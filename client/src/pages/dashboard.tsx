@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { RefreshCwIcon } from "lucide-react";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { FilterPanel } from "@/components/dashboard/filter-panel";
 import { SummaryCards } from "@/components/dashboard/summary-cards";
 import { GainersTable } from "@/components/dashboard/gainers-table";
@@ -86,9 +87,9 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-background">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-background border-b shadow-sm">
+      <header className="bg-card border-b shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div>
@@ -99,6 +100,7 @@ export default function Dashboard() {
               <div className="text-sm text-muted-foreground">
                 Last updated: <span className="font-medium">{formatLastUpdated(summary?.lastUpdated)}</span>
               </div>
+              <ThemeToggle />
               <Button
                 onClick={() => refreshMutation.mutate()}
                 disabled={refreshMutation.isPending}

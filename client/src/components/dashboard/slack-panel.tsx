@@ -66,7 +66,7 @@ export function SlackPanel() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 dark:bg-green-950 rounded-lg">
+            <div className="p-2 bg-green-100 dark:bg-green-900/50 rounded-lg">
               <svg className="w-5 h-5 text-green-600 dark:text-green-400" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M5.042 15.165a2.528 2.528 0 0 0 2.5 2.5c1.61 0 2.929-1.46 2.929-3.25v-3.25h-2.929a2.532 2.532 0 0 0-2.5 2.5 2.528 2.528 0 0 0 0 .5zm2.5-12.165a2.528 2.528 0 0 0-2.5 2.5v2.5h2.5a2.528 2.528 0 0 0 2.5-2.5 2.528 2.528 0 0 0-2.5-2.5zm12.928 5.5a2.528 2.528 0 0 0-2.5-2.5h-2.5v2.5a2.528 2.528 0 0 0 2.5 2.5c1.61 0 2.929-1.46 2.929-3.25 0-.83-.329-1.58-.929-2.25z"/>
               </svg>
@@ -96,7 +96,7 @@ export function SlackPanel() {
               <div className="flex items-center justify-between p-3 border rounded-lg">
                 <div>
                   <div className="text-sm font-medium">Morning Alert</div>
-                  <div className="text-xs text-muted-foreground">Top 10 Movers at 10:00 AM EST</div>
+                  <div className="text-xs text-muted-foreground">Top 10 Movers at 9:30 AM EST</div>
                 </div>
                 <div className="flex items-center">
                   <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
@@ -106,7 +106,17 @@ export function SlackPanel() {
               <div className="flex items-center justify-between p-3 border rounded-lg">
                 <div>
                   <div className="text-sm font-medium">Afternoon Alert</div>
-                  <div className="text-xs text-muted-foreground">Top 10 Movers at 3:00 PM EST</div>
+                  <div className="text-xs text-muted-foreground">Top 10 Movers at 1:00 PM EST</div>
+                </div>
+                <div className="flex items-center">
+                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                  <span className="text-xs text-green-600 dark:text-green-400">Active</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between p-3 border rounded-lg">
+                <div>
+                  <div className="text-sm font-medium">Market Close Alert</div>
+                  <div className="text-xs text-muted-foreground">Top 10 Movers at 4:00 PM EST</div>
                 </div>
                 <div className="flex items-center">
                   <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>

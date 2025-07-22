@@ -45,6 +45,7 @@ Preferred communication style: Simple, everyday language.
 - **Data Tables**: Sortable tables with custom cell renderers for financial data
 - **Export Functionality**: CSV export capabilities for market data
 - **Responsive Design**: Mobile-first design with adaptive layouts
+- **Dark Mode**: Complete light/dark theme toggle with Intropic MUI color scheme (#5AF5FA cyan accents)
 
 ### External Service Integration
 - **Stock Data Source**: Placeholder for Yahoo Finance API integration

@@ -92,8 +92,8 @@ export function SummaryCards({ summary, isLoading }: SummaryCardsProps) {
               <p className="text-sm font-medium text-muted-foreground">Market Cap</p>
               <p className="text-2xl font-bold">{summary.totalMarketCap}</p>
             </div>
-            <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
-              <DollarSignIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            <div className="p-3 bg-primary/10 rounded-lg">
+              <DollarSignIcon className="w-6 h-6 text-primary" />
             </div>
           </div>
           <p className="text-xs text-muted-foreground mt-2">Total tracked value</p>
