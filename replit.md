@@ -56,6 +56,7 @@ Preferred communication style: Simple, everyday language.
 - **Slack API**: Full Slack Web API integration with DM channel alerts (chat:write scope enabled)
 - **Real-time Updates**: Automatic refresh every 15 minutes with manual refresh capability
 - **Data Quality**: Premium financial data with comprehensive market coverage from dedicated market movers endpoints
+- **Market Cap Estimation**: Enhanced algorithm with realistic variation ($1.2B-$140B based on stock price tiers)
 - **API Performance**: Enterprise-grade rate limits with 100ms throttling between requests
 
 ## Data Flow
