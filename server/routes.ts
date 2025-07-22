@@ -89,6 +89,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Health check route for deployment debugging
+  app.get("/api/health", (req, res) => {
+    res.json({ 
+      status: "ok", 
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || "development",
+      port: process.env.PORT || "5000"
+    });
+  });
+
   // Slack integration routes
   app.post("/api/slack/test-alert", async (req, res) => {
     try {
