@@ -29,6 +29,7 @@ export class SlackService {
       
       const message: ChatPostMessageArguments = {
         channel: this.channelId,
+        text: `${timeLabel} Market Movers Alert - Top 5 Gainers and Losers`,
         blocks: [
           {
             type: "header",
