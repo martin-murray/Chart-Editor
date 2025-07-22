@@ -61,8 +61,8 @@ export function LosersTable({ losers, filter, onFilterChange, isLoading }: Loser
   if (isLoading) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>Top Losers</CardTitle>
+        <CardHeader className="bg-[#FFA5FF] border-b">
+          <CardTitle className="text-[#121212]">Top Losers</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="animate-pulse space-y-4">
@@ -77,11 +77,11 @@ export function LosersTable({ losers, filter, onFilterChange, isLoading }: Loser
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="bg-[#FFA5FF] border-b">
         <div className="flex justify-between items-center">
-          <CardTitle>Top Losers</CardTitle>
+          <CardTitle className="text-[#121212]">Top Losers</CardTitle>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Sort by:</span>
+            <span className="text-sm text-[#121212]/70">Sort by:</span>
             <Select
               value={filter.sortBy}
               onValueChange={(value) => onFilterChange({ ...filter, sortBy: value as any })}

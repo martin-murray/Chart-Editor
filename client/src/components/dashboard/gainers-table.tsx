@@ -61,8 +61,8 @@ export function GainersTable({ gainers, filter, onFilterChange, isLoading }: Gai
   if (isLoading) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>Top Gainers</CardTitle>
+        <CardHeader className="bg-[#5AF5FA] border-b">
+          <CardTitle className="text-[#121212]">Top Gainers</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="animate-pulse space-y-4">
@@ -77,11 +77,11 @@ export function GainersTable({ gainers, filter, onFilterChange, isLoading }: Gai
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="bg-[#5AF5FA] border-b">
         <div className="flex justify-between items-center">
-          <CardTitle>Top Gainers</CardTitle>
+          <CardTitle className="text-[#121212]">Top Gainers</CardTitle>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Sort by:</span>
+            <span className="text-sm text-[#121212]/70">Sort by:</span>
             <Select
               value={filter.sortBy}
               onValueChange={(value) => onFilterChange({ ...filter, sortBy: value as any })}
