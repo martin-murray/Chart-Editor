@@ -49,10 +49,11 @@ Preferred communication style: Simple, everyday language.
 - **Typography**: Space Grotesk headings (weight 300) and Mulish body text (weight 400)
 
 ### External Service Integration
-- **Stock Data Source**: Alpha Vantage API for live market data (500 requests/day free tier)
+- **Stock Data Source**: Yahoo Finance RapidAPI for live market data (500 requests/day free tier) - **ACTIVE**
+- **Previous API**: Alpha Vantage API (replaced due to 25/day limit) - **DEPRECATED**
 - **Slack API**: Full Slack Web API integration with DM channel alerts (chat:write scope enabled)
 - **Real-time Updates**: Automatic refresh every 15 minutes with manual refresh capability
-- **API Rate Management**: Intelligent request throttling and status monitoring
+- **API Rate Management**: Intelligent request throttling with 200ms delays between requests
 
 ## Data Flow
 

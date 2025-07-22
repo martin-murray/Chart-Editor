@@ -1,63 +1,27 @@
 import { type InsertStock } from "@shared/schema";
-
-interface AlphaVantageQuote {
-  "01. symbol": string;
-  "02. open": string;
-  "03. high": string;
-  "04. low": string;
-  "05. price": string;
-  "06. volume": string;
-  "07. latest trading day": string;
-  "08. previous close": string;
-  "09. change": string;
-  "10. change percent": string;
-}
-
-interface AlphaVantageResponse {
-  "Global Quote": AlphaVantageQuote;
-}
-
-interface AlphaVantageBatchResponse {
-  [symbol: string]: {
-    "1. open": string;
-    "2. high": string;
-    "3. low": string;
-    "4. price": string;
-    "5. volume": string;
-    "6. latest trading day": string;
-    "7. previous close": string;
-    "8. change": string;
-    "9. change percent": string;
-  };
-}
+import { yahooFinanceService, type YahooStockData } from "./yahooFinance";
 
 export class MarketDataService {
-  private readonly apiKey: string;
-  private readonly baseUrl = "https://www.alphavantage.co/query";
   private requestCount = 0;
-  private readonly dailyLimit = 500; // Alpha Vantage free tier limit
+  private readonly dailyLimit = 500; // Yahoo Finance RapidAPI free tier limit
   
   constructor() {
-    this.apiKey = process.env.ALPHA_VANTAGE_API_KEY || "";
-    if (!this.apiKey) {
-      console.warn("⚠️ ALPHA_VANTAGE_API_KEY not found - using sample data");
-    }
+    // Using Yahoo Finance service instead of Alpha Vantage
   }
 
   private async delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  private formatMarketCap(price: number, sharesOutstanding: number = 1000000000): string {
-    const marketCap = price * sharesOutstanding;
-    if (marketCap >= 1e12) {
-      return `$${(marketCap / 1e12).toFixed(1)}T`;
-    } else if (marketCap >= 1e9) {
-      return `$${(marketCap / 1e9).toFixed(1)}B`;
-    } else if (marketCap >= 1e6) {
-      return `$${(marketCap / 1e6).toFixed(1)}M`;
+  private formatMarketCap(marketCapValue: number): string {
+    if (marketCapValue >= 1e12) {
+      return `$${(marketCapValue / 1e12).toFixed(1)}T`;
+    } else if (marketCapValue >= 1e9) {
+      return `$${(marketCapValue / 1e9).toFixed(1)}B`;
+    } else if (marketCapValue >= 1e6) {
+      return `$${(marketCapValue / 1e6).toFixed(1)}M`;
     }
-    return `$${marketCap.toFixed(0)}`;
+    return `$${marketCapValue.toFixed(0)}`;
   }
 
   private getStockIndices(symbol: string): string[] {
@@ -175,27 +139,21 @@ export class MarketDataService {
     return nameMap[symbol] || symbol;
   }
 
-  private parseQuote(quote: AlphaVantageQuote): InsertStock {
-    const symbol = quote["01. symbol"];
-    const price = parseFloat(quote["05. price"]);
-    const change = parseFloat(quote["09. change"]);
-    const changePercent = quote["10. change percent"];
-    const volume = parseInt(quote["06. volume"]);
-    
-    // Remove percentage sign and parse
-    const percentChange = changePercent.replace("%", "");
-    
-    // Estimate market cap based on stock price (rough approximation)
-    const estimatedShares = this.getEstimatedShares(symbol);
-    const marketCapValue = price * estimatedShares;
+  private parseYahooData(data: YahooStockData): InsertStock {
+    const symbol = data.symbol;
+    const price = data.price;
+    const change = data.change;
+    const changePercent = data.changePercent;
+    const volume = data.volume;
+    const marketCapValue = data.marketCap;
     
     return {
       symbol,
-      name: this.getCompanyName(symbol),
+      name: data.name || this.getCompanyName(symbol),
       price: price.toFixed(2),
       change: change.toFixed(2),
-      percentChange: percentChange,
-      marketCap: this.formatMarketCap(price, estimatedShares),
+      percentChange: changePercent.toFixed(2),
+      marketCap: this.formatMarketCap(marketCapValue), // Yahoo Finance provides raw market cap value
       marketCapValue: marketCapValue.toString(),
       volume,
       indices: this.getStockIndices(symbol),
@@ -222,39 +180,21 @@ export class MarketDataService {
   }
 
   async getQuote(symbol: string): Promise<InsertStock | null> {
-    if (!this.apiKey) {
-      console.warn(`⚠️ No API key - cannot fetch data for ${symbol}`);
-      return null;
-    }
-
     if (this.requestCount >= this.dailyLimit) {
       console.warn(`⚠️ Daily API limit reached (${this.dailyLimit} requests)`);
       return null;
     }
 
     try {
-      // Rate limiting: 5 calls per minute
-      await this.delay(12000); // 12 second delay between requests
-      
-      const url = `${this.baseUrl}?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${this.apiKey}`;
-      
-      console.log(`📊 Fetching live data for ${symbol}...`);
-      const response = await fetch(url);
-      
-      if (!response.ok) {
-        throw new Error(`API request failed: ${response.status}`);
-      }
-      
-      const data: AlphaVantageResponse = await response.json();
+      const yahooData = await yahooFinanceService.getStockQuote(symbol);
       this.requestCount++;
       
-      if (!data["Global Quote"] || !data["Global Quote"]["01. symbol"]) {
-        console.warn(`⚠️ No quote data returned for ${symbol}`, data);
+      if (!yahooData) {
         return null;
       }
 
-      const stock = this.parseQuote(data["Global Quote"]);
-      console.log(`✅ Updated ${symbol}: $${stock.price} (${stock.percentChange > "0" ? "+" : ""}${stock.percentChange}%)`);
+      const stock = this.parseYahooData(yahooData);
+      console.log(`✅ Updated ${symbol}: $${stock.price} (${stock.percentChange.toString().startsWith("-") ? "" : "+"}${stock.percentChange}%)`);
       
       return stock;
     } catch (error) {
@@ -264,40 +204,21 @@ export class MarketDataService {
   }
 
   async getMultipleQuotes(symbols: string[]): Promise<InsertStock[]> {
-    if (!this.apiKey) {
-      console.warn("⚠️ No API key - cannot fetch live market data");
-      return [];
-    }
-
     console.log(`📊 Fetching live data for ${symbols.length} stocks...`);
     
-    const results: InsertStock[] = [];
-    
-    // Process symbols in batches to respect rate limits
-    const batchSize = 5; // 5 requests per minute max
-    for (let i = 0; i < symbols.length; i += batchSize) {
-      const batch = symbols.slice(i, i + batchSize);
+    try {
+      // Use Yahoo Finance service to get multiple stocks efficiently
+      const yahooResults = await yahooFinanceService.getMultipleStocks(symbols);
+      this.requestCount += symbols.length;
       
-      console.log(`📊 Processing batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(symbols.length/batchSize)}: ${batch.join(', ')}`);
+      const results: InsertStock[] = yahooResults.map(data => this.parseYahooData(data));
       
-      const batchPromises = batch.map(symbol => this.getQuote(symbol));
-      const batchResults = await Promise.all(batchPromises);
-      
-      for (const result of batchResults) {
-        if (result) {
-          results.push(result);
-        }
-      }
-      
-      // Wait between batches (except for the last batch)
-      if (i + batchSize < symbols.length) {
-        console.log("⏳ Waiting 60 seconds for next batch...");
-        await this.delay(60000); // Wait 1 minute between batches
-      }
+      console.log(`✅ Successfully fetched live data for ${results.length}/${symbols.length} stocks`);
+      return results;
+    } catch (error) {
+      console.error("❌ Error fetching multiple quotes:", error);
+      return [];
     }
-    
-    console.log(`✅ Successfully fetched live data for ${results.length}/${symbols.length} stocks`);
-    return results;
   }
 
   getRemainingRequests(): number {
