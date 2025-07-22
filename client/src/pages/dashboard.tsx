@@ -26,15 +26,7 @@ export default function Dashboard() {
   });
 
   const handleFilterChange = (newFilter: StockFilter) => {
-    console.log('Dashboard received filter change:', newFilter);
-    console.log('Current filter state:', filter);
     setFilter(newFilter);
-    
-    // Force refresh queries when filter changes
-    setTimeout(() => {
-      queryClient.invalidateQueries({ queryKey: ["/api/stocks/gainers"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/stocks/losers"] });
-    }, 100);
   };
 
   // Queries
@@ -44,11 +36,12 @@ export default function Dashboard() {
 
   const { data: gainers = [], isLoading: gainersLoading } = useQuery<Stock[]>({
     queryKey: ["/api/stocks/gainers", filter],
-    queryFn: () => {
+    queryFn: ({ queryKey }) => {
+      const [, currentFilter] = queryKey;
       const params = new URLSearchParams({
         limit: "10",
         ...Object.fromEntries(
-          Object.entries(filter).map(([key, value]) => [key, String(value)])
+          Object.entries(currentFilter as StockFilter).map(([key, value]) => [key, String(value)])
         ),
       });
       return fetch(`/api/stocks/gainers?${params}`).then(res => res.json());
@@ -57,11 +50,12 @@ export default function Dashboard() {
 
   const { data: losers = [], isLoading: losersLoading } = useQuery<Stock[]>({
     queryKey: ["/api/stocks/losers", filter],
-    queryFn: () => {
+    queryFn: ({ queryKey }) => {
+      const [, currentFilter] = queryKey;
       const params = new URLSearchParams({
         limit: "10",
         ...Object.fromEntries(
-          Object.entries(filter).map(([key, value]) => [key, String(value)])
+          Object.entries(currentFilter as StockFilter).map(([key, value]) => [key, String(value)])
         ),
       });
       return fetch(`/api/stocks/losers?${params}`).then(res => res.json());

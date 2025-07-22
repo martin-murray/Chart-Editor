@@ -11,10 +11,7 @@ interface FilterPanelProps {
 
 export function FilterPanel({ filter, onFilterChange, lastUpdated }: FilterPanelProps) {
   const updateFilter = (key: keyof StockFilter, value: any) => {
-    console.log('Filter change:', key, value);
-    const newFilter = { ...filter, [key]: value };
-    console.log('New filter state:', newFilter);
-    onFilterChange(newFilter);
+    onFilterChange({ ...filter, [key]: value });
   };
 
   return (
