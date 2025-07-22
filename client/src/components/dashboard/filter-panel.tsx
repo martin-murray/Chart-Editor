@@ -67,15 +67,10 @@ export function FilterPanel({ filter, onFilterChange, lastUpdated }: FilterPanel
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Indices</SelectItem>
-                <SelectItem value="sp500">S&P 500</SelectItem>
-                <SelectItem value="sp400">S&P 400</SelectItem>
-                <SelectItem value="sp600">S&P 600</SelectItem>
-                <SelectItem value="nasdaq100">NASDAQ 100</SelectItem>
-                <SelectItem value="russell1000">Russell 1000</SelectItem>
-                <SelectItem value="russell2000">Russell 2000</SelectItem>
-                <SelectItem value="russell3000">Russell 3000</SelectItem>
-                <SelectItem value="tmi">TMI</SelectItem>
+                <SelectItem value="all">All Indices (146)</SelectItem>
+                <SelectItem value="russell1000">Russell 1000 (146)</SelectItem>
+                <SelectItem value="sp500">S&P 500 (31)</SelectItem>
+                <SelectItem value="nasdaq100">NASDAQ 100 (11)</SelectItem>
               </SelectContent>
             </Select>
           </div>
