@@ -8,9 +8,9 @@ export class DataRefreshService {
   
   private readonly trackedSymbols = [
     "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "TSLA", "META",
-    "JPM", "JNJ", "V", "PG", "HD", "ABBV", "XOM", "KO", "PEP",
-    "BAC", "TMO", "COST", "WMT", "DIS", "NFLX", "AMD", "VZ",
-    "ADBE", "NKE", "NEE", "BMY", "QCOM", "HON", "LOW"
+    "JPM", "JNJ", "NKE", "V", "BAC", "AMD", "NFLX", "QCOM",
+    "PG", "HD", "ABBV", "XOM", "KO", "PEP", "TMO", "COST", 
+    "WMT", "DIS", "VZ", "ADBE", "NEE", "BMY", "HON", "LOW"
   ];
 
   startAutomaticRefresh() {
@@ -60,7 +60,7 @@ export class DataRefreshService {
       const batchSize = Math.min(10, Math.floor(remainingRequests / 2));
       const prioritySymbols = this.trackedSymbols.slice(0, batchSize);
       
-      console.log(`📊 Refreshing data for ${prioritySymbols.length} priority stocks...`);
+      console.log(`📊 Refreshing data for ${prioritySymbols.length} priority stocks: ${prioritySymbols.join(', ')}...`);
       
       const liveData = await marketDataService.getMultipleQuotes(prioritySymbols);
       
