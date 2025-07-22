@@ -100,9 +100,10 @@ export function PercentChangeCell({ value }: { value: string }) {
     <Badge
       variant="secondary"
       className={cn(
-        "font-semibold",
-        isPositive && "bg-gainer/10 text-gainer border-gainer/20",
-        isNegative && "bg-loser/10 text-loser border-loser/20"
+        "font-semibold text-[#121212] border-0",
+        isPositive && "bg-[#5AF5FA]",
+        isNegative && "bg-[#FFA5FF]",
+        !isPositive && !isNegative && "bg-muted text-muted-foreground"
       )}
     >
       {isPositive ? "+" : ""}{value}%
