@@ -6,12 +6,7 @@ export class DataRefreshService {
   private refreshTimer: NodeJS.Timeout | null = null;
   private isRefreshing = false;
   
-  private readonly trackedSymbols = [
-    "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "TSLA", "META",
-    "JPM", "JNJ", "NKE", "V", "BAC", "AMD", "NFLX", "QCOM",
-    "PG", "HD", "ABBV", "XOM", "KO", "PEP", "TMO", "COST", 
-    "WMT", "DIS", "VZ", "ADBE", "NEE", "BMY", "HON", "LOW"
-  ];
+  // No longer needed - using Yahoo Finance movers API for real market movers
 
   startAutomaticRefresh() {
     console.log("🕐 Starting automatic market data refresh...");
@@ -56,13 +51,11 @@ export class DataRefreshService {
         return;
       }
 
-      // Fetch live market data in smaller batches to avoid rate limits
-      const batchSize = Math.min(10, Math.floor(remainingRequests / 2));
-      const prioritySymbols = this.trackedSymbols.slice(0, batchSize);
+      // Fetch real market movers data (much more efficient - single API call)
+      console.log(`📊 Fetching real-time market movers from Yahoo Finance...`);
       
-      console.log(`📊 Refreshing data for ${prioritySymbols.length} priority stocks: ${prioritySymbols.join(', ')}...`);
-      
-      const liveData = await marketDataService.getMultipleQuotes(prioritySymbols);
+      const moversData = await marketDataService.getMarketMovers();
+      const liveData = [...moversData.gainers, ...moversData.losers];
       
       if (liveData.length === 0) {
         console.warn("⚠️ No live data received - keeping existing data");
@@ -181,12 +174,13 @@ export class DataRefreshService {
     }
   }
 
-  getRefreshStatus() {
+  async getRefreshStatus() {
+    const stocks = await storage.getStocks();
     return {
       isRefreshing: this.isRefreshing,
       autoRefreshActive: this.refreshTimer !== null,
       remainingRequests: marketDataService.getRemainingRequests(),
-      trackedSymbols: this.trackedSymbols.length
+      totalStocks: stocks.length
     };
   }
 }

@@ -1,5 +1,5 @@
 import { type InsertStock } from "@shared/schema";
-import { yahooFinanceService, type YahooStockData } from "./yahooFinance";
+import { yahooMoversService, type MarketMover } from "./yahooMovers";
 
 export class MarketDataService {
   private requestCount = 0;
@@ -139,7 +139,7 @@ export class MarketDataService {
     return nameMap[symbol] || symbol;
   }
 
-  private parseYahooData(data: YahooStockData): InsertStock {
+  private parseMoversData(data: MarketMover): InsertStock {
     const symbol = data.symbol;
     const price = data.price;
     const change = data.change;
@@ -153,7 +153,7 @@ export class MarketDataService {
       price: price.toFixed(2),
       change: change.toFixed(2),
       percentChange: changePercent.toFixed(2),
-      marketCap: this.formatMarketCap(marketCapValue), // Yahoo Finance provides raw market cap value
+      marketCap: this.formatMarketCap(marketCapValue),
       marketCapValue: marketCapValue.toString(),
       volume,
       indices: this.getStockIndices(symbol),
@@ -179,46 +179,41 @@ export class MarketDataService {
     return sharesMap[symbol] || 1000000000; // Default 1B shares
   }
 
-  async getQuote(symbol: string): Promise<InsertStock | null> {
+  async getMarketMovers(): Promise<{gainers: InsertStock[], losers: InsertStock[]}> {
     if (this.requestCount >= this.dailyLimit) {
       console.warn(`⚠️ Daily API limit reached (${this.dailyLimit} requests)`);
-      return null;
+      return {gainers: [], losers: []};
     }
 
     try {
-      const yahooData = await yahooFinanceService.getStockQuote(symbol);
-      this.requestCount++;
+      const moversData = await yahooMoversService.getAllMovers();
+      this.requestCount += 1; // Only one API call for all movers
       
-      if (!yahooData) {
-        return null;
-      }
-
-      const stock = this.parseYahooData(yahooData);
-      console.log(`✅ Updated ${symbol}: $${stock.price} (${stock.percentChange.toString().startsWith("-") ? "" : "+"}${stock.percentChange}%)`);
+      const gainers = moversData.gainers.map(data => this.parseMoversData(data));
+      const losers = moversData.losers.map(data => this.parseMoversData(data));
       
-      return stock;
+      console.log(`✅ Updated market movers: ${gainers.length} gainers, ${losers.length} losers`);
+      
+      return { gainers, losers };
     } catch (error) {
-      console.error(`❌ Error fetching quote for ${symbol}:`, error);
-      return null;
+      console.error(`❌ Error fetching market movers:`, error);
+      return {gainers: [], losers: []};
     }
   }
 
   async getMultipleQuotes(symbols: string[]): Promise<InsertStock[]> {
-    console.log(`📊 Fetching live data for ${symbols.length} stocks...`);
+    // This method is deprecated - use getMarketMovers() instead
+    console.log(`⚠️ getMultipleQuotes is deprecated, using market movers instead`);
     
-    try {
-      // Use Yahoo Finance service to get multiple stocks efficiently
-      const yahooResults = await yahooFinanceService.getMultipleStocks(symbols);
-      this.requestCount += symbols.length;
-      
-      const results: InsertStock[] = yahooResults.map(data => this.parseYahooData(data));
-      
-      console.log(`✅ Successfully fetched live data for ${results.length}/${symbols.length} stocks`);
-      return results;
-    } catch (error) {
-      console.error("❌ Error fetching multiple quotes:", error);
-      return [];
+    const moversData = await this.getMarketMovers();
+    const allStocks = [...moversData.gainers, ...moversData.losers];
+    
+    // Filter to only requested symbols if provided
+    if (symbols.length > 0) {
+      return allStocks.filter(stock => symbols.includes(stock.symbol));
     }
+    
+    return allStocks;
   }
 
   getRemainingRequests(): number {

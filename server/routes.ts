@@ -195,7 +195,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get refresh status
   app.get("/api/refresh-status", async (req, res) => {
     try {
-      const status = dataRefreshService.getRefreshStatus();
+      const status = await dataRefreshService.getRefreshStatus();
       res.json(status);
     } catch (error) {
       console.error("Error getting refresh status:", error);
