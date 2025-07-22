@@ -1,0 +1,94 @@
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { type StockFilter } from "@/types/stock";
+
+interface FilterPanelProps {
+  filter: StockFilter;
+  onFilterChange: (filter: StockFilter) => void;
+  lastUpdated?: string;
+}
+
+export function FilterPanel({ filter, onFilterChange, lastUpdated }: FilterPanelProps) {
+  const updateFilter = (key: keyof StockFilter, value: any) => {
+    onFilterChange({ ...filter, [key]: value });
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Filters & Settings</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="changeThreshold">% Change Threshold</Label>
+            <Select
+              value={filter.changeThreshold.toString()}
+              onValueChange={(value) => updateFilter("changeThreshold", parseInt(value))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">≥ 1%</SelectItem>
+                <SelectItem value="2">≥ 2%</SelectItem>
+                <SelectItem value="3">≥ 3%</SelectItem>
+                <SelectItem value="5">≥ 5%</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="marketCap">Market Cap</Label>
+            <Select
+              value={filter.marketCap}
+              onValueChange={(value) => updateFilter("marketCap", value)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="2B">≥ $2B</SelectItem>
+                <SelectItem value="5B">≥ $5B</SelectItem>
+                <SelectItem value="10B">≥ $10B</SelectItem>
+                <SelectItem value="50B">≥ $50B</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="indexFilter">Index Filter</Label>
+            <Select
+              value={filter.indexFilter}
+              onValueChange={(value) => updateFilter("indexFilter", value)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Indices</SelectItem>
+                <SelectItem value="sp500">S&P 500</SelectItem>
+                <SelectItem value="sp400">S&P 400</SelectItem>
+                <SelectItem value="sp600">S&P 600</SelectItem>
+                <SelectItem value="nasdaq100">NASDAQ 100</SelectItem>
+                <SelectItem value="russell1000">Russell 1000</SelectItem>
+                <SelectItem value="russell2000">Russell 2000</SelectItem>
+                <SelectItem value="russell3000">Russell 3000</SelectItem>
+                <SelectItem value="tmi">TMI</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Data Refresh</Label>
+            <div className="text-sm text-muted-foreground">
+              <div>Last: {lastUpdated || "Never"}</div>
+              <div className="text-xs">Updates: 9:30am, 1pm, 4pm EST</div>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
