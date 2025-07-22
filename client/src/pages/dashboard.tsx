@@ -34,6 +34,16 @@ export default function Dashboard() {
     queryKey: ["/api/market-summary"],
   });
 
+  const { data: marketStatus } = useQuery<{
+    status: string;
+    market: string;
+    serverTime: string;
+    exchanges: { name: string; status: string; }[];
+  }>({
+    queryKey: ["/api/market-status"],
+    refetchInterval: 60000, // Refresh every minute
+  });
+
   const { data: gainers = [], isLoading: gainersLoading } = useQuery<Stock[]>({
     queryKey: ["/api/stocks/gainers", filter],
     queryFn: ({ queryKey }) => {
@@ -117,10 +127,18 @@ export default function Dashboard() {
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <span>Last updated: <span className="font-medium">{formatLastUpdated(summary?.lastUpdated)}</span></span>
+                {marketStatus && (
+                  <span className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${marketStatus.status === 'open' ? 'bg-green-500' : 'bg-red-500'}`} />
+                    <span className="font-medium">US Market: {marketStatus.status.toUpperCase()}</span>
+                    <span className="text-xs opacity-75">
+                      {marketStatus.exchanges?.length > 0 ? `(${marketStatus.exchanges[0].name})` : '(NYSE/NASDAQ)'}
+                    </span>
+                  </span>
+                )}
                 {refreshStatus && (
                   <span className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${refreshStatus.isRefreshing ? 'bg-yellow-500' : 'bg-green-500'}`} />
+                    <div className={`w-2 h-2 rounded-full ${refreshStatus.isRefreshing ? 'bg-yellow-500' : 'bg-cyan-500'}`} />
                     {refreshStatus.isRefreshing ? 'Live data refreshing...' : `${refreshStatus.remainingRequests} API calls remaining`}
                   </span>
                 )}

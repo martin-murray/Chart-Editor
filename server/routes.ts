@@ -99,6 +99,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Market status endpoint
+  app.get("/api/market-status", async (req, res) => {
+    try {
+      const marketStatus = await stockDataService.getMarketStatus();
+      res.json(marketStatus);
+    } catch (error) {
+      console.error("Error fetching market status:", error);
+      res.status(500).json({ message: "Failed to fetch market status" });
+    }
+  });
+
   // Slack integration routes
   app.post("/api/slack/test-alert", async (req, res) => {
     try {

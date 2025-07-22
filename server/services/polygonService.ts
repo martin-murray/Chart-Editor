@@ -354,6 +354,71 @@ export class PolygonService {
       resetTime: "Daily reset at midnight UTC"
     };
   }
+
+  async getMarketStatus(): Promise<{
+    status: string;
+    market: string;
+    serverTime: string;
+    exchanges: {
+      name: string;
+      status: string;
+      nextOpenTime?: string;
+      nextCloseTime?: string;
+    }[];
+  }> {
+    try {
+      const response = await fetch(`${this.baseUrl}/v1/marketstatus/now?apiKey=${this.apiKey}`);
+      
+      if (!response.ok) {
+        throw new Error(`Polygon API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      // Filter for US stock exchanges only
+      const stockExchanges = data.results?.exchanges || [];
+      
+      // Focus on major US stock exchanges
+      const majorUSExchanges = stockExchanges.filter((exchange: any) => 
+        ['NASDAQ', 'NYSE', 'NYSEARCA', 'NYSEMKT'].includes(exchange.name)
+      ).map((exchange: any) => ({
+        name: exchange.name,
+        status: exchange.status,
+        nextOpenTime: exchange.nextOpenTime,
+        nextCloseTime: exchange.nextCloseTime
+      }));
+
+      // Determine overall market status
+      const isMarketOpen = majorUSExchanges.some((exchange: any) => exchange.status === 'open');
+      const overallStatus = isMarketOpen ? 'open' : 'closed';
+
+      return {
+        status: overallStatus,
+        market: 'US',
+        serverTime: data.results?.serverTime || new Date().toISOString(),
+        exchanges: majorUSExchanges
+      };
+    } catch (error) {
+      console.error('Error fetching market status:', error);
+      // Return fallback status based on time
+      const now = new Date();
+      const hour = now.getHours();
+      const isWeekday = now.getDay() >= 1 && now.getDay() <= 5;
+      const isMarketHours = hour >= 9 && hour < 16; // 9:30 AM to 4:00 PM EST
+      
+      return {
+        status: isWeekday && isMarketHours ? 'open' : 'closed',
+        market: 'US',
+        serverTime: now.toISOString(),
+        exchanges: [
+          {
+            name: 'NYSE',
+            status: isWeekday && isMarketHours ? 'open' : 'closed'
+          }
+        ]
+      };
+    }
+  }
 }
 
 export const polygonService = new PolygonService();

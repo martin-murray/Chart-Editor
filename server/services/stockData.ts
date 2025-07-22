@@ -29,6 +29,15 @@ export class StockDataService {
     }
   }
 
+  async getMarketStatus() {
+    try {
+      return await polygonService.getMarketStatus();
+    } catch (error) {
+      console.error('Error getting market status:', error);
+      throw error;
+    }
+  }
+
   async calculateMarketSummary(stocks: InsertStock[]): Promise<InsertMarketSummary> {
     const gainers = stocks.filter(stock => parseFloat(stock.percentChange) > 0);
     const losers = stocks.filter(stock => parseFloat(stock.percentChange) < 0);
