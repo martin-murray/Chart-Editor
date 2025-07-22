@@ -23,7 +23,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/stocks/gainers", async (req, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 10;
-      const filter = stockFilterSchema.safeParse(req.query);
+      
+      // Transform query params for validation
+      const queryParams = {
+        ...req.query,
+        changeThreshold: req.query.changeThreshold ? parseInt(req.query.changeThreshold as string) : undefined,
+      };
+      
+      const filter = stockFilterSchema.safeParse(queryParams);
       const gainers = await storage.getTopGainers(limit, filter.success ? filter.data : undefined);
       res.json(gainers);
     } catch (error) {
@@ -35,7 +42,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/stocks/losers", async (req, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 10;
-      const filter = stockFilterSchema.safeParse(req.query);
+      
+      // Transform query params for validation
+      const queryParams = {
+        ...req.query,
+        changeThreshold: req.query.changeThreshold ? parseInt(req.query.changeThreshold as string) : undefined,
+      };
+      
+      const filter = stockFilterSchema.safeParse(queryParams);
       const losers = await storage.getTopLosers(limit, filter.success ? filter.data : undefined);
       res.json(losers);
     } catch (error) {
