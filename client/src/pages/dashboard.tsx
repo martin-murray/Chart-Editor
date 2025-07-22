@@ -25,6 +25,18 @@ export default function Dashboard() {
     sortOrder: "desc",
   });
 
+  const handleFilterChange = (newFilter: StockFilter) => {
+    console.log('Dashboard received filter change:', newFilter);
+    console.log('Current filter state:', filter);
+    setFilter(newFilter);
+    
+    // Force refresh queries when filter changes
+    setTimeout(() => {
+      queryClient.invalidateQueries({ queryKey: ["/api/stocks/gainers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/stocks/losers"] });
+    }, 100);
+  };
+
   // Queries
   const { data: summary, isLoading: summaryLoading } = useQuery<MarketSummary>({
     queryKey: ["/api/market-summary"],
@@ -138,7 +150,7 @@ export default function Dashboard() {
         <div className="mb-8">
           <FilterPanel
             filter={filter}
-            onFilterChange={setFilter}
+            onFilterChange={handleFilterChange}
             lastUpdated={formatLastUpdated(summary?.lastUpdated)}
           />
         </div>
@@ -154,13 +166,13 @@ export default function Dashboard() {
             <GainersTable
               gainers={gainers}
               filter={filter}
-              onFilterChange={setFilter}
+              onFilterChange={handleFilterChange}
               isLoading={gainersLoading}
             />
             <LosersTable
               losers={losers}
               filter={filter}
-              onFilterChange={setFilter}
+              onFilterChange={handleFilterChange}
               isLoading={losersLoading}
             />
           </div>
