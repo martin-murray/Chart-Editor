@@ -73,7 +73,7 @@ export class DatabaseStorage implements IStorage {
     ];
 
     // Insert stocks into database
-    await db.insert(stocks).values(stockData as any);
+    await db.insert(stocks).values(stockData);
 
     // Calculate market summary
     const gainers = stockData.filter(stock => parseFloat(stock.percentChange) > 0);

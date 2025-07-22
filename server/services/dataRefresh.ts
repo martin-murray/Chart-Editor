@@ -1,5 +1,5 @@
 import { storage } from "../storage";
-import { marketDataService } from "./marketData";
+import { stockDataService } from "./stockData";
 import { type InsertMarketSummary } from "@shared/schema";
 
 export class DataRefreshService {
@@ -43,19 +43,18 @@ export class DataRefreshService {
       const startTime = Date.now();
       
       // Check if we have remaining API requests
-      const remainingRequests = marketDataService.getRemainingRequests();
-      console.log(`📊 Remaining API requests today: ${remainingRequests}`);
+      const apiStatus = await stockDataService.getApiStatus();
+      console.log(`📊 Remaining API requests today: ${apiStatus.remainingRequests}`);
       
-      if (remainingRequests < 10) {
-        console.warn("⚠️ Low API request limit - skipping refresh");
+      if (apiStatus.remainingRequests <= 0) {
+        console.warn("⚠️ API request limit reached - skipping refresh");
         return;
       }
 
-      // Fetch real market movers data (much more efficient - single API call)
-      console.log(`📊 Fetching real-time market movers from Yahoo Finance...`);
+      // Fetch market movers data exclusively from Polygon.io
+      console.log(`📊 Fetching real-time market movers from Polygon.io premium API...`);
       
-      const moversData = await marketDataService.getMarketMovers();
-      const liveData = [...moversData.gainers, ...moversData.losers];
+      const liveData = await stockDataService.getLatestStockData();
       
       if (liveData.length === 0) {
         console.warn("⚠️ No live data received - keeping existing data");
@@ -73,7 +72,7 @@ export class DataRefreshService {
       const duration = (endTime - startTime) / 1000;
       
       console.log(`✅ Market data refresh completed in ${duration.toFixed(1)}s`);
-      console.log(`📈 Updated ${liveData.length} stocks with live data`);
+      console.log(`📈 Updated ${liveData.length} stocks with live data from Polygon.io`);
       
     } catch (error) {
       console.error("❌ Error during market data refresh:", error);
@@ -176,10 +175,11 @@ export class DataRefreshService {
 
   async getRefreshStatus() {
     const stocks = await storage.getStocks();
+    const apiStatus = await stockDataService.getApiStatus();
     return {
       isRefreshing: this.isRefreshing,
       autoRefreshActive: this.refreshTimer !== null,
-      remainingRequests: marketDataService.getRemainingRequests(),
+      remainingRequests: apiStatus.remainingRequests,
       totalStocks: stocks.length
     };
   }
