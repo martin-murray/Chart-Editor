@@ -50,7 +50,7 @@ Preferred communication style: Simple, everyday language.
 
 ### External Service Integration
 - **Stock Data Source**: Alpha Vantage API for live market data (500 requests/day free tier)
-- **Slack API**: Full Slack Web API integration for team notifications
+- **Slack API**: Full Slack Web API integration with DM channel alerts (chat:write scope enabled)
 - **Real-time Updates**: Automatic refresh every 15 minutes with manual refresh capability
 - **API Rate Management**: Intelligent request throttling and status monitoring
 
@@ -66,9 +66,10 @@ Preferred communication style: Simple, everyday language.
 
 ### Slack Alert Workflow
 1. **Market Analysis**: System analyzes current market movers based on configured thresholds
-2. **Alert Generation**: Top gainers and losers identified and formatted
-3. **Slack Delivery**: Rich Slack blocks sent to configured channels
-4. **Alert Logging**: All alerts logged with timestamps and delivery status
+2. **Alert Generation**: Top gainers and losers identified and formatted for rich Slack blocks
+3. **Slack Delivery**: Automated alerts sent to configured DM channel with market data
+4. **Alert Logging**: All alerts logged with timestamps and delivery status in PostgreSQL
+5. **Test Capability**: Manual test alerts available through dashboard interface
 
 ### User Interaction Flow
 1. **Dashboard Load**: Initial data fetch for market summary and top movers
