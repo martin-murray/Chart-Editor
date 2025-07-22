@@ -23,10 +23,10 @@ Preferred communication style: Simple, everyday language.
 - **API Design**: RESTful API endpoints with JSON responses
 
 ### Data Storage Solutions
-- **Primary Database**: PostgreSQL via Neon serverless
+- **Primary Database**: PostgreSQL via Neon serverless (ACTIVE)
 - **ORM**: Drizzle with schema-first approach
 - **Migrations**: Drizzle Kit for database schema management
-- **Fallback Storage**: In-memory storage class for development/testing
+- **Storage Implementation**: DatabaseStorage class with full CRUD operations
 
 ## Key Components
 
@@ -114,6 +114,6 @@ Preferred communication style: Simple, everyday language.
 - **Cartographer Integration**: Enhanced debugging capabilities in Replit environment
 
 ### Environment Configuration
-- **Database Connection**: Automatic PostgreSQL database provisioning check
+- **Database Connection**: PostgreSQL database with automatic schema initialization
 - **Slack Integration**: Optional Slack credentials with fallback warnings
-- **Storage Fallback**: Graceful degradation to in-memory storage if database unavailable
+- **Persistent Storage**: All market data, alerts, and summaries stored in PostgreSQL

@@ -1,4 +1,6 @@
 import { stocks, slackAlerts, marketSummary, type Stock, type InsertStock, type SlackAlert, type InsertSlackAlert, type MarketSummary, type InsertMarketSummary, type StockFilter } from "@shared/schema";
+import { db } from "./db";
+import { eq, desc, asc, and, gte, sql, inArray } from "drizzle-orm";
 
 export interface IStorage {
   // Stock operations
@@ -23,22 +25,18 @@ export interface IStorage {
   updateMarketSummary(summary: InsertMarketSummary): Promise<MarketSummary>;
 }
 
-export class MemStorage implements IStorage {
-  private stocks: Map<number, Stock>;
-  private slackAlerts: Map<number, SlackAlert>;
-  private marketSummary: MarketSummary | undefined;
-  private currentStockId: number;
-  private currentAlertId: number;
-
+export class DatabaseStorage implements IStorage {
   constructor() {
-    this.stocks = new Map();
-    this.slackAlerts = new Map();
-    this.currentStockId = 1;
-    this.currentAlertId = 1;
     this.initializeData();
   }
 
-  private initializeData() {
+  private async initializeData() {
+    // Check if data already exists
+    const existingStocks = await db.select().from(stocks).limit(1);
+    if (existingStocks.length > 0) {
+      return; // Data already initialized
+    }
+
     // Generate realistic stock data for demonstration
     const stockData = [
       { symbol: "AAPL", name: "Apple Inc.", price: "180.25", change: "2.15", percentChange: "1.21", marketCap: "$2.8T", marketCapValue: "2800000000000", volume: 58492834, indices: ["S&P 500", "NASDAQ 100", "Russell 1000"], sector: "Technology" },
@@ -74,17 +72,8 @@ export class MemStorage implements IStorage {
       { symbol: "LOW", name: "Lowe's Companies Inc.", price: "265.75", change: "-6.25", percentChange: "-2.30", marketCap: "$158.9B", marketCapValue: "158900000000", volume: 5847291, indices: ["S&P 500", "Russell 1000"], sector: "Consumer Discretionary" }
     ];
 
-    // Add stocks to storage
-    stockData.forEach((stock, index) => {
-      const stockRecord: Stock = {
-        id: index + 1,
-        ...stock,
-        lastUpdated: new Date(),
-      };
-      this.stocks.set(index + 1, stockRecord);
-    });
-
-    this.currentStockId = stockData.length + 1;
+    // Insert stocks into database
+    await db.insert(stocks).values(stockData as any);
 
     // Calculate market summary
     const gainers = stockData.filter(stock => parseFloat(stock.percentChange) > 0);
@@ -101,8 +90,7 @@ export class MemStorage implements IStorage {
     const totalMarketCapValue = stockData.reduce((sum, stock) => sum + parseFloat(stock.marketCapValue), 0);
     const totalVolume = stockData.reduce((sum, stock) => sum + stock.volume, 0);
 
-    this.marketSummary = {
-      id: 1,
+    const summaryData = {
       totalMovers: stockData.length,
       totalGainers: gainers.length,
       totalLosers: losers.length,
@@ -112,119 +100,119 @@ export class MemStorage implements IStorage {
       avgVolume: `${(totalVolume / 1000000).toFixed(1)}M`,
       volatility: "Moderate",
       sectorLeader: "Technology",
-      lastUpdated: new Date(),
     };
+
+    await db.insert(marketSummary).values(summaryData);
   }
 
-  private applyStockFilter(stockArray: Stock[], filter?: StockFilter): Stock[] {
-    if (!filter) return stockArray;
-
-    let filtered = stockArray;
-
-    // Apply change threshold filter
-    filtered = filtered.filter(stock => 
-      Math.abs(parseFloat(stock.percentChange)) >= filter.changeThreshold
-    );
-
-    // Apply market cap filter
-    const marketCapThresholds = {
-      "2B": 2000000000,
-      "5B": 5000000000,
-      "10B": 10000000000,
-      "50B": 50000000000,
-    };
+  private buildFilterQuery(filter?: StockFilter) {
+    const conditions = [];
     
-    const threshold = marketCapThresholds[filter.marketCap];
-    filtered = filtered.filter(stock => 
-      parseFloat(stock.marketCapValue) >= threshold
-    );
-
-    // Apply index filter
-    if (filter.indexFilter !== "all") {
-      const indexMap = {
-        "sp500": "S&P 500",
-        "sp400": "S&P 400",
-        "sp600": "S&P 600",
-        "nasdaq100": "NASDAQ 100",
-        "russell1000": "Russell 1000",
-        "russell2000": "Russell 2000",
-        "russell3000": "Russell 3000",
-        "tmi": "TMI",
-      };
-      
-      const targetIndex = indexMap[filter.indexFilter];
-      filtered = filtered.filter(stock => 
-        stock.indices.includes(targetIndex)
-      );
-    }
-
-    // Apply sorting
-    filtered.sort((a, b) => {
-      let aValue: number, bValue: number;
-      
-      switch (filter.sortBy) {
-        case "percentChange":
-          aValue = parseFloat(a.percentChange);
-          bValue = parseFloat(b.percentChange);
-          break;
-        case "marketCapValue":
-          aValue = parseFloat(a.marketCapValue);
-          bValue = parseFloat(b.marketCapValue);
-          break;
-        case "volume":
-          aValue = a.volume;
-          bValue = b.volume;
-          break;
-        default:
-          aValue = parseFloat(a.percentChange);
-          bValue = parseFloat(b.percentChange);
+    if (filter) {
+      // Change threshold filter
+      if (filter.changeThreshold > 0) {
+        conditions.push(sql`ABS(CAST(${stocks.percentChange} AS NUMERIC)) >= ${filter.changeThreshold}`);
       }
 
-      return filter.sortOrder === "desc" ? bValue - aValue : aValue - bValue;
-    });
+      // Market cap filter
+      const marketCapThresholds = {
+        "2B": "2000000000",
+        "5B": "5000000000", 
+        "10B": "10000000000",
+        "50B": "50000000000",
+      };
+      const threshold = marketCapThresholds[filter.marketCap];
+      if (threshold) {
+        conditions.push(sql`CAST(${stocks.marketCapValue} AS NUMERIC) >= ${threshold}`);
+      }
 
-    return filtered;
+      // Index filter
+      if (filter.indexFilter !== "all") {
+        const indexMap = {
+          "sp500": "S&P 500",
+          "sp400": "S&P 400", 
+          "sp600": "S&P 600",
+          "nasdaq100": "NASDAQ 100",
+          "russell1000": "Russell 1000",
+          "russell2000": "Russell 2000", 
+          "russell3000": "Russell 3000",
+          "tmi": "TMI",
+        };
+        const targetIndex = indexMap[filter.indexFilter];
+        if (targetIndex) {
+          conditions.push(sql`${stocks.indices}::jsonb ? ${targetIndex}`);
+        }
+      }
+    }
+    
+    return conditions.length > 0 ? and(...conditions) : undefined;
+  }
+
+  private getSortOrder(filter?: StockFilter) {
+    if (!filter) return desc(stocks.percentChange);
+    
+    const sortDirection = filter.sortOrder === "asc" ? asc : desc;
+    
+    switch (filter.sortBy) {
+      case "marketCapValue":
+        return sortDirection(sql`CAST(${stocks.marketCapValue} AS NUMERIC)`);
+      case "volume":
+        return sortDirection(stocks.volume);
+      case "percentChange":
+      default:
+        return sortDirection(sql`CAST(${stocks.percentChange} AS NUMERIC)`);
+    }
   }
 
   async getStocks(filter?: StockFilter): Promise<Stock[]> {
-    const stockArray = Array.from(this.stocks.values());
-    return this.applyStockFilter(stockArray, filter);
+    const whereCondition = this.buildFilterQuery(filter);
+    const orderBy = this.getSortOrder(filter);
+    
+    return await db
+      .select()
+      .from(stocks)
+      .where(whereCondition)
+      .orderBy(orderBy);
   }
 
   async getStock(id: number): Promise<Stock | undefined> {
-    return this.stocks.get(id);
+    const [stock] = await db
+      .select()
+      .from(stocks)
+      .where(eq(stocks.id, id));
+    return stock || undefined;
   }
 
   async getStockBySymbol(symbol: string): Promise<Stock | undefined> {
-    return Array.from(this.stocks.values()).find(stock => stock.symbol === symbol);
+    const [stock] = await db
+      .select()
+      .from(stocks)
+      .where(eq(stocks.symbol, symbol));
+    return stock || undefined;
   }
 
   async createStock(insertStock: InsertStock): Promise<Stock> {
-    const id = this.currentStockId++;
-    const stock: Stock = { 
-      ...insertStock, 
-      id,
-      lastUpdated: new Date(),
-    };
-    this.stocks.set(id, stock);
+    const [stock] = await db
+      .insert(stocks)
+      .values(insertStock)
+      .returning();
     return stock;
   }
 
   async updateStock(id: number, updateStock: Partial<InsertStock>): Promise<Stock | undefined> {
-    const existing = this.stocks.get(id);
-    if (!existing) return undefined;
-
-    const updated: Stock = { 
-      ...existing, 
-      ...updateStock,
-      lastUpdated: new Date(),
-    };
-    this.stocks.set(id, updated);
-    return updated;
+    const [updated] = await db
+      .update(stocks)
+      .set({ ...updateStock, lastUpdated: new Date() } as any)
+      .where(eq(stocks.id, id))
+      .returning();
+    return updated || undefined;
   }
 
   async deleteStock(id: number): Promise<boolean> {
-    return this.stocks.delete(id);
+    const result = await db
+      .delete(stocks)
+      .where(eq(stocks.id, id));
+    return (result.rowCount || 0) > 0;
   }
 
   async bulkUpsertStocks(stocksToUpsert: InsertStock[]): Promise<Stock[]> {
@@ -246,54 +234,81 @@ export class MemStorage implements IStorage {
   }
 
   async getTopGainers(limit = 10, filter?: StockFilter): Promise<Stock[]> {
-    const stockArray = Array.from(this.stocks.values());
-    const gainers = stockArray.filter(stock => parseFloat(stock.percentChange) > 0);
-    const filtered = this.applyStockFilter(gainers, filter);
+    const baseConditions = [sql`CAST(${stocks.percentChange} AS NUMERIC) > 0`];
+    const filterCondition = this.buildFilterQuery(filter);
     
-    return filtered
-      .sort((a, b) => parseFloat(b.percentChange) - parseFloat(a.percentChange))
-      .slice(0, limit);
+    const whereCondition = filterCondition 
+      ? and(...baseConditions, filterCondition)
+      : and(...baseConditions);
+    
+    return await db
+      .select()
+      .from(stocks)
+      .where(whereCondition)
+      .orderBy(desc(sql`CAST(${stocks.percentChange} AS NUMERIC)`))
+      .limit(limit);
   }
 
   async getTopLosers(limit = 10, filter?: StockFilter): Promise<Stock[]> {
-    const stockArray = Array.from(this.stocks.values());
-    const losers = stockArray.filter(stock => parseFloat(stock.percentChange) < 0);
-    const filtered = this.applyStockFilter(losers, filter);
+    const baseConditions = [sql`CAST(${stocks.percentChange} AS NUMERIC) < 0`];
+    const filterCondition = this.buildFilterQuery(filter);
     
-    return filtered
-      .sort((a, b) => parseFloat(a.percentChange) - parseFloat(b.percentChange))
-      .slice(0, limit);
+    const whereCondition = filterCondition 
+      ? and(...baseConditions, filterCondition)
+      : and(...baseConditions);
+    
+    return await db
+      .select()
+      .from(stocks)
+      .where(whereCondition)
+      .orderBy(asc(sql`CAST(${stocks.percentChange} AS NUMERIC)`))
+      .limit(limit);
   }
 
   async getSlackAlerts(limit = 10): Promise<SlackAlert[]> {
-    return Array.from(this.slackAlerts.values())
-      .sort((a, b) => b.sentAt.getTime() - a.sentAt.getTime())
-      .slice(0, limit);
+    return await db
+      .select()
+      .from(slackAlerts)
+      .orderBy(desc(slackAlerts.sentAt))
+      .limit(limit);
   }
 
   async createSlackAlert(insertAlert: InsertSlackAlert): Promise<SlackAlert> {
-    const id = this.currentAlertId++;
-    const alert: SlackAlert = {
-      ...insertAlert,
-      id,
-      sentAt: new Date(),
-    };
-    this.slackAlerts.set(id, alert);
+    const [alert] = await db
+      .insert(slackAlerts)
+      .values({ ...insertAlert, status: insertAlert.status || "sent" })
+      .returning();
     return alert;
   }
 
   async getMarketSummary(): Promise<MarketSummary | undefined> {
-    return this.marketSummary;
+    const [summary] = await db
+      .select()
+      .from(marketSummary)
+      .orderBy(desc(marketSummary.lastUpdated))
+      .limit(1);
+    return summary || undefined;
   }
 
   async updateMarketSummary(summary: InsertMarketSummary): Promise<MarketSummary> {
-    this.marketSummary = {
-      id: 1,
-      ...summary,
-      lastUpdated: new Date(),
-    };
-    return this.marketSummary;
+    // First try to update existing summary
+    const [updated] = await db
+      .update(marketSummary)
+      .set({ ...summary, lastUpdated: new Date() })
+      .returning();
+    
+    if (updated) {
+      return updated;
+    }
+    
+    // If no existing summary, create new one
+    const [created] = await db
+      .insert(marketSummary)
+      .values(summary)
+      .returning();
+    
+    return created;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
