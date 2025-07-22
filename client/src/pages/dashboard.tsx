@@ -108,7 +108,6 @@ export default function Dashboard() {
           <div className="flex justify-between items-center h-16">
             <div>
               <h1 className="text-2xl font-semibold">Market Movers Dashboard</h1>
-              <p className="text-sm text-muted-foreground">Research Team - Real-time Stock Tracking</p>
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
