@@ -46,6 +46,7 @@ Preferred communication style: Simple, everyday language.
 - **Export Functionality**: CSV export capabilities for market data
 - **Responsive Design**: Mobile-first design with adaptive layouts
 - **Dark Mode**: Complete light/dark theme toggle with Intropic MUI color scheme (#5AF5FA cyan accents)
+- **Typography**: Space Grotesk headings (weight 300) and Mulish body text (weight 400)
 
 ### External Service Integration
 - **Stock Data Source**: Alpha Vantage API for live market data (500 requests/day free tier)

@@ -35,8 +35,8 @@
   --sidebar-accent-foreground: oklch(0.3218 0.2190 265.8914);
   --sidebar-border: oklch(0 0 0);
   --sidebar-ring: oklch(0.4853 0.2967 278.3947);
-  --font-sans: Space Grotesk, serif;
-  --font-serif: Space Grotesk, serif;
+  --font-sans: 'Mulish', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-serif: 'Space Grotesk', system-ui, -apple-system, BlinkMacSystemFont, serif;
   --font-mono: Space Mono, monospace;
   --radius: 0.25rem;
   --shadow-2xs: 0px 4px 8px -1px hsl(0 0% 10.1961% / 0.05);
@@ -87,8 +87,8 @@
   --sidebar-accent-foreground: oklch(0.9761 0 0);
   --sidebar-border: oklch(0.3715 0 0);
   --sidebar-ring: #5AF5FA;
-  --font-sans: Space Grotesk, serif;
-  --font-serif: Space Grotesk, serif;
+  --font-sans: 'Mulish', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-serif: 'Space Grotesk', system-ui, -apple-system, BlinkMacSystemFont, serif;
   --font-mono: Space Mono, monospace;
   --radius: 0.25rem;
   --shadow-2xs: 0px 4px 8px -1px hsl(0 0% 10.1961% / 0.05);
@@ -171,8 +171,14 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
-    font-family: 'Space Grotesk', system-ui, sans-serif;
+    font-family: 'Mulish', system-ui, sans-serif;
+    font-weight: 400;
     letter-spacing: var(--tracking-normal);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    font-weight: 300;
   }
 }
 
