@@ -50,11 +50,12 @@ Preferred communication style: Simple, everyday language.
 - **Typography**: Space Grotesk headings (weight 300) and Mulish body text (weight 400)
 
 ### External Service Integration
-- **Stock Data Source**: Polygon.io Premium API for institutional-grade market data (paid tier) - **ACTIVE**
-- **Previous APIs**: Yahoo Finance RapidAPI and Alpha Vantage API (replaced for reliability) - **DEPRECATED**
+- **Stock Data Source**: Polygon.io Premium API using dedicated gainers/losers endpoints for institutional-grade market data (paid tier) - **ACTIVE**
+- **API Endpoints**: `/v2/snapshot/locale/us/markets/stocks/gainers` and `/v2/snapshot/locale/us/markets/stocks/losers`
+- **Previous APIs**: Yahoo Finance RapidAPI and Alpha Vantage API (replaced for reliability) - **DEPRECATED** 
 - **Slack API**: Full Slack Web API integration with DM channel alerts (chat:write scope enabled)
 - **Real-time Updates**: Automatic refresh every 15 minutes with manual refresh capability
-- **Data Quality**: Premium financial data with comprehensive market coverage (11,000+ tickers)
+- **Data Quality**: Premium financial data with comprehensive market coverage from dedicated market movers endpoints
 - **API Performance**: Enterprise-grade rate limits with 100ms throttling between requests
 
 ## Data Flow

@@ -57,81 +57,84 @@ export class PolygonService {
   }
 
   /**
-   * Get daily market data for all stocks with significant movement
+   * Get market movers data using Polygon.io gainers/losers endpoints
    */
   async getMarketMovers(): Promise<InsertStock[]> {
     try {
-      // Get today's date for market data
-      const today = new Date();
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
+      console.log("📊 Fetching market movers from Polygon.io gainers/losers API...");
       
-      // Format date as YYYY-MM-DD
-      const dateStr = yesterday.toISOString().split('T')[0];
+      // Use the correct Polygon.io market movers endpoints
+      const gainersUrl = `${this.baseUrl}/v2/snapshot/locale/us/markets/stocks/gainers?apikey=${this.apiKey}`;
+      const losersUrl = `${this.baseUrl}/v2/snapshot/locale/us/markets/stocks/losers?apikey=${this.apiKey}`;
       
-      console.log(`📊 Fetching market data from Polygon.io for ${dateStr}`);
+      console.log(`📈 Fetching gainers and losers from Polygon.io market movers API...`);
       
-      // Get market snapshot for active stocks
-      const snapshotUrl = `${this.baseUrl}/v2/snapshot/locale/us/markets/stocks/tickers?apikey=${this.apiKey}`;
-      const snapshotResponse = await fetch(snapshotUrl);
+      // Fetch both gainers and losers simultaneously
+      const [gainersResponse, losersResponse] = await Promise.all([
+        fetch(gainersUrl),
+        fetch(losersUrl)
+      ]);
       
-      if (!snapshotResponse.ok) {
-        throw new Error(`Polygon API error: ${snapshotResponse.status} ${snapshotResponse.statusText}`);
+      if (!gainersResponse.ok) {
+        throw new Error(`Polygon gainers API error: ${gainersResponse.status} ${gainersResponse.statusText}`);
       }
       
-      const snapshotData = await snapshotResponse.json();
-      
-      // Log successful API connection
-      console.log(`📊 Polygon.io API: Processing ${snapshotData.tickers?.length || 0} market tickers`);
-      
-      if (!snapshotData.tickers || !Array.isArray(snapshotData.tickers)) {
-        console.error("📊 Full Polygon.io response:", JSON.stringify(snapshotData, null, 2));
-        throw new Error("Invalid response format from Polygon API");
+      if (!losersResponse.ok) {
+        throw new Error(`Polygon losers API error: ${losersResponse.status} ${losersResponse.statusText}`);
       }
+
+      const [gainersData, losersData] = await Promise.all([
+        gainersResponse.json(),
+        losersResponse.json()
+      ]);
       
-      console.log(`📈 Processing ${snapshotData.tickers.length} stock snapshots`);
+      const gainers = gainersData.tickers || [];
+      const losers = losersData.tickers || [];
       
-      // Filter for stocks with significant movement and market cap > $2B
-      const movers = snapshotData.tickers.filter((stock: any) => {
-        const changePercent = Math.abs(stock.todaysChangePerc || 0);
-        const volume = stock.day?.v || 0;
-        const price = stock.day?.c || 0;
-        
-        // Filter for significant movers: >1% change, >$10 price, >100k volume
-        return changePercent >= 1.0 && price >= 10 && volume >= 100000;
-      }).slice(0, 100); // Limit to top 100 movers
+      console.log(`📊 Polygon.io API: ${gainers.length} gainers, ${losers.length} losers`);
       
-      console.log(`📊 Found ${movers.length} significant market movers`);
+      // Combine both gainers and losers
+      const allMovers = [...gainers, ...losers];
       
-      // Convert to our stock format (batch process to avoid rate limits)
+      console.log(`📈 Processing ${allMovers.length} market movers from gainers/losers API`);
+      
+      // Convert to our stock format using the correct Polygon.io response structure
       const stocks: InsertStock[] = [];
       
-      for (let i = 0; i < Math.min(movers.length, 50); i++) {
-        const snapshot = movers[i];
+      for (let i = 0; i < Math.min(allMovers.length, 50); i++) {
+        const mover = allMovers[i];
         
-        // Use a simplified approach to avoid hitting rate limits
-        const marketCap = this.estimateMarketCap(snapshot.ticker, snapshot.day?.c || 0);
-        const marketCapFormatted = this.formatMarketCap(marketCap);
+        // Use correct Polygon.io gainers/losers response structure
+        const price = mover.day?.c || 0; // closing price
+        const change = mover.todaysChange || 0;
+        const percentChange = mover.todaysChangePerc || 0;
+        const volume = mover.day?.v || 0;
         
-        // Determine sector and indices
-        const sector = this.determineSectorFromTicker(snapshot.ticker);
-        const indices = this.determineIndices(snapshot.ticker, marketCap);
-        
-        stocks.push({
-          symbol: snapshot.ticker,
-          name: this.getCompanyName(snapshot.ticker),
-          price: (snapshot.day?.c || 0).toFixed(2),
-          change: (snapshot.todaysChange || 0).toFixed(2),
-          percentChange: (snapshot.todaysChangePerc || 0).toFixed(3),
-          marketCap: marketCapFormatted,
-          marketCapValue: marketCap.toFixed(2),
-          volume: snapshot.day?.v || 0,
-          indices: indices,
-          sector: sector,
-        });
+        // Filter for significant movers with minimum price and volume
+        if (Math.abs(percentChange) >= 1.0 && price >= 10 && volume >= 100000) {
+          const marketCap = this.estimateMarketCap(mover.ticker, price);
+          const marketCapFormatted = this.formatMarketCap(marketCap);
+          
+          // Determine sector and indices
+          const sector = this.determineSectorFromTicker(mover.ticker);
+          const indices = this.determineIndices(mover.ticker, marketCap);
+          
+          stocks.push({
+            symbol: mover.ticker,
+            name: this.getCompanyName(mover.ticker),
+            price: price.toFixed(2),
+            change: change.toFixed(2),
+            percentChange: percentChange.toFixed(3),
+            marketCap: marketCapFormatted,
+            marketCapValue: marketCap.toFixed(2),
+            volume: volume,
+            indices: indices,
+            sector: sector,
+          });
+        }
         
         // Add delay to respect rate limits
-        if (i < movers.length - 1) {
+        if (i < allMovers.length - 1) {
           await new Promise(resolve => setTimeout(resolve, 100));
         }
       }
