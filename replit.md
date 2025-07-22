@@ -49,11 +49,12 @@ Preferred communication style: Simple, everyday language.
 - **Typography**: Space Grotesk headings (weight 300) and Mulish body text (weight 400)
 
 ### External Service Integration
-- **Stock Data Source**: Yahoo Finance RapidAPI for live market data (500 requests/day free tier) - **ACTIVE**
-- **Previous API**: Alpha Vantage API (replaced due to 25/day limit) - **DEPRECATED**
+- **Stock Data Source**: Polygon.io Premium API for institutional-grade market data (paid tier) - **ACTIVE**
+- **Previous APIs**: Yahoo Finance RapidAPI and Alpha Vantage API (replaced for reliability) - **DEPRECATED**
 - **Slack API**: Full Slack Web API integration with DM channel alerts (chat:write scope enabled)
 - **Real-time Updates**: Automatic refresh every 15 minutes with manual refresh capability
-- **API Rate Management**: Intelligent request throttling with 200ms delays between requests
+- **Data Quality**: Premium financial data with comprehensive market coverage (11,000+ tickers)
+- **API Performance**: Enterprise-grade rate limits with 100ms throttling between requests
 
 ## Data Flow
 
