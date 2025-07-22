@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { stockDataService } from "./services/stockData";
 import { slackService } from "./services/slack";
+import { dataRefreshService } from "./services/dataRefresh";
 import { stockFilterSchema } from "@shared/schema";
 import { z } from "zod";
 
@@ -171,6 +172,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to export CSV" });
     }
   });
+
+  // Live market data refresh endpoints
+  app.post("/api/refresh-live-data", async (req, res) => {
+    try {
+      const result = await dataRefreshService.manualRefresh();
+      
+      if (result.success) {
+        res.json({
+          message: result.message,
+          updatedStocks: result.updatedCount
+        });
+      } else {
+        res.status(500).json({ message: result.message });
+      }
+    } catch (error) {
+      console.error("Error refreshing live market data:", error);
+      res.status(500).json({ message: "Failed to refresh live market data" });
+    }
+  });
+
+  // Get refresh status
+  app.get("/api/refresh-status", async (req, res) => {
+    try {
+      const status = dataRefreshService.getRefreshStatus();
+      res.json(status);
+    } catch (error) {
+      console.error("Error getting refresh status:", error);
+      res.status(500).json({ message: "Failed to get refresh status" });
+    }
+  });
+
+  // Start automatic data refresh
+  console.log("🚀 Starting automatic market data refresh service...");
+  dataRefreshService.startAutomaticRefresh();
 
   const httpServer = createServer(app);
   return httpServer;

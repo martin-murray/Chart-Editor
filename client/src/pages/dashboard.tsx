@@ -56,23 +56,37 @@ export default function Dashboard() {
     },
   });
 
-  // Refresh data mutation
+  // Live market data refresh mutation
   const refreshMutation = useMutation({
-    mutationFn: () => apiRequest("POST", "/api/stocks/refresh"),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api"] });
+    mutationFn: () => apiRequest("POST", "/api/refresh-live-data"),
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/stocks/gainers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/stocks/losers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/market-summary"] });
       toast({
-        title: "Data Refreshed",
-        description: "Stock data has been updated successfully",
+        title: "Live Data Updated",
+        description: `${data.updatedStocks || 0} stocks updated with live market data from Alpha Vantage`,
       });
     },
     onError: (error: Error) => {
+      console.error("Live refresh error:", error);
       toast({
         title: "Refresh Failed",
-        description: error.message,
+        description: "Failed to fetch live data. Check API key and connection.",
         variant: "destructive",
       });
     },
+  });
+
+  // Get refresh status query
+  const { data: refreshStatus } = useQuery<{
+    isRefreshing: boolean;
+    autoRefreshActive: boolean;
+    remainingRequests: number;
+    trackedSymbols: number;
+  }>({
+    queryKey: ["/api/refresh-status"],
+    refetchInterval: 30000, // Refresh every 30 seconds
   });
 
   const formatLastUpdated = (dateString?: string) => {
@@ -97,8 +111,14 @@ export default function Dashboard() {
               <p className="text-sm text-muted-foreground">Research Team - Real-time Stock Tracking</p>
             </div>
             <div className="flex items-center gap-4">
-              <div className="text-sm text-muted-foreground">
-                Last updated: <span className="font-medium">{formatLastUpdated(summary?.lastUpdated)}</span>
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <span>Last updated: <span className="font-medium">{formatLastUpdated(summary?.lastUpdated)}</span></span>
+                {refreshStatus && (
+                  <span className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${refreshStatus.isRefreshing ? 'bg-yellow-500' : 'bg-green-500'}`} />
+                    {refreshStatus.isRefreshing ? 'Live data refreshing...' : `${refreshStatus.remainingRequests} API calls remaining`}
+                  </span>
+                )}
               </div>
               <ThemeToggle />
               <Button
@@ -107,7 +127,7 @@ export default function Dashboard() {
                 className="flex items-center gap-2"
               >
                 <RefreshCwIcon className={`w-4 h-4 ${refreshMutation.isPending ? "animate-spin" : ""}`} />
-                {refreshMutation.isPending ? "Refreshing..." : "Refresh Data"}
+                {refreshMutation.isPending ? "Fetching Live Data..." : "Get Live Data"}
               </Button>
             </div>
           </div>

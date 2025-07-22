@@ -48,18 +48,20 @@ Preferred communication style: Simple, everyday language.
 - **Dark Mode**: Complete light/dark theme toggle with Intropic MUI color scheme (#5AF5FA cyan accents)
 
 ### External Service Integration
-- **Stock Data Source**: Placeholder for Yahoo Finance API integration
+- **Stock Data Source**: Alpha Vantage API for live market data (500 requests/day free tier)
 - **Slack API**: Full Slack Web API integration for team notifications
-- **Real-time Updates**: Configurable refresh intervals for market data
+- **Real-time Updates**: Automatic refresh every 15 minutes with manual refresh capability
+- **API Rate Management**: Intelligent request throttling and status monitoring
 
 ## Data Flow
 
 ### Stock Data Pipeline
-1. **Data Ingestion**: Stock data retrieved from external APIs (Yahoo Finance placeholder)
-2. **Data Processing**: Raw data transformed and enriched with sector and index information
-3. **Database Storage**: Bulk upsert operations for efficient data updates
+1. **Data Ingestion**: Live stock quotes retrieved from Alpha Vantage API with rate limiting
+2. **Data Processing**: Raw market data transformed and enriched with sector and index information
+3. **Database Storage**: Bulk upsert operations for efficient data updates in PostgreSQL
 4. **API Endpoints**: RESTful endpoints serve filtered and sorted data to frontend
-5. **Real-time Updates**: Frontend polling with TanStack Query for fresh data
+5. **Real-time Updates**: Automatic 15-minute refresh cycle with manual refresh capability
+6. **Status Monitoring**: Live API quota tracking and refresh status indicators
 
 ### Slack Alert Workflow
 1. **Market Analysis**: System analyzes current market movers based on configured thresholds
