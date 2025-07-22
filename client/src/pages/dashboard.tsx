@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { RefreshCwIcon } from "lucide-react";
@@ -13,7 +13,61 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { type Stock, type MarketSummary, type StockFilter } from "@/types/stock";
 
-export default function Dashboard() {
+function MarketOpenCountdown() {
+  const [timeToOpen, setTimeToOpen] = useState<string>("");
+
+  useEffect(() => {
+    const updateCountdown = () => {
+      const now = new Date();
+      const today = new Date(now);
+      
+      // Set to 9:30 AM ET
+      today.setHours(9, 30, 0, 0);
+      
+      // If it's past 9:30 AM today, set to 9:30 AM tomorrow (but skip weekends)
+      if (now > today) {
+        today.setDate(today.getDate() + 1);
+      }
+      
+      // Skip weekends - if it's Saturday (6) or Sunday (0), move to Monday
+      while (today.getDay() === 0 || today.getDay() === 6) {
+        today.setDate(today.getDate() + 1);
+      }
+      
+      const diff = today.getTime() - now.getTime();
+      
+      if (diff > 0) {
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        
+        if (hours > 24) {
+          const days = Math.floor(hours / 24);
+          const remainingHours = hours % 24;
+          setTimeToOpen(`${days}d ${remainingHours}h ${minutes}m to open`);
+        } else {
+          setTimeToOpen(`${hours}h ${minutes}m to open`);
+        }
+      } else {
+        setTimeToOpen("");
+      }
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, []);
+
+  if (!timeToOpen) return null;
+
+  return (
+    <span className="text-xs opacity-75">
+      {timeToOpen}
+    </span>
+  );
+}
+
+function Dashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -131,15 +185,15 @@ export default function Dashboard() {
                   <span className="flex items-center gap-2">
                     <div className={`w-2 h-2 rounded-full ${marketStatus.status === 'open' ? 'bg-green-500' : 'bg-red-500'}`} />
                     <span className="font-medium">US Market: {marketStatus.status.toUpperCase()}</span>
-                    <span className="text-xs opacity-75">
-                      {marketStatus.exchanges?.length > 0 ? `(${marketStatus.exchanges[0].name})` : '(NYSE/NASDAQ)'}
-                    </span>
+                    {marketStatus.status === 'closed' && (
+                      <MarketOpenCountdown />
+                    )}
                   </span>
                 )}
-                {refreshStatus && (
+                {refreshStatus?.isRefreshing && (
                   <span className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${refreshStatus.isRefreshing ? 'bg-yellow-500' : 'bg-cyan-500'}`} />
-                    {refreshStatus.isRefreshing ? 'Live data refreshing...' : `${refreshStatus.remainingRequests} API calls remaining`}
+                    <div className="w-2 h-2 rounded-full bg-yellow-500" />
+                    Live data refreshing...
                   </span>
                 )}
               </div>
@@ -199,3 +253,5 @@ export default function Dashboard() {
     </div>
   );
 }
+
+export default Dashboard;

@@ -42,6 +42,7 @@ Preferred communication style: Simple, everyday language.
 
 ### User Interface Components
 - **Dashboard**: Main interface with summary cards, gainers/losers tables, and filter controls
+- **Market Status Indicator**: Real-time US market status (OPEN/CLOSED) with countdown to next market open
 - **Data Tables**: Sortable tables with custom cell renderers for financial data
 - **Export Functionality**: CSV export capabilities for market data
 - **Responsive Design**: Mobile-first design with adaptive layouts
