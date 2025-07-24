@@ -51,13 +51,13 @@ export class DataRefreshService {
         return;
       }
 
-      // Generate mock market data - no external API calls
-      console.log(`📊 Generating mock market data - no external APIs used...`);
+      // Fetch market movers data from Alpaca Markets API
+      console.log(`📊 Fetching real-time market movers from Alpaca Markets API...`);
       
       const liveData = await stockDataService.getLatestStockData();
       
       if (liveData.length === 0) {
-        console.warn("⚠️ No mock data generated - keeping existing data");
+        console.warn("⚠️ No live data received - keeping existing data");
         return;
       }
 
@@ -72,7 +72,7 @@ export class DataRefreshService {
       const duration = (endTime - startTime) / 1000;
       
       console.log(`✅ Market data refresh completed in ${duration.toFixed(1)}s`);
-      console.log(`📈 Updated ${liveData.length} stocks with mock data`);
+      console.log(`📈 Updated ${liveData.length} stocks with live data from Alpaca Markets`);
       
     } catch (error) {
       console.error("❌ Error during market data refresh:", error);

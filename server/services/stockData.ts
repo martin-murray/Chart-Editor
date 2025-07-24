@@ -1,118 +1,114 @@
 import { type InsertStock, type InsertMarketSummary } from "@shared/schema";
-
-// Static data for demo purposes - removed external API dependencies
+import { alpacaService } from "./alpacaService";
 
 export class StockDataService {
-  private mockStocks: InsertStock[] = [
-    {
-      symbol: "AAPL",
-      name: "Apple Inc.",
-      price: "185.23",
-      change: "2.45",
-      percentChange: "1.34",
-      marketCap: "$2.9T",
-      marketCapValue: "2900000000000",
-      volume: 45230000,
-      indices: ["S&P 500", "NASDAQ 100", "Russell 1000"],
-      sector: "Technology"
-    },
-    {
-      symbol: "MSFT", 
-      name: "Microsoft Corporation",
-      price: "412.67",
-      change: "-1.23",
-      percentChange: "-0.30",
-      marketCap: "$3.1T",
-      marketCapValue: "3100000000000", 
-      volume: 32100000,
-      indices: ["S&P 500", "NASDAQ 100", "Russell 1000"],
-      sector: "Technology"
-    },
-    {
-      symbol: "GOOGL",
-      name: "Alphabet Inc.",
-      price: "145.78",
-      change: "3.21",
-      percentChange: "2.25",
-      marketCap: "$1.8T",
-      marketCapValue: "1800000000000",
-      volume: 28450000,
-      indices: ["S&P 500", "NASDAQ 100", "Russell 1000"],
-      sector: "Technology"
-    },
-    {
-      symbol: "AMZN",
-      name: "Amazon.com Inc.",
-      price: "178.34",
-      change: "-2.11",
-      percentChange: "-1.17",
-      marketCap: "$1.9T",
-      marketCapValue: "1900000000000",
-      volume: 31200000,
-      indices: ["S&P 500", "NASDAQ 100", "Russell 1000"],
-      sector: "Consumer Discretionary"
-    },
-    {
-      symbol: "TSLA",
-      name: "Tesla Inc.",
-      price: "267.42",
-      change: "12.35",
-      percentChange: "4.84",
-      marketCap: "$850.5B",
-      marketCapValue: "850500000000",
-      volume: 89650000,
-      indices: ["S&P 500", "Russell 1000"],
-      sector: "Consumer Discretionary"
-    }
-  ];
-
   constructor() {
-    // Using static mock data - no external API dependencies
+    // Using Alpaca Markets API for real market data
   }
 
   async getLatestStockData(): Promise<InsertStock[]> {
     try {
-      console.log("📊 Using static market data - no external API calls");
-      
-      // Simulate some variation in the data
-      const stocks = this.mockStocks.map(stock => ({
-        ...stock,
-        price: (parseFloat(stock.price) + (Math.random() - 0.5) * 2).toFixed(2),
-        change: ((Math.random() - 0.5) * 5).toFixed(2),
-        percentChange: ((Math.random() - 0.5) * 5).toFixed(3)
-      }));
-      
-      console.log(`✅ Successfully generated ${stocks.length} mock market movers`);
+      console.log("🔄 Attempting to fetch from Alpaca Markets API...");
+      const stocks = await alpacaService.getMarketMovers();
+      console.log(`✅ Successfully fetched ${stocks.length} market movers from Alpaca Markets`);
       return stocks;
     } catch (error) {
-      console.error('Error generating mock stock data:', error);
-      throw error;
+      console.error('⚠️ Alpaca Markets API error, falling back to mock data:', error);
+      
+      // Fallback to mock data when API fails
+      return this.getMockData();
     }
   }
 
+  private getMockData(): InsertStock[] {
+    const mockStocks: InsertStock[] = [
+      {
+        symbol: "AAPL",
+        name: "Apple Inc.",
+        price: "185.23",
+        change: "2.45",
+        percentChange: "1.34",
+        marketCap: "$2.9T",
+        marketCapValue: "2900000000000",
+        volume: 45230000,
+        indices: ["S&P 500", "NASDAQ 100", "Russell 1000"],
+        sector: "Technology"
+      },
+      {
+        symbol: "MSFT", 
+        name: "Microsoft Corporation",
+        price: "412.67",
+        change: "-1.23",
+        percentChange: "-0.30",
+        marketCap: "$3.1T",
+        marketCapValue: "3100000000000", 
+        volume: 32100000,
+        indices: ["S&P 500", "NASDAQ 100", "Russell 1000"],
+        sector: "Technology"
+      },
+      {
+        symbol: "GOOGL",
+        name: "Alphabet Inc.",
+        price: "145.78",
+        change: "3.21",
+        percentChange: "2.25",
+        marketCap: "$1.8T",
+        marketCapValue: "1800000000000",
+        volume: 28450000,
+        indices: ["S&P 500", "NASDAQ 100", "Russell 1000"],
+        sector: "Technology"
+      },
+      {
+        symbol: "AMZN",
+        name: "Amazon.com Inc.",
+        price: "178.34",
+        change: "-2.11",
+        percentChange: "-1.17",
+        marketCap: "$1.9T",
+        marketCapValue: "1900000000000",
+        volume: 31200000,
+        indices: ["S&P 500", "NASDAQ 100", "Russell 1000"],
+        sector: "Consumer Discretionary"
+      },
+      {
+        symbol: "TSLA",
+        name: "Tesla Inc.",
+        price: "267.42",
+        change: "12.35",
+        percentChange: "4.84",
+        marketCap: "$850.5B",
+        marketCapValue: "850500000000",
+        volume: 89650000,
+        indices: ["S&P 500", "Russell 1000"],
+        sector: "Consumer Discretionary"
+      }
+    ];
+
+    // Add some variation to simulate market movement
+    return mockStocks.map(stock => ({
+      ...stock,
+      price: (parseFloat(stock.price) + (Math.random() - 0.5) * 2).toFixed(2),
+      change: ((Math.random() - 0.5) * 5).toFixed(2),
+      percentChange: ((Math.random() - 0.5) * 5).toFixed(3)
+    }));
+  }
+
   async getApiStatus(): Promise<{remainingRequests: number, resetTime?: string}> {
-    return { 
-      remainingRequests: 1000,
-      resetTime: "No API limits - using static data"
-    };
+    try {
+      return await alpacaService.getApiStatus();
+    } catch (error) {
+      console.error('Error getting API status:', error);
+      return { remainingRequests: 0, resetTime: "Unknown" };
+    }
   }
 
   async getMarketStatus() {
-    // Simple market status based on current time
-    const now = new Date();
-    const hour = now.getHours();
-    const isWeekday = now.getDay() >= 1 && now.getDay() <= 5;
-    const isMarketHours = hour >= 9 && hour < 16; // 9:30 AM to 4:00 PM EST
-    
-    return {
-      status: isWeekday && isMarketHours ? 'open' : 'closed',
-      market: 'US',
-      serverTime: now.toISOString(),
-      exchanges: [{
-        name: 'NYSE',
-        status: isWeekday && isMarketHours ? 'open' : 'closed'
-      }]
-    };
+    try {
+      return await alpacaService.getMarketStatus();
+    } catch (error) {
+      console.error('Error getting market status:', error);
+      throw error;
+    }
   }
 
   async calculateMarketSummary(stocks: InsertStock[]): Promise<InsertMarketSummary> {

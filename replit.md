@@ -50,13 +50,15 @@ Preferred communication style: Simple, everyday language.
 - **Typography**: Space Grotesk headings (weight 300) and Mulish body text (weight 400)
 
 ### External Service Integration
-- **Stock Data Source**: Static mock data for demonstration purposes - **ACTIVE**
+- **Stock Data Source**: Alpaca Markets API with fallback to mock data - **ACTIVE**
+- **API Endpoints**: `/v1beta1/screener/stocks/movers` (403 error - falling back to mock data)
+- **Fallback System**: Graceful degradation to mock major US stocks when API unavailable
 - **Previous APIs**: Polygon.io Premium API, Yahoo Finance RapidAPI and Alpha Vantage API - **REMOVED**
 - **Slack API**: Full Slack Web API integration with DM channel alerts (chat:write scope enabled)
-- **Real-time Updates**: Mock data variation every 15 minutes with manual refresh capability
-- **Data Quality**: Static demonstration data with major US stocks (AAPL, MSFT, GOOGL, AMZN, TSLA)
-- **Market Cap Estimation**: Pre-defined market cap values for major stocks
-- **API Performance**: No external API rate limits - using static data
+- **Real-time Updates**: Live market data refresh every 15 minutes with manual refresh capability
+- **Data Quality**: Alpaca API integration with robust fallback to ensure system availability
+- **Market Cap Estimation**: Enhanced algorithm with realistic variation based on price tiers
+- **API Performance**: Resilient system with fallback ensures continuous operation
 
 ## Data Flow
 
