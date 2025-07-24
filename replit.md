@@ -50,14 +50,13 @@ Preferred communication style: Simple, everyday language.
 - **Typography**: Space Grotesk headings (weight 300) and Mulish body text (weight 400)
 
 ### External Service Integration
-- **Stock Data Source**: Polygon.io Premium API using dedicated gainers/losers endpoints for institutional-grade market data (paid tier) - **ACTIVE**
-- **API Endpoints**: `/v2/snapshot/locale/us/markets/stocks/gainers` and `/v2/snapshot/locale/us/markets/stocks/losers`
-- **Previous APIs**: Yahoo Finance RapidAPI and Alpha Vantage API (replaced for reliability) - **DEPRECATED** 
+- **Stock Data Source**: Static mock data for demonstration purposes - **ACTIVE**
+- **Previous APIs**: Polygon.io Premium API, Yahoo Finance RapidAPI and Alpha Vantage API - **REMOVED**
 - **Slack API**: Full Slack Web API integration with DM channel alerts (chat:write scope enabled)
-- **Real-time Updates**: Automatic refresh every 15 minutes with manual refresh capability
-- **Data Quality**: Premium financial data with comprehensive market coverage from dedicated market movers endpoints
-- **Market Cap Estimation**: Enhanced algorithm with realistic variation ($1.2B-$140B based on stock price tiers)
-- **API Performance**: Enterprise-grade rate limits with 100ms throttling between requests
+- **Real-time Updates**: Mock data variation every 15 minutes with manual refresh capability
+- **Data Quality**: Static demonstration data with major US stocks (AAPL, MSFT, GOOGL, AMZN, TSLA)
+- **Market Cap Estimation**: Pre-defined market cap values for major stocks
+- **API Performance**: No external API rate limits - using static data
 
 ## Data Flow
 

@@ -1,41 +1,118 @@
 import { type InsertStock, type InsertMarketSummary } from "@shared/schema";
-import { polygonService } from "./polygonService";
 
-// Polygon.io provides all stock data dynamically, no need for static lists
+// Static data for demo purposes - removed external API dependencies
 
 export class StockDataService {
+  private mockStocks: InsertStock[] = [
+    {
+      symbol: "AAPL",
+      name: "Apple Inc.",
+      price: "185.23",
+      change: "2.45",
+      percentChange: "1.34",
+      marketCap: "$2.9T",
+      marketCapValue: "2900000000000",
+      volume: 45230000,
+      indices: ["S&P 500", "NASDAQ 100", "Russell 1000"],
+      sector: "Technology"
+    },
+    {
+      symbol: "MSFT", 
+      name: "Microsoft Corporation",
+      price: "412.67",
+      change: "-1.23",
+      percentChange: "-0.30",
+      marketCap: "$3.1T",
+      marketCapValue: "3100000000000", 
+      volume: 32100000,
+      indices: ["S&P 500", "NASDAQ 100", "Russell 1000"],
+      sector: "Technology"
+    },
+    {
+      symbol: "GOOGL",
+      name: "Alphabet Inc.",
+      price: "145.78",
+      change: "3.21",
+      percentChange: "2.25",
+      marketCap: "$1.8T",
+      marketCapValue: "1800000000000",
+      volume: 28450000,
+      indices: ["S&P 500", "NASDAQ 100", "Russell 1000"],
+      sector: "Technology"
+    },
+    {
+      symbol: "AMZN",
+      name: "Amazon.com Inc.",
+      price: "178.34",
+      change: "-2.11",
+      percentChange: "-1.17",
+      marketCap: "$1.9T",
+      marketCapValue: "1900000000000",
+      volume: 31200000,
+      indices: ["S&P 500", "NASDAQ 100", "Russell 1000"],
+      sector: "Consumer Discretionary"
+    },
+    {
+      symbol: "TSLA",
+      name: "Tesla Inc.",
+      price: "267.42",
+      change: "12.35",
+      percentChange: "4.84",
+      marketCap: "$850.5B",
+      marketCapValue: "850500000000",
+      volume: 89650000,
+      indices: ["S&P 500", "Russell 1000"],
+      sector: "Consumer Discretionary"
+    }
+  ];
+
   constructor() {
-    // No API key needed here as Polygon service handles it
+    // Using static mock data - no external API dependencies
   }
 
   async getLatestStockData(): Promise<InsertStock[]> {
     try {
-      console.log("🔄 Switching to Polygon.io for premium market data...");
-      const stocks = await polygonService.getMarketMovers();
-      console.log(`✅ Successfully fetched ${stocks.length} market movers from Polygon.io`);
+      console.log("📊 Using static market data - no external API calls");
+      
+      // Simulate some variation in the data
+      const stocks = this.mockStocks.map(stock => ({
+        ...stock,
+        price: (parseFloat(stock.price) + (Math.random() - 0.5) * 2).toFixed(2),
+        change: ((Math.random() - 0.5) * 5).toFixed(2),
+        percentChange: ((Math.random() - 0.5) * 5).toFixed(3)
+      }));
+      
+      console.log(`✅ Successfully generated ${stocks.length} mock market movers`);
       return stocks;
     } catch (error) {
-      console.error('Error getting latest stock data from Polygon.io:', error);
+      console.error('Error generating mock stock data:', error);
       throw error;
     }
   }
 
   async getApiStatus(): Promise<{remainingRequests: number, resetTime?: string}> {
-    try {
-      return await polygonService.getApiStatus();
-    } catch (error) {
-      console.error('Error getting API status:', error);
-      return { remainingRequests: 0, resetTime: "Unknown" };
-    }
+    return { 
+      remainingRequests: 1000,
+      resetTime: "No API limits - using static data"
+    };
   }
 
   async getMarketStatus() {
-    try {
-      return await polygonService.getMarketStatus();
-    } catch (error) {
-      console.error('Error getting market status:', error);
-      throw error;
-    }
+    // Simple market status based on current time
+    const now = new Date();
+    const hour = now.getHours();
+    const isWeekday = now.getDay() >= 1 && now.getDay() <= 5;
+    const isMarketHours = hour >= 9 && hour < 16; // 9:30 AM to 4:00 PM EST
+    
+    return {
+      status: isWeekday && isMarketHours ? 'open' : 'closed',
+      market: 'US',
+      serverTime: now.toISOString(),
+      exchanges: [{
+        name: 'NYSE',
+        status: isWeekday && isMarketHours ? 'open' : 'closed'
+      }]
+    };
   }
 
   async calculateMarketSummary(stocks: InsertStock[]): Promise<InsertMarketSummary> {
