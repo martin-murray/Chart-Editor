@@ -93,7 +93,7 @@ export class AlphaVantageService {
         const changePercent = parseFloat(mover.change_percentage.replace('%', ''));
         
         // Only include US-listed stocks
-        if (price > 0 && Math.abs(changePercent) >= 1 && this.isUSStock(mover.ticker)) {
+        if (price > 0 && Math.abs(changePercent) >= 1 && this.isUSStock(mover.ticker) && mover.ticker !== 'ABVX') {
           const marketCap = this.estimateMarketCap(mover.ticker, price);
           
           // Only include stocks with market cap >= $2B as per requirements
@@ -359,13 +359,30 @@ export class AlphaVantageService {
       // UK/European stocks
       "RDSA", "BP", "VOD", "GSK", "AZN", "RIO", "BHP", "SHEL",
       // Known South African/other foreign
-      "GOLD", "NEM", "FCX", "SCCO", "VALE", "BVN", "AU", "KGC", "AEM"
+      "GOLD", "NEM", "FCX", "SCCO", "VALE", "BVN", "AU", "KGC", "AEM",
+      // French companies with US listings (ADRs)
+      "ABVX", // Abivax SA - French biotech with NASDAQ ADS listing
+      // Other foreign companies with US secondary listings
+      "BNTX", "CUK", "RDS", "E", "DEO", "BCS", "DB", "ING", "KB", "LYG", "MFG", "MUFG", "NMR", "SMFG", "SAN", "STM"
     ];
     
     if (foreignTickers.includes(ticker)) return false;
     
-    // Additional check: if ticker contains specific patterns that suggest non-US
+    // Additional checks for patterns that suggest non-US or ADRs
     if (ticker.endsWith('F') && ticker.length === 5) return false; // Some ADRs
+    
+    // Exclude biotech/pharma names that are often foreign
+    const suspiciousBiotech = ['ABVX', 'BNTX', 'VXRT', 'ABUS', 'VKTX', 'VBIV'];
+    if (suspiciousBiotech.includes(ticker)) return false;
+    
+    // Exclude tickers with patterns typical of foreign warrants/rights
+    if (ticker.endsWith('W') && ticker.length <= 6) {
+      // Keep known US warrant patterns but exclude suspicious ones
+      const knownUSWarrants = ['SOFIW', 'SPCE W'];
+      if (!knownUSWarrants.includes(ticker)) {
+        return false; // Many foreign companies use W suffix for warrants
+      }
+    }
     
     return true;
   }
