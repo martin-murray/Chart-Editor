@@ -1,0 +1,272 @@
+TMUS
+T-Mobile US, Inc.
+247.50
++13.57	+5.80%	8.612M	4.563M	281.024B	23.35	+33.57%	
+BX
+Blackstone Inc.
+178.11
++6.15	+3.58%	6.712M	3.709M	216.088B	53.97	+22.81%	
+NOW
+ServiceNow, Inc.
+996.18
++39.75	+4.16%	4.059M	1.342M	206.361B	135.35	+15.40%	
+APH
+Amphenol Corporation
+104.46
++3.75	+3.72%	11.977M	8.375M	126.355B	41.62	+63.07%	
+DB
+Deutsche Bank Aktiengesellschaft
+33.73
++2.45	+7.83%	6.113M	2.862M	65.462B	17.57	+100.26%	
+URI
+United Rentals, Inc.
+875.25
++72.00	+8.96%	1.594M	546,518	56.89B	22.70	+6.50%	
+NDAQ
+Nasdaq, Inc.
+93.50
++5.22	+5.91%	8.336M	3.521M	53.68B	42.31	+31.25%	
+CCI
+Crown Castle Inc.
+113.91
++4.18	+3.81%	5.537M	2.991M	49.603B	--	+3.98%	
+LVS
+Las Vegas Sands Corp.
+50.79
++2.10	+4.31%	15.294M	5.271M	35.89B	28.37	+23.77%	
+IQV
+IQVIA Holdings Inc.
+200.82
++6.58	+3.39%	5.46M	2.417M	34.139B	29.10	-16.38%	
+RJF
+Raymond James Financial, Inc.
+166.84
++5.97	+3.71%	2.196M	1.097M	33.661B	16.07	+36.32%	
+KB
+KB Financial Group Inc.
+90.36
++6.12	+7.26%	956,892	201,024	32.905B	8.60	+38.58%	
+EQT
+EQT Corporation
+54.03
++2.07	+3.98%	12.621M	8.088M	32.354B	28.44	+51.13%	
+BR
+Broadridge Financial Solutions, Inc.
+252.99
++10.35	+4.27%	2.123M	522,631	29.717B	38.04	+16.61%	
+ROL
+Rollins, Inc.
+58.03
++2.87	+5.20%	2.898M	1.787M	28.124B	57.46	+18.04%	
+CQP
+Cheniere Energy Partners, L.P.
+55.23
++1.83	+3.43%	130,460	183,332	26.734B	13.31	+0.96%	
+NTRS
+Northern Trust Corporation
+128.76
++4.53	+3.65%	2.289M	1.999M	24.623B	15.11	+41.20%	
+LH
+Labcorp Holdings Inc.
+267.69
++17.18	+6.86%	2.383M	770,531	22.406B	30.88	+19.45%	
+TPL
+Texas Pacific Land Corporation
+969.44
++38.16	+4.10%	272,505	138,368	22.285B	48.42	+15.32%	
+WST
+West Pharmaceutical Services, Inc.
+279.10
++51.79	+22.78%	2.744M	663,288	20.052B	43.88	-17.99%	
+TRU
+TransUnion
+98.43
++3.86	+4.08%	3.652M	2.141M	19.204B	52.64	+12.84%	
+MDB
+MongoDB, Inc.
+235.16
++6.91	+3.03%	2.446M	2.365M	19.216B	--	-10.93%	
+ZTO
+ZTO Express (Cayman) Inc.
+20.24
++0.77	+3.95%	4.674M	2.38M	16.068B	12.73	+4.34%	
+ICLR
+ICON Public Limited Company
+195.01
++27.12	+16.15%	4.524M	1.526M	15.5B	21.24	-46.38%	
+FTI
+TechnipFMC plc
+37.54
++3.95	+11.76%	9.306M	4.167M	15.738B	19.86	+18.36%	
+RPM
+RPM International Inc.
+122.64
++9.69	+8.58%	2.197M	805,600	15.75B	24.58	-4.66%	
+GMAB
+Genmab A/S
+23.63
++0.76	+3.32%	1.534M	1.402M	14.533B	13.90	-18.70%	
+ALLE
+Allegion plc
+163.67
++9.31	+6.03%	1.895M	900,165	14.084B	22.99	+16.16%	
+MEDP
+Medpace Holdings, Inc.
+455.68
++18.27	+4.18%	897,359	477,940	12.801B	33.83	+14.96%	
+CX
+CEMEX, S.A.B. de C.V.
+8.25
++0.28	+3.51%	29.451M	12.957M	11.969B	15.57	+25.12%	
+SQM
+Sociedad Química y Minera de Chile S.A.
+41.41
++1.86	+4.70%	2.466M	1.235M	11.635B	19.63	+5.61%	
+GL
+Globe Life Inc.
+131.52
++6.71	+5.38%	1.533M	606,478	10.856B	10.71	+40.11%	
+AOS
+A. O. Smith Corporation
+73.94
++2.56	+3.59%	4.191M	1.685M	10.508B	20.65	-13.14%	
+OKLO
+Oklo Inc.
+74.59
++7.62	+11.38%	40.261M	20.409M	10.993B	--	+696.31%	
+ALB
+Albemarle Corporation
+84.18
++5.39	+6.84%	7.742M	3.758M	9.905B	--	-13.42%	
+AVTR
+Avantor, Inc.
+14.01
++0.41	+3.01%	16.048M	12.919M	9.547B	13.47	-40.40%	
+TECH
+Bio-Techne Corporation
+58.47
++3.16	+5.71%	4.382M	2.257M	9.166B	70.45	-29.69%	
+CRL
+Charles River Laboratories International, Inc.
+177.10
++9.15	+5.45%	1.736M	1.031M	8.698B	--	-24.28%	
+FSV
+FirstService Corporation
+194.00
++14.94	+8.34%	436,950	111,344	8.816B	67.36	+2.69%	
+CHDN
+Churchill Downs Incorporated
+113.75
++4.59	+4.20%	2.081M	822,585	8.216B	20.24	-20.88%	
+GGAL
+Grupo Financiero Galicia S.A.
+51.06
++1.81	+3.68%	1.737M	1.327M	7.882B	6.98	+73.60%	
+STVN
+Stevanato Group S.p.A.
+27.95
++2.54	+10.00%	800,590	301,462	7.628B	51.76	+28.40%	
+BE
+Bloom Energy Corporation
+33.06
++6.17	+22.95%	39.185M	6.081M	7.677B	1,653.00	+85.70%	
+WEX
+WEX Inc.
+174.10
++10.70	+6.55%	1.421M	503,990	5.962B	22.44	-5.07%	
+WH
+Wyndham Hotels & Resorts, Inc.
+88.82
++2.69	+3.12%	2.253M	1.148M	6.839B	21.15	+12.44%	
+RGEN
+Repligen Corporation
+121.87
++4.74	+4.05%	1.012M	792,998	6.847B	--	-11.51%	
+FCN
+FTI Consulting, Inc.
+173.49
++5.94	+3.55%	1.047M	390,700	5.948B	23.70	-25.74%	
+CRK
+Comstock Resources, Inc.
+21.21
++0.66	+3.21%	1.663M	2.315M	6.213B	--	+104.48%	
+FAF
+First American Financial Corporation
+59.61
++1.99	+3.45%	2.004M	1.183M	6.134B	39.22	-0.72%	
+VRNS
+Varonis Systems, Inc.
+53.38
++1.57	+3.03%	2.23M	1.33M	5.975B	--	+10.45%	
+MNSO
+MINISO Group Holding Limited
+18.95
++1.39	+7.92%	1.579M	1.017M	5.793B	17.23	+5.15%	
+SMR
+NuScale Power Corporation
+51.03
++3.18	+6.65%	17.597M	13.412M	6.807B	--	+359.21%	
+NXE
+NexGen Energy Ltd.
+7.43
++0.34	+4.80%	8.404M	9.395M	4.239B	--	+14.17%	
+HRI
+Herc Holdings Inc.
+147.29
++7.04	+5.02%	546,761	489,478	4.7B	32.95	-9.74%	
+LEU
+Centrus Energy Corp.
+242.33
++12.82	+5.59%	1.077M	1.235M	4.129B	37.57	+449.07%	
+VEON
+VEON Ltd.
+55.73
++3.33	+6.35%	252,956	256,747	3.907B	9.69	+93.43%	
+UEC
+Uranium Energy Corp.
+8.77
++0.27	+3.18%	14.741M	13.848M	3.897B	--	+54.83%	
+HGTY
+Hagerty, Inc.
+10.63
++0.35	+3.40%	218,108	76,877	3.633B	50.62	-5.08%	
+BBAR
+Banco BBVA Argentina S.A.
+15.77
++0.47	+3.07%	506,359	730,926	3.221B	10.66	+77.70%	
+GEO
+The GEO Group, Inc.
+24.55
++0.88	+3.72%	3.43M	2.959M	3.47B	111.59	+54.00%	
+AGX
+Argan, Inc.
+224.37
++8.17	+3.78%	327,342	431,549	3.061B	31.25	+185.68%	
+JOE
+The St. Joe Company
+51.76
++1.80	+3.60%	397,712	245,378	3.014B	38.92	-21.45%	
+WRD
+WeRide Inc.
+10.32
++0.33	+3.30%	12.082M	15.005M	2.936B	--	-39.64%	
+TMC
+TMC the metals company Inc.
+8.10
++0.47	+6.16%	15.993M	11.432M	4.227B	--	+541.18%	
+GTX
+Garrett Motion Inc.
+12.19
++0.40	+3.39%	3.519M	2.457M	2.468B	9.52	+46.28%	
+BHFAP
+Brighthouse Financial, Inc.
+15.29
++0.81	+5.59%	252,079	63,160	2.535B	1.21	-37.04%	
+ASGN
+ASGN Incorporated
+55.65
++5.63	+11.26%	1.667M	520,829	2.437B	15.90	-46.08%	
+OII
+Oceaneering International, Inc.
+23.95
++1.52	+6.78%	1.656M	773,109	2.409B	13.46	-22.52%	

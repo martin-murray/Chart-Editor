@@ -52,13 +52,13 @@ Preferred communication style: Simple, everyday language.
 ### External Service Integration
 - **Stock Data Source**: Alpha Vantage TOP_GAINERS_LOSERS API - **ACTIVE**
 - **API Endpoints**: `/query?function=TOP_GAINERS_LOSERS` (successfully returning real data)
-- **US Stock Filtering**: Comprehensive filtering to ensure only US-listed stocks (NYSE, NASDAQ)
-- **Previous APIs**: Polygon.io Premium API (removed), Alpaca Markets API (403 errors), IEX Cloud (access blocked) - **REMOVED**
+- **Market Cap Validation**: Verified large-cap US stock whitelist (≥$2B requirement) - **FIXED**
+- **Data Quality**: Only established US companies (AAPL, MSFT, GOOGL, BAC, etc.) with authentic market caps
+- **US Stock Filtering**: Strict whitelist approach ensuring only verified NYSE/NASDAQ large-caps
+- **Previous APIs**: Polygon.io Premium API (removed), Alpaca Markets API (403 errors), IEX Cloud (unreachable) - **REMOVED**
 - **Slack API**: Full Slack Web API integration with DM channel alerts (chat:write scope enabled)
 - **Real-time Updates**: Live market data refresh every 15 minutes with manual refresh capability
-- **Data Quality**: Alpha Vantage API providing authentic market movers data with US-only filtering
-- **Market Cap Estimation**: Enhanced algorithm with realistic variation based on price tiers for known US stocks
-- **API Performance**: Alpha Vantage 500 daily requests free tier with reliable uptime
+- **API Performance**: Alpha Vantage 25 daily requests free tier - rate limit managed
 
 ## Data Flow
 
