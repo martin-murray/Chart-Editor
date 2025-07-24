@@ -92,7 +92,8 @@ export class AlphaVantageService {
         const price = parseFloat(mover.price);
         const changePercent = parseFloat(mover.change_percentage.replace('%', ''));
         
-        if (price > 0 && Math.abs(changePercent) >= 1) {
+        // Only include US-listed stocks
+        if (price > 0 && Math.abs(changePercent) >= 1 && this.isUSStock(mover.ticker)) {
           const marketCap = this.estimateMarketCap(mover.ticker, price);
           
           // Only include stocks with market cap >= $2B as per requirements
@@ -119,7 +120,7 @@ export class AlphaVantageService {
         }
       }
       
-      console.log(`✅ Successfully processed ${stocks.length} stocks from Alpha Vantage (≥$2B market cap)`);
+      console.log(`✅ Successfully processed ${stocks.length} US stocks from Alpha Vantage (≥$2B market cap)`);
       return stocks;
       
     } catch (error) {
@@ -326,6 +327,47 @@ export class AlphaVantageService {
     }
     
     return indices.length > 0 ? indices : ["Russell 1000"];
+  }
+
+  private isUSStock(ticker: string): boolean {
+    // Filter out obvious non-US tickers
+    // US stocks typically have 1-5 letter symbols without special characters
+    if (ticker.length > 5) return false;
+    if (ticker.includes('.')) return false; // Foreign exchanges often use dots
+    if (ticker.includes('-')) return false; // Some foreign tickers use dashes
+    
+    // Common non-US ticker patterns to exclude
+    const nonUSPatterns = [
+      /^[A-Z]{2,3}\d+$/,  // Pattern like "DB1", "SX5E" (European)
+      /^[A-Z]+\.L$/,      // London Stock Exchange (.L suffix)
+      /^[A-Z]+\.TO$/,     // Toronto Stock Exchange (.TO suffix)
+      /^[A-Z]+\.V$/,      // TSX Venture (.V suffix)
+      /^[A-Z]+\.HK$/,     // Hong Kong (.HK suffix)
+      /^[A-Z]+\.AX$/,     // Australian Securities Exchange (.AX suffix)
+    ];
+    
+    for (const pattern of nonUSPatterns) {
+      if (pattern.test(ticker)) return false;
+    }
+    
+    // Known foreign tickers to exclude explicitly
+    const foreignTickers = [
+      // German stocks
+      "SAP", "ASML", "NVO", "UL", "NESN", "RHHBY", "TM", "TSM", "BABA", "PDD",
+      // Canadian stocks  
+      "SHOP", "CNQ", "SU", "CP", "CNR", "RY", "TD", "BMO", "BNS",
+      // UK/European stocks
+      "RDSA", "BP", "VOD", "GSK", "AZN", "RIO", "BHP", "SHEL",
+      // Known South African/other foreign
+      "GOLD", "NEM", "FCX", "SCCO", "VALE", "BVN", "AU", "KGC", "AEM"
+    ];
+    
+    if (foreignTickers.includes(ticker)) return false;
+    
+    // Additional check: if ticker contains specific patterns that suggest non-US
+    if (ticker.endsWith('F') && ticker.length === 5) return false; // Some ADRs
+    
+    return true;
   }
 
   private isNasdaqListed(ticker: string): boolean {

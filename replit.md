@@ -50,25 +50,26 @@ Preferred communication style: Simple, everyday language.
 - **Typography**: Space Grotesk headings (weight 300) and Mulish body text (weight 400)
 
 ### External Service Integration
-- **Stock Data Source**: Alpaca Markets API with fallback to mock data - **ACTIVE**
-- **API Endpoints**: `/v1beta1/screener/stocks/movers` (403 error - falling back to mock data)
-- **Fallback System**: Graceful degradation to mock major US stocks when API unavailable
-- **Previous APIs**: Polygon.io Premium API, Yahoo Finance RapidAPI and Alpha Vantage API - **REMOVED**
+- **Stock Data Source**: Alpha Vantage TOP_GAINERS_LOSERS API - **ACTIVE**
+- **API Endpoints**: `/query?function=TOP_GAINERS_LOSERS` (successfully returning real data)
+- **US Stock Filtering**: Comprehensive filtering to ensure only US-listed stocks (NYSE, NASDAQ)
+- **Previous APIs**: Polygon.io Premium API (removed), Alpaca Markets API (403 errors), IEX Cloud (access blocked) - **REMOVED**
 - **Slack API**: Full Slack Web API integration with DM channel alerts (chat:write scope enabled)
 - **Real-time Updates**: Live market data refresh every 15 minutes with manual refresh capability
-- **Data Quality**: Alpaca API integration with robust fallback to ensure system availability
-- **Market Cap Estimation**: Enhanced algorithm with realistic variation based on price tiers
-- **API Performance**: Resilient system with fallback ensures continuous operation
+- **Data Quality**: Alpha Vantage API providing authentic market movers data with US-only filtering
+- **Market Cap Estimation**: Enhanced algorithm with realistic variation based on price tiers for known US stocks
+- **API Performance**: Alpha Vantage 500 daily requests free tier with reliable uptime
 
 ## Data Flow
 
 ### Stock Data Pipeline
-1. **Data Ingestion**: Live stock quotes retrieved from Alpha Vantage API with rate limiting
-2. **Data Processing**: Raw market data transformed and enriched with sector and index information
-3. **Database Storage**: Bulk upsert operations for efficient data updates in PostgreSQL
-4. **API Endpoints**: RESTful endpoints serve filtered and sorted data to frontend
-5. **Real-time Updates**: Automatic 15-minute refresh cycle with manual refresh capability
-6. **Status Monitoring**: Live API quota tracking and refresh status indicators
+1. **Data Ingestion**: Live market movers retrieved from Alpha Vantage TOP_GAINERS_LOSERS endpoint
+2. **US Stock Filtering**: Comprehensive filtering to exclude foreign exchanges and non-US tickers
+3. **Data Processing**: Raw market data transformed and enriched with sector and index information
+4. **Database Storage**: Bulk upsert operations for efficient data updates in PostgreSQL
+5. **API Endpoints**: RESTful endpoints serve filtered and sorted data to frontend
+6. **Real-time Updates**: Automatic 15-minute refresh cycle with manual refresh capability
+7. **Status Monitoring**: Live API quota tracking and refresh status indicators
 
 ### Slack Alert Workflow
 1. **Market Analysis**: System analyzes current market movers based on configured thresholds
