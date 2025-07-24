@@ -51,8 +51,8 @@ export class DataRefreshService {
         return;
       }
 
-      // Fetch market movers data from Alpaca Markets API
-      console.log(`📊 Fetching real-time market movers from Alpaca Markets API...`);
+      // Fetch market movers data from IEX Cloud API
+      console.log(`📊 Fetching real-time market movers from IEX Cloud API...`);
       
       const liveData = await stockDataService.getLatestStockData();
       
@@ -72,7 +72,7 @@ export class DataRefreshService {
       const duration = (endTime - startTime) / 1000;
       
       console.log(`✅ Market data refresh completed in ${duration.toFixed(1)}s`);
-      console.log(`📈 Updated ${liveData.length} stocks with live data from Alpaca Markets`);
+      console.log(`📈 Updated ${liveData.length} stocks with live data from IEX Cloud`);
       
     } catch (error) {
       console.error("❌ Error during market data refresh:", error);

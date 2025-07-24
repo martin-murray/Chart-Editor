@@ -13,13 +13,20 @@ interface AlpacaMoversResponse {
 }
 
 export class AlpacaService {
-  private apiKey: string;
-  private baseUrl = "https://data.alpaca.markets";
+  private apiKeyId: string;
+  private apiSecret: string;
+  private baseUrl = "https://paper-api.alpaca.markets"; // Use paper trading URL
+  private dataUrl = "https://data.alpaca.markets";
 
   constructor() {
-    this.apiKey = process.env.ALPACA_API_KEY || "";
-    if (!this.apiKey) {
+    this.apiKeyId = process.env.ALPACA_API_KEY || "";
+    this.apiSecret = process.env.ALPACA_API_SECRET || "";
+    
+    if (!this.apiKeyId) {
       throw new Error("ALPACA_API_KEY environment variable is required");
+    }
+    if (!this.apiSecret) {
+      throw new Error("ALPACA_API_SECRET environment variable is required");
     }
   }
 
@@ -30,11 +37,12 @@ export class AlpacaService {
     try {
       console.log("📊 Fetching market movers from Alpaca Markets API...");
       
-      const url = `${this.baseUrl}/v1beta1/screener/stocks/movers`;
+      const url = `${this.dataUrl}/v1beta1/screener/stocks/movers`;
       
       const response = await fetch(url, {
         headers: {
-          'APCA-API-KEY-ID': this.apiKey,
+          'APCA-API-KEY-ID': this.apiKeyId,
+          'APCA-API-SECRET-KEY': this.apiSecret,
           'Content-Type': 'application/json'
         }
       });
@@ -295,7 +303,8 @@ export class AlpacaService {
     try {
       const response = await fetch(`${this.baseUrl}/v2/calendar`, {
         headers: {
-          'APCA-API-KEY-ID': this.apiKey,
+          'APCA-API-KEY-ID': this.apiKeyId,
+          'APCA-API-SECRET-KEY': this.apiSecret,
           'Content-Type': 'application/json'
         }
       });

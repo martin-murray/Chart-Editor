@@ -1,5 +1,5 @@
 import { type InsertStock, type InsertMarketSummary } from "@shared/schema";
-import { alpacaService } from "./alpacaService";
+import { iexService } from "./iexService";
 
 export class StockDataService {
   constructor() {
@@ -8,12 +8,12 @@ export class StockDataService {
 
   async getLatestStockData(): Promise<InsertStock[]> {
     try {
-      console.log("🔄 Attempting to fetch from Alpaca Markets API...");
-      const stocks = await alpacaService.getMarketMovers();
-      console.log(`✅ Successfully fetched ${stocks.length} market movers from Alpaca Markets`);
+      console.log("🔄 Attempting to fetch from IEX Cloud API...");
+      const stocks = await iexService.getMarketMovers();
+      console.log(`✅ Successfully fetched ${stocks.length} market movers from IEX Cloud`);
       return stocks;
     } catch (error) {
-      console.error('⚠️ Alpaca Markets API error, falling back to mock data:', error);
+      console.error('⚠️ IEX Cloud API error, falling back to mock data:', error);
       
       // Fallback to mock data when API fails
       return this.getMockData();
@@ -95,7 +95,7 @@ export class StockDataService {
 
   async getApiStatus(): Promise<{remainingRequests: number, resetTime?: string}> {
     try {
-      return await alpacaService.getApiStatus();
+      return await iexService.getApiStatus();
     } catch (error) {
       console.error('Error getting API status:', error);
       return { remainingRequests: 0, resetTime: "Unknown" };
@@ -104,7 +104,7 @@ export class StockDataService {
 
   async getMarketStatus() {
     try {
-      return await alpacaService.getMarketStatus();
+      return await iexService.getMarketStatus();
     } catch (error) {
       console.error('Error getting market status:', error);
       throw error;
