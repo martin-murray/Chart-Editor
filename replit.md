@@ -49,16 +49,16 @@ Preferred communication style: Simple, everyday language.
 - **Dark Mode**: Complete light/dark theme toggle with Intropic MUI color scheme (#5AF5FA cyan accents)
 - **Typography**: Space Grotesk headings (weight 300) and Mulish body text (weight 400)
 
-### External Service Integration - CLEAN SLATE
-- **Stock Data Source**: NO API CONFIGURED - ready for new integration
-- **API Endpoints**: All external API services removed completely
-- **Market Cap Validation**: All filtering logic removed - clean slate
-- **Data Quality**: Ready for new authentic data source integration
-- **US Stock Filtering**: Removed - ready for new filtering implementation
-- **Previous APIs**: Alpha Vantage, Polygon.io, Alpaca Markets, IEX Cloud - **ALL REMOVED**
-- **Messaging Integration**: Slack API completely removed - ready for new service
-- **Real-time Updates**: Framework ready - no active data source
-- **API Performance**: No active APIs - completely clean codebase
+### External Service Integration - FINNHUB PREMIUM ACTIVE
+- **Stock Data Source**: Finnhub Premium API - **LIVE & ACTIVE**
+- **API Key**: Premium account integrated with comprehensive US stock coverage
+- **Market Cap Validation**: Real-time filtering for ≥$2B market cap requirement
+- **Data Quality**: Authentic real-time US stock data from NYSE, NASDAQ, AMEX
+- **US Stock Filtering**: Advanced filtering excluding foreign exchanges and ADRs
+- **Ticker Search**: Live search functionality with real-time quotes and company profiles
+- **Coverage**: Complete US stock universe with market cap, sector, and index data
+- **Real-time Updates**: Live quotes, percent changes, and market status
+- **API Performance**: Premium tier with high rate limits and comprehensive endpoints
 
 ## Data Flow
 

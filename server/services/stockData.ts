@@ -1,17 +1,28 @@
 import type { InsertStock, InsertMarketSummary } from "@shared/schema";
+import { finnhubService } from "./finnhubService";
 
 /**
- * Mock Stock Data Service - Clean slate for new API integration
- * All external API dependencies have been removed
+ * Stock Data Service - Powered by Finnhub Premium API
  */
 export class StockDataService {
   
   /**
-   * Get latest stock data - currently returns empty array
-   * Ready for new API integration
+   * Search stocks using Finnhub API
+   */
+  async searchStocks(query: string): Promise<InsertStock[]> {
+    try {
+      return await finnhubService.searchStocks(query);
+    } catch (error) {
+      console.error("Error searching stocks:", error);
+      return [];
+    }
+  }
+
+  /**
+   * Get latest stock data - placeholder for future market movers endpoint
    */
   async getLatestStockData(): Promise<InsertStock[]> {
-    console.log("📊 No API configured - ready for new integration");
+    console.log("📊 Finnhub configured - market movers endpoint to be implemented");
     return [];
   }
 
@@ -26,23 +37,29 @@ export class StockDataService {
   }
 
   /**
-   * Get market status - basic time-based calculation
+   * Get market status from Finnhub
    */
   async getMarketStatus() {
-    const now = new Date();
-    const hour = now.getHours();
-    const isWeekday = now.getDay() >= 1 && now.getDay() <= 5;
-    const isMarketHours = hour >= 9 && hour < 16;
-    
-    return {
-      status: isWeekday && isMarketHours ? 'open' : 'closed',
-      market: 'US',
-      serverTime: now.toISOString(),
-      exchanges: [{
-        name: 'NYSE',
-        status: isWeekday && isMarketHours ? 'open' : 'closed'
-      }]
-    };
+    try {
+      return await finnhubService.getMarketStatus();
+    } catch (error) {
+      console.error("Error getting market status:", error);
+      // Fallback to basic calculation
+      const now = new Date();
+      const hour = now.getHours();
+      const isWeekday = now.getDay() >= 1 && now.getDay() <= 5;
+      const isMarketHours = hour >= 9 && hour < 16;
+      
+      return {
+        status: isWeekday && isMarketHours ? 'open' : 'closed',
+        market: 'US',
+        serverTime: now.toISOString(),
+        exchanges: [{
+          name: 'US Market',
+          status: isWeekday && isMarketHours ? 'open' : 'closed'
+        }]
+      };
+    }
   }
 
   /**

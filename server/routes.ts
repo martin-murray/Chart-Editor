@@ -20,7 +20,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Ticker search endpoint
+  // Ticker search endpoint powered by Finnhub
   app.get("/api/stocks/search", async (req, res) => {
     try {
       const query = req.query.q as string;
@@ -28,27 +28,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json([]);
       }
 
-      const searchTerm = query.trim().toUpperCase();
-      const allStocks = await storage.getStocks();
+      console.log(`🔍 Live search for: "${query}"`);
+      const results = await stockDataService.searchStocks(query.trim());
       
-      // Search by symbol or name
-      const results = allStocks
-        .filter(stock => 
-          stock.symbol.includes(searchTerm) || 
-          stock.name.toUpperCase().includes(searchTerm)
-        )
-        .slice(0, 10) // Limit to 10 results
-        .map(stock => ({
-          symbol: stock.symbol,
-          name: stock.name,
-          price: stock.price,
-          percentChange: stock.percentChange,
-          marketCap: stock.marketCap
-        }));
+      // Return simplified format for frontend
+      const searchResults = results.map(stock => ({
+        symbol: stock.symbol,
+        name: stock.name,
+        price: stock.price,
+        percentChange: stock.percentChange,
+        marketCap: stock.marketCap
+      }));
 
-      res.json(results);
+      res.json(searchResults);
     } catch (error) {
-      console.error("Error searching stocks:", error);
+      console.error("Error searching stocks with Finnhub:", error);
       res.status(500).json({ message: "Failed to search stocks" });
     }
   });
