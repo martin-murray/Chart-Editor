@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Search, TrendingUp, TrendingDown } from "lucide-react";
+import { Search, TrendingUp, TrendingDown, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface SearchResult {
@@ -54,6 +54,19 @@ export function TickerSearch({ onSelectStock }: TickerSearchProps) {
     setSearchQuery(`${stock.symbol} - ${stock.name}`);
     setIsOpen(false);
     onSelectStock?.(stock);
+  };
+
+  const handleAddToWatchlist = (e: React.MouseEvent, stock: SearchResult) => {
+    e.stopPropagation(); // Prevent triggering the parent button click
+    if (window.addToWatchlist) {
+      window.addToWatchlist({
+        symbol: stock.symbol,
+        name: stock.name,
+        price: stock.price,
+        percentChange: stock.percentChange,
+        marketCap: stock.marketCap
+      });
+    }
   };
 
   const formatPercentChange = (change: string) => {
@@ -111,7 +124,7 @@ export function TickerSearch({ onSelectStock }: TickerSearchProps) {
                           {stock.marketCap}
                         </div>
                       </div>
-                      <div className="flex items-center gap-3 ml-4">
+                      <div className="flex items-center gap-2 ml-4">
                         <span className="font-medium text-foreground">
                           ${parseFloat(stock.price).toFixed(2)}
                         </span>
@@ -128,6 +141,14 @@ export function TickerSearch({ onSelectStock }: TickerSearchProps) {
                           )}
                           {changeValue}%
                         </div>
+                        <button
+                          onClick={(e) => handleAddToWatchlist(e, stock)}
+                          className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-[#5AF5FA]/10 text-[#5AF5FA] hover:bg-[#5AF5FA]/20 transition-colors border border-[#5AF5FA]/30"
+                          title="Add to Watchlist"
+                        >
+                          <Plus className="w-3 h-3" />
+                          Watch
+                        </button>
                       </div>
                     </div>
                   </button>

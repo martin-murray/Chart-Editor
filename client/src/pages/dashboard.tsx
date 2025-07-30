@@ -8,6 +8,7 @@ import { FilterPanel } from "@/components/dashboard/filter-panel";
 import { GainersTable } from "@/components/dashboard/gainers-table";
 import { LosersTable } from "@/components/dashboard/losers-table";
 import { SlackPanel } from "@/components/dashboard/slack-panel";
+import { WatchlistPanel } from "@/components/dashboard/watchlist-panel";
 import { ExportPanel } from "@/components/dashboard/export-panel";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -242,6 +243,7 @@ function Dashboard() {
 
           {/* Sidebar */}
           <div className="space-y-6">
+            <WatchlistPanel />
             <SlackPanel />
             <ExportPanel summary={summary} filter={filter} />
           </div>
