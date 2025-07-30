@@ -79,6 +79,16 @@ export const stockFilterSchema = z.object({
   ]).default("all"),
   sortBy: z.enum(["percentChange", "marketCapValue", "volume"]).default("percentChange"),
   sortOrder: z.enum(["asc", "desc"]).default("desc"),
+  ticker: z.string().optional(), // For ticker search
+});
+
+// Search result schema
+export const searchResultSchema = z.object({
+  symbol: z.string(),
+  name: z.string(),
+  price: z.string(),
+  percentChange: z.string(),
+  marketCap: z.string(),
 });
 
 export type StockFilter = z.infer<typeof stockFilterSchema>;
