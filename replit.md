@@ -49,16 +49,16 @@ Preferred communication style: Simple, everyday language.
 - **Dark Mode**: Complete light/dark theme toggle with Intropic MUI color scheme (#5AF5FA cyan accents)
 - **Typography**: Space Grotesk headings (weight 300) and Mulish body text (weight 400)
 
-### External Service Integration
-- **Stock Data Source**: Alpha Vantage TOP_GAINERS_LOSERS API - **ACTIVE**
-- **API Endpoints**: `/query?function=TOP_GAINERS_LOSERS` (successfully returning real data)
-- **Market Cap Validation**: Verified large-cap US stock whitelist (≥$2B requirement) - **FIXED**
-- **Data Quality**: Only established US companies (AAPL, MSFT, GOOGL, BAC, etc.) with authentic market caps
-- **US Stock Filtering**: Strict whitelist approach ensuring only verified NYSE/NASDAQ large-caps
-- **Previous APIs**: Polygon.io Premium API (removed), Alpaca Markets API (403 errors), IEX Cloud (unreachable) - **REMOVED**
-- **Slack API**: Full Slack Web API integration with DM channel alerts (chat:write scope enabled)
-- **Real-time Updates**: Live market data refresh every 15 minutes with manual refresh capability
-- **API Performance**: Alpha Vantage 25 daily requests free tier - rate limit managed
+### External Service Integration - CLEAN SLATE
+- **Stock Data Source**: NO API CONFIGURED - ready for new integration
+- **API Endpoints**: All external API services removed completely
+- **Market Cap Validation**: All filtering logic removed - clean slate
+- **Data Quality**: Ready for new authentic data source integration
+- **US Stock Filtering**: Removed - ready for new filtering implementation
+- **Previous APIs**: Alpha Vantage, Polygon.io, Alpaca Markets, IEX Cloud - **ALL REMOVED**
+- **Messaging Integration**: Slack API completely removed - ready for new service
+- **Real-time Updates**: Framework ready - no active data source
+- **API Performance**: No active APIs - completely clean codebase
 
 ## Data Flow
 

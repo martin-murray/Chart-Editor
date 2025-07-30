@@ -1,38 +1,37 @@
-import { storage } from "../storage";
-import { stockDataService } from "./stockData";
-import { type InsertMarketSummary } from "@shared/schema";
+import { stockDataService } from './stockData';
+import { storage } from '../storage';
 
+/**
+ * Data Refresh Service - Clean slate for new API integration
+ * All external API dependencies have been removed
+ */
 export class DataRefreshService {
-  private refreshTimer: NodeJS.Timeout | null = null;
   private isRefreshing = false;
-  
-  // No longer needed - using Yahoo Finance movers API for real market movers
+  private refreshInterval: NodeJS.Timeout | null = null;
+  private readonly REFRESH_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes
 
-  startAutomaticRefresh() {
+  constructor() {
+    console.log("🚀 Starting automatic market data refresh service...");
+    this.startAutoRefresh();
+  }
+
+  private startAutoRefresh() {
     console.log("🕐 Starting automatic market data refresh...");
     
-    // Refresh every 15 minutes during market hours
-    this.refreshTimer = setInterval(() => {
-      this.refreshMarketData();
-    }, 15 * 60 * 1000); // 15 minutes
+    // Initial refresh on startup
+    this.refreshData();
     
-    // Initial refresh
-    setTimeout(() => this.refreshMarketData(), 2000);
+    // Set up recurring refresh
+    this.refreshInterval = setInterval(() => {
+      this.refreshData();
+    }, this.REFRESH_INTERVAL_MS);
     
     console.log("✅ Automatic refresh scheduled every 15 minutes");
   }
 
-  stopAutomaticRefresh() {
-    if (this.refreshTimer) {
-      clearInterval(this.refreshTimer);
-      this.refreshTimer = null;
-      console.log("🛑 Automatic refresh stopped");
-    }
-  }
-
-  async refreshMarketData(): Promise<void> {
+  async refreshData(): Promise<void> {
     if (this.isRefreshing) {
-      console.log("⏳ Market data refresh already in progress...");
+      console.log("⚠️ Refresh already in progress - skipping");
       return;
     }
 
@@ -42,22 +41,16 @@ export class DataRefreshService {
     try {
       const startTime = Date.now();
       
-      // Check if we have remaining API requests
+      // Check API status (returns 0 since no API configured)
       const apiStatus = await stockDataService.getApiStatus();
-      console.log(`📊 Remaining API requests today: ${apiStatus.remainingRequests}`);
+      console.log(`📊 API Status: ${apiStatus.resetTime}`);
       
-      if (apiStatus.remainingRequests <= 0) {
-        console.warn("⚠️ API request limit reached - skipping refresh");
-        return;
-      }
-
-      // Fetch market movers data from Alpha Vantage API
-      console.log(`📊 Fetching real-time market movers from Alpha Vantage API...`);
-      
+      // Get latest stock data (returns empty array)
+      console.log(`📊 No API configured - ready for new integration`);
       const liveData = await stockDataService.getLatestStockData();
       
       if (liveData.length === 0) {
-        console.warn("⚠️ No live data received - keeping existing data");
+        console.log("⚠️ No API configured - keeping existing data");
         return;
       }
 
@@ -72,7 +65,7 @@ export class DataRefreshService {
       const duration = (endTime - startTime) / 1000;
       
       console.log(`✅ Market data refresh completed in ${duration.toFixed(1)}s`);
-      console.log(`📈 Updated ${liveData.length} stocks with live data from Alpha Vantage`);
+      console.log(`📈 Updated ${liveData.length} stocks with live data`);
       
     } catch (error) {
       console.error("❌ Error during market data refresh:", error);
@@ -86,58 +79,9 @@ export class DataRefreshService {
       console.log("📊 Calculating new market summary...");
       
       const allStocks = await storage.getStocks();
+      const summary = await stockDataService.calculateMarketSummary(allStocks);
       
-      const gainers = allStocks.filter(stock => parseFloat(stock.percentChange) > 0);
-      const losers = allStocks.filter(stock => parseFloat(stock.percentChange) < 0);
-      
-      const avgGainerChange = gainers.length > 0 
-        ? (gainers.reduce((sum, stock) => sum + parseFloat(stock.percentChange), 0) / gainers.length).toFixed(3)
-        : "0.000";
-      
-      const avgLoserChange = losers.length > 0
-        ? (losers.reduce((sum, stock) => sum + parseFloat(stock.percentChange), 0) / losers.length).toFixed(3)
-        : "0.000";
-
-      const totalMarketCapValue = allStocks.reduce((sum, stock) => sum + parseFloat(stock.marketCapValue), 0);
-      const totalVolume = allStocks.reduce((sum, stock) => sum + stock.volume, 0);
-      
-      // Determine volatility based on average absolute change
-      const avgAbsChange = allStocks.length > 0
-        ? allStocks.reduce((sum, stock) => sum + Math.abs(parseFloat(stock.percentChange)), 0) / allStocks.length
-        : 0;
-      
-      let volatility = "Low";
-      if (avgAbsChange > 3) volatility = "High";
-      else if (avgAbsChange > 1.5) volatility = "Moderate";
-      
-      // Find sector with most gainers
-      const sectorCounts: Record<string, { gains: number, total: number }> = {};
-      allStocks.forEach(stock => {
-        if (!sectorCounts[stock.sector]) {
-          sectorCounts[stock.sector] = { gains: 0, total: 0 };
-        }
-        sectorCounts[stock.sector].total++;
-        if (parseFloat(stock.percentChange) > 0) {
-          sectorCounts[stock.sector].gains++;
-        }
-      });
-      
-      const sectorLeader = Object.entries(sectorCounts)
-        .sort(([,a], [,b]) => (b.gains / b.total) - (a.gains / a.total))[0]?.[0] || "Technology";
-
-      const summaryData: InsertMarketSummary = {
-        totalMovers: allStocks.length,
-        totalGainers: gainers.length,
-        totalLosers: losers.length,
-        totalMarketCap: `$${(totalMarketCapValue / 1e12).toFixed(1)}T`,
-        avgGainerChange,
-        avgLoserChange,
-        avgVolume: `${(totalVolume / 1000000).toFixed(1)}M`,
-        volatility,
-        sectorLeader,
-      };
-
-      await storage.updateMarketSummary(summaryData);
+      await storage.updateMarketSummary(summary);
       console.log("✅ Market summary updated");
       
     } catch (error) {
@@ -145,43 +89,34 @@ export class DataRefreshService {
     }
   }
 
-  async manualRefresh(): Promise<{ success: boolean; message: string; updatedCount: number }> {
+  async manualRefresh(): Promise<{ message: string; updatedStocks: number }> {
     if (this.isRefreshing) {
-      return {
-        success: false,
-        message: "Refresh already in progress",
-        updatedCount: 0
-      };
+      throw new Error("Refresh already in progress");
     }
 
-    try {
-      await this.refreshMarketData();
-      const stocks = await storage.getStocks();
-      
-      return {
-        success: true,
-        message: "Market data refreshed successfully",
-        updatedCount: stocks.length
-      };
-    } catch (error) {
-      console.error("❌ Manual refresh failed:", error);
-      return {
-        success: false,
-        message: error instanceof Error ? error.message : "Unknown error occurred",
-        updatedCount: 0
-      };
-    }
+    await this.refreshData();
+    
+    const allStocks = await storage.getStocks();
+    return {
+      message: "Market data refreshed successfully",
+      updatedStocks: allStocks.length
+    };
   }
 
-  async getRefreshStatus() {
-    const stocks = await storage.getStocks();
-    const apiStatus = await stockDataService.getApiStatus();
+  getRefreshStatus() {
     return {
       isRefreshing: this.isRefreshing,
-      autoRefreshActive: this.refreshTimer !== null,
-      remainingRequests: apiStatus.remainingRequests,
-      totalStocks: stocks.length
+      autoRefreshActive: this.refreshInterval !== null,
+      nextRefreshIn: this.REFRESH_INTERVAL_MS
     };
+  }
+
+  stopAutoRefresh() {
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval);
+      this.refreshInterval = null;
+      console.log("🛑 Automatic refresh stopped");
+    }
   }
 }
 

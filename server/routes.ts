@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { stockDataService } from "./services/stockData";
-import { slackService } from "./services/slack";
+// Slack service removed - clean slate for new messaging integration
 import { dataRefreshService } from "./services/dataRefresh";
 import { stockFilterSchema } from "@shared/schema";
 import { z } from "zod";
@@ -110,71 +110,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Slack integration routes
-  app.post("/api/slack/test-alert", async (req, res) => {
-    try {
-      const gainers = await storage.getTopGainers(5);
-      const losers = await storage.getTopLosers(5);
-      
-      const messageTs = await slackService.sendMarketMoversAlert(gainers, losers, "test");
-      
-      await storage.createSlackAlert({
-        type: "test",
-        title: "Test Alert Sent",
-        description: `Top ${gainers.length} gainers and ${losers.length} losers posted to Slack`,
-        status: "sent"
-      });
-      
-      res.json({ 
-        message: "Test alert sent successfully", 
-        messageTs 
-      });
-    } catch (error) {
-      console.error("Error sending test alert:", error);
-      res.status(500).json({ message: "Failed to send test alert" });
-    }
-  });
-
-  app.post("/api/slack/scheduled-alert", async (req, res) => {
-    try {
-      const { type } = req.body;
-      
-      if (!["morning", "afternoon"].includes(type)) {
-        return res.status(400).json({ message: "Invalid alert type" });
-      }
-      
-      const gainers = await storage.getTopGainers(10);
-      const losers = await storage.getTopLosers(10);
-      
-      const messageTs = await slackService.sendMarketMoversAlert(gainers, losers, type);
-      
-      await storage.createSlackAlert({
-        type,
-        title: `${type === "morning" ? "Morning" : "Afternoon"} Alert Sent`,
-        description: `Top 10 gainers and losers posted to #research-team`,
-        status: "sent"
-      });
-      
-      res.json({ 
-        message: `${type} alert sent successfully`, 
-        messageTs 
-      });
-    } catch (error) {
-      console.error("Error sending scheduled alert:", error);
-      res.status(500).json({ message: "Failed to send scheduled alert" });
-    }
-  });
-
-  app.get("/api/slack/alerts", async (req, res) => {
-    try {
-      const limit = parseInt(req.query.limit as string) || 10;
-      const alerts = await storage.getSlackAlerts(limit);
-      res.json(alerts);
-    } catch (error) {
-      console.error("Error fetching slack alerts:", error);
-      res.status(500).json({ message: "Failed to fetch slack alerts" });
-    }
-  });
+  // Messaging integration removed - clean slate for new integration
 
   // Export routes
   app.get("/api/export/csv", async (req, res) => {
@@ -240,7 +176,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Start automatic data refresh
   console.log("🚀 Starting automatic market data refresh service...");
-  dataRefreshService.startAutomaticRefresh();
+  // Auto refresh starts automatically in constructor
 
   const httpServer = createServer(app);
   return httpServer;
