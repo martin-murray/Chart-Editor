@@ -76,22 +76,17 @@ export function WatchlistPanel({ onAddStock }: WatchlistPanelProps) {
             <Eye className="w-5 h-5 text-[#5AF5FA]" />
             My Watchlist
           </CardTitle>
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="bg-muted text-muted-foreground">
-              {watchlist.length} stocks
-            </Badge>
-            {watchlist.length > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearAllWatchlist}
-                className="h-7 px-2 text-xs text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
-              >
-                <X className="w-3 h-3 mr-1" />
-                Clear All
-              </Button>
-            )}
-          </div>
+          {watchlist.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearAllWatchlist}
+              className="h-7 px-2 text-xs text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
+            >
+              <X className="w-3 h-3 mr-1" />
+              Clear All
+            </Button>
+          )}
         </div>
       </CardHeader>
       <CardContent>
