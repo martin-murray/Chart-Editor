@@ -44,7 +44,19 @@ export class FinnhubService {
     const url = `${BASE_URL}${endpoint}${endpoint.includes('?') ? '&' : '?'}token=${FINNHUB_API_KEY}`;
     
     try {
-      const response = await fetch(url);
+      // Add timeout and compression for faster requests
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+      
+      const response = await fetch(url, {
+        signal: controller.signal,
+        headers: {
+          'Accept-Encoding': 'gzip, deflate',
+          'User-Agent': 'Market-Dashboard/1.0'
+        }
+      });
+      
+      clearTimeout(timeoutId);
       
       if (!response.ok) {
         throw new Error(`Finnhub API error: ${response.status} ${response.statusText}`);
@@ -60,6 +72,10 @@ export class FinnhubService {
       
       return JSON.parse(text);
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.error(`Request timeout for ${endpoint}`);
+        throw new Error('Request timeout');
+      }
       console.error(`Error fetching from Finnhub ${endpoint}:`, error);
       throw error;
     }
@@ -132,11 +148,11 @@ export class FinnhubService {
   }
 
   /**
-   * Search stocks by symbol or name
+   * Search stocks by symbol or name - OPTIMIZED VERSION
    */
   async searchStocks(query: string): Promise<InsertStock[]> {
     try {
-      console.log(`🔍 Searching Finnhub for: "${query}"`);
+      console.log(`🔍 Fast search for: "${query}"`);
       
       const searchResults = await this.makeRequest(`/search?q=${encodeURIComponent(query)}`);
       
@@ -144,43 +160,44 @@ export class FinnhubService {
         return [];
       }
 
-      // Process search results and get quotes
-      const results: InsertStock[] = [];
-      const maxResults = 10;
-      
-      for (let i = 0; i < Math.min(searchResults.result.length, maxResults); i++) {
-        const result = searchResults.result[i];
-        
-        // Skip if not a US stock or has exchange suffix
-        if (!result.symbol || 
-            result.type !== "Common Stock" || 
-            result.symbol.includes('.') || 
-            result.symbol.length > 5) {
-          continue;
-        }
+      // Filter and limit results early
+      const filteredResults = searchResults.result
+        .filter((result: any) => 
+          result.symbol && 
+          result.type === "Common Stock" && 
+          !result.symbol.includes('.') && 
+          result.symbol.length <= 5
+        )
+        .slice(0, 5); // Reduce to 5 results max for speed
 
+      if (filteredResults.length === 0) {
+        return [];
+      }
+
+      // Batch API calls with Promise.all for parallel execution
+      const stockPromises = filteredResults.map(async (result: any) => {
         try {
-          // Get quote data
-          const quote = await this.getQuote(result.symbol);
-          if (!quote) continue;
+          // Parallel API calls
+          const [quote, profile] = await Promise.all([
+            this.getQuote(result.symbol),
+            this.getCompanyProfile(result.symbol)
+          ]);
 
-          // Get company profile for market cap
-          const profile = await this.getCompanyProfile(result.symbol);
-          if (!profile) continue;
+          if (!quote || !profile) return null;
 
-          // Only include US companies with market cap data
+          // Quick US and market cap validation
           if (profile.country !== "US" || !profile.marketCapitalization) {
-            continue;
+            return null;
           }
 
-          const marketCapValue = profile.marketCapitalization * 1000000; // Finnhub returns in millions
+          const marketCapValue = profile.marketCapitalization * 1000000;
           
-          // Apply minimum $2B market cap filter
+          // Apply $2B filter
           if (marketCapValue < 2000000000) {
-            continue;
+            return null;
           }
 
-          // Format market cap display
+          // Format market cap
           const formatMarketCap = (value: number): string => {
             if (value >= 1e12) return `$${(value / 1e12).toFixed(1)}T`;
             if (value >= 1e9) return `$${(value / 1e9).toFixed(1)}B`;
@@ -188,7 +205,7 @@ export class FinnhubService {
             return `$${value.toLocaleString()}`;
           };
 
-          const stock: InsertStock = {
+          return {
             symbol: result.symbol,
             name: result.description || profile.name,
             price: quote.c.toFixed(2),
@@ -196,22 +213,24 @@ export class FinnhubService {
             percentChange: quote.dp.toFixed(2),
             marketCap: formatMarketCap(marketCapValue),
             marketCapValue: marketCapValue.toString(),
-            volume: Math.round(Math.random() * 10000000), // Finnhub doesn't provide volume in quote
+            volume: Math.round(Math.random() * 10000000),
             indices: this.determineIndices(result.symbol, marketCapValue),
             sector: profile.finnhubIndustry || "Unknown"
           };
-
-          results.push(stock);
         } catch (error) {
           console.error(`Error processing ${result.symbol}:`, error);
-          continue;
+          return null;
         }
-      }
+      });
 
-      console.log(`✅ Found ${results.length} matching US stocks`);
-      return results;
+      // Wait for all promises and filter out nulls
+      const stockResults = await Promise.all(stockPromises);
+      const validStocks = stockResults.filter(stock => stock !== null) as InsertStock[];
+
+      console.log(`⚡ Fast search completed: ${validStocks.length} results in parallel`);
+      return validStocks;
     } catch (error) {
-      console.error("Error searching stocks:", error);
+      console.error("Error in fast search:", error);
       return [];
     }
   }

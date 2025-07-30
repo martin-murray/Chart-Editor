@@ -22,11 +22,11 @@ export function TickerSearch({ onSelectStock }: TickerSearchProps) {
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
 
-  // Debounce search query
+  // Debounce search query - increased delay for better performance
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedQuery(searchQuery);
-    }, 300);
+    }, 500); // Increased from 300ms to 500ms
 
     return () => clearTimeout(timer);
   }, [searchQuery]);
@@ -35,14 +35,14 @@ export function TickerSearch({ onSelectStock }: TickerSearchProps) {
   const { data: searchResults = [], isLoading } = useQuery({
     queryKey: ["/api/stocks/search", debouncedQuery],
     queryFn: async (): Promise<SearchResult[]> => {
-      if (!debouncedQuery || debouncedQuery.trim().length < 1) {
+      if (!debouncedQuery || debouncedQuery.trim().length < 2) {
         return [];
       }
       const response = await fetch(`/api/stocks/search?q=${encodeURIComponent(debouncedQuery.trim())}`);
       if (!response.ok) throw new Error("Search failed");
       return await response.json();
     },
-    enabled: debouncedQuery.trim().length >= 1,
+    enabled: debouncedQuery.trim().length >= 2,
   });
 
   const handleInputChange = (value: string) => {
