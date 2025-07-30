@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Trash2, TrendingUp, TrendingDown, Eye, Plus } from "lucide-react";
+import { Trash2, TrendingUp, TrendingDown, Eye, Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface WatchlistStock {
@@ -43,6 +43,10 @@ export function WatchlistPanel({ onAddStock }: WatchlistPanelProps) {
     setWatchlist(prev => prev.filter(stock => stock.symbol !== symbol));
   };
 
+  const clearAllWatchlist = () => {
+    setWatchlist([]);
+  };
+
   const addToWatchlist = (stock: Omit<WatchlistStock, 'addedAt'>) => {
     const exists = watchlist.find(w => w.symbol === stock.symbol);
     if (!exists) {
@@ -71,9 +75,22 @@ export function WatchlistPanel({ onAddStock }: WatchlistPanelProps) {
             <Eye className="w-5 h-5 text-[#5AF5FA]" />
             My Watchlist
           </CardTitle>
-          <Badge variant="secondary" className="bg-muted text-muted-foreground">
-            {watchlist.length} stocks
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="bg-muted text-muted-foreground">
+              {watchlist.length} stocks
+            </Badge>
+            {watchlist.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearAllWatchlist}
+                className="h-7 px-2 text-xs text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
+              >
+                <X className="w-3 h-3 mr-1" />
+                Clear All
+              </Button>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent>
