@@ -168,14 +168,22 @@ export class FinnhubService {
           !result.symbol.includes('.') && 
           result.symbol.length <= 5
         )
-        .slice(0, 5); // Reduce to 5 results max for speed
+        .slice(0, 3); // Limit to 3 results max
 
       if (filteredResults.length === 0) {
         return [];
       }
 
+      // Remove duplicates by symbol before processing
+      const uniqueResults = filteredResults.reduce((acc: any[], result: any) => {
+        if (!acc.find(r => r.symbol === result.symbol)) {
+          acc.push(result);
+        }
+        return acc;
+      }, []);
+
       // Batch API calls with Promise.all for parallel execution
-      const stockPromises = filteredResults.map(async (result: any) => {
+      const stockPromises = uniqueResults.map(async (result: any) => {
         try {
           // Parallel API calls
           const [quote, profile] = await Promise.all([
@@ -227,8 +235,18 @@ export class FinnhubService {
       const stockResults = await Promise.all(stockPromises);
       const validStocks = stockResults.filter(stock => stock !== null) as InsertStock[];
 
-      console.log(`⚡ Fast search completed: ${validStocks.length} results in parallel`);
-      return validStocks;
+      // Final deduplication by symbol and limit to 3 results
+      const finalResults = validStocks
+        .reduce((acc: InsertStock[], stock: InsertStock) => {
+          if (!acc.find(s => s.symbol === stock.symbol)) {
+            acc.push(stock);
+          }
+          return acc;
+        }, [])
+        .slice(0, 3);
+
+      console.log(`⚡ Fast search completed: ${finalResults.length} unique results in parallel`);
+      return finalResults;
     } catch (error) {
       console.error("Error in fast search:", error);
       return [];

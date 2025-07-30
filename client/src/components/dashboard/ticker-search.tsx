@@ -95,7 +95,7 @@ export function TickerSearch({ onSelectStock }: TickerSearchProps) {
                 const { value: changeValue, isPositive } = formatPercentChange(stock.percentChange);
                 return (
                   <button
-                    key={stock.symbol}
+                    key={`${stock.symbol}-${stock.name}`}
                     onClick={() => handleSelectStock(stock)}
                     className="w-full px-4 py-3 text-left hover:bg-muted/50 transition-colors border-b border-border/50 last:border-b-0"
                   >
