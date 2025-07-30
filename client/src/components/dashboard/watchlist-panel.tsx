@@ -1,4 +1,5 @@
 import { useState } from "react";
+import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -62,10 +63,10 @@ export function WatchlistPanel({ onAddStock }: WatchlistPanelProps) {
     };
   };
 
-  // Expose addToWatchlist function to parent
-  if (onAddStock && !window.addToWatchlist) {
+  // Expose addToWatchlist function globally
+  React.useEffect(() => {
     window.addToWatchlist = addToWatchlist;
-  }
+  }, [addToWatchlist]);
 
   return (
     <Card className="bg-card border-border">
