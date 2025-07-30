@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { RefreshCwIcon } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { FilterPanel } from "@/components/dashboard/filter-panel";
-import { SummaryCards } from "@/components/dashboard/summary-cards";
+
 import { GainersTable } from "@/components/dashboard/gainers-table";
 import { LosersTable } from "@/components/dashboard/losers-table";
 import { SlackPanel } from "@/components/dashboard/slack-panel";
@@ -221,10 +221,7 @@ function Dashboard() {
           />
         </div>
 
-        {/* Summary Cards */}
-        <div className="mb-8">
-          <SummaryCards summary={summary} isLoading={summaryLoading} />
-        </div>
+
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Data Tables */}
