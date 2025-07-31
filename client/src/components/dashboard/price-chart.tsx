@@ -261,7 +261,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
       </div>
 
       {/* Stats Grid - 4 Columns */}
-      {stockDetails && (
+      {stockDetails && stockDetails.quote && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-sm">
           {/* Column 1 */}
           <div className="space-y-3">
@@ -312,7 +312,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Market Cap</span>
-              <span className="font-medium">{stockDetails.profile.marketCapitalization ? formatMarketCap(stockDetails.profile.marketCapitalization) : 'N/A'}</span>
+              <span className="font-medium">{stockDetails.profile?.marketCapitalization ? formatMarketCap(stockDetails.profile.marketCapitalization) : 'N/A'}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Beta (5Y Monthly)</span>

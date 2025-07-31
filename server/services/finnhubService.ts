@@ -46,7 +46,7 @@ export class FinnhubService {
     try {
       // Add timeout and compression for faster requests
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 12000); // 12 second timeout for better reliability
       
       const response = await fetch(url, {
         signal: controller.signal,
@@ -326,23 +326,37 @@ export class FinnhubService {
 
   async getDetailedQuote(symbol: string): Promise<any> {
     try {
-      // Get comprehensive quote data including pre/after market and alternative market cap sources
-      const [quote, profile, metrics] = await Promise.all([
-        this.makeRequest(`/quote?symbol=${symbol}`),
+      // Get quote first (faster), then profile and metrics with fallback handling
+      const quote = await this.makeRequest(`/quote?symbol=${symbol}`);
+      if (!quote) {
+        return null;
+      }
+
+      // Get profile and metrics with individual timeout handling
+      const [profile, metrics] = await Promise.allSettled([
         this.makeRequest(`/stock/profile2?symbol=${symbol}`),
         this.makeRequest(`/stock/metric?symbol=${symbol}&metric=all`)
       ]);
 
-      if (!quote || !profile) {
-        return null;
+      // Extract successful results from Promise.allSettled
+      const profileResult = profile.status === 'fulfilled' ? profile.value : null;
+      const metricsResult = metrics.status === 'fulfilled' ? metrics.value : null;
+
+      if (!profileResult) {
+        console.log(`Profile data unavailable for ${symbol}, returning limited data`);
+        return {
+          quote,
+          profile: null,
+          metrics: metricsResult?.metric || {}
+        };
       }
 
       // Check for market cap data quality and use most reliable source
-      let marketCap = profile.marketCapitalization;
-      if (metrics?.metric?.marketCapitalization && metrics.metric.marketCapitalization !== marketCap) {
-        console.log(`📊 DATA QUALITY ALERT: ${symbol} market cap discrepancy - Profile: $${(marketCap/1000).toFixed(1)}B vs Metrics: $${(metrics.metric.marketCapitalization/1000).toFixed(1)}B`);
+      let marketCap = profileResult.marketCapitalization;
+      if (metricsResult?.metric?.marketCapitalization && metricsResult.metric.marketCapitalization !== marketCap) {
+        console.log(`📊 DATA QUALITY ALERT: ${symbol} market cap discrepancy - Profile: $${(marketCap/1000).toFixed(1)}B vs Metrics: $${(metricsResult.metric.marketCapitalization/1000).toFixed(1)}B`);
         // Use the metrics endpoint value as it may be more current
-        marketCap = metrics.metric.marketCapitalization;
+        marketCap = metricsResult.metric.marketCapitalization;
       }
       
       // Known data quality issues - log for research team awareness
@@ -359,10 +373,10 @@ export class FinnhubService {
       return {
         quote,
         profile: {
-          ...profile,
+          ...profileResult,
           marketCapitalization: marketCap  // Use the potentially more current value
         },
-        metrics: metrics?.metric || {}
+        metrics: metricsResult?.metric || {}
       };
     } catch (error) {
       console.error(`Error fetching detailed quote for ${symbol}:`, error);
