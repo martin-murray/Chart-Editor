@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -24,6 +25,8 @@ export function TickerSearch({ onSelectStock }: TickerSearchProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedStock, setSelectedStock] = useState<SearchResult | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
 
   // Debounce search query - increased delay for better performance
   useEffect(() => {
@@ -48,9 +51,32 @@ export function TickerSearch({ onSelectStock }: TickerSearchProps) {
     enabled: debouncedQuery.trim().length >= 2,
   });
 
+  const updateDropdownPosition = () => {
+    if (inputRef.current) {
+      const rect = inputRef.current.getBoundingClientRect();
+      setDropdownPosition({
+        top: rect.bottom + window.scrollY + 4,
+        left: rect.left + window.scrollX,
+        width: rect.width
+      });
+    }
+  };
+
   const handleInputChange = (value: string) => {
     setSearchQuery(value);
-    setIsOpen(value.length > 0);
+    if (value.length > 0) {
+      updateDropdownPosition();
+      setIsOpen(true);
+    } else {
+      setIsOpen(false);
+    }
+  };
+
+  const handleInputFocus = () => {
+    if (searchQuery.length > 0) {
+      updateDropdownPosition();
+      setIsOpen(true);
+    }
   };
 
   const handleSelectStock = (stock: SearchResult) => {
@@ -87,21 +113,25 @@ export function TickerSearch({ onSelectStock }: TickerSearchProps) {
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
         <Input
+          ref={inputRef}
           type="text"
           placeholder="Search ticker or company name..."
           value={searchQuery}
           onChange={(e) => handleInputChange(e.target.value)}
-          onFocus={() => searchQuery.length > 0 && setIsOpen(true)}
+          onFocus={handleInputFocus}
           className="pl-10 pr-4 bg-background border-border focus:border-[#5AF5FA] focus:ring-[#5AF5FA]/20"
         />
       </div>
 
-      {/* Search Results Dropdown - Fixed positioning strategy */}
-      {isOpen && (
+      {/* Search Results Dropdown - Portal to body for absolute positioning */}
+      {isOpen && createPortal(
         <Card 
-          className="absolute left-0 right-0 mt-1 max-h-80 overflow-y-auto shadow-xl border-border bg-card"
+          className="max-h-80 overflow-y-auto shadow-xl border-border bg-card"
           style={{
-            top: '100%',
+            position: 'absolute',
+            top: dropdownPosition.top,
+            left: dropdownPosition.left,
+            width: dropdownPosition.width,
             zIndex: 10000
           }}
         >
@@ -170,7 +200,8 @@ export function TickerSearch({ onSelectStock }: TickerSearchProps) {
               No stocks found for "{debouncedQuery}"
             </div>
             ) : null}
-        </Card>
+        </Card>,
+        document.body
       )}
 
       {/* Backdrop to close dropdown */}
