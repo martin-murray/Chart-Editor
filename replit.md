@@ -131,3 +131,10 @@ Preferred communication style: Simple, everyday language.
 - **Database Connection**: PostgreSQL database with automatic schema initialization
 - **Slack Integration**: Optional Slack credentials with fallback warnings
 - **Persistent Storage**: All market data, alerts, and summaries stored in PostgreSQL
+
+## Recent Changes
+- **January 31, 2025**: Implemented interactive price chart component with Finnhub integration
+  - Added PriceChart component with 5 timeframes (1D, 1W, 1M, 3M, 1Y)
+  - Integrated charts into ticker search for immediate visualization
+  - Added `/api/stocks/:symbol/chart` endpoint with OHLCV data
+  - Tested successfully with real market data (CVNA, AAPL)
