@@ -80,9 +80,9 @@ export function MarketMoversTabs({
           </div>
         </div>
         
-        {/* Filters Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4">
-          <div className="space-y-2">
+        {/* Filters Row - Always Inline */}
+        <div className="flex flex-col sm:flex-row gap-4 pt-4">
+          <div className="flex-1 space-y-2">
             <Label htmlFor="changeThreshold">% Change Threshold</Label>
             <Select
               value={filter.changeThreshold.toString()}
@@ -100,7 +100,7 @@ export function MarketMoversTabs({
             </Select>
           </div>
 
-          <div className="space-y-2">
+          <div className="flex-1 space-y-2">
             <Label htmlFor="marketCap">Market Cap</Label>
             <Select
               value={filter.marketCap}
@@ -118,7 +118,7 @@ export function MarketMoversTabs({
             </Select>
           </div>
 
-          <div className="space-y-2">
+          <div className="flex-1 space-y-2">
             <Label htmlFor="indexFilter">Index Filter</Label>
             <Select
               value={filter.indexFilter}
