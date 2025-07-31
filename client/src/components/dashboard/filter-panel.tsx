@@ -87,13 +87,7 @@ export function FilterPanel({ filter, onFilterChange, lastUpdated }: FilterPanel
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label>Data Refresh</Label>
-            <div className="text-sm text-muted-foreground">
-              <div>Last: {lastUpdated || "Never"}</div>
-              <div className="text-xs">Updates: 9:30am, 1pm, 4pm EST</div>
-            </div>
-          </div>
+
         </div>
       </CardContent>
     </Card>
