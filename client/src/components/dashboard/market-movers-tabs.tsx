@@ -34,8 +34,7 @@ export function MarketMoversTabs({
   return (
     <Card className="overflow-visible">
       <CardHeader className="pb-4">
-        <div className="flex items-center justify-between">
-          <CardTitle>Market Movers</CardTitle>
+        <div className="flex items-center justify-end">
           <div className="flex items-center gap-4">
             {/* Ticker Search */}
             <div className="relative" style={{ zIndex: 1000 }}>
