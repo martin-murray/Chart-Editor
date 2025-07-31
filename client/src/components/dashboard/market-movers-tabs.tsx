@@ -34,14 +34,12 @@ export function MarketMoversTabs({
   return (
     <Card className="overflow-visible">
       <CardHeader className="pb-4">
-        <div className="flex items-center justify-end">
-          <div className="flex items-center gap-4">
-            {/* Ticker Search */}
-            <div className="relative" style={{ zIndex: 1000 }}>
-              <TickerSearch onSelectStock={(stock) => {
-                console.log("Selected stock:", stock);
-              }} />
-            </div>
+        <div className="w-full">
+          {/* Ticker Search - Full Width */}
+          <div className="relative w-full" style={{ zIndex: 1000 }}>
+            <TickerSearch onSelectStock={(stock) => {
+              console.log("Selected stock:", stock);
+            }} />
           </div>
         </div>
         
