@@ -143,7 +143,7 @@ export function MarketMoversTabs({
             <TabsTrigger value="gainers" className="data-[state=active]:bg-[#5AF5FA] data-[state=active]:text-black">
               Top Gainers ({gainers.length})
             </TabsTrigger>
-            <TabsTrigger value="losers" className="data-[state=active]:bg-[#AA99FF] data-[state=active]:text-black">
+            <TabsTrigger value="losers" className="data-[state=active]:bg-[#FFA5FF] data-[state=active]:text-black">
               Top Losers ({losers.length})
             </TabsTrigger>
           </TabsList>
