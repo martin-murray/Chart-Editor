@@ -1,0 +1,494 @@
+Symbol
+Change %
+Price
+Volume
+Rel Volume
+Market cap
+P/E
+EPS dil
+TTM
+EPS dil growth
+TTM YoY
+Div yield %
+TTM
+Sector
+Analyst Rating
+S
+SI
+Shoulder Innovations, Inc.
++1,104.00%	15.05 USD	1.86 M	0.69	—	—	−9.77 USD	+14.71%	—	Health technology	
+Neutral
+
+SNGX
+Soligenix, Inc.
++134.40%	2.93 USD	375.31 M	2,148.94	4.08 M USD	—	−4.34 USD	+63.38%	0.00%	Health technology	
+Strong buy
+P
+PAPL
+Pineapple Financial Inc.
++73.06%	5.14 USD	33.45 M	12.00	—	—	−8.13 USD	+4.26%	0.00%	Finance	
+Neutral
+
+RCON
+Recon Technology, Ltd.
++65.44%	4.50 USD	3.25 M	0.69	137.82 M USD	—	−0.57 USD	+83.11%	0.00%	Distribution services	
+Neutral
+
+NEGG
+Newegg Commerce, Inc.
++41.85%	63.79 USD	2.56 M	2.16	1.24 B USD	—	—	—	0.00%	Retail trade	
+Neutral
+S
+SLXN
+Silexion Therapeutics Corp
++31.98%	14.94 USD	2.06 M	86.57	8.66 M USD	—	−296.59 USD	−1,881.99%	0.00%	Health technology	
+Strong buy
+
+APLD
+Applied Digital Corporation
++31.01%	13.14 USD	137.58 M	4.54	2.96 B USD	—	−1.38 USD	−72.91%	0.00%	Technology services	
+Strong buy
+
+FRGE
+Forge Global Holdings, Inc.
++30.32%	21.92 USD	416.95 K	4.75	270.24 M USD	—	−5.39 USD	+16.74%	0.00%	Technology services	
+Buy
+
+AMSC
+American Superconductor Corporation
++29.38%	56.85 USD	5.31 M	5.67	2.48 B USD	143.96	0.39 USD	—	0.00%	Producer manufacturing	
+Strong buy
+
+PI
+Impinj, Inc.
++26.49%	154.58 USD	2.7 M	5.21	4.48 B USD	21,469.44	0.01 USD	−97.16%	0.00%	Electronic technology	
+Strong buy
+
+RSI
+Rush Street Interactive, Inc.
++25.53%	20.16 USD	11.19 M	8.35	4.62 B USD	79.31	0.25 USD	—	0.00%	Consumer services	
+Strong buy
+
+HIT
+Health In Tech, Inc.
++24.70%	2.07 USD	2.5 M	0.88	113.17 M USD	89.61	0.02 USD	−32.26%	0.00%	Technology services	
+Strong buy
+
+AGH
+Aureus Greenway Holdings Inc.
++24.62%	2.48 USD	576.44 K	0.13	—	—	—	—	—	Consumer services	
+Neutral
+L
+LVLU
+Lulu's Fashion Lounge Holdings, Inc.
++23.08%	4.00 USD	925.2 K	2.33	11.06 M USD	—	−20.69 USD	−183.52%	0.00%	Retail trade	
+Neutral
+
+CGNX
+Cognex Corporation
++20.76%	40.77 USD	7.01 M	3.98	6.84 B USD	57.09	0.71 USD	+57.46%	0.93%	Electronic technology	
+Buy
+E
+EMPG
+Empro Group Inc.
++19.78%	5.39 USD	989.41 K	4.19	43.79 M USD	—	—	—	0.00%	Distribution services	
+Neutral
+
+AVTX
+Avalo Therapeutics, Inc.
++18.47%	7.89 USD	708.67 K	3.99	85.43 M USD	—	−21.53 USD	+93.25%	0.00%	Health technology	
+Strong buy
+
+MOD
+Modine Manufacturing Company
++18.43%	134.56 USD	4.51 M	3.31	7.06 B USD	38.56	3.49 USD	+13.95%	0.00%	Producer manufacturing	
+Strong buy
+
+EBAY
+eBay Inc.
++18.30%	91.75 USD	20.27 M	3.48	42.3 B USD	20.24	4.53 USD	−11.63%	1.44%	Retail trade	
+Neutral
+
+ATAI
+ATAI Life Sciences N.V.
++18.16%	4.10 USD	15.83 M	1.85	823.09 M USD	—	—	—	0.00%	Health technology	
+Strong buy
+
+CHRW
+C.H. Robinson Worldwide, Inc.
++18.10%	115.32 USD	6.47 M	4.94	13.69 B USD	26.25	4.39 USD	+58.43%	2.54%	Transportation	
+Buy
+
+NSPR
+InspireMD Inc.
++17.72%	2.79 USD	888.35 K	22.07	85.47 M USD	—	−0.79 USD	+6.09%	0.00%	Health technology	
+Strong buy
+
+APLS
+Apellis Pharmaceuticals, Inc.
++17.58%	22.34 USD	7 M	2.42	2.81 B USD	—	−1.79 USD	+48.16%	0.00%	Health technology	
+Buy
+I
+IMA
+ImageneBio, Inc.
++17.07%	17.90 USD	121.12 K	12.78	200.15 M USD	—	−7.65 USD	+55.32%	0.00%	Health technology	
+Buy
+
+ASPS
+Altisource Portfolio Solutions S.A.
++17.05%	11.12 USD	40.92 K	0.98	122.17 M USD	—	−4.31 USD	+66.26%	0.00%	Finance	
+Neutral
+
+CVNA
+Carvana Co.
++16.96%	390.17 USD	10.85 M	3.87	83.55 B USD	97.69	3.99 USD	+26.04%	0.00%	Retail trade	
+Buy
+
+CLMB
+Climb Global Solutions, Inc.
++16.21%	118.00 USD	182.17 K	4.51	543.08 M USD	24.41	4.83 USD	+59.78%	0.67%	Distribution services	
+Strong buy
+
+INDV
+Indivior PLC
++16.09%	20.20 USD	24.09 M	6.79	2.52 B USD	—	−0.23 USD	−1,980.17%	0.00%	Health technology	
+Strong buy
+
+GNLN
+Greenlane Holdings, Inc.
++16.03%	3.98 USD	162.03 K	0.61	5.52 M USD	—	−5,850.47 USD	+92.54%	0.00%	Distribution services	
+Neutral
+
+TGEN
+Tecogen Inc.
++15.51%	9.68 USD	1.65 M	1.16	286.11 M USD	—	−0.17 USD	−2.30%	0.00%	Producer manufacturing	
+Neutral
+
+ALNY
+Alnylam Pharmaceuticals, Inc.
++15.43%	392.24 USD	3.35 M	3.51	51.14 B USD	—	−2.09 USD	+21.99%	0.00%	Health technology	
+Buy
+
+AVD
+American Vanguard Corporation
++14.88%	3.86 USD	895.96 K	3.93	134.14 M USD	—	−4.76 USD	−2,011.16%	0.89%	Process industries	
+Strong buy
+
+LUD
+Luda Technology Group Limited
++14.42%	4.92 USD	35.19 K	0.58	—	—	—	—	—	Non-energy minerals	
+Neutral
+
+USAR
+USA Rare Earth, Inc.
++13.99%	12.71 USD	6.38 M	1.58	1.22 B USD	15.75	0.81 USD	+160.63%	0.00%	Producer manufacturing	
+Strong buy
+F
+FGI
+FGI Industries Ltd.
++13.92%	4.50 USD	127.68 K	4.44	37.89 M USD	—	−0.74 USD	−337.06%	0.00%	Producer manufacturing	
+Strong buy
+A
+AMBQ
+Ambiq Micro, Inc.
++13.81%	43.85 USD	4.1 M	—	747.03 M USD	—	—	—	0.00%	Electronic technology	
+Neutral
+
+FIEE
+FiEE, Inc
++13.62%	2.67 USD	921.52 K	15.53	16.62 M USD	—	−0.45 USD	+94.47%	0.00%	Electronic technology	
+Neutral
+
+NATL
+NCR Atleos Corporation
++13.42%	30.60 USD	1.66 M	1.71	2.25 B USD	19.68	1.56 USD	—	0.00%	Electronic technology	
+Buy
+
+INOD
+Innodata Inc.
++13.22%	54.90 USD	6.36 M	3.10	1.74 B USD	52.79	1.04 USD	+1,512.25%	0.00%	Technology services	
+Strong buy
+
+TOYO
+TOYO Co., Ltd
++13.17%	5.67 USD	191.48 K	6.77	190.49 M USD	5.14	1.10 USD	+393.21%	0.00%	Electronic technology	
+Neutral
+
+HDSN
+Hudson Technologies, Inc.
++12.86%	9.39 USD	2.99 M	9.63	408.28 M USD	23.54	0.40 USD	−48.48%	0.00%	Distribution services	
+Buy
+M
+MSGY
+Masonglory Limited
++12.84%	11.78 USD	305.02 K	1.58	167.57 M USD	—	—	—	0.00%	Industrial services	
+Neutral
+
+MPU
+Mega Matrix Inc.
++12.61%	3.93 USD	1.24 M	0.68	226.35 M USD	—	—	—	0.00%	Technology services	
+Neutral
+
+FGF
+Fundamental Global Inc.
++12.02%	20.79 USD	372.32 K	1.40	26.45 M USD	—	−5.59 USD	−33.99%	0.00%	Finance	
+Neutral
+
+LANV
+Lanvin Group Holdings Limited
++11.63%	2.40 USD	37.2 K	0.97	302.33 M USD	—	−1.83 USD	−38.76%	0.00%	Consumer non-durables	
+Neutral
+
+CRML
+Critical Metals Corp.
++11.54%	3.77 USD	3.47 M	0.75	371.73 M USD	—	−1.96 USD	−195.90%	0.00%	Non-energy minerals	
+Neutral
+
+LNC
+Lincoln National Corporation
++11.43%	38.11 USD	6.37 M	3.45	6.51 B USD	5.42	7.03 USD	−3.95%	5.26%	Finance	
+Neutral
+
+META
+Meta Platforms, Inc.
++11.25%	773.44 USD	38.68 M	3.23	1.94 T USD	28.01	27.62 USD	+41.00%	0.29%	Technology services	
+Strong buy
+
+CPSH
+CPS Technologies Corp.
++11.11%	2.90 USD	283.85 K	3.78	42.13 M USD	—	−0.13 USD	−132.72%	0.00%	Producer manufacturing	
+Neutral
+
+STGW
+Stagwell Inc.
++11.05%	5.73 USD	2.62 M	1.90	1.53 B USD	1,123.53	0.01 USD	—	0.00%	Commercial services	
+Buy
+
+PXLW
+Pixelworks, Inc.
++10.96%	11.85 USD	101.84 K	0.60	62.14 M USD	—	−6.38 USD	−37.78%	0.00%	Electronic technology	
+Strong buy
+
+CRWV
+CoreWeave, Inc.
++10.92%	114.13 USD	24.76 M	2.44	55.7 B USD	—	—	—	0.00%	Technology services	
+Neutral
+
+ONCO
+Onconetix, Inc.
++10.90%	3.56 USD	25.98 M	79.70	1.86 M USD	—	−2,700.35 USD	+64.54%	0.00%	Health technology	
+Neutral
+
+CERO
+CERo Therapeutics Holdings, Inc.
++10.86%	7.76 USD	227.93 K	2.92	9.27 M USD	—	−498.80 USD	+46.28%	0.00%	Health technology	
+Strong buy
+Y
+YMAT
+J-Star Holding Co., Ltd.
++10.78%	4.52 USD	4.05 M	—	76.9 M USD	69.65	0.06 USD	−18.67%	0.00%	Producer manufacturing	
+Neutral
+
+XYL
+Xylem Inc.
++10.74%	144.62 USD	3.54 M	3.96	35.19 B USD	38.91	3.72 USD	+32.80%	1.16%	Producer manufacturing	
+Buy
+
+LTRN
+Lantern Pharma Inc.
++10.72%	4.44 USD	716.1 K	1.36	47.88 M USD	—	−1.85 USD	−13.72%	0.00%	Health technology	
+Strong buy
+
+VSEC
+VSE Corporation
++10.64%	156.54 USD	480.84 K	2.70	3.24 B USD	141.23	1.11 USD	+40.55%	0.28%	Industrial services	
+Strong buy
+
+AGCO
+AGCO Corporation
++10.62%	117.97 USD	3.16 M	4.22	8.8 B USD	—	−7.81 USD	−152.85%	1.09%	Producer manufacturing	
+Neutral
+
+STFS
+Star Fashion Culture Holdings Limited
++10.53%	2.10 USD	8.96 M	5.16	29.29 M USD	295.77	0.01 USD	−92.85%	0.00%	Commercial services	
+Neutral
+
+TMDX
+TransMedics Group, Inc.
++10.46%	118.97 USD	3.86 M	3.20	4.03 B USD	61.52	1.93 USD	+5,316.81%	0.00%	Health technology	
+Buy
+
+EVTC
+Evertec, Inc.
++10.31%	36.15 USD	1.19 M	3.38	2.31 B USD	17.01	2.13 USD	+101.21%	0.61%	Commercial services	
+Buy
+
+RBLX
+Roblox Corporation
++10.28%	137.79 USD	24.64 M	2.83	93.46 B USD	—	−1.34 USD	+27.61%	0.00%	Technology services	
+Buy
+
+MDXG
+MiMedx Group, Inc
++10.28%	7.19 USD	2.78 M	3.56	1.06 B USD	33.33	0.22 USD	−63.27%	0.00%	Health technology	
+Strong buy
+
+WDC
+Western Digital Corporation
++10.16%	78.69 USD	24.01 M	3.42	27.45 B USD	15.50	5.08 USD	—	0.14%	Electronic technology	
+Buy
+
+CCRD
+CoreCard Corporation
++10.03%	28.95 USD	814.6 K	17.03	225.42 M USD	33.69	0.86 USD	+182.11%	0.00%	Technology services	
+Neutral
+
+BLIV
+BeLive Holdings
++10.00%	2.64 USD	35.06 K	0.79	28.68 M USD	—	−0.41 USD	−157.22%	0.00%	Technology services	
+Neutral
+
+PRLB
+Proto Labs, Inc.
++9.92%	43.12 USD	390.19 K	2.29	1.02 B USD	72.23	0.60 USD	−21.99%	0.00%	Process industries	
+Buy
+
+COMP
+Compass, Inc.
++9.82%	7.94 USD	18.97 M	2.80	4.22 B USD	—	−0.10 USD	+78.51%	0.00%	Technology services	
+Buy
+
+INTG
+The Intergroup Corporation
++9.81%	11.75 USD	4.73 K	1.14	25.31 M USD	—	−3.48 USD	+45.20%	0.00%	Consumer services	
+Neutral
+
+FORD
+Forward Industries, Inc.
++9.79%	12.11 USD	45.85 K	2.33	13.64 M USD	—	−2.91 USD	+12.45%	0.00%	Consumer durables	
+Neutral
+
+PLPC
+Preformed Line Products Company
++9.77%	154.33 USD	82.36 K	1.45	762.43 M USD	18.04	8.56 USD	+4.96%	0.57%	Producer manufacturing	
+Neutral
+
+TDUP
+ThredUp Inc.
++9.69%	8.26 USD	2.04 M	1.19	976.72 M USD	—	−0.58 USD	+9.27%	0.00%	Retail trade	
+Strong buy
+M
+MFI
+mF International Limited
++9.54%	24.12 USD	29.91 K	1.07	39.95 M USD	—	−0.20 USD	—	0.00%	Technology services	
+Neutral
+
+KNW
+Know Labs, Inc.
++9.52%	2.76 USD	365.56 K	0.93	20.69 M USD	—	−6.45 USD	+52.80%	0.00%	Electronic technology	
+Neutral
+A
+AMZE
+Amaze Holdings, Inc.
++9.45%	4.58 USD	48.55 K	0.44	24.15 M USD	—	−5.01 USD	+64.17%	0.00%	Consumer non-durables	
+Strong buy
+
+NCLH
+Norwegian Cruise Line Holdings Ltd.
++9.23%	25.56 USD	40.61 M	3.09	11.42 B USD	15.58	1.64 USD	+151.32%	0.00%	Consumer services	
+Buy
+
+APPS
+Digital Turbine, Inc.
++9.11%	5.45 USD	4.08 M	1.22	588.37 M USD	—	−0.89 USD	+78.56%	0.00%	Technology services	
+Neutral
+
+LECO
+Lincoln Electric Holdings, Inc.
++9.03%	243.50 USD	1.04 M	3.37	13.59 B USD	30.05	8.10 USD	−14.04%	1.33%	Producer manufacturing	
+Buy
+
+IMNN
+Imunon, Inc.
++8.94%	8.29 USD	330.86 K	0.45	17.59 M USD	—	−21.10 USD	+30.50%	0.00%	Health technology	
+Buy
+
+UDMY
+Udemy, Inc.
++8.87%	7.61 USD	3.22 M	2.01	1.13 B USD	—	−0.21 USD	+63.17%	0.00%	Technology services	
+Buy
+
+WKSP
+Worksport, Ltd.
++8.74%	3.36 USD	383.72 K	1.22	17.47 M USD	—	−5.19 USD	+36.22%	0.00%	Producer manufacturing	
+Strong buy
+
+CTOS
+Custom Truck One Source, Inc.
++8.60%	6.19 USD	2.08 M	2.38	1.4 B USD	—	−0.16 USD	−177.08%	0.00%	Finance	
+Buy
+
+XCUR
+Exicure, Inc.
++8.36%	7.13 USD	6.64 K	0.16	45.05 M USD	—	−1.63 USD	+79.14%	0.00%	Health technology	
+Neutral
+
+TSSI
+TSS, Inc.
++8.32%	27.20 USD	3.15 M	1.13	680.56 M USD	76.62	0.36 USD	+814.95%	0.00%	Technology services	
+Neutral
+
+ENGN
+enGene Holdings Inc.
++8.29%	3.79 USD	849.89 K	15.78	193.69 M USD	—	−1.65 USD	−1,000.40%	0.00%	Health technology	
+Strong buy
+
+CWD
+CaliberCos Inc.
++8.11%	2.97 USD	84.56 K	2.84	3.92 M USD	—	−18.19 USD	−27.34%	0.00%	Finance	
+Neutral
+
+HII
+Huntington Ingalls Industries, Inc.
++7.87%	278.86 USD	2.04 M	5.11	10.94 B USD	20.10	13.87 USD	−21.80%	2.07%	Electronic technology	
+Buy
+
+MNRO
+Monro, Inc.
++7.84%	14.10 USD	2.09 M	1.64	422.45 M USD	—	−0.70 USD	−166.80%	8.57%	Retail trade	
+Neutral
+
+AUID
+authID Inc.
++7.71%	3.91 USD	130.09 K	2.24	52.57 M USD	—	−1.53 USD	+91.63%	0.00%	Electronic technology	
+Neutral
+
+SPOK
+Spok Holdings, Inc.
++7.69%	18.34 USD	216.3 K	2.48	377.3 M USD	22.18	0.83 USD	+8.97%	7.34%	Communications	
+Strong buy
+
+AIRS
+AirSculpt Technologies, Inc.
++7.65%	6.61 USD	1.19 M	1.55	412.56 M USD	—	−0.30 USD	−1,278.09%	0.00%	Health technology	
+Neutral
+
+SILC
+Silicom Ltd
++7.60%	16.50 USD	135.22 K	23.78	93.99 M USD	—	−1.94 USD	+61.26%	0.00%	Electronic technology	
+Neutral
+
+ISPO
+Inspirato Incorporated
++7.56%	2.49 USD	33.63 K	0.61	31.05 M USD	—	−1.84 USD	+87.32%	0.00%	Consumer services	
+Neutral
+
+RDDT
+Reddit, Inc.
++7.54%	160.59 USD	18.46 M	3.51	29.63 B USD	248.44	0.65 USD	—	0.00%	Technology services	
+Buy
+
+APP
+Applovin Corporation
++7.54%	390.70 USD	7.91 M	2.18	132.21 B USD	70.55	5.54 USD	+228.10%

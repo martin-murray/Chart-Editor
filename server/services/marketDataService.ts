@@ -1,29 +1,59 @@
 import { FinnhubService } from './finnhubService.js';
+import { AlphaVantageService } from './alphaVantageService.js';
 import { storage } from '../storage.js';
 import type { InsertStock, InsertMarketSummary } from '@shared/schema.js';
 
 export class MarketDataService {
   private finnhub: FinnhubService;
+  private alphaVantage: AlphaVantageService | null = null;
 
   constructor() {
     this.finnhub = new FinnhubService();
+    try {
+      this.alphaVantage = new AlphaVantageService();
+    } catch (error) {
+      console.warn('⚠️ Alpha Vantage service not available:', error);
+    }
   }
 
   /**
-   * Refresh market movers data from Finnhub API
+   * Refresh market movers data using Alpha Vantage (primary) or Finnhub (fallback)
    */
   async refreshMarketMovers(): Promise<{ success: boolean; count: number; message: string }> {
     try {
-      console.log('🔄 Starting market movers refresh with Finnhub data...');
+      console.log('🔄 Starting market movers refresh...');
 
-      // Get fresh market movers from Finnhub
-      const { gainers, losers } = await this.finnhub.getMarketMovers(25);
+      let gainers: InsertStock[] = [];
+      let losers: InsertStock[] = [];
+      let dataSource = '';
+
+      // Try Alpha Vantage first (comprehensive market movers)
+      if (this.alphaVantage) {
+        try {
+          console.log('📊 Using Alpha Vantage for comprehensive market movers...');
+          const alphaData = await this.alphaVantage.getTopGainersLosers();
+          gainers = alphaData.gainers;
+          losers = alphaData.losers;
+          dataSource = 'Alpha Vantage';
+        } catch (error) {
+          console.warn('⚠️ Alpha Vantage failed, falling back to Finnhub:', error);
+        }
+      }
+
+      // Fallback to Finnhub if Alpha Vantage failed or unavailable
+      if (gainers.length === 0 && losers.length === 0) {
+        console.log('📊 Using Finnhub for limited market movers...');
+        const finnhubData = await this.finnhub.getMarketMovers(25);
+        gainers = finnhubData.gainers;
+        losers = finnhubData.losers;
+        dataSource = 'Finnhub';
+      }
       
       if (gainers.length === 0 && losers.length === 0) {
         return {
           success: false,
           count: 0,
-          message: 'No market movers data available from Finnhub'
+          message: 'No market movers data available from any source'
         };
       }
 
@@ -47,12 +77,12 @@ export class MarketDataService {
       // Update market summary
       await this.updateMarketSummary(allStocks);
 
-      console.log(`✅ Market movers refresh complete: ${insertedCount} stocks updated`);
+      console.log(`✅ Market movers refresh complete: ${insertedCount} stocks updated from ${dataSource}`);
       
       return {
         success: true,
         count: insertedCount,
-        message: `Successfully updated ${insertedCount} market movers from Finnhub`
+        message: `Successfully updated ${insertedCount} market movers from ${dataSource}`
       };
 
     } catch (error) {
