@@ -160,7 +160,7 @@ export class MarketDataService {
       };
 
       await storage.updateMarketSummary(summaryData);
-      console.log('📊 Market summary updated with Finnhub data');
+      console.log('📊 Market summary updated with Alpha Vantage data');
 
     } catch (error) {
       console.error('Error updating market summary:', error);
