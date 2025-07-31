@@ -112,6 +112,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Detailed stock info endpoint
+  app.get("/api/stocks/:symbol/details", async (req, res) => {
+    try {
+      const { symbol } = req.params;
+      const stockDetails = await stockDataService.getDetailedStockInfo(symbol);
+      
+      if (!stockDetails) {
+        return res.status(404).json({ error: "Stock details not available" });
+      }
+
+      res.json(stockDetails);
+    } catch (error) {
+      console.error("Stock details error:", error);
+      res.status(500).json({ error: "Failed to fetch stock details" });
+    }
+  });
+
   app.get("/api/stocks/gainers", async (req, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 10;

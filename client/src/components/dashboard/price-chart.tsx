@@ -22,6 +22,33 @@ interface ChartResponse {
   data: ChartData[];
 }
 
+interface StockDetails {
+  quote: {
+    c: number; // Current price
+    d: number; // Change
+    dp: number; // Percent change
+    h: number; // High
+    l: number; // Low
+    o: number; // Open
+    pc: number; // Previous close
+    t: number; // Timestamp
+  };
+  profile: {
+    marketCapitalization: number;
+    shareOutstanding: number;
+    name: string;
+  };
+  metrics: {
+    peRatioTTM?: number;
+    epsTTM?: number;
+    beta?: number;
+    "52WeekHigh"?: number;
+    "52WeekLow"?: number;
+    dividendYieldTTM?: number;
+    [key: string]: any;
+  };
+}
+
 interface PriceChartProps {
   symbol: string;
   name: string;
@@ -46,6 +73,16 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
     queryFn: async (): Promise<ChartResponse> => {
       const response = await fetch(`/api/stocks/${symbol}/chart?timeframe=${selectedTimeframe}`);
       if (!response.ok) throw new Error('Failed to fetch chart data');
+      return await response.json();
+    },
+    enabled: !!symbol,
+  });
+
+  const { data: stockDetails } = useQuery({
+    queryKey: ['/api/stocks', symbol, 'details'],
+    queryFn: async (): Promise<StockDetails> => {
+      const response = await fetch(`/api/stocks/${symbol}/details`);
+      if (!response.ok) throw new Error('Failed to fetch stock details');
       return await response.json();
     },
     enabled: !!symbol,
@@ -88,16 +125,29 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
   const isPositive = parseChange >= 0;
   const lineColor = isPositive ? '#10b981' : '#ef4444'; // Green for positive, red for negative
 
+  const formatNumber = (num: number) => {
+    if (num >= 1e12) return `${(num / 1e12).toFixed(2)}T`;
+    if (num >= 1e9) return `${(num / 1e9).toFixed(2)}B`;
+    if (num >= 1e6) return `${(num / 1e6).toFixed(2)}M`;
+    if (num >= 1e3) return `${(num / 1e3).toFixed(2)}K`;
+    return num?.toLocaleString() || 'N/A';
+  };
+
+  const formatPercent = (value: number) => {
+    return value ? `${(value * 100).toFixed(2)}%` : 'N/A';
+  };
+
   return (
-    <Card className="w-full">
-      <CardHeader className="pb-4">
+    <div className="w-full space-y-6">
+      {/* Header Section */}
+      <div className="space-y-4">
         <div className="flex items-start justify-between">
           <div>
-            <CardTitle className="text-xl font-medium flex items-center gap-2">
+            <div className="text-xl font-medium flex items-center gap-2">
               <span className="text-[#5AF5FA]">{symbol}</span>
               <span className="text-muted-foreground">-</span>
               <span className="text-sm font-normal text-muted-foreground">{name}</span>
-            </CardTitle>
+            </div>
             <div className="mt-2 flex items-center gap-3">
               <span className="text-2xl font-bold">{formatPrice(parseFloat(currentPrice))}</span>
               <Badge 
@@ -109,11 +159,23 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
               </Badge>
               <span className="text-sm text-muted-foreground">{marketCap}</span>
             </div>
+            
+            {/* Pre/After Market Display */}
+            {stockDetails?.quote && (
+              <div className="mt-3 flex items-center gap-4 text-sm">
+                <span className="text-muted-foreground">
+                  Pre-Market: <span className="text-foreground">N/A</span>
+                </span>
+                <span className="text-muted-foreground">
+                  After Hours: <span className="text-foreground">N/A</span>
+                </span>
+              </div>
+            )}
           </div>
         </div>
         
         {/* Timeframe selector */}
-        <div className="flex gap-1 mt-4">
+        <div className="flex gap-1">
           {timeframes.map((timeframe) => (
             <Button
               key={timeframe.value}
@@ -130,9 +192,9 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             </Button>
           ))}
         </div>
-      </CardHeader>
-      
-      <CardContent>
+      </div>
+      {/* Chart Section */}
+      <div className="bg-background">
         {isLoading ? (
           <div className="h-80 flex items-center justify-center">
             <div className="flex items-center gap-2 text-muted-foreground">
@@ -189,7 +251,97 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             </ResponsiveContainer>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+
+      {/* Stats Grid - 4 Columns */}
+      {stockDetails && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-sm">
+          {/* Column 1 */}
+          <div className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Previous Close</span>
+              <span className="font-medium">{formatPrice(stockDetails.quote.pc)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Open</span>
+              <span className="font-medium">{formatPrice(stockDetails.quote.o)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Bid</span>
+              <span className="font-medium">N/A</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Ask</span>
+              <span className="font-medium">N/A</span>
+            </div>
+          </div>
+
+          {/* Column 2 */}
+          <div className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Day's Range</span>
+              <span className="font-medium">{formatPrice(stockDetails.quote.l)} - {formatPrice(stockDetails.quote.h)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">52 Week Range</span>
+              <span className="font-medium">
+                {stockDetails.metrics["52WeekLow"] && stockDetails.metrics["52WeekHigh"] 
+                  ? `${formatPrice(stockDetails.metrics["52WeekLow"])} - ${formatPrice(stockDetails.metrics["52WeekHigh"])}`
+                  : 'N/A'
+                }
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Volume</span>
+              <span className="font-medium">N/A</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Avg. Volume</span>
+              <span className="font-medium">N/A</span>
+            </div>
+          </div>
+
+          {/* Column 3 */}
+          <div className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Market Cap</span>
+              <span className="font-medium">{stockDetails.profile.marketCapitalization ? formatNumber(stockDetails.profile.marketCapitalization * 1000000) : 'N/A'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Beta (5Y Monthly)</span>
+              <span className="font-medium">{stockDetails.metrics.beta?.toFixed(2) || 'N/A'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">PE Ratio (TTM)</span>
+              <span className="font-medium">{stockDetails.metrics.peRatioTTM?.toFixed(2) || 'N/A'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">EPS (TTM)</span>
+              <span className="font-medium">{stockDetails.metrics.epsTTM?.toFixed(2) || 'N/A'}</span>
+            </div>
+          </div>
+
+          {/* Column 4 */}
+          <div className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Earnings Date</span>
+              <span className="font-medium">N/A</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Forward Dividend & Yield</span>
+              <span className="font-medium">{stockDetails.metrics.dividendYieldTTM ? formatPercent(stockDetails.metrics.dividendYieldTTM) : 'N/A'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Ex-Dividend Date</span>
+              <span className="font-medium">N/A</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">1y Target Est</span>
+              <span className="font-medium">N/A</span>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

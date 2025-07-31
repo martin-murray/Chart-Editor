@@ -323,6 +323,30 @@ export class FinnhubService {
       return null;
     }
   }
+
+  async getDetailedQuote(symbol: string): Promise<any> {
+    try {
+      // Get comprehensive quote data including pre/after market
+      const [quote, profile, metrics] = await Promise.all([
+        this.makeRequest(`/quote?symbol=${symbol}`),
+        this.makeRequest(`/stock/profile2?symbol=${symbol}`),
+        this.makeRequest(`/stock/metric?symbol=${symbol}&metric=all`)
+      ]);
+
+      if (!quote || !profile) {
+        return null;
+      }
+
+      return {
+        quote,
+        profile,
+        metrics: metrics?.metric || {}
+      };
+    } catch (error) {
+      console.error(`Error fetching detailed quote for ${symbol}:`, error);
+      return null;
+    }
+  }
 }
 
 export const finnhubService = new FinnhubService();

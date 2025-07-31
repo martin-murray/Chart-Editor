@@ -39,6 +39,18 @@ export class StockDataService {
   }
 
   /**
+   * Get detailed stock information including pre/after market and stats
+   */
+  async getDetailedStockInfo(symbol: string): Promise<any> {
+    try {
+      return await finnhubService.getDetailedQuote(symbol);
+    } catch (error) {
+      console.error("Error getting detailed stock info:", error);
+      return null;
+    }
+  }
+
+  /**
    * Get API status - placeholder for new API
    */
   async getApiStatus(): Promise<{remainingRequests: number, resetTime?: string}> {
