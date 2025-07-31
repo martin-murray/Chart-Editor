@@ -307,6 +307,22 @@ export class FinnhubService {
       throw error;
     }
   }
+
+  async getStockCandles(symbol: string, from: number, to: number, resolution: string = '1'): Promise<any> {
+    try {
+      const endpoint = `/stock/candle?symbol=${symbol}&resolution=${resolution}&from=${from}&to=${to}`;
+      const response = await this.makeRequest(endpoint);
+      
+      if (response?.s === 'no_data') {
+        return null;
+      }
+      
+      return response;
+    } catch (error) {
+      console.error(`Error fetching candle data for ${symbol}:`, error);
+      return null;
+    }
+  }
 }
 
 export const finnhubService = new FinnhubService();

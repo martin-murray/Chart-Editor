@@ -47,6 +47,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Stock chart data endpoint
+  app.get("/api/stocks/:symbol/chart", async (req, res) => {
+    try {
+      const { symbol } = req.params;
+      const { timeframe = '1D' } = req.query;
+
+      // Calculate time range based on timeframe
+      const now = Math.floor(Date.now() / 1000);
+      let from: number;
+      let resolution: string;
+
+      switch (timeframe) {
+        case '1D':
+          from = now - (24 * 60 * 60); // 1 day
+          resolution = '5'; // 5-minute intervals
+          break;
+        case '1W':
+          from = now - (7 * 24 * 60 * 60); // 1 week  
+          resolution = '15'; // 15-minute intervals
+          break;
+        case '1M':
+          from = now - (30 * 24 * 60 * 60); // 1 month
+          resolution = '60'; // 1-hour intervals
+          break;
+        case '3M':
+          from = now - (90 * 24 * 60 * 60); // 3 months
+          resolution = 'D'; // Daily intervals
+          break;
+        case '1Y':
+          from = now - (365 * 24 * 60 * 60); // 1 year
+          resolution = 'D'; // Daily intervals
+          break;
+        default:
+          from = now - (24 * 60 * 60);
+          resolution = '5';
+      }
+
+      const chartData = await stockDataService.getStockChart(symbol, from, now, resolution);
+      
+      if (!chartData) {
+        return res.status(404).json({ error: "Chart data not available" });
+      }
+
+      // Transform the data for the frontend chart
+      const formattedData = chartData.t?.map((timestamp: number, index: number) => ({
+        timestamp: timestamp * 1000, // Convert to milliseconds
+        time: new Date(timestamp * 1000).toISOString(),
+        open: chartData.o[index],
+        high: chartData.h[index],
+        low: chartData.l[index],
+        close: chartData.c[index],
+        volume: chartData.v[index]
+      })) || [];
+
+      res.json({
+        symbol,
+        timeframe,
+        data: formattedData
+      });
+    } catch (error) {
+      console.error("Chart data error:", error);
+      res.status(500).json({ error: "Failed to fetch chart data" });
+    }
+  });
+
   app.get("/api/stocks/gainers", async (req, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 10;

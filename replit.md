@@ -45,6 +45,8 @@ Preferred communication style: Simple, everyday language.
 - **Market Status Indicator**: Real-time US market status (OPEN/CLOSED) with countdown to next market open
 - **Data Tables**: Sortable tables with custom cell renderers for financial data
 - **Export Functionality**: CSV export capabilities for market data
+- **Price Chart Component**: Interactive stock price charts with multiple timeframes (1D, 1W, 1M, 3M, 1Y)
+- **Ticker Search with Charts**: Real-time search with integrated price visualization on stock selection
 - **Responsive Design**: Mobile-first design with adaptive layouts
 - **Dark Mode**: Complete light/dark theme toggle with Intropic MUI color scheme (#5AF5FA cyan accents)
 - **Typography**: Space Grotesk headings (weight 300) and Mulish body text (weight 400)
@@ -56,6 +58,7 @@ Preferred communication style: Simple, everyday language.
 - **Data Quality**: Authentic real-time US stock data from NYSE, NASDAQ, AMEX
 - **US Stock Filtering**: Advanced filtering excluding foreign exchanges and ADRs
 - **Ticker Search**: Live search functionality with real-time quotes and company profiles
+- **Historical Chart Data**: Real-time OHLCV data with multiple timeframe resolutions
 - **Coverage**: Complete US stock universe with market cap, sector, and index data
 - **Real-time Updates**: Live quotes, percent changes, and market status
 - **API Performance**: Premium tier with high rate limits and comprehensive endpoints

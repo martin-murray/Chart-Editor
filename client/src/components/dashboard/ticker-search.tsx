@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Search, TrendingUp, TrendingDown, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PriceChart } from "./price-chart";
 
 interface SearchResult {
   symbol: string;
@@ -21,6 +22,7 @@ export function TickerSearch({ onSelectStock }: TickerSearchProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+  const [selectedStock, setSelectedStock] = useState<SearchResult | null>(null);
 
   // Debounce search query - increased delay for better performance
   useEffect(() => {
@@ -53,6 +55,7 @@ export function TickerSearch({ onSelectStock }: TickerSearchProps) {
   const handleSelectStock = (stock: SearchResult) => {
     setSearchQuery(`${stock.symbol} - ${stock.name}`);
     setIsOpen(false);
+    setSelectedStock(stock);
     onSelectStock?.(stock);
   };
 
@@ -169,6 +172,19 @@ export function TickerSearch({ onSelectStock }: TickerSearchProps) {
           className="fixed inset-0 z-40"
           onClick={() => setIsOpen(false)}
         />
+      )}
+
+      {/* Price Chart */}
+      {selectedStock && (
+        <div className="mt-6">
+          <PriceChart
+            symbol={selectedStock.symbol}
+            name={selectedStock.name}
+            currentPrice={selectedStock.price}
+            percentChange={selectedStock.percentChange}
+            marketCap={selectedStock.marketCap}
+          />
+        </div>
       )}
     </div>
   );

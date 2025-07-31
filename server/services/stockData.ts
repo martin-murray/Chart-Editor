@@ -27,6 +27,18 @@ export class StockDataService {
   }
 
   /**
+   * Get stock chart data using Finnhub API
+   */
+  async getStockChart(symbol: string, from: number, to: number, resolution: string): Promise<any> {
+    try {
+      return await finnhubService.getStockCandles(symbol, from, to, resolution);
+    } catch (error) {
+      console.error("Error getting stock chart:", error);
+      return null;
+    }
+  }
+
+  /**
    * Get API status - placeholder for new API
    */
   async getApiStatus(): Promise<{remainingRequests: number, resetTime?: string}> {
