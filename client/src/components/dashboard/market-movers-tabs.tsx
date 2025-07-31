@@ -139,18 +139,6 @@ export function MarketMoversTabs({
       </CardHeader>
       
       <CardContent className="pt-0">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">Market Movers</h3>
-          <Button
-            onClick={onFinnhubRefresh}
-            disabled={isRefreshing}
-            size="sm"
-            className="bg-[#5AF5FA] hover:bg-[#4AE5EA] text-black"
-          >
-            <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-            {isRefreshing ? 'Refreshing...' : 'Refresh Market Data'}
-          </Button>
-        </div>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
