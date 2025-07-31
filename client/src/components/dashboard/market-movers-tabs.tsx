@@ -37,12 +37,15 @@ export function MarketMoversTabs({
   };
 
   const handleSort = (key: keyof Stock) => {
+    console.log('Sorting by:', key, 'Current filter:', filter);
     const newOrder = filter.sortBy === key && filter.sortOrder === "desc" ? "asc" : "desc";
-    onFilterChange({
+    const newFilter = {
       ...filter,
       sortBy: key as any,
       sortOrder: newOrder,
-    });
+    };
+    console.log('New filter:', newFilter);
+    onFilterChange(newFilter);
   };
 
   const columns = [
