@@ -97,7 +97,7 @@ export function TickerSearch({ onSelectStock }: TickerSearchProps) {
 
       {/* Search Results Dropdown */}
       {isOpen && (
-        <Card className="absolute top-full left-0 right-0 mt-1 max-h-80 overflow-y-auto z-50 shadow-lg border-border bg-card">
+        <Card className="absolute top-full left-0 right-0 mt-1 max-h-80 overflow-y-auto z-[9999] shadow-lg border-border bg-card">
           {isLoading ? (
             <div className="p-4 text-center text-muted-foreground">
               <div className="flex items-center justify-center gap-2">
@@ -169,7 +169,7 @@ export function TickerSearch({ onSelectStock }: TickerSearchProps) {
       {/* Backdrop to close dropdown */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-40"
+          className="fixed inset-0 z-[9998]"
           onClick={() => setIsOpen(false)}
         />
       )}

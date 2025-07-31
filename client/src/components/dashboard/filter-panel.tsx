@@ -16,15 +16,15 @@ export function FilterPanel({ filter, onFilterChange, lastUpdated }: FilterPanel
   };
 
   return (
-    <Card>
+    <Card className="overflow-visible">
       <CardHeader>
         <CardTitle>Filters & Settings</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="overflow-visible">
         {/* Ticker Search Section */}
         <div className="mb-6">
           <Label htmlFor="tickerSearch">Ticker Search</Label>
-          <div className="mt-2">
+          <div className="mt-2 relative z-10">
             <TickerSearch onSelectStock={(stock) => {
               // Optional: Navigate to specific stock or apply additional filtering
               console.log("Selected stock:", stock);
