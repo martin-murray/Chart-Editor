@@ -206,15 +206,11 @@ export class FinnhubService {
             return null;
           }
 
-          // Calculate real-time market cap (price × shares outstanding)
-          const realTimeMarketCapValue = quote.c * profile.shareOutstanding * 1000000; // shares in millions
-          
-          // Format market cap from real-time calculation
-          const formatMarketCap = (marketCapValue: number): string => {
-            if (marketCapValue >= 1e12) return `$${(marketCapValue / 1e12).toFixed(1)}T`;
-            if (marketCapValue >= 1e9) return `$${(marketCapValue / 1e9).toFixed(1)}B`;
-            if (marketCapValue >= 1e6) return `$${(marketCapValue / 1e6).toFixed(1)}M`;
-            return `$${marketCapValue.toLocaleString()}`;
+          // Use Finnhub's stored market cap data (in millions)
+          const formatMarketCap = (marketCapInMillions: number): string => {
+            if (marketCapInMillions >= 1000000) return `$${(marketCapInMillions / 1000000).toFixed(1)}T`;
+            if (marketCapInMillions >= 1000) return `$${(marketCapInMillions / 1000).toFixed(1)}B`;
+            return `$${marketCapInMillions.toFixed(1)}M`;
           };
 
           return {
@@ -223,10 +219,10 @@ export class FinnhubService {
             price: quote.c.toFixed(2),
             change: quote.d.toFixed(2),
             percentChange: quote.dp.toFixed(2),
-            marketCap: formatMarketCap(realTimeMarketCapValue),
-            marketCapValue: realTimeMarketCapValue.toString(),
+            marketCap: formatMarketCap(profile.marketCapitalization),
+            marketCapValue: marketCapValue.toString(),
             volume: Math.round(Math.random() * 10000000),
-            indices: this.determineIndices(result.symbol, realTimeMarketCapValue),
+            indices: this.determineIndices(result.symbol, marketCapValue),
             sector: profile.finnhubIndustry || "Unknown"
           };
         } catch (error) {
@@ -330,7 +326,7 @@ export class FinnhubService {
 
   async getDetailedQuote(symbol: string): Promise<any> {
     try {
-      // Get comprehensive quote data including pre/after market
+      // Get comprehensive quote data including pre/after market and alternative market cap sources
       const [quote, profile, metrics] = await Promise.all([
         this.makeRequest(`/quote?symbol=${symbol}`),
         this.makeRequest(`/stock/profile2?symbol=${symbol}`),
@@ -341,9 +337,31 @@ export class FinnhubService {
         return null;
       }
 
+      // Check for market cap data quality and use most reliable source
+      let marketCap = profile.marketCapitalization;
+      if (metrics?.metric?.marketCapitalization && metrics.metric.marketCapitalization !== marketCap) {
+        console.log(`📊 DATA QUALITY ALERT: ${symbol} market cap discrepancy - Profile: $${(marketCap/1000).toFixed(1)}B vs Metrics: $${(metrics.metric.marketCapitalization/1000).toFixed(1)}B`);
+        // Use the metrics endpoint value as it may be more current
+        marketCap = metrics.metric.marketCapitalization;
+      }
+      
+      // Known data quality issues - log for research team awareness
+      const knownIssues: Record<string, { expected: number; source: string }> = {
+        'CVNA': { expected: 47047, source: 'Research Team Verification' }
+      };
+      
+      if (knownIssues[symbol]) {
+        const expected = knownIssues[symbol].expected;
+        const actual = marketCap;
+        console.log(`⚠️  DATA VERIFICATION: ${symbol} - Finnhub shows $${(actual/1000).toFixed(1)}B but expected $${(expected/1000).toFixed(1)}B (${knownIssues[symbol].source})`);
+      }
+
       return {
         quote,
-        profile,
+        profile: {
+          ...profile,
+          marketCapitalization: marketCap  // Use the potentially more current value
+        },
         metrics: metrics?.metric || {}
       };
     } catch (error) {
