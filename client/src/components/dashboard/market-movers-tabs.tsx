@@ -6,8 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
 import { TickerSearch } from "./ticker-search";
-import { GainersTable } from "./gainers-table";
-import { LosersTable } from "./losers-table";
+import { DataTable, StockSymbolCell, PercentChangeCell, PriceChangeCell, IndexBadges } from "@/components/ui/data-table";
 import { type Stock, type StockFilter } from "@/types/stock";
 
 interface MarketMoversTabsProps {
@@ -36,6 +35,53 @@ export function MarketMoversTabs({
   const updateFilter = (key: keyof StockFilter, value: any) => {
     onFilterChange({ ...filter, [key]: value });
   };
+
+  const handleSort = (key: keyof Stock) => {
+    const newOrder = filter.sortBy === key && filter.sortOrder === "desc" ? "asc" : "desc";
+    onFilterChange({
+      ...filter,
+      sortBy: key as any,
+      sortOrder: newOrder,
+    });
+  };
+
+  const columns = [
+    {
+      key: "symbol" as keyof Stock,
+      header: "Stock",
+      cell: (value: string, row: Stock) => <StockSymbolCell symbol={value} name={row.name} />,
+      sortable: true,
+    },
+    {
+      key: "price" as keyof Stock,
+      header: "Price",
+      cell: (value: string) => `$${value}`,
+      sortable: true,
+    },
+    {
+      key: "change" as keyof Stock,
+      header: "Change",
+      cell: (value: string) => <PriceChangeCell value={value} />,
+      sortable: true,
+    },
+    {
+      key: "percentChange" as keyof Stock,
+      header: "% Change",
+      cell: (value: string) => <PercentChangeCell value={value} />,
+      sortable: true,
+    },
+    {
+      key: "marketCap" as keyof Stock,
+      header: "Market Cap",
+      sortable: true,
+    },
+    {
+      key: "indices" as keyof Stock,
+      header: "Index",
+      cell: (value: string[]) => <IndexBadges indices={value} />,
+      sortable: false,
+    },
+  ];
 
   return (
     <Card className="overflow-visible">
@@ -79,6 +125,9 @@ export function MarketMoversTabs({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="symbol">Stock Symbol</SelectItem>
+                <SelectItem value="price">Price</SelectItem>
+                <SelectItem value="change">Change</SelectItem>
                 <SelectItem value="percentChange">% Change</SelectItem>
                 <SelectItem value="marketCapValue">Market Cap</SelectItem>
                 <SelectItem value="volume">Volume</SelectItem>
@@ -149,21 +198,39 @@ export function MarketMoversTabs({
           </TabsList>
           
           <TabsContent value="gainers" className="mt-4">
-            <GainersTable
-              gainers={gainers}
-              filter={filter}
-              onFilterChange={onFilterChange}
-              isLoading={gainersLoading}
-            />
+            {gainersLoading ? (
+              <div className="animate-pulse space-y-4">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="h-12 bg-muted rounded"></div>
+                ))}
+              </div>
+            ) : (
+              <DataTable
+                data={gainers}
+                columns={columns}
+                sortBy={filter.sortBy}
+                sortOrder={filter.sortOrder}
+                onSort={handleSort}
+              />
+            )}
           </TabsContent>
           
           <TabsContent value="losers" className="mt-4">
-            <LosersTable
-              losers={losers}
-              filter={filter}
-              onFilterChange={onFilterChange}
-              isLoading={losersLoading}
-            />
+            {losersLoading ? (
+              <div className="animate-pulse space-y-4">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="h-12 bg-muted rounded"></div>
+                ))}
+              </div>
+            ) : (
+              <DataTable
+                data={losers}
+                columns={columns}
+                sortBy={filter.sortBy}
+                sortOrder={filter.sortOrder}
+                onSort={handleSort}
+              />
+            )}
           </TabsContent>
         </Tabs>
       </CardContent>
