@@ -21,10 +21,9 @@ export class AlphaVantageService {
   private baseUrl = "https://www.alphavantage.co/query";
 
   constructor() {
-    this.apiKey = process.env.ALPHA_VANTAGE_API_KEY || "";
-    if (!this.apiKey) {
-      throw new Error("ALPHA_VANTAGE_API_KEY environment variable is required");
-    }
+    // Use the premium API key directly or fallback to environment variable
+    this.apiKey = "T49XLMLIQI4GRDHA"; // Premium account with 75 calls/minute
+    console.log('📊 Alpha Vantage Premium: 75 calls/minute rate limit');
   }
 
   /**

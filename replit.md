@@ -51,28 +51,33 @@ Preferred communication style: Simple, everyday language.
 - **Dark Mode**: Complete light/dark theme toggle with Intropic MUI color scheme (#5AF5FA cyan accents)
 - **Typography**: Space Grotesk headings (weight 300) and Mulish body text (weight 400)
 
-### External Service Integration - FINNHUB PREMIUM ACTIVE
-- **Stock Data Source**: Finnhub Premium API - **LIVE & ACTIVE**
-- **API Key**: Premium account integrated with comprehensive US stock coverage
-- **Market Cap Validation**: Real-time filtering for ≥$2B market cap requirement
-- **Data Quality**: Authentic real-time US stock data from NYSE, NASDAQ, AMEX
-- **US Stock Filtering**: Advanced filtering excluding foreign exchanges and ADRs
-- **Ticker Search**: Live search functionality with real-time quotes and company profiles
-- **Historical Chart Data**: Real-time OHLCV data with multiple timeframe resolutions
-- **Coverage**: Complete US stock universe with market cap, sector, and index data
-- **Real-time Updates**: Live quotes, percent changes, and market status
-- **API Performance**: Premium tier with high rate limits and comprehensive endpoints
+### External Service Integration - ALPHA VANTAGE PREMIUM ACTIVE
+- **Primary Data Source**: Alpha Vantage Premium API - **LIVE & ACTIVE**
+- **API Key**: T49XLMLIQI4GRDHA - Premium account with 75 calls/minute rate limit
+- **Market Movers Coverage**: TradingView-level comprehensive data with 40 total stocks (20 gainers, 20 losers)
+- **High-Percentage Gainers**: Capturing extreme movers like REPL (+101.33%), XBP (+81.09%), BGLC (+60.99%)
+- **Data Quality**: Authentic real-time US market movers from TOP_GAINERS_LOSERS endpoint
+- **US Stock Filtering**: Enhanced filtering to include comprehensive US stocks while excluding foreign exchanges
+- **Market Cap Calculations**: Smart estimation based on price, volume, and ticker patterns
+- **Sector Classification**: Intelligent sector guessing based on ticker patterns and company indicators
+- **Real-time Updates**: Live market movers data with 40 stocks per refresh cycle
+- **API Performance**: Premium tier with high rate limits ensuring reliable comprehensive coverage
+
+### Secondary Data Sources
+- **Finnhub API**: Fallback for ticker search, price charts, and company profiles
+- **Polygon API**: Available for additional market data and comprehensive stock screening (backup source)
 
 ## Data Flow
 
 ### Stock Data Pipeline
-1. **Data Ingestion**: Live market movers retrieved from Alpha Vantage TOP_GAINERS_LOSERS endpoint
-2. **US Stock Filtering**: Comprehensive filtering to exclude foreign exchanges and non-US tickers
-3. **Data Processing**: Raw market data transformed and enriched with sector and index information
-4. **Database Storage**: Bulk upsert operations for efficient data updates in PostgreSQL
-5. **API Endpoints**: RESTful endpoints serve filtered and sorted data to frontend
-6. **Real-time Updates**: Automatic 15-minute refresh cycle with manual refresh capability
-7. **Status Monitoring**: Live API quota tracking and refresh status indicators
+1. **Data Ingestion**: Live market movers retrieved from Alpha Vantage Premium TOP_GAINERS_LOSERS endpoint (75 calls/minute)
+2. **Comprehensive Coverage**: 40 total market movers (20 gainers, 20 losers) per refresh with TradingView-level coverage
+3. **US Stock Filtering**: Enhanced filtering to include more US stocks while excluding obvious foreign exchanges
+4. **Data Processing**: Raw market data transformed with smart market cap estimation and sector classification
+5. **Database Storage**: Bulk upsert operations for efficient data updates in PostgreSQL
+6. **API Endpoints**: RESTful endpoints serve filtered and sorted data to frontend
+7. **Real-time Updates**: Automatic 15-minute refresh cycle with manual refresh capability
+8. **Status Monitoring**: Premium API quota tracking with 75 calls/minute rate limit monitoring
 
 ### Slack Alert Workflow
 1. **Market Analysis**: System analyzes current market movers based on configured thresholds
