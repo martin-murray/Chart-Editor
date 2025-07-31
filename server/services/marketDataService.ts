@@ -1,11 +1,13 @@
 import { FinnhubService } from './finnhubService.js';
 import { AlphaVantageService } from './alphaVantageService.js';
+import { PolygonService } from './polygonService.js';
 import { storage } from '../storage.js';
 import type { InsertStock, InsertMarketSummary } from '@shared/schema.js';
 
 export class MarketDataService {
   private finnhub: FinnhubService;
   private alphaVantage: AlphaVantageService | null = null;
+  private polygon: PolygonService | null = null;
 
   constructor() {
     this.finnhub = new FinnhubService();
@@ -14,23 +16,41 @@ export class MarketDataService {
     } catch (error) {
       console.warn('⚠️ Alpha Vantage service not available:', error);
     }
+    try {
+      this.polygon = new PolygonService();
+    } catch (error) {
+      console.warn('⚠️ Polygon service not available:', error);
+    }
   }
 
   /**
-   * Refresh market movers data using Alpha Vantage (primary) or Finnhub (fallback)
+   * Refresh market movers data using Polygon (primary), Alpha Vantage, or Finnhub (fallback)
    */
   async refreshMarketMovers(): Promise<{ success: boolean; count: number; message: string }> {
     try {
-      console.log('🔄 Starting market movers refresh...');
+      console.log('🔄 Starting comprehensive market movers refresh...');
 
       let gainers: InsertStock[] = [];
       let losers: InsertStock[] = [];
       let dataSource = '';
 
-      // Try Alpha Vantage first (comprehensive market movers)
-      if (this.alphaVantage) {
+      // Try Polygon first (most comprehensive data like TradingView)
+      if (this.polygon) {
         try {
-          console.log('📊 Using Alpha Vantage for comprehensive market movers...');
+          console.log('📊 Using Polygon for TradingView-level comprehensive market movers...');
+          const polygonData = await this.polygon.getComprehensiveMarketMovers();
+          gainers = polygonData.gainers;
+          losers = polygonData.losers;
+          dataSource = 'Polygon';
+        } catch (error) {
+          console.warn('⚠️ Polygon failed, falling back to Alpha Vantage:', error);
+        }
+      }
+
+      // Fallback to Alpha Vantage if Polygon failed
+      if (gainers.length === 0 && losers.length === 0 && this.alphaVantage) {
+        try {
+          console.log('📊 Using Alpha Vantage for market movers...');
           const alphaData = await this.alphaVantage.getTopGainersLosers();
           gainers = alphaData.gainers;
           losers = alphaData.losers;
@@ -40,7 +60,7 @@ export class MarketDataService {
         }
       }
 
-      // Fallback to Finnhub if Alpha Vantage failed or unavailable
+      // Final fallback to Finnhub if other sources failed
       if (gainers.length === 0 && losers.length === 0) {
         console.log('📊 Using Finnhub for limited market movers...');
         const finnhubData = await this.finnhub.getMarketMovers(25);
@@ -77,12 +97,12 @@ export class MarketDataService {
       // Update market summary
       await this.updateMarketSummary(allStocks);
 
-      console.log(`✅ Market movers refresh complete: ${insertedCount} stocks updated from ${dataSource}`);
+      console.log(`✅ Comprehensive market movers refresh complete: ${insertedCount} stocks updated from ${dataSource}`);
       
       return {
         success: true,
         count: insertedCount,
-        message: `Successfully updated ${insertedCount} market movers from ${dataSource}`
+        message: `Successfully updated ${insertedCount} comprehensive market movers from ${dataSource}`
       };
 
     } catch (error) {

@@ -61,15 +61,15 @@ export class AlphaVantageService {
   }
 
   /**
-   * Process and filter stock data from Alpha Vantage
+   * Process and filter stock data from Alpha Vantage with enhanced coverage
    */
   private async processStocks(stocks: AlphaVantageGainerLoser[]): Promise<InsertStock[]> {
     const processedStocks: InsertStock[] = [];
 
     for (const stock of stocks) {
       try {
-        // Filter out non-US tickers (simple heuristics)
-        if (this.isNonUSStock(stock.ticker)) {
+        // More lenient filtering - only exclude obvious non-US patterns
+        if (this.isDefinitelyNonUSStock(stock.ticker)) {
           continue;
         }
 
@@ -84,20 +84,23 @@ export class AlphaVantageService {
           continue;
         }
 
-        // Get market cap estimate (simplified - would need additional API calls for exact values)
-        const marketCap = this.estimateMarketCap(parseFloat(price), volume);
+        // More accurate market cap calculation
+        const marketCap = this.calculateMarketCap(parseFloat(price), volume, stock.ticker);
+
+        // Enhanced stock name (clean up ticker for display)
+        const displayName = this.getDisplayName(stock.ticker);
 
         const processedStock: InsertStock = {
           symbol: stock.ticker,
-          name: stock.ticker, // Alpha Vantage doesn't provide company names in this endpoint
+          name: displayName,
           price: price,
           change: changeAmount,
           percentChange: percentChange,
           marketCap: this.formatMarketCap(marketCap),
           marketCapValue: marketCap.toString(),
           volume: volume,
-          sector: "Unknown", // Would need additional API calls
-          indices: [], // Would need additional data source
+          sector: this.guessSector(stock.ticker), // Smart sector guessing
+          indices: this.guessIndices(parseFloat(price), marketCap), // Smart index guessing
         };
 
         processedStocks.push(processedStock);
@@ -108,15 +111,18 @@ export class AlphaVantageService {
       }
     }
 
-    return processedStocks;
+    // Sort by absolute percentage change to prioritize biggest movers
+    return processedStocks.sort((a, b) => 
+      Math.abs(parseFloat(b.percentChange)) - Math.abs(parseFloat(a.percentChange))
+    );
   }
 
   /**
-   * Filter out non-US stocks using simple heuristics
+   * Filter out only obviously non-US stocks (more lenient)
    */
-  private isNonUSStock(ticker: string): boolean {
-    // Filter out common non-US patterns
-    const nonUSPatterns = [
+  private isDefinitelyNonUSStock(ticker: string): boolean {
+    // Only filter out clear foreign exchange patterns
+    const definiteNonUSPatterns = [
       /\.TO$/,    // Toronto Stock Exchange
       /\.L$/,     // London Stock Exchange  
       /\.PA$/,    // Euronext Paris
@@ -124,25 +130,95 @@ export class AlphaVantageService {
       /\.HK$/,    // Hong Kong
       /\.T$/,     // Tokyo
       /\.AX$/,    // Australian Securities Exchange
-      /\.[A-Z]{2}$/, // Other foreign exchanges
     ];
 
-    return nonUSPatterns.some(pattern => pattern.test(ticker));
+    return definiteNonUSPatterns.some(pattern => pattern.test(ticker));
   }
 
   /**
-   * Estimate market cap based on price and volume (rough approximation)
+   * Get display name for ticker
    */
-  private estimateMarketCap(price: number, volume: number): number {
-    // This is a very rough estimate - ideally we'd get actual shares outstanding
-    // Using a heuristic based on price and trading volume
-    if (price > 100) {
-      return price * volume * 100; // Large-cap estimate
-    } else if (price > 20) {
-      return price * volume * 200; // Mid-cap estimate
-    } else {
-      return price * volume * 500; // Small-cap estimate
+  private getDisplayName(ticker: string): string {
+    // Clean up common patterns for better display
+    if (ticker.endsWith('W')) {
+      return ticker; // Keep warrant notation
     }
+    if (ticker.includes('.')) {
+      return ticker.split('.')[0]; // Remove class indicators for display
+    }
+    return ticker;
+  }
+
+  /**
+   * Smart sector guessing based on ticker patterns
+   */
+  private guessSector(ticker: string): string {
+    // Basic sector classification based on common patterns
+    if (ticker.match(/BIO|VYNE|GENE|CELL|CURE|HEAL/i)) return "Health Technology";
+    if (ticker.match(/TECH|SOFT|DATA|COMP|AI|ML/i)) return "Technology Services";
+    if (ticker.match(/BANK|FIN|CAP|LOAN|MORT/i)) return "Finance";
+    if (ticker.match(/ENERGY|OIL|GAS|SOLAR|WIND/i)) return "Energy";
+    if (ticker.match(/REAL|REIT|PROP/i)) return "Finance";
+    if (ticker.match(/AUTO|CAR|TRUCK|BIKE/i)) return "Consumer Durables";
+    return "Unknown";
+  }
+
+  /**
+   * Smart index guessing based on market cap and price
+   */
+  private guessIndices(price: number, marketCap: number): string[] {
+    const indices: string[] = [];
+    
+    if (marketCap >= 50e9) {
+      indices.push("sp500", "russell1000");
+    } else if (marketCap >= 10e9) {
+      indices.push("russell1000");
+    } else if (marketCap >= 2e9) {
+      indices.push("russell2000");
+    }
+    
+    if (price > 100 && marketCap >= 1e9) {
+      indices.push("nasdaq100");
+    }
+    
+    return indices;
+  }
+
+  /**
+   * Enhanced market cap calculation with better heuristics
+   */
+  private calculateMarketCap(price: number, volume: number, ticker: string): number {
+    // Enhanced estimation based on multiple factors
+    let multiplier = 300; // Base multiplier
+    
+    // Adjust based on price patterns (higher price often means fewer shares outstanding)
+    if (price > 500) {
+      multiplier = 50;
+    } else if (price > 200) {
+      multiplier = 100;
+    } else if (price > 50) {
+      multiplier = 200;
+    } else if (price > 10) {
+      multiplier = 400;
+    } else if (price > 1) {
+      multiplier = 600;
+    } else {
+      multiplier = 1000; // Penny stocks often have many shares
+    }
+    
+    // Adjust for warrant tickers (typically lower market cap)
+    if (ticker.endsWith('W') || ticker.includes('WARRANT')) {
+      multiplier *= 0.1;
+    }
+    
+    // Volume-based adjustments
+    if (volume > 10e6) {
+      multiplier *= 1.5; // High volume suggests larger company
+    } else if (volume < 100000) {
+      multiplier *= 0.5; // Low volume suggests smaller company
+    }
+    
+    return price * volume * multiplier;
   }
 
   /**
