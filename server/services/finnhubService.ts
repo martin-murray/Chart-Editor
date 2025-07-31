@@ -198,6 +198,7 @@ export class FinnhubService {
             return null;
           }
 
+          // Finnhub returns market cap in millions, convert to actual dollars for filtering
           const marketCapValue = profile.marketCapitalization * 1000000;
           
           // Apply $2B filter
@@ -205,12 +206,11 @@ export class FinnhubService {
             return null;
           }
 
-          // Format market cap
-          const formatMarketCap = (value: number): string => {
-            if (value >= 1e12) return `$${(value / 1e12).toFixed(1)}T`;
-            if (value >= 1e9) return `$${(value / 1e9).toFixed(1)}B`;
-            if (value >= 1e6) return `$${(value / 1e6).toFixed(1)}M`;
-            return `$${value.toLocaleString()}`;
+          // Format market cap from millions value (not the inflated marketCapValue)
+          const formatMarketCap = (marketCapInMillions: number): string => {
+            if (marketCapInMillions >= 1000000) return `$${(marketCapInMillions / 1000000).toFixed(1)}T`;
+            if (marketCapInMillions >= 1000) return `$${(marketCapInMillions / 1000).toFixed(1)}B`;
+            return `$${marketCapInMillions.toFixed(1)}M`;
           };
 
           return {
@@ -219,7 +219,7 @@ export class FinnhubService {
             price: quote.c.toFixed(2),
             change: quote.d.toFixed(2),
             percentChange: quote.dp.toFixed(2),
-            marketCap: formatMarketCap(marketCapValue),
+            marketCap: formatMarketCap(profile.marketCapitalization),
             marketCapValue: marketCapValue.toString(),
             volume: Math.round(Math.random() * 10000000),
             indices: this.determineIndices(result.symbol, marketCapValue),
