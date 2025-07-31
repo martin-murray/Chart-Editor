@@ -206,11 +206,15 @@ export class FinnhubService {
             return null;
           }
 
-          // Format market cap from millions value (not the inflated marketCapValue)
-          const formatMarketCap = (marketCapInMillions: number): string => {
-            if (marketCapInMillions >= 1000000) return `$${(marketCapInMillions / 1000000).toFixed(1)}T`;
-            if (marketCapInMillions >= 1000) return `$${(marketCapInMillions / 1000).toFixed(1)}B`;
-            return `$${marketCapInMillions.toFixed(1)}M`;
+          // Calculate real-time market cap (price × shares outstanding)
+          const realTimeMarketCapValue = quote.c * profile.shareOutstanding * 1000000; // shares in millions
+          
+          // Format market cap from real-time calculation
+          const formatMarketCap = (marketCapValue: number): string => {
+            if (marketCapValue >= 1e12) return `$${(marketCapValue / 1e12).toFixed(1)}T`;
+            if (marketCapValue >= 1e9) return `$${(marketCapValue / 1e9).toFixed(1)}B`;
+            if (marketCapValue >= 1e6) return `$${(marketCapValue / 1e6).toFixed(1)}M`;
+            return `$${marketCapValue.toLocaleString()}`;
           };
 
           return {
@@ -219,10 +223,10 @@ export class FinnhubService {
             price: quote.c.toFixed(2),
             change: quote.d.toFixed(2),
             percentChange: quote.dp.toFixed(2),
-            marketCap: formatMarketCap(profile.marketCapitalization),
-            marketCapValue: marketCapValue.toString(),
+            marketCap: formatMarketCap(realTimeMarketCapValue),
+            marketCapValue: realTimeMarketCapValue.toString(),
             volume: Math.round(Math.random() * 10000000),
-            indices: this.determineIndices(result.symbol, marketCapValue),
+            indices: this.determineIndices(result.symbol, realTimeMarketCapValue),
             sector: profile.finnhubIndustry || "Unknown"
           };
         } catch (error) {

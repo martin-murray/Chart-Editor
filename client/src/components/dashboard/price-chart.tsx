@@ -125,12 +125,15 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
   const isPositive = parseChange >= 0;
   const lineColor = isPositive ? '#10b981' : '#ef4444'; // Green for positive, red for negative
 
-  const formatMarketCap = (marketCapInMillions: number) => {
-    // Finnhub returns market cap in millions of dollars
-    if (marketCapInMillions >= 1e6) return `${(marketCapInMillions / 1e6).toFixed(2)}T`;
-    if (marketCapInMillions >= 1e3) return `${(marketCapInMillions / 1e3).toFixed(2)}B`;
-    return `${marketCapInMillions.toFixed(2)}M`;
+  const calculateRealTimeMarketCap = (price: number, sharesMillions: number) => {
+    const marketCapValue = price * sharesMillions * 1000000; // Convert to actual dollars
+    if (marketCapValue >= 1e12) return `${(marketCapValue / 1e12).toFixed(1)}T`;
+    if (marketCapValue >= 1e9) return `${(marketCapValue / 1e9).toFixed(1)}B`;
+    if (marketCapValue >= 1e6) return `${(marketCapValue / 1e6).toFixed(1)}M`;
+    return `$${marketCapValue.toLocaleString()}`;
   };
+
+  const formatMarketCap = calculateRealTimeMarketCap; // Alias for compatibility
 
   const formatNumber = (num: number) => {
     if (num >= 1e12) return `${(num / 1e12).toFixed(2)}T`;
@@ -312,7 +315,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Market Cap</span>
-              <span className="font-medium">{stockDetails.profile.marketCapitalization ? formatMarketCap(stockDetails.profile.marketCapitalization) : 'N/A'}</span>
+              <span className="font-medium">{stockDetails.quote.c && stockDetails.profile.shareOutstanding ? calculateRealTimeMarketCap(stockDetails.quote.c, stockDetails.profile.shareOutstanding) : 'N/A'}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Beta (5Y Monthly)</span>
