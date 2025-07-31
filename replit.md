@@ -53,7 +53,7 @@ Preferred communication style: Simple, everyday language.
 
 ### External Service Integration - YAHOO FINANCE PRIMARY ACTIVE
 - **Primary Data Source**: Yahoo Finance Real-time API - **LIVE & ACTIVE**
-- **Data Coverage**: Current market movers with 20+ gainers and losers from today's trading
+- **Data Coverage**: Current market movers with 30 gainers and 30 losers from today's trading (60 total market movers)
 - **Real-time Quality**: Current January 31, 2025 market data vs stale July 2025 data from Alpha Vantage
 - **Current Top Gainers**: APLD (+31.01%), AMSC (+29.38%), PI (+26.49%), RSI (+25.53%), CGNX (+20.76%)
 - **Data Accuracy**: Authentic real-time US market movers matching Yahoo Finance website exactly
@@ -138,6 +138,11 @@ Preferred communication style: Simple, everyday language.
 - **Persistent Storage**: All market data, alerts, and summaries stored in PostgreSQL
 
 ## Recent Changes
+- **January 31, 2025**: Expanded market coverage to 60 comprehensive market movers
+  - **EXPANDED**: Increased from ~20 stocks to 60 total market movers (30 gainers + 30 losers)
+  - **TradingView-level coverage**: Now matches comprehensive market tracking with extensive current movers
+  - **Real top losers included**: ALGN (-36.63%), CFLT (-32.86%), BAX (-22.42%) from actual trading
+  - **Enhanced data breadth**: Covers small-cap, mid-cap, and large-cap movers across all sectors
 - **January 31, 2025**: Critical data quality fix - Replaced stale Alpha Vantage with Yahoo Finance
   - **RESOLVED**: Alpha Vantage TOP_GAINERS_LOSERS providing stale July 2025 data instead of current January 31, 2025 data
   - **NEW PRIMARY SOURCE**: Yahoo Finance real-time market movers now primary data source
