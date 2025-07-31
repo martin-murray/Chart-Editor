@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
 import { TickerSearch } from "./ticker-search";
 import { GainersTable } from "./gainers-table";
 import { LosersTable } from "./losers-table";
@@ -15,6 +17,8 @@ interface MarketMoversTabsProps {
   onFilterChange: (filter: StockFilter) => void;
   gainersLoading: boolean;
   losersLoading: boolean;
+  onFinnhubRefresh: () => void;
+  isRefreshing: boolean;
 }
 
 export function MarketMoversTabs({ 
@@ -23,7 +27,9 @@ export function MarketMoversTabs({
   filter, 
   onFilterChange, 
   gainersLoading, 
-  losersLoading 
+  losersLoading,
+  onFinnhubRefresh,
+  isRefreshing
 }: MarketMoversTabsProps) {
   const [activeTab, setActiveTab] = useState("gainers");
 
@@ -119,12 +125,25 @@ export function MarketMoversTabs({
       </CardHeader>
       
       <CardContent className="pt-0">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold">Market Movers</h3>
+          <Button
+            onClick={onFinnhubRefresh}
+            disabled={isRefreshing}
+            size="sm"
+            className="bg-[#5AF5FA] hover:bg-[#4AE5EA] text-black"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+            {isRefreshing ? 'Refreshing...' : 'Refresh from Finnhub'}
+          </Button>
+        </div>
+        
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="gainers" className="data-[state=active]:bg-green-500 data-[state=active]:text-white">
+            <TabsTrigger value="gainers" className="data-[state=active]:bg-[#5AF5FA] data-[state=active]:text-black">
               Top Gainers ({gainers.length})
             </TabsTrigger>
-            <TabsTrigger value="losers" className="data-[state=active]:bg-red-500 data-[state=active]:text-white">
+            <TabsTrigger value="losers" className="data-[state=active]:bg-[#AA99FF] data-[state=active]:text-black">
               Top Losers ({losers.length})
             </TabsTrigger>
           </TabsList>

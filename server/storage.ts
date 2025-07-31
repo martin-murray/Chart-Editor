@@ -11,6 +11,7 @@ export interface IStorage {
   updateStock(id: number, stock: Partial<InsertStock>): Promise<Stock | undefined>;
   deleteStock(id: number): Promise<boolean>;
   bulkUpsertStocks(stocks: InsertStock[]): Promise<Stock[]>;
+  clearAllStocks(): Promise<void>;
   
   // Gainers and losers
   getTopGainers(limit?: number, filter?: StockFilter): Promise<Stock[]>;
@@ -213,6 +214,10 @@ export class DatabaseStorage implements IStorage {
       .delete(stocks)
       .where(eq(stocks.id, id));
     return (result.rowCount || 0) > 0;
+  }
+
+  async clearAllStocks(): Promise<void> {
+    await db.delete(stocks);
   }
 
   async bulkUpsertStocks(stocksToUpsert: InsertStock[]): Promise<Stock[]> {

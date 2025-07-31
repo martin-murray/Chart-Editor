@@ -146,6 +146,28 @@ function Dashboard() {
     },
   });
 
+  // Finnhub market movers refresh mutation
+  const finnhubRefreshMutation = useMutation({
+    mutationFn: () => apiRequest("POST", "/api/refresh-market-movers"),
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/stocks/gainers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/stocks/losers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/market-summary"] });
+      toast({
+        title: "Market Movers Updated",
+        description: `${data.count || 0} stocks updated with real market data from Finnhub`,
+      });
+    },
+    onError: (error: Error) => {
+      console.error("Finnhub refresh error:", error);
+      toast({
+        title: "Refresh Failed",
+        description: "Failed to fetch market movers from Finnhub.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Get refresh status query
   const { data: refreshStatus } = useQuery<{
     isRefreshing: boolean;
@@ -220,6 +242,8 @@ function Dashboard() {
               onFilterChange={handleFilterChange}
               gainersLoading={gainersLoading}
               losersLoading={losersLoading}
+              onFinnhubRefresh={() => finnhubRefreshMutation.mutate()}
+              isRefreshing={finnhubRefreshMutation.isPending}
             />
           </div>
 

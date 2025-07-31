@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { stockDataService } from "./services/stockData";
 // Slack service removed - clean slate for new messaging integration
 import { dataRefreshService } from "./services/dataRefresh";
+import { marketDataService } from "./services/marketDataService";
 import { stockFilterSchema } from "@shared/schema";
 import { z } from "zod";
 
@@ -261,6 +262,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error refreshing live market data:", error);
       res.status(500).json({ message: "Failed to refresh live market data" });
+    }
+  });
+
+  // Finnhub market movers refresh endpoint
+  app.post("/api/refresh-market-movers", async (req, res) => {
+    try {
+      const result = await marketDataService.refreshMarketMovers();
+      res.json(result);
+    } catch (error) {
+      console.error("Error refreshing market movers:", error);
+      res.status(500).json({ message: "Failed to refresh market movers" });
     }
   });
 
