@@ -4,7 +4,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, TrendingUp, TrendingDown } from 'lucide-react';
+import { Loader2, TrendingUp, TrendingDown, Plus } from 'lucide-react';
 
 interface ChartData {
   timestamp: number;
@@ -179,6 +179,27 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
               </div>
             )}
           </div>
+          
+          {/* Watch Button */}
+          <Button
+            size="sm"
+            onClick={() => {
+              if (window.addToWatchlist) {
+                window.addToWatchlist({
+                  symbol,
+                  name,
+                  price: currentPrice,
+                  percentChange,
+                  marketCap
+                });
+              }
+            }}
+            className="h-8 px-3 text-xs bg-[#5AF5FA]/10 text-[#5AF5FA] hover:bg-[#5AF5FA]/20 border border-[#5AF5FA]/30"
+            variant="outline"
+          >
+            <Plus className="w-3 h-3 mr-1" />
+            Watch
+          </Button>
         </div>
         
         {/* Timeframe selector */}
