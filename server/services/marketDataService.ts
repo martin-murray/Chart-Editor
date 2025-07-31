@@ -1,6 +1,7 @@
 import { FinnhubService } from './finnhubService.js';
 import { AlphaVantageService } from './alphaVantageService.js';
 import { PolygonService } from './polygonService.js';
+import { YahooFinanceService } from './yahooFinanceService.js';
 import { storage } from '../storage.js';
 import type { InsertStock, InsertMarketSummary } from '@shared/schema.js';
 
@@ -8,9 +9,11 @@ export class MarketDataService {
   private finnhub: FinnhubService;
   private alphaVantage: AlphaVantageService | null = null;
   private polygon: PolygonService | null = null;
+  private yahooFinance: YahooFinanceService;
 
   constructor() {
     this.finnhub = new FinnhubService();
+    this.yahooFinance = new YahooFinanceService(); // Always available
     try {
       this.alphaVantage = new AlphaVantageService();
     } catch (error) {
@@ -24,20 +27,31 @@ export class MarketDataService {
   }
 
   /**
-   * Refresh market movers data using Polygon (primary), Alpha Vantage, or Finnhub (fallback)
+   * Refresh market movers data using Yahoo Finance (primary), Polygon, Alpha Vantage, or Finnhub (fallback)
    */
   async refreshMarketMovers(): Promise<{ success: boolean; count: number; message: string }> {
     try {
-      console.log('🔄 Starting comprehensive market movers refresh...');
+      console.log('🔄 Starting real-time market movers refresh...');
 
       let gainers: InsertStock[] = [];
       let losers: InsertStock[] = [];
       let dataSource = '';
 
-      // Try Polygon first (most comprehensive data like TradingView)
-      if (this.polygon) {
+      // Try Yahoo Finance first (real-time current data)
+      try {
+        console.log('📊 Using Yahoo Finance for real-time current market movers...');
+        const yahooData = await this.yahooFinance.getCurrentMarketMovers();
+        gainers = yahooData.gainers;
+        losers = yahooData.losers;
+        dataSource = 'Yahoo Finance';
+      } catch (error) {
+        console.warn('⚠️ Yahoo Finance failed, falling back to Polygon:', error);
+      }
+
+      // Fallback to Polygon if Yahoo Finance failed
+      if (gainers.length === 0 && losers.length === 0 && this.polygon) {
         try {
-          console.log('📊 Using Polygon for TradingView-level comprehensive market movers...');
+          console.log('📊 Using Polygon for comprehensive market movers...');
           const polygonData = await this.polygon.getComprehensiveMarketMovers();
           gainers = polygonData.gainers;
           losers = polygonData.losers;
@@ -47,20 +61,20 @@ export class MarketDataService {
         }
       }
 
-      // Fallback to Alpha Vantage if Polygon failed
+      // Third fallback to Alpha Vantage if other sources failed
       if (gainers.length === 0 && losers.length === 0 && this.alphaVantage) {
         try {
-          console.log('📊 Using Alpha Vantage for market movers...');
+          console.log('📊 Using Alpha Vantage for market movers (may be stale)...');
           const alphaData = await this.alphaVantage.getTopGainersLosers();
           gainers = alphaData.gainers;
           losers = alphaData.losers;
-          dataSource = 'Alpha Vantage';
+          dataSource = 'Alpha Vantage (stale data)';
         } catch (error) {
           console.warn('⚠️ Alpha Vantage failed, falling back to Finnhub:', error);
         }
       }
 
-      // Final fallback to Finnhub if other sources failed
+      // Final fallback to Finnhub if all other sources failed
       if (gainers.length === 0 && losers.length === 0) {
         console.log('📊 Using Finnhub for limited market movers...');
         const finnhubData = await this.finnhub.getMarketMovers(25);

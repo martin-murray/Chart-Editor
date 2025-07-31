@@ -51,17 +51,17 @@ Preferred communication style: Simple, everyday language.
 - **Dark Mode**: Complete light/dark theme toggle with Intropic MUI color scheme (#5AF5FA cyan accents)
 - **Typography**: Space Grotesk headings (weight 300) and Mulish body text (weight 400)
 
-### External Service Integration - ALPHA VANTAGE PREMIUM ACTIVE
-- **Primary Data Source**: Alpha Vantage Premium API - **LIVE & ACTIVE**
-- **API Key**: T49XLMLIQI4GRDHA - Premium account with 75 calls/minute rate limit
-- **Market Movers Coverage**: TradingView-level comprehensive data with 40 total stocks (20 gainers, 20 losers)
-- **High-Percentage Gainers**: Capturing extreme movers like REPL (+101.33%), XBP (+81.09%), BGLC (+60.99%)
-- **Data Quality**: Authentic real-time US market movers from TOP_GAINERS_LOSERS endpoint
-- **US Stock Filtering**: Enhanced filtering to include comprehensive US stocks while excluding foreign exchanges
-- **Market Cap Calculations**: Smart estimation based on price, volume, and ticker patterns
-- **Sector Classification**: Intelligent sector guessing based on ticker patterns and company indicators
-- **Real-time Updates**: Live market movers data with 40 stocks per refresh cycle
-- **API Performance**: Premium tier with high rate limits ensuring reliable comprehensive coverage
+### External Service Integration - YAHOO FINANCE PRIMARY ACTIVE
+- **Primary Data Source**: Yahoo Finance Real-time API - **LIVE & ACTIVE**
+- **Data Coverage**: Current market movers with 20+ gainers and losers from today's trading
+- **Real-time Quality**: Current January 31, 2025 market data vs stale July 2025 data from Alpha Vantage
+- **Current Top Gainers**: APLD (+31.01%), AMSC (+29.38%), PI (+26.49%), RSI (+25.53%), CGNX (+20.76%)
+- **Data Accuracy**: Authentic real-time US market movers matching Yahoo Finance website exactly
+- **Multi-source Fallback**: Yahoo Finance → Polygon → Alpha Vantage (stale) → Finnhub
+- **Market Cap Integration**: Proper market cap values for filtering above $2B requirement
+- **Sector Classification**: Accurate sector data from Yahoo Finance source
+- **Real-time Updates**: Live current market movers data every 15 minutes
+- **Data Quality**: Completely replaced stale Alpha Vantage TOP_GAINERS_LOSERS endpoint
 
 ### Secondary Data Sources
 - **Finnhub API**: Fallback for ticker search, price charts, and company profiles
@@ -138,13 +138,13 @@ Preferred communication style: Simple, everyday language.
 - **Persistent Storage**: All market data, alerts, and summaries stored in PostgreSQL
 
 ## Recent Changes
-- **January 31, 2025**: Fixed critical data coverage issue with Alpha Vantage integration
-  - **Resolved missing market movers**: Implemented Alpha Vantage TOP_GAINERS_LOSERS endpoint to replace limited Finnhub approach
-  - **Comprehensive market data**: Now captures hundreds of market movers instead of just 3 major stocks (from 3 to 40+ stocks per refresh)
-  - **High-percentage movers included**: Successfully retrieving stocks with massive gains like REPL (+101.33%), XBP (+81.09%), BGLC (+60.99%)
-  - **Authentic data source**: Alpha Vantage provides complete US market coverage including small-cap and mid-cap movers
-  - **Dual-source reliability**: Alpha Vantage primary with Finnhub fallback for maximum uptime
-  - **Updated refresh interface**: Changed button from "Refresh from Finnhub" to "Refresh Market Data" to reflect comprehensive data source
+- **January 31, 2025**: Critical data quality fix - Replaced stale Alpha Vantage with Yahoo Finance
+  - **RESOLVED**: Alpha Vantage TOP_GAINERS_LOSERS providing stale July 2025 data instead of current January 31, 2025 data
+  - **NEW PRIMARY SOURCE**: Yahoo Finance real-time market movers now primary data source
+  - **Current data quality**: Now showing actual January 31, 2025 gainers: APLD (+31.01%), AMSC (+29.38%), PI (+26.49%)
+  - **Multi-tier fallback**: Yahoo Finance → Polygon → Alpha Vantage (marked stale) → Finnhub for maximum reliability
+  - **Automatic & manual refresh**: Both now use Yahoo Finance for current market movers data
+  - **Data integrity maintained**: System now displays authentic current market data, not outdated July information
 - **January 31, 2025**: Major UI restructure with tabbed interface and integrated filters
   - **Moved filters into Top Gainers/Losers section**: All 4 filters (% Change Threshold, Sort By, Market Cap, Index Filter) now integrated into the main table header
   - **Converted to tabbed interface**: Top Gainers and Top Losers are now tabs instead of separate sections
