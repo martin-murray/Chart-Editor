@@ -146,7 +146,7 @@ function Dashboard() {
     },
   });
 
-  // Finnhub market movers refresh mutation
+  // Market movers refresh mutation (Alpha Vantage primary, Finnhub fallback)
   const finnhubRefreshMutation = useMutation({
     mutationFn: () => apiRequest("POST", "/api/refresh-market-movers"),
     onSuccess: (data: any) => {
@@ -155,14 +155,14 @@ function Dashboard() {
       queryClient.invalidateQueries({ queryKey: ["/api/market-summary"] });
       toast({
         title: "Market Movers Updated",
-        description: `${data.count || 0} stocks updated with real market data from Finnhub`,
+        description: `${data.count || 0} stocks updated with comprehensive market data`,
       });
     },
     onError: (error: Error) => {
-      console.error("Finnhub refresh error:", error);
+      console.error("Market movers refresh error:", error);
       toast({
         title: "Refresh Failed",
-        description: "Failed to fetch market movers from Finnhub.",
+        description: "Failed to fetch comprehensive market data.",
         variant: "destructive",
       });
     },

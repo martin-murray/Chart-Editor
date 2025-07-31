@@ -148,7 +148,7 @@ export function MarketMoversTabs({
             className="bg-[#5AF5FA] hover:bg-[#4AE5EA] text-black"
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-            {isRefreshing ? 'Refreshing...' : 'Refresh from Finnhub'}
+            {isRefreshing ? 'Refreshing...' : 'Refresh Market Data'}
           </Button>
         </div>
         

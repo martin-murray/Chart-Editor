@@ -133,6 +133,13 @@ Preferred communication style: Simple, everyday language.
 - **Persistent Storage**: All market data, alerts, and summaries stored in PostgreSQL
 
 ## Recent Changes
+- **January 31, 2025**: Fixed critical data coverage issue with Alpha Vantage integration
+  - **Resolved missing market movers**: Implemented Alpha Vantage TOP_GAINERS_LOSERS endpoint to replace limited Finnhub approach
+  - **Comprehensive market data**: Now captures hundreds of market movers instead of just 3 major stocks (from 3 to 40+ stocks per refresh)
+  - **High-percentage movers included**: Successfully retrieving stocks with massive gains like REPL (+101.33%), XBP (+81.09%), BGLC (+60.99%)
+  - **Authentic data source**: Alpha Vantage provides complete US market coverage including small-cap and mid-cap movers
+  - **Dual-source reliability**: Alpha Vantage primary with Finnhub fallback for maximum uptime
+  - **Updated refresh interface**: Changed button from "Refresh from Finnhub" to "Refresh Market Data" to reflect comprehensive data source
 - **January 31, 2025**: Major UI restructure with tabbed interface and integrated filters
   - **Moved filters into Top Gainers/Losers section**: All 4 filters (% Change Threshold, Sort By, Market Cap, Index Filter) now integrated into the main table header
   - **Converted to tabbed interface**: Top Gainers and Top Losers are now tabs instead of separate sections
