@@ -36,53 +36,35 @@ export function MarketMoversTabs({
     onFilterChange({ ...filter, [key]: value });
   };
 
-  const handleSort = (key: keyof Stock) => {
-    console.log('Sorting by:', key, 'Current filter:', filter);
-    const newOrder = filter.sortBy === key && filter.sortOrder === "desc" ? "asc" : "desc";
-    const newFilter = {
-      ...filter,
-      sortBy: key as any,
-      sortOrder: newOrder,
-    };
-    console.log('New filter:', newFilter);
-    onFilterChange(newFilter);
-  };
-
   const columns = [
     {
       key: "symbol" as keyof Stock,
       header: "Stock",
       cell: (value: string, row: Stock) => <StockSymbolCell symbol={value} name={row.name} />,
-      sortable: true,
     },
     {
       key: "price" as keyof Stock,
       header: "Price",
       cell: (value: string) => `$${value}`,
-      sortable: true,
     },
     {
       key: "change" as keyof Stock,
       header: "Change",
       cell: (value: string) => <PriceChangeCell value={value} />,
-      sortable: true,
     },
     {
       key: "percentChange" as keyof Stock,
       header: "% Change",
       cell: (value: string) => <PercentChangeCell value={value} />,
-      sortable: true,
     },
     {
       key: "marketCap" as keyof Stock,
       header: "Market Cap",
-      sortable: true,
     },
     {
       key: "indices" as keyof Stock,
       header: "Index",
       cell: (value: string[]) => <IndexBadges indices={value} />,
-      sortable: false,
     },
   ];
 
@@ -99,7 +81,7 @@ export function MarketMoversTabs({
         </div>
         
         {/* Filters Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4">
           <div className="space-y-2">
             <Label htmlFor="changeThreshold">% Change Threshold</Label>
             <Select
@@ -114,26 +96,6 @@ export function MarketMoversTabs({
                 <SelectItem value="2">≥ 2%</SelectItem>
                 <SelectItem value="3">≥ 3%</SelectItem>
                 <SelectItem value="5">≥ 5%</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="sortBy">Sort By</Label>
-            <Select
-              value={filter.sortBy}
-              onValueChange={(value) => updateFilter("sortBy", value)}
-            >
-              <SelectTrigger className="h-8">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="symbol">Stock Symbol</SelectItem>
-                <SelectItem value="price">Price</SelectItem>
-                <SelectItem value="change">Change</SelectItem>
-                <SelectItem value="percentChange">% Change</SelectItem>
-                <SelectItem value="marketCapValue">Market Cap</SelectItem>
-                <SelectItem value="volume">Volume</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -211,9 +173,6 @@ export function MarketMoversTabs({
               <DataTable
                 data={gainers}
                 columns={columns}
-                sortBy={filter.sortBy}
-                sortOrder={filter.sortOrder}
-                onSort={handleSort}
               />
             )}
           </TabsContent>
@@ -229,9 +188,6 @@ export function MarketMoversTabs({
               <DataTable
                 data={losers}
                 columns={columns}
-                sortBy={filter.sortBy}
-                sortOrder={filter.sortOrder}
-                onSort={handleSort}
               />
             )}
           </TabsContent>
