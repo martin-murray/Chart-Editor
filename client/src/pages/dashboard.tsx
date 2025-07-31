@@ -3,10 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { RefreshCwIcon } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { FilterPanel } from "@/components/dashboard/filter-panel";
-
-import { GainersTable } from "@/components/dashboard/gainers-table";
-import { LosersTable } from "@/components/dashboard/losers-table";
+import { MarketMoversTabs } from "@/components/dashboard/market-movers-tabs";
 import { SlackPanel } from "@/components/dashboard/slack-panel";
 import { WatchlistPanel } from "@/components/dashboard/watchlist-panel";
 import { ExportPanel } from "@/components/dashboard/export-panel";
@@ -213,31 +210,16 @@ function Dashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Filter Panel */}
-        <div className="mb-8">
-          <FilterPanel
-            filter={filter}
-            onFilterChange={handleFilterChange}
-            lastUpdated={formatLastUpdated(summary?.lastUpdated)}
-          />
-        </div>
-
-
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Data Tables */}
-          <div className="lg:col-span-2 space-y-8">
-            <GainersTable
+          {/* Main Data Tables with Integrated Filters */}
+          <div className="lg:col-span-2">
+            <MarketMoversTabs
               gainers={gainers}
-              filter={filter}
-              onFilterChange={handleFilterChange}
-              isLoading={gainersLoading}
-            />
-            <LosersTable
               losers={losers}
               filter={filter}
               onFilterChange={handleFilterChange}
-              isLoading={losersLoading}
+              gainersLoading={gainersLoading}
+              losersLoading={losersLoading}
             />
           </div>
 

@@ -133,6 +133,13 @@ Preferred communication style: Simple, everyday language.
 - **Persistent Storage**: All market data, alerts, and summaries stored in PostgreSQL
 
 ## Recent Changes
+- **January 31, 2025**: Major UI restructure with tabbed interface and integrated filters
+  - **Moved filters into Top Gainers/Losers section**: All 4 filters (% Change Threshold, Sort By, Market Cap, Index Filter) now integrated into the main table header
+  - **Converted to tabbed interface**: Top Gainers and Top Losers are now tabs instead of separate sections
+  - **Added "+ Watch" button**: Positioned in far right of price chart headers with cyan accent styling
+  - **Removed Data Refresh section**: Eliminated "Data Refresh Last: 4:23 PM EDT Updates: 9:30am, 1pm, 4pm EST" display for cleaner interface
+  - **Created MarketMoversTabs component**: New unified component combining both tables with integrated filter controls
+  - **Enhanced UX**: Ticker search remains at top of filters, all controls consolidated in single card interface
 - **January 31, 2025**: Implemented interactive price chart component with Finnhub integration
   - Added PriceChart component with 5 timeframes (1D, 1W, 1M, 3M, 1Y)
   - Integrated charts into ticker search for immediate visualization
