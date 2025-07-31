@@ -77,7 +77,7 @@ export const stockFilterSchema = z.object({
     "russell3000",
     "tmi"
   ]).default("all"),
-  sortBy: z.enum(["percentChange", "marketCapValue", "volume"]).default("percentChange"),
+  sortBy: z.enum(["symbol", "price", "change", "percentChange", "marketCap", "marketCapValue", "volume"]).default("percentChange"),
   sortOrder: z.enum(["asc", "desc"]).default("desc"),
   ticker: z.string().optional(), // For ticker search
 });

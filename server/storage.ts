@@ -150,12 +150,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   private getSortOrder(filter?: StockFilter) {
-    if (!filter) return desc(stocks.percentChange);
+    if (!filter) return desc(sql`CAST(${stocks.percentChange} AS NUMERIC)`);
     
     const sortDirection = filter.sortOrder === "asc" ? asc : desc;
     
     switch (filter.sortBy) {
+      case "symbol":
+        return sortDirection(stocks.symbol);
+      case "price":
+        return sortDirection(sql`CAST(${stocks.price} AS NUMERIC)`);
+      case "change":
+        return sortDirection(sql`CAST(${stocks.change} AS NUMERIC)`);
       case "marketCapValue":
+        return sortDirection(sql`CAST(${stocks.marketCapValue} AS NUMERIC)`);
+      case "marketCap":
         return sortDirection(sql`CAST(${stocks.marketCapValue} AS NUMERIC)`);
       case "volume":
         return sortDirection(stocks.volume);
