@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -23,6 +23,7 @@ export function TickerSearch({ onSelectStock }: TickerSearchProps) {
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [selectedStock, setSelectedStock] = useState<SearchResult | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Debounce search query - increased delay for better performance
   useEffect(() => {
@@ -81,7 +82,7 @@ export function TickerSearch({ onSelectStock }: TickerSearchProps) {
   };
 
   return (
-    <div className="relative">
+    <div ref={containerRef} className="relative">
       {/* Search Input */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
@@ -95,10 +96,16 @@ export function TickerSearch({ onSelectStock }: TickerSearchProps) {
         />
       </div>
 
-      {/* Search Results Dropdown */}
+      {/* Search Results Dropdown - Fixed positioning strategy */}
       {isOpen && (
-        <Card className="absolute top-full left-0 right-0 mt-1 max-h-80 overflow-y-auto z-[9999] shadow-lg border-border bg-card">
-          {isLoading ? (
+        <Card 
+          className="absolute left-0 right-0 mt-1 max-h-80 overflow-y-auto shadow-xl border-border bg-card"
+          style={{
+            top: '100%',
+            zIndex: 10000
+          }}
+        >
+            {isLoading ? (
             <div className="p-4 text-center text-muted-foreground">
               <div className="flex items-center justify-center gap-2">
                 <div className="w-4 h-4 border-2 border-[#5AF5FA] border-t-transparent rounded-full animate-spin" />
@@ -162,7 +169,7 @@ export function TickerSearch({ onSelectStock }: TickerSearchProps) {
             <div className="p-4 text-center text-muted-foreground">
               No stocks found for "{debouncedQuery}"
             </div>
-          ) : null}
+            ) : null}
         </Card>
       )}
 
