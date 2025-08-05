@@ -138,10 +138,12 @@ Preferred communication style: Simple, everyday language.
 - **Persistent Storage**: All market data, alerts, and summaries stored in PostgreSQL
 
 ## Recent Changes
-- **August 5, 2025**: CRITICAL FIX - Resolved week-old stale data issue by switching back to Alpha Vantage Premium
-  - **RESOLVED**: Yahoo Finance providing week-old data (APLD showing +31% vs actual +11.42% with +0.51% pre-market)
+- **August 5, 2025**: CRITICAL FIX - Resolved week-old stale data AND market cap calculation issues
+  - **RESOLVED DATA STALENESS**: Yahoo Finance providing week-old data (APLD showing +31% vs actual +11.42% with +0.51% pre-market)
+  - **RESOLVED MARKET CAP**: Fixed wildly incorrect market caps (VERB was $424B, now realistic $13.48M)
   - **NEW PRIMARY SOURCE**: Alpha Vantage Premium now primary data source with authentic current extreme movers
-  - **Current data quality**: Now showing actual August 5, 2025 movers: VERB (+114.72%), PBM (+92.37%), COMM (+86.26%)
+  - **Current data quality**: Now showing actual August 5, 2025 movers: BTBDW (+413.9%), VERB (+114.72%), PBM (+92.37%)
+  - **Market cap accuracy**: Real market caps from Polygon API or realistic estimation based on price patterns
   - **Data source priority**: Alpha Vantage Premium → Polygon → Yahoo Finance (stale fallback) → Finnhub
   - **Market coverage**: 40 total market movers (20 gainers + 20 losers) with authentic current trading data
 - **January 31, 2025**: Expanded market coverage to 60 comprehensive market movers
