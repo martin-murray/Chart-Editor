@@ -37,18 +37,20 @@ export class MarketDataService {
       let losers: InsertStock[] = [];
       let dataSource = '';
 
-      // Try Yahoo Finance first (real-time current data)
-      try {
-        console.log('📊 Using Yahoo Finance for real-time current market movers...');
-        const yahooData = await this.yahooFinance.getCurrentMarketMovers();
-        gainers = yahooData.gainers;
-        losers = yahooData.losers;
-        dataSource = 'Yahoo Finance';
-      } catch (error) {
-        console.warn('⚠️ Yahoo Finance failed, falling back to Polygon:', error);
+      // Try Alpha Vantage first (real-time current data)
+      if (this.alphaVantage) {
+        try {
+          console.log('📊 Using Alpha Vantage Premium for real-time current market movers...');
+          const alphaData = await this.alphaVantage.getTopGainersLosers();
+          gainers = alphaData.gainers;
+          losers = alphaData.losers;
+          dataSource = 'Alpha Vantage Premium';
+        } catch (error) {
+          console.warn('⚠️ Alpha Vantage failed, falling back to Polygon:', error);
+        }
       }
 
-      // Fallback to Polygon if Yahoo Finance failed
+      // Fallback to Polygon if Alpha Vantage failed
       if (gainers.length === 0 && losers.length === 0 && this.polygon) {
         try {
           console.log('📊 Using Polygon for comprehensive market movers...');
@@ -57,20 +59,20 @@ export class MarketDataService {
           losers = polygonData.losers;
           dataSource = 'Polygon';
         } catch (error) {
-          console.warn('⚠️ Polygon failed, falling back to Alpha Vantage:', error);
+          console.warn('⚠️ Polygon failed, falling back to Yahoo Finance:', error);
         }
       }
 
-      // Third fallback to Alpha Vantage if other sources failed
-      if (gainers.length === 0 && losers.length === 0 && this.alphaVantage) {
+      // Third fallback to Yahoo Finance if other sources failed
+      if (gainers.length === 0 && losers.length === 0) {
         try {
-          console.log('📊 Using Alpha Vantage for market movers (may be stale)...');
-          const alphaData = await this.alphaVantage.getTopGainersLosers();
-          gainers = alphaData.gainers;
-          losers = alphaData.losers;
-          dataSource = 'Alpha Vantage (stale data)';
+          console.log('📊 Using Yahoo Finance for market movers (fallback)...');
+          const yahooData = await this.yahooFinance.getCurrentMarketMovers();
+          gainers = yahooData.gainers;
+          losers = yahooData.losers;
+          dataSource = 'Yahoo Finance (fallback)';
         } catch (error) {
-          console.warn('⚠️ Alpha Vantage failed, falling back to Finnhub:', error);
+          console.warn('⚠️ Yahoo Finance failed, falling back to Finnhub:', error);
         }
       }
 

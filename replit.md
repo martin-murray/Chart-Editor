@@ -51,13 +51,13 @@ Preferred communication style: Simple, everyday language.
 - **Dark Mode**: Complete light/dark theme toggle with Intropic MUI color scheme (#5AF5FA cyan accents)
 - **Typography**: Space Grotesk headings (weight 300) and Mulish body text (weight 400)
 
-### External Service Integration - YAHOO FINANCE PRIMARY ACTIVE
-- **Primary Data Source**: Yahoo Finance Real-time API - **LIVE & ACTIVE**
-- **Data Coverage**: Current market movers with 30 gainers and 30 losers from today's trading (60 total market movers)
-- **Real-time Quality**: Current January 31, 2025 market data vs stale July 2025 data from Alpha Vantage
-- **Current Top Gainers**: APLD (+31.01%), AMSC (+29.38%), PI (+26.49%), RSI (+25.53%), CGNX (+20.76%)
-- **Data Accuracy**: Authentic real-time US market movers matching Yahoo Finance website exactly
-- **Multi-source Fallback**: Yahoo Finance → Polygon → Alpha Vantage (stale) → Finnhub
+### External Service Integration - ALPHA VANTAGE PREMIUM PRIMARY ACTIVE
+- **Primary Data Source**: Alpha Vantage Premium TOP_GAINERS_LOSERS API - **LIVE & ACTIVE** 
+- **Data Coverage**: Current market movers with 20 gainers and 20 losers from today's trading (40 total market movers)
+- **Real-time Quality**: Current August 5, 2025 market data with authentic extreme movers
+- **Current Top Gainers**: VERB (+114.72%), PBM (+92.37%), COMM (+86.26%), BTAI (+85.40%)
+- **Data Accuracy**: Authentic real-time US market movers with genuine current trading data
+- **Multi-source Fallback**: Alpha Vantage Premium → Polygon → Yahoo Finance (stale) → Finnhub
 - **Market Cap Integration**: Proper market cap values for filtering above $2B requirement
 - **Sector Classification**: Accurate sector data from Yahoo Finance source
 - **Real-time Updates**: Live current market movers data every 15 minutes
@@ -138,6 +138,12 @@ Preferred communication style: Simple, everyday language.
 - **Persistent Storage**: All market data, alerts, and summaries stored in PostgreSQL
 
 ## Recent Changes
+- **August 5, 2025**: CRITICAL FIX - Resolved week-old stale data issue by switching back to Alpha Vantage Premium
+  - **RESOLVED**: Yahoo Finance providing week-old data (APLD showing +31% vs actual +11.42% with +0.51% pre-market)
+  - **NEW PRIMARY SOURCE**: Alpha Vantage Premium now primary data source with authentic current extreme movers
+  - **Current data quality**: Now showing actual August 5, 2025 movers: VERB (+114.72%), PBM (+92.37%), COMM (+86.26%)
+  - **Data source priority**: Alpha Vantage Premium → Polygon → Yahoo Finance (stale fallback) → Finnhub
+  - **Market coverage**: 40 total market movers (20 gainers + 20 losers) with authentic current trading data
 - **January 31, 2025**: Expanded market coverage to 60 comprehensive market movers
   - **EXPANDED**: Increased from ~20 stocks to 60 total market movers (30 gainers + 30 losers)
   - **TradingView-level coverage**: Now matches comprehensive market tracking with extensive current movers
