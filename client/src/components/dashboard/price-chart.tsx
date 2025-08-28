@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Loader2, TrendingUp, TrendingDown, Plus, Calendar as CalendarIcon } from 'lucide-react';
+import { Loader2, TrendingUp, TrendingDown, Plus, Calendar as CalendarIcon, X } from 'lucide-react';
 import { format, subDays, subMonths, subYears } from 'date-fns';
 
 interface ChartData {
@@ -243,7 +243,16 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         {/* Custom Date Range Picker - Positioned Below Timeframes */}
         {selectedTimeframe === 'Custom' && (
           <div className="mt-4 p-4 border rounded-lg bg-card relative z-50" style={{ zIndex: 9999 }}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Close Button */}
+            <button
+              onClick={() => setSelectedTimeframe('1D')}
+              className="absolute top-3 right-3 text-muted-foreground hover:text-foreground transition-colors"
+              title="Close date picker"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pr-8">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Start Date</label>
                 <Calendar
@@ -273,9 +282,15 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                 </div>
                 <Button
                   onClick={() => {
-                    // Trigger chart refresh by clearing and resetting query
+                    // Close the date picker immediately and trigger chart refresh
+                    const tempStart = startDate;
+                    const tempEnd = endDate;
                     setSelectedTimeframe('1D');
-                    setTimeout(() => setSelectedTimeframe('Custom'), 100);
+                    setTimeout(() => {
+                      setStartDate(tempStart);
+                      setEndDate(tempEnd);
+                      setSelectedTimeframe('Custom');
+                    }, 100);
                   }}
                   className="bg-[#5AF5FA] text-black hover:bg-[#5AF5FA]/90"
                   size="sm"
