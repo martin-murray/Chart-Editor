@@ -266,113 +266,28 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
               </div>
             </div>
             
-            <div className="mt-4 flex gap-2 flex-wrap justify-center">
-              <Button
-                size="sm"
-                onClick={() => {
-                  setStartDate(subDays(new Date(), 7));
-                  setEndDate(new Date());
-                }}
-                variant="outline"
-                className="text-xs"
-              >
-                Last 7 days
-              </Button>
-              <Button
-                size="sm"
-                onClick={() => {
-                  setStartDate(subMonths(new Date(), 1));
-                  setEndDate(new Date());
-                }}
-                variant="outline"
-                className="text-xs"
-              >
-                Last month
-              </Button>
-              <Button
-                size="sm"
-                onClick={() => {
-                  setStartDate(subYears(new Date(), 1));
-                  setEndDate(new Date());
-                }}
-                variant="outline"
-                className="text-xs"
-              >
-                Last year
-              </Button>
-            </div>
-            
             {startDate && endDate && (
-              <div className="mt-3 text-sm text-center text-muted-foreground">
-                Selected: {format(startDate, 'MMM dd, yyyy')} - {format(endDate, 'MMM dd, yyyy')}
+              <div className="mt-4 text-center space-y-3">
+                <div className="text-sm text-muted-foreground">
+                  Selected: {format(startDate, 'MMM dd, yyyy')} - {format(endDate, 'MMM dd, yyyy')}
+                </div>
+                <Button
+                  onClick={() => {
+                    // Trigger chart refresh by clearing and resetting query
+                    setSelectedTimeframe('1D');
+                    setTimeout(() => setSelectedTimeframe('Custom'), 100);
+                  }}
+                  className="bg-[#5AF5FA] text-black hover:bg-[#5AF5FA]/90"
+                  size="sm"
+                >
+                  Apply Date Range
+                </Button>
               </div>
             )}
           </div>
         )}
       </div>
 
-      {/* Chart Section */}
-      <div className="bg-background relative z-10">
-        {isLoading ? (
-          <div className="h-80 flex items-center justify-center">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Loader2 className="w-5 h-5 animate-spin" />
-              Loading chart data...
-            </div>
-          </div>
-        ) : error ? (
-          <div className="h-80 flex items-center justify-center text-red-500">
-            Failed to load chart data
-          </div>
-        ) : !chartData?.data || chartData.data.length === 0 ? (
-          <div className="h-80 flex items-center justify-center text-muted-foreground">
-            No chart data available for {symbol}
-          </div>
-        ) : (
-          <div className="h-80 w-full rounded-lg" style={{ backgroundColor: '#1C1C1C' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart
-                data={chartData.data}
-                margin={{ top: 15, right: 30, left: 20, bottom: 15 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#333333" opacity={0.3} />
-                <XAxis 
-                  dataKey="time"
-                  tickFormatter={(value) => formatTime(value, selectedTimeframe)}
-                  tick={{ fontSize: 12, fill: '#F7F7F7' }}
-                  axisLine={{ stroke: '#F7F7F7' }}
-                  tickLine={{ stroke: '#F7F7F7' }}
-                />
-                <YAxis 
-                  domain={['dataMin - 1', 'dataMax + 1']}
-                  tickFormatter={formatPrice}
-                  tick={{ fontSize: 12, fill: '#F7F7F7' }}
-                  axisLine={{ stroke: '#F7F7F7' }}
-                  tickLine={{ stroke: '#F7F7F7' }}
-                />
-                <Tooltip 
-                  labelFormatter={(value) => formatTime(value, selectedTimeframe)}
-                  formatter={(value: number) => [formatPrice(value), 'Price']}
-                  contentStyle={{
-                    backgroundColor: '#1C1C1C',
-                    border: '1px solid #333333',
-                    borderRadius: '6px',
-                    color: '#F7F7F7'
-                  }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="close" 
-                  stroke={lineColor}
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 4, fill: lineColor, stroke: '#1C1C1C', strokeWidth: 2 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-      </div>
       {/* Chart Section */}
       <div className="bg-background relative z-10">
         {isLoading ? (

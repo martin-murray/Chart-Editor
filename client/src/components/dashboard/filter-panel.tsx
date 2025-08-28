@@ -1,7 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { TickerSearch } from "./ticker-search";
 import { type StockFilter } from "@/types/stock";
 
 interface FilterPanelProps {
@@ -21,16 +20,7 @@ export function FilterPanel({ filter, onFilterChange, lastUpdated }: FilterPanel
         <CardTitle>Filters & Settings</CardTitle>
       </CardHeader>
       <CardContent className="overflow-visible">
-        {/* Ticker Search Section */}
-        <div className="mb-6">
-          <Label htmlFor="tickerSearch">Ticker Search</Label>
-          <div className="mt-2" style={{ position: 'relative', zIndex: 1000 }}>
-            <TickerSearch onSelectStock={(stock) => {
-              // Optional: Navigate to specific stock or apply additional filtering
-              console.log("Selected stock:", stock);
-            }} />
-          </div>
-        </div>
+        {/* Ticker Search removed - now in MarketMoversTabs */}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="space-y-2">
