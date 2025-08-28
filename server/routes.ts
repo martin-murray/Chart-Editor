@@ -52,40 +52,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/stocks/:symbol/chart", async (req, res) => {
     try {
       const { symbol } = req.params;
-      const { timeframe = '1D' } = req.query;
+      const { timeframe = '1D', from: customFrom, to: customTo } = req.query;
 
-      // Calculate time range based on timeframe
+      // Calculate time range based on timeframe or custom dates
       const now = Math.floor(Date.now() / 1000);
       let from: number;
+      let to: number = now;
       let resolution: string;
 
-      switch (timeframe) {
-        case '1D':
-          from = now - (24 * 60 * 60); // 1 day
-          resolution = '5'; // 5-minute intervals
-          break;
-        case '1W':
-          from = now - (7 * 24 * 60 * 60); // 1 week  
-          resolution = '15'; // 15-minute intervals
-          break;
-        case '1M':
-          from = now - (30 * 24 * 60 * 60); // 1 month
-          resolution = '60'; // 1-hour intervals
-          break;
-        case '3M':
-          from = now - (90 * 24 * 60 * 60); // 3 months
-          resolution = 'D'; // Daily intervals
-          break;
-        case '1Y':
-          from = now - (365 * 24 * 60 * 60); // 1 year
-          resolution = 'D'; // Daily intervals
-          break;
-        default:
-          from = now - (24 * 60 * 60);
-          resolution = '5';
+      if (timeframe === 'Custom' && customFrom && customTo) {
+        from = parseInt(customFrom as string);
+        to = parseInt(customTo as string);
+        // For custom ranges, use appropriate resolution based on date range
+        const daysDiff = (to - from) / (24 * 60 * 60);
+        if (daysDiff <= 1) {
+          resolution = '5'; // 5-minute intervals for 1 day or less
+        } else if (daysDiff <= 7) {
+          resolution = '15'; // 15-minute intervals for up to 1 week
+        } else if (daysDiff <= 90) {
+          resolution = '60'; // 1-hour intervals for up to 3 months
+        } else {
+          resolution = 'D'; // Daily intervals for longer periods
+        }
+      } else {
+        switch (timeframe) {
+          case '1D':
+            from = now - (24 * 60 * 60); // 1 day
+            resolution = '5'; // 5-minute intervals
+            break;
+          case '1W':
+            from = now - (7 * 24 * 60 * 60); // 1 week  
+            resolution = '15'; // 15-minute intervals
+            break;
+          case '1M':
+            from = now - (30 * 24 * 60 * 60); // 1 month
+            resolution = '60'; // 1-hour intervals
+            break;
+          case '3M':
+            from = now - (90 * 24 * 60 * 60); // 3 months
+            resolution = 'D'; // Daily intervals
+            break;
+          case '1Y':
+            from = now - (365 * 24 * 60 * 60); // 1 year
+            resolution = 'D'; // Daily intervals
+            break;
+          default:
+            from = now - (24 * 60 * 60);
+            resolution = '5';
+        }
       }
 
-      const chartData = await stockDataService.getStockChart(symbol, from, now, resolution);
+      const chartData = await stockDataService.getStockChart(symbol, from, to, resolution);
       
       if (!chartData) {
         return res.status(404).json({ error: "Chart data not available" });

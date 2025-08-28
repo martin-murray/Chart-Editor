@@ -4,7 +4,10 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, TrendingUp, TrendingDown, Plus } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { Loader2, TrendingUp, TrendingDown, Plus, Calendar as CalendarIcon } from 'lucide-react';
+import { format, subDays, subMonths, subYears } from 'date-fns';
 
 interface ChartData {
   timestamp: number;
@@ -62,20 +65,30 @@ const timeframes = [
   { label: '1W', value: '1W' },
   { label: '1M', value: '1M' },
   { label: '3M', value: '3M' },
-  { label: '1Y', value: '1Y' }
+  { label: '1Y', value: '1Y' },
+  { label: 'Custom', value: 'Custom' }
 ];
 
 export function PriceChart({ symbol, name, currentPrice, percentChange, marketCap }: PriceChartProps) {
   const [selectedTimeframe, setSelectedTimeframe] = useState('1D');
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
 
   const { data: chartData, isLoading, error } = useQuery({
-    queryKey: ['/api/stocks', symbol, 'chart', selectedTimeframe],
+    queryKey: ['/api/stocks', symbol, 'chart', selectedTimeframe, startDate, endDate],
     queryFn: async (): Promise<ChartResponse> => {
-      const response = await fetch(`/api/stocks/${symbol}/chart?timeframe=${selectedTimeframe}`);
+      let url = `/api/stocks/${symbol}/chart?timeframe=${selectedTimeframe}`;
+      if (selectedTimeframe === 'Custom' && startDate && endDate) {
+        const fromTimestamp = Math.floor(startDate.getTime() / 1000);
+        const toTimestamp = Math.floor(endDate.getTime() / 1000);
+        url = `/api/stocks/${symbol}/chart?from=${fromTimestamp}&to=${toTimestamp}&timeframe=Custom`;
+      }
+      const response = await fetch(url);
       if (!response.ok) throw new Error('Failed to fetch chart data');
       return await response.json();
     },
-    enabled: !!symbol,
+    enabled: !!symbol && (selectedTimeframe !== 'Custom' || (!!startDate && !!endDate)),
   });
 
   const { data: stockDetails } = useQuery({
@@ -203,13 +216,19 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         </div>
         
         {/* Timeframe selector */}
-        <div className="flex gap-1">
+        <div className="flex gap-1 items-center">
           {timeframes.map((timeframe) => (
             <Button
               key={timeframe.value}
               variant={selectedTimeframe === timeframe.value ? "default" : "outline"}
               size="sm"
-              onClick={() => setSelectedTimeframe(timeframe.value)}
+              onClick={() => {
+                setSelectedTimeframe(timeframe.value);
+                if (timeframe.value !== 'Custom') {
+                  setStartDate(undefined);
+                  setEndDate(undefined);
+                }
+              }}
               className={`h-8 px-3 text-xs ${
                 selectedTimeframe === timeframe.value 
                   ? 'bg-[#5AF5FA] text-black hover:bg-[#5AF5FA]/90' 
@@ -219,6 +238,91 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
               {timeframe.label}
             </Button>
           ))}
+          
+          {/* Custom Date Range Picker */}
+          {selectedTimeframe === 'Custom' && (
+            <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 px-3 text-xs hover:bg-muted flex items-center gap-1"
+                >
+                  <CalendarIcon className="w-3 h-3" />
+                  {startDate && endDate 
+                    ? `${format(startDate, 'MMM dd')} - ${format(endDate, 'MMM dd')}`
+                    : 'Select dates'
+                  }
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <div className="p-4 space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Start Date</label>
+                    <Calendar
+                      mode="single"
+                      selected={startDate}
+                      onSelect={setStartDate}
+                      disabled={(date) => date > new Date() || (!!endDate && date > endDate)}
+                      className="rounded-md border"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">End Date</label>
+                    <Calendar
+                      mode="single"
+                      selected={endDate}
+                      onSelect={setEndDate}
+                      disabled={(date) => date > new Date() || (!!startDate && date < startDate)}
+                      className="rounded-md border"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        setStartDate(subDays(new Date(), 7));
+                        setEndDate(new Date());
+                      }}
+                      variant="outline"
+                      className="text-xs"
+                    >
+                      Last 7 days
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        setStartDate(subMonths(new Date(), 1));
+                        setEndDate(new Date());
+                      }}
+                      variant="outline"
+                      className="text-xs"
+                    >
+                      Last month
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        setStartDate(subYears(new Date(), 1));
+                        setEndDate(new Date());
+                      }}
+                      variant="outline"
+                      className="text-xs"
+                    >
+                      Last year
+                    </Button>
+                  </div>
+                  <Button
+                    onClick={() => setDatePickerOpen(false)}
+                    disabled={!startDate || !endDate}
+                    className="w-full bg-[#5AF5FA] text-black hover:bg-[#5AF5FA]/90"
+                  >
+                    Apply Date Range
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
+          )}
         </div>
       </div>
       {/* Chart Section */}
@@ -239,32 +343,35 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             No chart data available for {symbol}
           </div>
         ) : (
-          <div className="h-80 w-full">
+          <div className="h-80 w-full rounded-lg" style={{ backgroundColor: '#1C1C1C' }}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
                 data={chartData.data}
-                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                margin={{ top: 15, right: 30, left: 20, bottom: 15 }}
               >
-                <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#333333" opacity={0.3} />
                 <XAxis 
                   dataKey="time"
                   tickFormatter={(value) => formatTime(value, selectedTimeframe)}
-                  tick={{ fontSize: 12 }}
-                  axisLine={{ stroke: '#374151' }}
+                  tick={{ fontSize: 12, fill: '#F7F7F7' }}
+                  axisLine={{ stroke: '#F7F7F7' }}
+                  tickLine={{ stroke: '#F7F7F7' }}
                 />
                 <YAxis 
                   domain={['dataMin - 1', 'dataMax + 1']}
                   tickFormatter={formatPrice}
-                  tick={{ fontSize: 12 }}
-                  axisLine={{ stroke: '#374151' }}
+                  tick={{ fontSize: 12, fill: '#F7F7F7' }}
+                  axisLine={{ stroke: '#F7F7F7' }}
+                  tickLine={{ stroke: '#F7F7F7' }}
                 />
                 <Tooltip 
                   labelFormatter={(value) => formatTime(value, selectedTimeframe)}
                   formatter={(value: number) => [formatPrice(value), 'Price']}
                   contentStyle={{
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '6px'
+                    backgroundColor: '#1C1C1C',
+                    border: '1px solid #333333',
+                    borderRadius: '6px',
+                    color: '#F7F7F7'
                   }}
                 />
                 <Line 
@@ -273,7 +380,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                   stroke={lineColor}
                   strokeWidth={2}
                   dot={false}
-                  activeDot={{ r: 4, fill: lineColor }}
+                  activeDot={{ r: 4, fill: lineColor, stroke: '#1C1C1C', strokeWidth: 2 }}
                 />
               </LineChart>
             </ResponsiveContainer>
