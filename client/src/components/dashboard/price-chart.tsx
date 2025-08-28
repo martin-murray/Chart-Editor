@@ -73,7 +73,6 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
   const [selectedTimeframe, setSelectedTimeframe] = useState('1D');
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
-  const [datePickerOpen, setDatePickerOpen] = useState(false);
 
   const { data: chartData, isLoading, error } = useQuery({
     queryKey: ['/api/stocks', symbol, 'chart', selectedTimeframe, startDate, endDate],
@@ -239,94 +238,86 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             </Button>
           ))}
           
-          {/* Custom Date Range Picker */}
+          {/* Custom Date Range Picker - Direct Dropdown */}
           {selectedTimeframe === 'Custom' && (
-            <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 px-3 text-xs hover:bg-muted flex items-center gap-1"
+            <div className="relative z-50">
+              <Popover open={true} onOpenChange={() => {}}>
+                <PopoverContent 
+                  className="w-auto p-0" 
+                  align="start" 
+                  sideOffset={5}
+                  style={{ zIndex: 9999 }}
                 >
-                  <CalendarIcon className="w-3 h-3" />
-                  {startDate && endDate 
-                    ? `${format(startDate, 'MMM dd')} - ${format(endDate, 'MMM dd')}`
-                    : 'Select dates'
-                  }
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <div className="p-4 space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Start Date</label>
-                    <Calendar
-                      mode="single"
-                      selected={startDate}
-                      onSelect={setStartDate}
-                      disabled={(date) => date > new Date() || (!!endDate && date > endDate)}
-                      className="rounded-md border"
-                    />
+                  <div className="p-4 space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Start Date</label>
+                      <Calendar
+                        mode="single"
+                        selected={startDate}
+                        onSelect={setStartDate}
+                        disabled={(date) => date > new Date() || (!!endDate && date > endDate)}
+                        className="rounded-md border"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">End Date</label>
+                      <Calendar
+                        mode="single"
+                        selected={endDate}
+                        onSelect={setEndDate}
+                        disabled={(date) => date > new Date() || (!!startDate && date < startDate)}
+                        className="rounded-md border"
+                      />
+                    </div>
+                    <div className="flex gap-2 flex-wrap">
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          setStartDate(subDays(new Date(), 7));
+                          setEndDate(new Date());
+                        }}
+                        variant="outline"
+                        className="text-xs"
+                      >
+                        Last 7 days
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          setStartDate(subMonths(new Date(), 1));
+                          setEndDate(new Date());
+                        }}
+                        variant="outline"
+                        className="text-xs"
+                      >
+                        Last month
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          setStartDate(subYears(new Date(), 1));
+                          setEndDate(new Date());
+                        }}
+                        variant="outline"
+                        className="text-xs"
+                      >
+                        Last year
+                      </Button>
+                    </div>
+                    {startDate && endDate && (
+                      <div className="text-sm text-center text-muted-foreground">
+                        {format(startDate, 'MMM dd, yyyy')} - {format(endDate, 'MMM dd, yyyy')}
+                      </div>
+                    )}
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">End Date</label>
-                    <Calendar
-                      mode="single"
-                      selected={endDate}
-                      onSelect={setEndDate}
-                      disabled={(date) => date > new Date() || (!!startDate && date < startDate)}
-                      className="rounded-md border"
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        setStartDate(subDays(new Date(), 7));
-                        setEndDate(new Date());
-                      }}
-                      variant="outline"
-                      className="text-xs"
-                    >
-                      Last 7 days
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        setStartDate(subMonths(new Date(), 1));
-                        setEndDate(new Date());
-                      }}
-                      variant="outline"
-                      className="text-xs"
-                    >
-                      Last month
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        setStartDate(subYears(new Date(), 1));
-                        setEndDate(new Date());
-                      }}
-                      variant="outline"
-                      className="text-xs"
-                    >
-                      Last year
-                    </Button>
-                  </div>
-                  <Button
-                    onClick={() => setDatePickerOpen(false)}
-                    disabled={!startDate || !endDate}
-                    className="w-full bg-[#5AF5FA] text-black hover:bg-[#5AF5FA]/90"
-                  >
-                    Apply Date Range
-                  </Button>
-                </div>
-              </PopoverContent>
-            </Popover>
+                </PopoverContent>
+              </Popover>
+            </div>
           )}
         </div>
       </div>
       {/* Chart Section */}
-      <div className="bg-background">
+      <div className="bg-background relative z-10">
         {isLoading ? (
           <div className="h-80 flex items-center justify-center">
             <div className="flex items-center gap-2 text-muted-foreground">
