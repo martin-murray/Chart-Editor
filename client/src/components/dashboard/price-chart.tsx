@@ -282,15 +282,9 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                 </div>
                 <Button
                   onClick={() => {
-                    // Close the date picker immediately and trigger chart refresh
-                    const tempStart = startDate;
-                    const tempEnd = endDate;
+                    // Simply close the date picker by switching away from Custom
+                    // The chart will already have the custom data loaded based on the current startDate and endDate
                     setSelectedTimeframe('1D');
-                    setTimeout(() => {
-                      setStartDate(tempStart);
-                      setEndDate(tempEnd);
-                      setSelectedTimeframe('Custom');
-                    }, 100);
                   }}
                   className="bg-[#5AF5FA] text-black hover:bg-[#5AF5FA]/90"
                   size="sm"
