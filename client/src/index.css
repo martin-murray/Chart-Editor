@@ -205,3 +205,42 @@
     background-color: hsl(var(--loser) / 0.1);
   }
 }
+
+/* Calendar customizations */
+@layer components {
+  /* Style today's date with outline instead of solid background */
+  .rdp-day_button[aria-current="date"] {
+    background-color: transparent !important;
+    border: 2px solid #5AF5FA !important;
+    color: var(--foreground) !important;
+    font-weight: 500;
+  }
+  
+  /* Light theme today's date */
+  :root .rdp-day_button[aria-current="date"] {
+    border-color: #059691 !important;
+  }
+  
+  /* Dark theme today's date */
+  .dark .rdp-day_button[aria-current="date"] {
+    border-color: #5AF5FA !important;
+  }
+  
+  /* Hover state for today's date */
+  .rdp-day_button[aria-current="date"]:hover {
+    background-color: rgba(90, 245, 250, 0.1) !important;
+  }
+  
+  /* Selected date styling (keep distinct from today) */
+  .rdp-day_button[aria-selected="true"]:not([aria-current="date"]) {
+    background-color: #5AF5FA !important;
+    color: black !important;
+  }
+  
+  /* When today is also selected */
+  .rdp-day_button[aria-selected="true"][aria-current="date"] {
+    background-color: #5AF5FA !important;
+    color: black !important;
+    border-color: #5AF5FA !important;
+  }
+}
