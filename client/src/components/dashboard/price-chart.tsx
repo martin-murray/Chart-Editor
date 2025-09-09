@@ -1056,7 +1056,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                     dataKey="time"
                     tickFormatter={(value) => formatTime(value, selectedTimeframe)}
                     tick={{ fontSize: 12, fill: '#F7F7F7' }}
-                    axisLine={false}
+                    axisLine={{ stroke: '#F7F7F7' }}
                     tickLine={{ stroke: '#F7F7F7' }}
                   />
                   
