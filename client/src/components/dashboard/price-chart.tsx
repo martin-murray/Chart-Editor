@@ -77,6 +77,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
   const [selectedTimeframe, setSelectedTimeframe] = useState('1D');
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const chartRef = useRef<HTMLDivElement>(null);
 
   const { data: chartData, isLoading, error } = useQuery({
@@ -332,6 +333,9 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                 if (timeframe.value !== 'Custom') {
                   setStartDate(undefined);
                   setEndDate(undefined);
+                  setShowDatePicker(false);
+                } else {
+                  setShowDatePicker(true);
                 }
               }}
               className={`h-8 px-3 text-xs ${
@@ -347,11 +351,11 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         </div>
         
         {/* Custom Date Range Picker - Positioned Below Timeframes */}
-        {selectedTimeframe === 'Custom' && (
+        {selectedTimeframe === 'Custom' && showDatePicker && (
           <div className="mt-4 p-4 border rounded-lg bg-card relative z-50" style={{ zIndex: 9999 }}>
             {/* Close Button */}
             <button
-              onClick={() => setSelectedTimeframe('1D')}
+              onClick={() => setShowDatePicker(false)}
               className="absolute top-3 right-3 text-muted-foreground hover:text-foreground transition-colors"
               title="Close date picker"
             >
@@ -389,9 +393,9 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                 <div className="flex gap-2 justify-center">
                   <Button
                     onClick={() => {
-                      // Simply close the date picker by switching away from Custom
-                      // The chart will already have the custom data loaded based on the current startDate and endDate
-                      setSelectedTimeframe('1D');
+                      // Close the date picker while keeping Custom timeframe active
+                      // The chart will continue showing the custom data based on startDate and endDate
+                      setShowDatePicker(false);
                     }}
                     className="bg-[#5AF5FA] text-black hover:bg-[#5AF5FA]/90"
                     size="sm"
