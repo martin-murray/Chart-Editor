@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { AreaChart, Area, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -887,6 +887,59 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                   activeDot={{ r: 4, fill: lineColor, stroke: '#1C1C1C', strokeWidth: 2 }}
                 />
               </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
+        {/* Volume Bar Chart */}
+        {chartData?.data && chartData.data.length > 0 && (
+          <div className="h-32 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartDataWithPercentage}>
+                <CartesianGrid 
+                  strokeDasharray="1 1" 
+                  stroke="#333333" 
+                  opacity={0.3}
+                  horizontal={true}
+                  vertical={false}
+                />
+                
+                <XAxis 
+                  dataKey="time"
+                  tickFormatter={(value) => formatTime(value, selectedTimeframe)}
+                  tick={{ fontSize: 10, fill: '#999999' }}
+                  axisLine={{ stroke: '#F7F7F7', opacity: 0.3 }}
+                  tickLine={{ stroke: '#F7F7F7', opacity: 0.3 }}
+                />
+                
+                <YAxis 
+                  orientation="left"
+                  tickFormatter={(value) => formatNumber(value)}
+                  tick={{ fontSize: 10, fill: '#999999' }}
+                  axisLine={{ stroke: '#F7F7F7', opacity: 0.3 }}
+                  tickLine={{ stroke: '#F7F7F7', opacity: 0.3 }}
+                  width={60}
+                />
+                
+                <Tooltip 
+                  labelFormatter={(value) => formatTime(value, selectedTimeframe)}
+                  formatter={(value: number) => [formatNumber(value), 'Volume']}
+                  contentStyle={{
+                    backgroundColor: '#1C1C1C',
+                    border: '1px solid #333333',
+                    borderRadius: '6px',
+                    color: '#F7F7F7',
+                    fontSize: '12px'
+                  }}
+                />
+                
+                <Bar 
+                  dataKey="volume" 
+                  fill="#5AF5FA"
+                  opacity={0.7}
+                  radius={[1, 1, 0, 0]}
+                />
+              </BarChart>
             </ResponsiveContainer>
           </div>
         )}
