@@ -95,6 +95,8 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
   const [showAnnotationInput, setShowAnnotationInput] = useState(false);
   const [annotationInput, setAnnotationInput] = useState('');
   const [pendingAnnotation, setPendingAnnotation] = useState<Omit<Annotation, 'id' | 'text'> | null>(null);
+  const [editingAnnotation, setEditingAnnotation] = useState<Annotation | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   const { data: chartData, isLoading, error } = useQuery({
     queryKey: ['/api/stocks', symbol, 'chart', selectedTimeframe, startDate, endDate],
@@ -209,24 +211,51 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
       const price = clickedData.close;
       const time = clickedData.time;
       
-      // Create pending annotation
-      const newAnnotation: Omit<Annotation, 'id' | 'text'> = {
-        x: 0, // Will be set by chart rendering
-        y: 0, // Will be set by chart rendering  
-        timestamp,
-        price,
-        time
-      };
+      // Check if click is near an existing annotation (within tolerance)
+      const clickedAnnotation = annotations.find(annotation => {
+        return Math.abs(annotation.timestamp - timestamp) < 60000; // Within 1 minute tolerance
+      });
       
-      setPendingAnnotation(newAnnotation);
-      setShowAnnotationInput(true);
-      setAnnotationInput('');
+      if (clickedAnnotation) {
+        // Clicking on existing annotation - show edit/delete options
+        setEditingAnnotation(clickedAnnotation);
+        setIsEditMode(true);
+        setAnnotationInput(clickedAnnotation.text);
+        setShowAnnotationInput(true);
+      } else {
+        // Clicking on empty space - create new annotation
+        const newAnnotation: Omit<Annotation, 'id' | 'text'> = {
+          x: 0, // Will be set by chart rendering
+          y: 0, // Will be set by chart rendering  
+          timestamp,
+          price,
+          time
+        };
+        
+        setPendingAnnotation(newAnnotation);
+        setShowAnnotationInput(true);
+        setAnnotationInput('');
+        setEditingAnnotation(null);
+        setIsEditMode(false);
+      }
     }
   };
 
   // Save annotation with user text
   const saveAnnotation = () => {
-    if (pendingAnnotation && annotationInput.trim()) {
+    if (isEditMode && editingAnnotation && annotationInput.trim()) {
+      // Update existing annotation
+      setAnnotations(prev => prev.map(annotation => 
+        annotation.id === editingAnnotation.id 
+          ? { ...annotation, text: annotationInput.trim() }
+          : annotation
+      ));
+      setShowAnnotationInput(false);
+      setAnnotationInput('');
+      setEditingAnnotation(null);
+      setIsEditMode(false);
+    } else if (pendingAnnotation && annotationInput.trim()) {
+      // Create new annotation
       const newAnnotation: Annotation = {
         ...pendingAnnotation,
         id: `annotation-${Date.now()}`,
@@ -240,11 +269,24 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
     }
   };
 
+  // Delete annotation
+  const deleteAnnotation = () => {
+    if (editingAnnotation) {
+      setAnnotations(prev => prev.filter(annotation => annotation.id !== editingAnnotation.id));
+      setShowAnnotationInput(false);
+      setAnnotationInput('');
+      setEditingAnnotation(null);
+      setIsEditMode(false);
+    }
+  };
+
   // Cancel annotation
   const cancelAnnotation = () => {
     setShowAnnotationInput(false);
     setAnnotationInput('');
     setPendingAnnotation(null);
+    setEditingAnnotation(null);
+    setIsEditMode(false);
   };
 
   const formatPercent = (value: number) => {
@@ -1409,13 +1451,15 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
       </div>
 
       {/* Annotation Input Modal */}
-      {showAnnotationInput && pendingAnnotation && (
+      {showAnnotationInput && (pendingAnnotation || editingAnnotation) && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-card border border-border rounded-lg p-6 w-96 max-w-[90vw]">
-            <h3 className="text-lg font-semibold mb-4">Add Annotation</h3>
+            <h3 className="text-lg font-semibold mb-4">
+              {isEditMode ? 'Edit Annotation' : 'Add Annotation'}
+            </h3>
             <div className="mb-4 text-sm text-muted-foreground">
-              <div>Time: {pendingAnnotation.time}</div>
-              <div>Price: {formatPrice(pendingAnnotation.price)}</div>
+              <div>Time: {isEditMode ? editingAnnotation?.time : pendingAnnotation?.time}</div>
+              <div>Price: {formatPrice(isEditMode ? editingAnnotation?.price || 0 : pendingAnnotation?.price || 0)}</div>
             </div>
             <div className="mb-4">
               <label className="block text-sm font-medium mb-2">Event Description</label>
@@ -1438,12 +1482,21 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
               <Button variant="outline" onClick={cancelAnnotation}>
                 Cancel
               </Button>
+              {isEditMode && (
+                <Button 
+                  variant="destructive"
+                  onClick={deleteAnnotation}
+                  className="bg-red-600 text-white hover:bg-red-700"
+                >
+                  Delete
+                </Button>
+              )}
               <Button 
                 onClick={saveAnnotation}
                 disabled={!annotationInput.trim()}
                 className="bg-[#5AF5FA] text-black hover:bg-[#5AF5FA]/90"
               >
-                Save
+                {isEditMode ? 'Update' : 'Save'}
               </Button>
             </div>
             <div className="mt-2 text-xs text-muted-foreground">
