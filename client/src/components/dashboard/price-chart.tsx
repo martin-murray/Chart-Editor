@@ -1170,6 +1170,51 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         )}
       </div>
 
+      {/* Annotation Input Modal */}
+      {showAnnotationInput && pendingAnnotation && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-card border border-border rounded-lg p-6 w-96 max-w-[90vw]">
+            <h3 className="text-lg font-semibold mb-4">Add Annotation</h3>
+            <div className="mb-4 text-sm text-muted-foreground">
+              <div>Time: {pendingAnnotation.time}</div>
+              <div>Price: {formatPrice(pendingAnnotation.price)}</div>
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2">Event Description</label>
+              <textarea
+                value={annotationInput}
+                onChange={(e) => setAnnotationInput(e.target.value)}
+                placeholder="Enter event description..."
+                className="w-full h-24 px-3 py-2 border border-border rounded-md bg-background text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && e.ctrlKey) {
+                    saveAnnotation();
+                  } else if (e.key === 'Escape') {
+                    cancelAnnotation();
+                  }
+                }}
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={cancelAnnotation}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={saveAnnotation}
+                disabled={!annotationInput.trim()}
+                className="bg-[#5AF5FA] text-black hover:bg-[#5AF5FA]/90"
+              >
+                Save
+              </Button>
+            </div>
+            <div className="mt-2 text-xs text-muted-foreground">
+              Press Ctrl+Enter to save, Escape to cancel
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Stats Grid - 4 Columns */}
       {stockDetails && stockDetails.quote && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-sm">
