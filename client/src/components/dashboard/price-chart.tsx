@@ -106,6 +106,28 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
     enabled: !!symbol,
   });
 
+  const formatMarketCap = (marketCapInMillions: number) => {
+    // Finnhub returns market cap in millions of dollars
+    if (marketCapInMillions >= 1000000) return `${(marketCapInMillions / 1000000).toFixed(1)}T`;
+    if (marketCapInMillions >= 1000) return `${(marketCapInMillions / 1000).toFixed(1)}B`;
+    return `${marketCapInMillions.toFixed(1)}M`;
+  };
+
+  // Use stock details data if currentPrice is placeholder or invalid
+  const actualCurrentPrice = (currentPrice && currentPrice !== '--' && !isNaN(parseFloat(currentPrice))) 
+    ? currentPrice 
+    : stockDetails?.quote?.c?.toString() || '--';
+    
+  const actualPercentChange = (percentChange && percentChange !== '0' && percentChange !== '--') 
+    ? percentChange 
+    : stockDetails?.quote?.dp?.toString() || '0';
+    
+  const actualMarketCap = (marketCap && marketCap !== '--') 
+    ? marketCap 
+    : stockDetails?.profile?.marketCapitalization 
+      ? formatMarketCap(stockDetails.profile.marketCapitalization) 
+      : '--';
+
   const formatPrice = (value: number) => `$${value.toFixed(2)}`;
   
   const formatTime = (timeStr: string, timeframe: string) => {
@@ -139,7 +161,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
     }
   };
 
-  const parseChange = parseFloat(percentChange);
+  const parseChange = parseFloat(actualPercentChange);
   const isPositive = parseChange >= 0;
   const lineColor = isPositive ? '#5AF5FA' : '#FFA5FF'; // Cyan for positive, Pink for negative
   
@@ -149,13 +171,6 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
     const percentageChange = ((item.close - firstPrice) / firstPrice) * 100;
     return { ...item, percentageChange };
   }) || [];
-
-  const formatMarketCap = (marketCapInMillions: number) => {
-    // Finnhub returns market cap in millions of dollars
-    if (marketCapInMillions >= 1000000) return `${(marketCapInMillions / 1000000).toFixed(1)}T`;
-    if (marketCapInMillions >= 1000) return `${(marketCapInMillions / 1000).toFixed(1)}B`;
-    return `${marketCapInMillions.toFixed(1)}M`;
-  };
 
   const formatNumber = (num: number) => {
     if (num >= 1e12) return `${(num / 1e12).toFixed(2)}T`;
@@ -198,9 +213,9 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
       // Add price info - fix the NaN issue
       ctx.fillStyle = '#F7F7F7';
       ctx.font = '36px system-ui, -apple-system, sans-serif';
-      const price = currentPrice && currentPrice !== 'NaN' ? formatPrice(parseFloat(currentPrice)) : 'N/A';
-      const change = percentChange && percentChange !== '0' ? percentChange : 'N/A';
-      const cap = marketCap && marketCap !== '--' ? marketCap : 'N/A';
+      const price = actualCurrentPrice && actualCurrentPrice !== 'NaN' && actualCurrentPrice !== '--' ? formatPrice(parseFloat(actualCurrentPrice)) : 'N/A';
+      const change = actualPercentChange && actualPercentChange !== '0' && actualPercentChange !== '--' ? actualPercentChange : 'N/A';
+      const cap = actualMarketCap && actualMarketCap !== '--' ? actualMarketCap : 'N/A';
       
       ctx.fillText(`Price: ${price} (${change}%)`, 60, 140);
       ctx.fillText(`Market Cap: ${cap}`, 60, 190);
@@ -358,9 +373,9 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
       // Add price info - fix the NaN issue
       ctx.fillStyle = '#F7F7F7';
       ctx.font = '36px system-ui, -apple-system, sans-serif';
-      const price = currentPrice && currentPrice !== 'NaN' ? formatPrice(parseFloat(currentPrice)) : 'N/A';
-      const change = percentChange && percentChange !== '0' ? percentChange : 'N/A';
-      const cap = marketCap && marketCap !== '--' ? marketCap : 'N/A';
+      const price = actualCurrentPrice && actualCurrentPrice !== 'NaN' && actualCurrentPrice !== '--' ? formatPrice(parseFloat(actualCurrentPrice)) : 'N/A';
+      const change = actualPercentChange && actualPercentChange !== '0' && actualPercentChange !== '--' ? actualPercentChange : 'N/A';
+      const cap = actualMarketCap && actualMarketCap !== '--' ? actualMarketCap : 'N/A';
       
       ctx.fillText(`Price: ${price} (${change}%)`, 60, 140);
       ctx.fillText(`Market Cap: ${cap}`, 60, 190);
@@ -496,9 +511,9 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
 
   const exportAsSVG = async () => {
     try {
-      const price = currentPrice && currentPrice !== 'NaN' ? formatPrice(parseFloat(currentPrice)) : 'N/A';
-      const change = percentChange && percentChange !== '0' ? percentChange : 'N/A';
-      const cap = marketCap && marketCap !== '--' ? marketCap : 'N/A';
+      const price = actualCurrentPrice && actualCurrentPrice !== 'NaN' && actualCurrentPrice !== '--' ? formatPrice(parseFloat(actualCurrentPrice)) : 'N/A';
+      const change = actualPercentChange && actualPercentChange !== '0' && actualPercentChange !== '--' ? actualPercentChange : 'N/A';
+      const cap = actualMarketCap && actualMarketCap !== '--' ? actualMarketCap : 'N/A';
       
       const timeframeText = startDate && endDate 
         ? `Date Range: ${format(startDate, 'MMM dd, yyyy')} - ${format(endDate, 'MMM dd, yyyy')}`
@@ -618,7 +633,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
               <span className="text-sm font-normal text-muted-foreground">{name}</span>
             </div>
             <div className="mt-2 flex items-center gap-3">
-              <span className="text-2xl font-bold">{formatPrice(parseFloat(currentPrice))}</span>
+              <span className="text-2xl font-bold">{actualCurrentPrice !== '--' ? formatPrice(parseFloat(actualCurrentPrice)) : '--'}</span>
               <Badge 
                 variant={isPositive ? "default" : "destructive"}
                 className={`flex items-center gap-1 ${isPositive ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'}`}
@@ -626,7 +641,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                 {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                 {Math.abs(parseChange).toFixed(2)}%
               </Badge>
-              <span className="text-sm text-muted-foreground">{marketCap}</span>
+              <span className="text-sm text-muted-foreground">{actualMarketCap}</span>
             </div>
             
             {/* Pre/After Market Display */}
@@ -650,9 +665,9 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                 window.addToWatchlist({
                   symbol,
                   name,
-                  price: currentPrice,
-                  percentChange,
-                  marketCap
+                  price: actualCurrentPrice,
+                  percentChange: actualPercentChange,
+                  marketCap: actualMarketCap
                 });
               }
             }}
