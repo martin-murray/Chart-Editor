@@ -172,10 +172,9 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
   // Export functions
   const exportAsPNG = async () => {
     try {
-      // Fallback approach - create a simple canvas-based chart
       const canvas = document.createElement('canvas');
-      canvas.width = 800;
-      canvas.height = 400;
+      canvas.width = 1000;
+      canvas.height = 600;
       const ctx = canvas.getContext('2d');
       
       if (!ctx) {
@@ -189,30 +188,88 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
       // Add title
       ctx.fillStyle = '#5AF5FA';
       ctx.font = 'bold 24px Arial';
-      ctx.fillText(`${symbol} - ${name}`, 20, 40);
+      ctx.fillText(`${symbol} - ${name}`, 30, 40);
       
-      // Add price info
+      // Add price info - fix the NaN issue
       ctx.fillStyle = '#F7F7F7';
       ctx.font = '18px Arial';
-      ctx.fillText(`Price: ${formatPrice(parseFloat(currentPrice))} (${percentChange})`, 20, 70);
-      ctx.fillText(`Market Cap: ${marketCap}`, 20, 95);
+      const price = currentPrice && currentPrice !== 'NaN' ? formatPrice(parseFloat(currentPrice)) : 'N/A';
+      const change = percentChange && percentChange !== '0' ? percentChange : 'N/A';
+      const cap = marketCap && marketCap !== '--' ? marketCap : 'N/A';
+      
+      ctx.fillText(`Price: ${price} (${change}%)`, 30, 70);
+      ctx.fillText(`Market Cap: ${cap}`, 30, 95);
       
       // Add timeframe info
       const timeframeText = startDate && endDate 
         ? `Date Range: ${format(startDate, 'MMM dd, yyyy')} - ${format(endDate, 'MMM dd, yyyy')}`
         : `Timeframe: ${selectedTimeframe}`;
-      ctx.fillText(timeframeText, 20, 120);
+      ctx.fillText(timeframeText, 30, 120);
       
-      // Add chart placeholder
-      ctx.strokeStyle = '#5AF5FA';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(20, 140, 760, 220);
-      
-      // Add note about using browser's screenshot feature
-      ctx.fillStyle = '#888888';
-      ctx.font = '14px Arial';
-      ctx.fillText('Note: For full chart visualization, use your browser\'s screenshot feature', 20, 380);
-      ctx.fillText('or try the SVG export option which works reliably.', 20, 395);
+      // Draw actual chart if data is available
+      if (chartData?.data && chartData.data.length > 0) {
+        const chartArea = { x: 60, y: 150, width: 880, height: 350 };
+        
+        // Draw chart background
+        ctx.fillStyle = '#1C1C1C';
+        ctx.fillRect(chartArea.x, chartArea.y, chartArea.width, chartArea.height);
+        
+        // Draw grid lines
+        ctx.strokeStyle = '#333333';
+        ctx.lineWidth = 1;
+        for (let i = 0; i <= 5; i++) {
+          const y = chartArea.y + (i * chartArea.height / 5);
+          ctx.beginPath();
+          ctx.moveTo(chartArea.x, y);
+          ctx.lineTo(chartArea.x + chartArea.width, y);
+          ctx.stroke();
+        }
+        
+        // Get price data and calculate bounds
+        const prices = chartData.data.map(d => d.close);
+        const minPrice = Math.min(...prices);
+        const maxPrice = Math.max(...prices);
+        const priceRange = maxPrice - minPrice;
+        
+        // Draw price line
+        const lineColor = isPositive ? '#5AF5FA' : '#FFA5FF';
+        ctx.strokeStyle = lineColor;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        
+        chartData.data.forEach((point, index) => {
+          const x = chartArea.x + (index / (chartData.data.length - 1)) * chartArea.width;
+          const y = chartArea.y + chartArea.height - ((point.close - minPrice) / priceRange) * chartArea.height;
+          
+          if (index === 0) {
+            ctx.moveTo(x, y);
+          } else {
+            ctx.lineTo(x, y);
+          }
+        });
+        ctx.stroke();
+        
+        // Draw Y-axis labels (prices)
+        ctx.fillStyle = '#F7F7F7';
+        ctx.font = '12px Arial';
+        for (let i = 0; i <= 5; i++) {
+          const price = minPrice + (i / 5) * priceRange;
+          const y = chartArea.y + chartArea.height - (i * chartArea.height / 5);
+          ctx.fillText(formatPrice(price), chartArea.x + chartArea.width + 10, y + 4);
+        }
+        
+        // Draw X-axis labels (simplified)
+        ctx.fillText('Start', chartArea.x, chartArea.y + chartArea.height + 20);
+        ctx.fillText('End', chartArea.x + chartArea.width - 30, chartArea.y + chartArea.height + 20);
+      } else {
+        // Fallback if no chart data
+        ctx.strokeStyle = '#5AF5FA';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(60, 150, 880, 350);
+        ctx.fillStyle = '#888888';
+        ctx.font = '16px Arial';
+        ctx.fillText('Chart data not available', 450, 325);
+      }
       
       const filename = `${symbol}_chart_${selectedTimeframe}${
         startDate && endDate ? `_${format(startDate, 'yyyy-MM-dd')}_${format(endDate, 'yyyy-MM-dd')}` : ''
@@ -234,38 +291,120 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
       
     } catch (error) {
       console.error('PNG export failed:', error);
-      alert('PNG export failed. Please try using the SVG export option instead, or take a screenshot manually.');
+      alert('PNG export failed. Please try again.');
     }
   };
 
   const exportAsPDF = async () => {
     try {
-      const pdf = new jsPDF('landscape', 'mm', 'a4');
+      // First create the same canvas chart as PNG export
+      const canvas = document.createElement('canvas');
+      canvas.width = 1000;
+      canvas.height = 600;
+      const ctx = canvas.getContext('2d');
       
-      // Add title and metadata
-      pdf.setFontSize(20);
-      pdf.text(`${symbol} - ${name}`, 15, 25);
-      pdf.setFontSize(14);
-      pdf.text(`Price: ${formatPrice(parseFloat(currentPrice))} (${percentChange})`, 15, 40);
-      pdf.text(`Market Cap: ${marketCap}`, 15, 50);
-      if (startDate && endDate) {
-        pdf.text(`Date Range: ${format(startDate, 'MMM dd, yyyy')} - ${format(endDate, 'MMM dd, yyyy')}`, 15, 60);
-      } else {
-        pdf.text(`Timeframe: ${selectedTimeframe}`, 15, 60);
+      if (!ctx) {
+        throw new Error('Could not get canvas context');
       }
       
-      // Add current timestamp
-      pdf.text(`Generated: ${new Date().toLocaleString()}`, 15, 70);
+      // Set background
+      ctx.fillStyle = '#1C1C1C';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
       
-      // Add chart placeholder
-      pdf.setDrawColor(90, 245, 250); // #5AF5FA
-      pdf.setLineWidth(1);
-      pdf.rect(15, 80, 260, 130);
+      // Add title
+      ctx.fillStyle = '#5AF5FA';
+      ctx.font = 'bold 24px Arial';
+      ctx.fillText(`${symbol} - ${name}`, 30, 40);
       
-      // Add note
-      pdf.setFontSize(12);
-      pdf.text('Note: For full chart visualization, use the SVG export option', 15, 225);
-      pdf.text('or take a screenshot of the interactive chart.', 15, 235);
+      // Add price info - fix the NaN issue
+      ctx.fillStyle = '#F7F7F7';
+      ctx.font = '18px Arial';
+      const price = currentPrice && currentPrice !== 'NaN' ? formatPrice(parseFloat(currentPrice)) : 'N/A';
+      const change = percentChange && percentChange !== '0' ? percentChange : 'N/A';
+      const cap = marketCap && marketCap !== '--' ? marketCap : 'N/A';
+      
+      ctx.fillText(`Price: ${price} (${change}%)`, 30, 70);
+      ctx.fillText(`Market Cap: ${cap}`, 30, 95);
+      
+      // Add timeframe info
+      const timeframeText = startDate && endDate 
+        ? `Date Range: ${format(startDate, 'MMM dd, yyyy')} - ${format(endDate, 'MMM dd, yyyy')}`
+        : `Timeframe: ${selectedTimeframe}`;
+      ctx.fillText(timeframeText, 30, 120);
+      
+      // Draw actual chart if data is available
+      if (chartData?.data && chartData.data.length > 0) {
+        const chartArea = { x: 60, y: 150, width: 880, height: 350 };
+        
+        // Draw chart background
+        ctx.fillStyle = '#1C1C1C';
+        ctx.fillRect(chartArea.x, chartArea.y, chartArea.width, chartArea.height);
+        
+        // Draw grid lines
+        ctx.strokeStyle = '#333333';
+        ctx.lineWidth = 1;
+        for (let i = 0; i <= 5; i++) {
+          const y = chartArea.y + (i * chartArea.height / 5);
+          ctx.beginPath();
+          ctx.moveTo(chartArea.x, y);
+          ctx.lineTo(chartArea.x + chartArea.width, y);
+          ctx.stroke();
+        }
+        
+        // Get price data and calculate bounds
+        const prices = chartData.data.map(d => d.close);
+        const minPrice = Math.min(...prices);
+        const maxPrice = Math.max(...prices);
+        const priceRange = maxPrice - minPrice;
+        
+        // Draw price line
+        const lineColor = isPositive ? '#5AF5FA' : '#FFA5FF';
+        ctx.strokeStyle = lineColor;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        
+        chartData.data.forEach((point, index) => {
+          const x = chartArea.x + (index / (chartData.data.length - 1)) * chartArea.width;
+          const y = chartArea.y + chartArea.height - ((point.close - minPrice) / priceRange) * chartArea.height;
+          
+          if (index === 0) {
+            ctx.moveTo(x, y);
+          } else {
+            ctx.lineTo(x, y);
+          }
+        });
+        ctx.stroke();
+        
+        // Draw Y-axis labels (prices)
+        ctx.fillStyle = '#F7F7F7';
+        ctx.font = '12px Arial';
+        for (let i = 0; i <= 5; i++) {
+          const price = minPrice + (i / 5) * priceRange;
+          const y = chartArea.y + chartArea.height - (i * chartArea.height / 5);
+          ctx.fillText(formatPrice(price), chartArea.x + chartArea.width + 10, y + 4);
+        }
+        
+        // Draw X-axis labels (simplified)
+        ctx.fillText('Start', chartArea.x, chartArea.y + chartArea.height + 20);
+        ctx.fillText('End', chartArea.x + chartArea.width - 30, chartArea.y + chartArea.height + 20);
+      }
+      
+      // Now create PDF and add the canvas as image
+      const pdf = new jsPDF('landscape', 'mm', 'a4');
+      const imgData = canvas.toDataURL('image/png');
+      
+      // Calculate dimensions to fit the chart nicely in PDF
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pdfWidth - 20; // Leave margins
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      // Add the chart image
+      pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, Math.min(imgHeight, pdfHeight - 30));
+      
+      // Add generation timestamp at bottom
+      pdf.setFontSize(10);
+      pdf.text(`Generated: ${new Date().toLocaleString()}`, 15, pdfHeight - 10);
       
       const filename = `${symbol}_chart_${selectedTimeframe}${
         startDate && endDate ? `_${format(startDate, 'yyyy-MM-dd')}_${format(endDate, 'yyyy-MM-dd')}` : ''
@@ -274,7 +413,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
       pdf.save(filename);
     } catch (error) {
       console.error('PDF export failed:', error);
-      alert('PDF export failed. Please try using the SVG export option instead.');
+      alert('PDF export failed. Please try again.');
     }
   };
 
