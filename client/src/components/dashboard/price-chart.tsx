@@ -811,105 +811,139 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             No chart data available for {symbol}
           </div>
         ) : (
-          <div ref={chartRef} className="h-96 w-full rounded-lg" style={{ backgroundColor: '#1C1C1C' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart
-                data={chartDataWithPercentage}
-                margin={{ top: 15, right: 80, left: 0, bottom: 15 }}
-              >
-                <defs>
-                  <linearGradient id="positiveGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#5AF5FA" stopOpacity={0.5} />
-                    <stop offset="100%" stopColor="#5AF5FA" stopOpacity={0.2} />
-                  </linearGradient>
-                  <linearGradient id="negativeGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#FFA5FF" stopOpacity={0.5} />
-                    <stop offset="100%" stopColor="#FFA5FF" stopOpacity={0.2} />
-                  </linearGradient>
-                </defs>
-                
-                {/* Enhanced horizontal grid lines */}
-                <CartesianGrid 
-                  strokeDasharray="1 1" 
-                  stroke="#333333" 
-                  opacity={0.6}
-                  horizontal={true}
-                  vertical={false}
-                />
-                
-                <XAxis 
-                  dataKey="time"
-                  tickFormatter={(value) => formatTime(value, selectedTimeframe)}
-                  tick={{ fontSize: 12, fill: '#F7F7F7' }}
-                  axisLine={{ stroke: '#F7F7F7' }}
-                  tickLine={{ stroke: '#F7F7F7' }}
-                />
-                
-                {/* Y-axis for price (right side) */}
-                <YAxis 
-                  yAxisId="price"
-                  orientation="right"
-                  domain={['dataMin - 1', 'dataMax + 1']}
-                  tickFormatter={formatPrice}
-                  tick={{ fontSize: 12, fill: '#F7F7F7' }}
-                  axisLine={{ stroke: '#F7F7F7' }}
-                  tickLine={{ stroke: '#F7F7F7' }}
-                />
-                
-                {/* Y-axis for volume (right side) */}
-                <YAxis 
-                  yAxisId="volume"
-                  orientation="right"
-                  tickFormatter={(value) => formatNumber(value)}
-                  tick={{ fontSize: 10, fill: '#999999' }}
-                  axisLine={{ stroke: '#F7F7F7', opacity: 0.3 }}
-                  tickLine={{ stroke: '#F7F7F7', opacity: 0.3 }}
-                  width={60}
-                  dx={60}
-                />
-                
-                <Tooltip 
-                  labelFormatter={(value) => formatTime(value, selectedTimeframe)}
-                  formatter={(value: number, name: string) => {
-                    if (name === 'close') {
-                      return [formatPrice(value), 'Price'];
-                    } else if (name === 'volume') {
-                      return [formatNumber(value), 'Volume'];
-                    } else if (name === 'percentageChange') {
-                      return [`${value.toFixed(2)}%`, 'Change'];
-                    }
-                    return [value, name];
-                  }}
-                  contentStyle={{
-                    backgroundColor: '#1C1C1C',
-                    border: '1px solid #333333',
-                    borderRadius: '6px',
-                    color: '#F7F7F7'
-                  }}
-                />
-                
-                {/* Volume bars at the bottom */}
-                <Bar 
-                  yAxisId="volume"
-                  dataKey="volume" 
-                  fill="#5AF5FA"
-                  opacity={0.4}
-                  radius={[1, 1, 0, 0]}
-                />
-                
-                {/* Mountain area chart with gradient fill */}
-                <Area
-                  yAxisId="price"
-                  type="monotone" 
-                  dataKey="close" 
-                  stroke={lineColor}
-                  strokeWidth={2}
-                  fill={`url(#${isPositive ? 'positiveGradient' : 'negativeGradient'})`}
-                  dot={false}
-                  activeDot={{ r: 4, fill: lineColor, stroke: '#1C1C1C', strokeWidth: 2 }}
-                />
-              </ComposedChart>
-            </ResponsiveContainer>
+          <div className="space-y-2">
+            {/* Price Chart */}
+            <div ref={chartRef} className="h-80 w-full rounded-lg" style={{ backgroundColor: '#1C1C1C' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart
+                  data={chartDataWithPercentage}
+                  margin={{ top: 15, right: 0, left: 0, bottom: 15 }}
+                >
+                  <defs>
+                    <linearGradient id="positiveGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#5AF5FA" stopOpacity={0.5} />
+                      <stop offset="100%" stopColor="#5AF5FA" stopOpacity={0.2} />
+                    </linearGradient>
+                    <linearGradient id="negativeGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#FFA5FF" stopOpacity={0.5} />
+                      <stop offset="100%" stopColor="#FFA5FF" stopOpacity={0.2} />
+                    </linearGradient>
+                  </defs>
+                  
+                  {/* Enhanced horizontal grid lines */}
+                  <CartesianGrid 
+                    strokeDasharray="1 1" 
+                    stroke="#333333" 
+                    opacity={0.6}
+                    horizontal={true}
+                    vertical={false}
+                  />
+                  
+                  <XAxis 
+                    dataKey="time"
+                    tickFormatter={(value) => formatTime(value, selectedTimeframe)}
+                    tick={{ fontSize: 12, fill: '#F7F7F7' }}
+                    axisLine={{ stroke: '#F7F7F7' }}
+                    tickLine={{ stroke: '#F7F7F7' }}
+                  />
+                  
+                  {/* Primary Y-axis for price (right side) */}
+                  <YAxis 
+                    yAxisId="price"
+                    orientation="right"
+                    domain={['dataMin - 1', 'dataMax + 1']}
+                    tickFormatter={formatPrice}
+                    tick={{ fontSize: 12, fill: '#F7F7F7' }}
+                    axisLine={{ stroke: '#F7F7F7' }}
+                    tickLine={{ stroke: '#F7F7F7' }}
+                  />
+                  
+                  <Tooltip 
+                    labelFormatter={(value) => formatTime(value, selectedTimeframe)}
+                    formatter={(value: number, name: string) => {
+                      if (name === 'close') {
+                        return [formatPrice(value), 'Price'];
+                      } else if (name === 'percentageChange') {
+                        return [`${value.toFixed(2)}%`, 'Change'];
+                      }
+                      return [value, name];
+                    }}
+                    contentStyle={{
+                      backgroundColor: '#1C1C1C',
+                      border: '1px solid #333333',
+                      borderRadius: '6px',
+                      color: '#F7F7F7'
+                    }}
+                  />
+                  
+                  {/* Mountain area chart with gradient fill */}
+                  <Area
+                    yAxisId="price"
+                    type="monotone" 
+                    dataKey="close" 
+                    stroke={lineColor}
+                    strokeWidth={2}
+                    fill={`url(#${isPositive ? 'positiveGradient' : 'negativeGradient'})`}
+                    dot={false}
+                    activeDot={{ r: 4, fill: lineColor, stroke: '#1C1C1C', strokeWidth: 2 }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Volume Bar Chart - Below Price Chart */}
+            <div className="h-32 w-full rounded-lg" style={{ backgroundColor: '#1C1C1C' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart 
+                  data={chartDataWithPercentage}
+                  margin={{ top: 5, right: 0, left: 0, bottom: 15 }}
+                >
+                  <CartesianGrid 
+                    strokeDasharray="1 1" 
+                    stroke="#333333" 
+                    opacity={0.3}
+                    horizontal={true}
+                    vertical={false}
+                  />
+                  
+                  <XAxis 
+                    dataKey="time"
+                    tickFormatter={(value) => formatTime(value, selectedTimeframe)}
+                    tick={{ fontSize: 10, fill: '#999999' }}
+                    axisLine={{ stroke: '#F7F7F7', opacity: 0.3 }}
+                    tickLine={{ stroke: '#F7F7F7', opacity: 0.3 }}
+                  />
+                  
+                  <YAxis 
+                    orientation="right"
+                    tickFormatter={(value) => formatNumber(value)}
+                    tick={{ fontSize: 10, fill: '#999999' }}
+                    axisLine={{ stroke: '#F7F7F7', opacity: 0.3 }}
+                    tickLine={{ stroke: '#F7F7F7', opacity: 0.3 }}
+                    width={60}
+                  />
+                  
+                  <Tooltip 
+                    labelFormatter={(value) => formatTime(value, selectedTimeframe)}
+                    formatter={(value: number) => [formatNumber(value), 'Volume']}
+                    contentStyle={{
+                      backgroundColor: '#1C1C1C',
+                      border: '1px solid #333333',
+                      borderRadius: '6px',
+                      color: '#F7F7F7',
+                      fontSize: '12px'
+                    }}
+                  />
+                  
+                  <Bar 
+                    dataKey="volume" 
+                    fill="#5AF5FA"
+                    opacity={0.7}
+                    radius={[1, 1, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         )}
       </div>
