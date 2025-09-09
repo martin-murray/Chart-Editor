@@ -48,6 +48,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Global stock search endpoint using Finnhub symbol lookup
+  app.get("/api/stocks/global-search", async (req, res) => {
+    try {
+      const query = req.query.q as string;
+      if (!query || query.trim().length === 0) {
+        return res.json([]);
+      }
+
+      console.log(`🌍 Global search for: "${query}"`);
+      
+      // Use Finnhub symbol lookup API for global search
+      const finnhubApiKey = process.env.FINNHUB_API_KEY;
+      if (!finnhubApiKey) {
+        console.error("FINNHUB_API_KEY not configured");
+        return res.status(500).json({ message: "Global search service not configured" });
+      }
+
+      const searchUrl = `https://finnhub.io/api/v1/search?q=${encodeURIComponent(query.trim())}&token=${finnhubApiKey}`;
+      const response = await fetch(searchUrl);
+      
+      if (!response.ok) {
+        throw new Error(`Finnhub API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      // Transform Finnhub response to our format
+      const globalResults = data.result?.slice(0, 10).map((item: any) => ({
+        symbol: item.symbol,
+        description: item.description,
+        displaySymbol: item.displaySymbol,
+        type: item.type || 'Unknown'
+      })) || [];
+
+      console.log(`🌍 Global search completed: ${globalResults.length} results for "${query}"`);
+      res.json(globalResults);
+    } catch (error) {
+      console.error("Error in global stock search:", error);
+      res.status(500).json({ message: "Failed to search global stocks" });
+    }
+  });
+
   // Stock chart data endpoint
   app.get("/api/stocks/:symbol/chart", async (req, res) => {
     try {
