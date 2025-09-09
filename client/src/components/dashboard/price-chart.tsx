@@ -56,6 +56,16 @@ interface StockDetails {
   };
 }
 
+interface Annotation {
+  id: string;
+  x: number; // X coordinate on chart
+  y: number; // Y coordinate on chart
+  timestamp: number; // Data point timestamp
+  price: number; // Price at this point
+  text: string; // User annotation text
+  time: string; // Formatted time string
+}
+
 interface PriceChartProps {
   symbol: string;
   name: string;
@@ -79,6 +89,12 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const chartRef = useRef<HTMLDivElement>(null);
+  
+  // Annotation state
+  const [annotations, setAnnotations] = useState<Annotation[]>([]);
+  const [showAnnotationInput, setShowAnnotationInput] = useState(false);
+  const [annotationInput, setAnnotationInput] = useState('');
+  const [pendingAnnotation, setPendingAnnotation] = useState<Omit<Annotation, 'id' | 'text'> | null>(null);
 
   const { data: chartData, isLoading, error } = useQuery({
     queryKey: ['/api/stocks', symbol, 'chart', selectedTimeframe, startDate, endDate],
