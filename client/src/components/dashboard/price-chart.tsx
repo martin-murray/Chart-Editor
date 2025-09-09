@@ -236,7 +236,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         ctx.fillRect(priceArea.x, priceArea.y, priceArea.width, priceArea.height);
         
         // Draw grid lines for price chart
-        ctx.strokeStyle = '#3B3B3B';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
         ctx.lineWidth = 2;
         for (let i = 0; i <= 5; i++) {
           const y = priceArea.y + (i * priceArea.height / 5);
@@ -325,7 +325,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         ctx.fillRect(volumeArea.x, volumeArea.y, volumeArea.width, volumeArea.height);
         
         // Draw grid lines for volume chart
-        ctx.strokeStyle = '#3B3B3B';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
         ctx.lineWidth = 2;
         for (let i = 0; i <= 3; i++) {
           const y = volumeArea.y + (i * volumeArea.height / 3);
@@ -449,7 +449,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         ctx.fillRect(priceArea.x, priceArea.y, priceArea.width, priceArea.height);
         
         // Draw grid lines for price chart
-        ctx.strokeStyle = '#3B3B3B';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
         ctx.lineWidth = 2;
         for (let i = 0; i <= 5; i++) {
           const y = priceArea.y + (i * priceArea.height / 5);
@@ -538,7 +538,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         ctx.fillRect(volumeArea.x, volumeArea.y, volumeArea.width, volumeArea.height);
         
         // Draw grid lines for volume chart
-        ctx.strokeStyle = '#3B3B3B';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
         ctx.lineWidth = 2;
         for (let i = 0; i <= 3; i++) {
           const y = volumeArea.y + (i * volumeArea.height / 3);
@@ -636,7 +636,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
           
           <!-- Grid line style -->
           <style>
-            .grid-line { stroke: #3B3B3B; stroke-width: 2; }
+            .grid-line { stroke: white; stroke-width: 2; stroke-opacity: 0.5; }
             .price-line { stroke: ${isPositive ? '#5AF5FA' : '#FFA5FF'}; stroke-width: 6; fill: none; stroke-linecap: round; stroke-linejoin: round; }
             .title-text { fill: #5AF5FA; font-family: system-ui, -apple-system, sans-serif; font-size: 48px; font-weight: bold; }
             .info-text { fill: #F7F7F7; font-family: system-ui, -apple-system, sans-serif; font-size: 36px; }
@@ -975,8 +975,8 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                   {/* Enhanced horizontal grid lines */}
                   <CartesianGrid 
                     strokeDasharray="1 1" 
-                    stroke="#3B3B3B" 
-                    opacity={0.6}
+                    stroke="white" 
+                    opacity={0.5}
                     horizontal={true}
                     vertical={false}
                   />
@@ -1046,8 +1046,8 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                 >
                   <CartesianGrid 
                     strokeDasharray="1 1" 
-                    stroke="#3B3B3B" 
-                    opacity={0.3}
+                    stroke="white" 
+                    opacity={0.5}
                     horizontal={true}
                     vertical={false}
                   />
