@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AreaChart, Area, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,8 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Loader2, TrendingUp, TrendingDown, Plus, Calendar as CalendarIcon, X } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Loader2, TrendingUp, TrendingDown, Plus, Calendar as CalendarIcon, X, Download, ChevronDown } from 'lucide-react';
 import { format, subDays, subMonths, subYears } from 'date-fns';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import { saveAs } from 'file-saver';
 
 interface ChartData {
   timestamp: number;
@@ -73,6 +77,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
   const [selectedTimeframe, setSelectedTimeframe] = useState('1D');
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const chartRef = useRef<HTMLDivElement>(null);
 
   const { data: chartData, isLoading, error } = useQuery({
     queryKey: ['/api/stocks', symbol, 'chart', selectedTimeframe, startDate, endDate],
@@ -161,6 +166,100 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
 
   const formatPercent = (value: number) => {
     return value ? `${(value * 100).toFixed(2)}%` : 'N/A';
+  };
+
+  // Export functions
+  const exportAsPNG = async () => {
+    if (!chartRef.current) return;
+    
+    try {
+      const canvas = await html2canvas(chartRef.current, {
+        backgroundColor: '#1C1C1C',
+        scale: 2,
+        logging: false,
+        useCORS: true
+      });
+      
+      const filename = `${symbol}_chart_${selectedTimeframe}${
+        startDate && endDate ? `_${format(startDate, 'yyyy-MM-dd')}_${format(endDate, 'yyyy-MM-dd')}` : ''
+      }.png`;
+      
+      canvas.toBlob((blob) => {
+        if (blob) saveAs(blob, filename);
+      }, 'image/png');
+    } catch (error) {
+      console.error('PNG export failed:', error);
+    }
+  };
+
+  const exportAsPDF = async () => {
+    if (!chartRef.current) return;
+    
+    try {
+      const canvas = await html2canvas(chartRef.current, {
+        backgroundColor: '#1C1C1C',
+        scale: 2,
+        logging: false,
+        useCORS: true
+      });
+      
+      const pdf = new jsPDF('landscape', 'mm', 'a4');
+      const imgWidth = 280;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      // Add title and metadata
+      pdf.setFontSize(16);
+      pdf.text(`${symbol} - ${name}`, 15, 20);
+      pdf.setFontSize(12);
+      pdf.text(`Price: ${formatPrice(parseFloat(currentPrice))} (${percentChange})`, 15, 30);
+      pdf.text(`Market Cap: ${marketCap}`, 15, 40);
+      if (startDate && endDate) {
+        pdf.text(`Date Range: ${format(startDate, 'MMM dd, yyyy')} - ${format(endDate, 'MMM dd, yyyy')}`, 15, 50);
+      } else {
+        pdf.text(`Timeframe: ${selectedTimeframe}`, 15, 50);
+      }
+      
+      // Add chart
+      const imgData = canvas.toDataURL('image/png');
+      pdf.addImage(imgData, 'PNG', 15, 60, imgWidth, imgHeight);
+      
+      const filename = `${symbol}_chart_${selectedTimeframe}${
+        startDate && endDate ? `_${format(startDate, 'yyyy-MM-dd')}_${format(endDate, 'yyyy-MM-dd')}` : ''
+      }.pdf`;
+      
+      pdf.save(filename);
+    } catch (error) {
+      console.error('PDF export failed:', error);
+    }
+  };
+
+  const exportAsSVG = async () => {
+    // SVG export is more complex and would require recreating the chart in SVG format
+    // For now, we'll provide a simplified implementation that creates a basic SVG
+    try {
+      const dateRange = startDate && endDate 
+        ? `${format(startDate, 'MMM dd, yyyy')} - ${format(endDate, 'MMM dd, yyyy')}`
+        : selectedTimeframe;
+      
+      const svgContent = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" style="background: #1C1C1C; color: #F7F7F7;">
+          <text x="20" y="30" font-family="Arial" font-size="18" fill="#5AF5FA">${symbol} - ${name}</text>
+          <text x="20" y="55" font-family="Arial" font-size="14" fill="#F7F7F7">Price: ${formatPrice(parseFloat(currentPrice))} (${percentChange})</text>
+          <text x="20" y="75" font-family="Arial" font-size="14" fill="#F7F7F7">Market Cap: ${marketCap}</text>
+          <text x="20" y="95" font-family="Arial" font-size="14" fill="#F7F7F7">Period: ${dateRange}</text>
+          <text x="20" y="130" font-family="Arial" font-size="12" fill="#888">Note: Full chart visualization requires PNG or PDF export</text>
+        </svg>
+      `;
+      
+      const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+      const filename = `${symbol}_chart_${selectedTimeframe}${
+        startDate && endDate ? `_${format(startDate, 'yyyy-MM-dd')}_${format(endDate, 'yyyy-MM-dd')}` : ''
+      }.svg`;
+      
+      saveAs(blob, filename);
+    } catch (error) {
+      console.error('SVG export failed:', error);
+    }
   };
 
   return (
@@ -287,17 +386,48 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                 <div className="text-sm text-muted-foreground">
                   Selected: {format(startDate, 'MMM dd, yyyy')} - {format(endDate, 'MMM dd, yyyy')}
                 </div>
-                <Button
-                  onClick={() => {
-                    // Simply close the date picker by switching away from Custom
-                    // The chart will already have the custom data loaded based on the current startDate and endDate
-                    setSelectedTimeframe('1D');
-                  }}
-                  className="bg-[#5AF5FA] text-black hover:bg-[#5AF5FA]/90"
-                  size="sm"
-                >
-                  Apply Date Range
-                </Button>
+                <div className="flex gap-2 justify-center">
+                  <Button
+                    onClick={() => {
+                      // Simply close the date picker by switching away from Custom
+                      // The chart will already have the custom data loaded based on the current startDate and endDate
+                      setSelectedTimeframe('1D');
+                    }}
+                    className="bg-[#5AF5FA] text-black hover:bg-[#5AF5FA]/90"
+                    size="sm"
+                  >
+                    Apply Date Range
+                  </Button>
+                  
+                  {/* Export Dropdown */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 px-3 text-xs border-[#5AF5FA]/30 text-[#5AF5FA] hover:bg-[#5AF5FA]/10"
+                      >
+                        <Download className="w-3 h-3 mr-1" />
+                        Export
+                        <ChevronDown className="w-3 h-3 ml-1" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="center" className="w-36">
+                      <DropdownMenuItem onClick={exportAsPNG} className="cursor-pointer">
+                        <Download className="w-4 h-4 mr-2" />
+                        Export as PNG
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={exportAsPDF} className="cursor-pointer">
+                        <Download className="w-4 h-4 mr-2" />
+                        Export as PDF
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={exportAsSVG} className="cursor-pointer">
+                        <Download className="w-4 h-4 mr-2" />
+                        Export as SVG
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
             )}
           </div>
@@ -322,7 +452,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             No chart data available for {symbol}
           </div>
         ) : (
-          <div className="h-80 w-full rounded-lg" style={{ backgroundColor: '#1C1C1C' }}>
+          <div ref={chartRef} className="h-80 w-full rounded-lg" style={{ backgroundColor: '#1C1C1C' }}>
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart
                 data={chartDataWithPercentage}
