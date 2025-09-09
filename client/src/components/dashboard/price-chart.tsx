@@ -348,6 +348,34 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             </Button>
           ))}
           
+          {/* Export Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 px-3 text-xs border-[#5AF5FA]/30 text-[#5AF5FA] hover:bg-[#5AF5FA]/10"
+              >
+                <Download className="w-3 h-3 mr-1" />
+                Export
+                <ChevronDown className="w-3 h-3 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center" className="w-36">
+              <DropdownMenuItem onClick={exportAsPNG} className="cursor-pointer">
+                <Download className="w-4 h-4 mr-2" />
+                Export as PNG
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={exportAsPDF} className="cursor-pointer">
+                <Download className="w-4 h-4 mr-2" />
+                Export as PDF
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={exportAsSVG} className="cursor-pointer">
+                <Download className="w-4 h-4 mr-2" />
+                Export as SVG
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         
         {/* Custom Date Range Picker - Positioned Below Timeframes */}
@@ -390,48 +418,17 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                 <div className="text-sm text-muted-foreground">
                   Selected: {format(startDate, 'MMM dd, yyyy')} - {format(endDate, 'MMM dd, yyyy')}
                 </div>
-                <div className="flex gap-2 justify-center">
-                  <Button
-                    onClick={() => {
-                      // Close the date picker while keeping Custom timeframe active
-                      // The chart will continue showing the custom data based on startDate and endDate
-                      setShowDatePicker(false);
-                    }}
-                    className="bg-[#5AF5FA] text-black hover:bg-[#5AF5FA]/90"
-                    size="sm"
-                  >
-                    Apply Date Range
-                  </Button>
-                  
-                  {/* Export Dropdown */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 px-3 text-xs border-[#5AF5FA]/30 text-[#5AF5FA] hover:bg-[#5AF5FA]/10"
-                      >
-                        <Download className="w-3 h-3 mr-1" />
-                        Export
-                        <ChevronDown className="w-3 h-3 ml-1" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="center" className="w-36">
-                      <DropdownMenuItem onClick={exportAsPNG} className="cursor-pointer">
-                        <Download className="w-4 h-4 mr-2" />
-                        Export as PNG
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={exportAsPDF} className="cursor-pointer">
-                        <Download className="w-4 h-4 mr-2" />
-                        Export as PDF
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={exportAsSVG} className="cursor-pointer">
-                        <Download className="w-4 h-4 mr-2" />
-                        Export as SVG
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+                <Button
+                  onClick={() => {
+                    // Close the date picker while keeping Custom timeframe active
+                    // The chart will continue showing the custom data based on startDate and endDate
+                    setShowDatePicker(false);
+                  }}
+                  className="bg-[#5AF5FA] text-black hover:bg-[#5AF5FA]/90"
+                  size="sm"
+                >
+                  Apply Date Range
+                </Button>
               </div>
             )}
           </div>
