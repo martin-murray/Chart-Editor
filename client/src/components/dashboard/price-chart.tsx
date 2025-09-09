@@ -953,7 +953,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             No chart data available for {symbol}
           </div>
         ) : (
-          <div ref={chartRef} className="w-full rounded-lg border border-gray-600" style={{ backgroundColor: '#1C1C1C' }}>
+          <div ref={chartRef} className="w-full rounded-lg" style={{ backgroundColor: '#1C1C1C' }}>
             {/* Price Chart - No X-axis */}
             <div className="h-80 w-full">
               <ResponsiveContainer width="100%" height="100%">
