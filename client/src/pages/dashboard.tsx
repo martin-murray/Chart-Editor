@@ -199,10 +199,11 @@ function Dashboard() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-6">
               <h1 className="text-2xl font-semibold">Market Movers (US)</h1>
-              <Link href="/chartmaker">
-                <a className="text-[#5AF5FA] hover:text-[#5AF5FA]/80 font-medium transition-colors">
-                  ChartMaker
-                </a>
+              <Link 
+                href="/chartmaker" 
+                className="text-[#5AF5FA] hover:text-[#5AF5FA]/80 font-medium transition-colors"
+              >
+                ChartMaker
               </Link>
             </div>
             <div className="flex items-center gap-4">
