@@ -211,34 +211,29 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
       const price = clickedData.close;
       const time = clickedData.time;
       
-      // Check if click is near an existing annotation (within tolerance)
-      const clickedAnnotation = annotations.find(annotation => {
-        return Math.abs(annotation.timestamp - timestamp) < 60000; // Within 1 minute tolerance
-      });
+      // Only create new annotations on chart click, not edit existing ones
+      const newAnnotation: Omit<Annotation, 'id' | 'text'> = {
+        x: 0, // Will be set by chart rendering
+        y: 0, // Will be set by chart rendering  
+        timestamp,
+        price,
+        time
+      };
       
-      if (clickedAnnotation) {
-        // Clicking on existing annotation - show edit/delete options
-        setEditingAnnotation(clickedAnnotation);
-        setIsEditMode(true);
-        setAnnotationInput(clickedAnnotation.text);
-        setShowAnnotationInput(true);
-      } else {
-        // Clicking on empty space - create new annotation
-        const newAnnotation: Omit<Annotation, 'id' | 'text'> = {
-          x: 0, // Will be set by chart rendering
-          y: 0, // Will be set by chart rendering  
-          timestamp,
-          price,
-          time
-        };
-        
-        setPendingAnnotation(newAnnotation);
-        setShowAnnotationInput(true);
-        setAnnotationInput('');
-        setEditingAnnotation(null);
-        setIsEditMode(false);
-      }
+      setPendingAnnotation(newAnnotation);
+      setShowAnnotationInput(true);
+      setAnnotationInput('');
+      setEditingAnnotation(null);
+      setIsEditMode(false);
     }
+  };
+
+  // Handle annotation double-click for editing
+  const handleAnnotationDoubleClick = (annotation: Annotation) => {
+    setEditingAnnotation(annotation);
+    setIsEditMode(true);
+    setAnnotationInput(annotation.text);
+    setShowAnnotationInput(true);
   };
 
   // Save annotation with user text
@@ -1375,8 +1370,12 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                           <div className="absolute -top-1 -left-1 w-3 h-3 rounded-full border-2 border-background" style={{ backgroundColor: '#FAFF50' }}></div>
                           
                           {/* Annotation text */}
-                          <div className="absolute top-0 left-2 bg-background border border-border rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-pointer hover:bg-muted">
-                            <div className="font-medium text-yellow-400">{formatTime(annotation.time, selectedTimeframe)}</div>
+                          <div 
+                            className="absolute top-0 left-2 bg-background border border-border rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-pointer hover:bg-muted"
+                            onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
+                            title="Double-click to edit"
+                          >
+                            <div className="font-medium" style={{ color: '#FAFF50' }}>{formatTime(annotation.time, selectedTimeframe)}</div>
                             <div className="text-muted-foreground">{formatPrice(annotation.price)}</div>
                             <div className="text-foreground mt-1">{annotation.text}</div>
                           </div>
