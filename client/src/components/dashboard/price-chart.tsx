@@ -177,32 +177,55 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
     }
     
     try {
-      // Wait a bit for any animations to complete
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Wait for any animations to complete
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       const canvas = await html2canvas(chartRef.current, {
         backgroundColor: '#1C1C1C',
-        scale: 2,
-        logging: true,
+        scale: 1,
+        logging: false,
         useCORS: true,
-        allowTaint: true,
-        foreignObjectRendering: true,
-        width: chartRef.current.offsetWidth,
-        height: chartRef.current.offsetHeight
+        allowTaint: false,
+        foreignObjectRendering: false,
+        removeContainer: true,
+        imageTimeout: 15000,
+        onclone: (clonedDoc) => {
+          // Force all SVG elements to be visible
+          const svgs = clonedDoc.querySelectorAll('svg');
+          svgs.forEach(svg => {
+            svg.style.display = 'block';
+            svg.style.visibility = 'visible';
+          });
+        }
       });
+      
+      if (canvas.width === 0 || canvas.height === 0) {
+        throw new Error('Canvas has zero dimensions');
+      }
       
       const filename = `${symbol}_chart_${selectedTimeframe}${
         startDate && endDate ? `_${format(startDate, 'yyyy-MM-dd')}_${format(endDate, 'yyyy-MM-dd')}` : ''
       }.png`;
       
-      // Create and download the image
-      const link = document.createElement('a');
-      link.download = filename;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
+      // Convert to blob and download
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.download = filename;
+          link.href = url;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        } else {
+          throw new Error('Failed to create blob');
+        }
+      }, 'image/png');
+      
     } catch (error) {
       console.error('PNG export failed:', error);
-      alert('PNG export failed. Please try again.');
+      alert('PNG export failed. This may be due to browser security restrictions with chart elements.');
     }
   };
 
@@ -213,19 +236,31 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
     }
     
     try {
-      // Wait a bit for any animations to complete
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Wait for any animations to complete
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       const canvas = await html2canvas(chartRef.current, {
         backgroundColor: '#1C1C1C',
-        scale: 2,
-        logging: true,
+        scale: 1,
+        logging: false,
         useCORS: true,
-        allowTaint: true,
-        foreignObjectRendering: true,
-        width: chartRef.current.offsetWidth,
-        height: chartRef.current.offsetHeight
+        allowTaint: false,
+        foreignObjectRendering: false,
+        removeContainer: true,
+        imageTimeout: 15000,
+        onclone: (clonedDoc) => {
+          // Force all SVG elements to be visible
+          const svgs = clonedDoc.querySelectorAll('svg');
+          svgs.forEach(svg => {
+            svg.style.display = 'block';
+            svg.style.visibility = 'visible';
+          });
+        }
       });
+      
+      if (canvas.width === 0 || canvas.height === 0) {
+        throw new Error('Canvas has zero dimensions');
+      }
       
       const pdf = new jsPDF('landscape', 'mm', 'a4');
       const imgWidth = 280;
@@ -254,7 +289,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
       pdf.save(filename);
     } catch (error) {
       console.error('PDF export failed:', error);
-      alert('PDF export failed. Please try again.');
+      alert('PDF export failed. This may be due to browser security restrictions with chart elements.');
     }
   };
 
