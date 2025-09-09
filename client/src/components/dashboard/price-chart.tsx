@@ -367,16 +367,6 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                   tickLine={{ stroke: '#F7F7F7' }}
                 />
                 
-                {/* Secondary Y-axis for percentage (left side) */}
-                <YAxis 
-                  yAxisId="percentage"
-                  orientation="left"
-                  domain={['dataMin', 'dataMax']}
-                  tickFormatter={(value) => `${value.toFixed(1)}%`}
-                  tick={{ fontSize: 12, fill: '#F7F7F7' }}
-                  axisLine={{ stroke: '#F7F7F7' }}
-                  tickLine={{ stroke: '#F7F7F7' }}
-                />
                 
                 <Tooltip 
                   labelFormatter={(value) => formatTime(value, selectedTimeframe)}
