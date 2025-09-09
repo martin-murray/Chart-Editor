@@ -243,4 +243,10 @@
     color: black !important;
     border-color: #5AF5FA !important;
   }
+  
+  /* Extend volume chart Y-axis to connect with price chart */
+  .volume-chart-container .recharts-cartesian-axis-line {
+    transform: translateY(-20px);
+    height: calc(100% + 40px) !important;
+  }
 }

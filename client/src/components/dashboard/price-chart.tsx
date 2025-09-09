@@ -1038,7 +1038,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             <div className="my-3"></div>
 
             {/* Volume Bar Chart - Below with spacing */}
-            <div className="h-40 w-full mt-2">
+            <div className="h-40 w-full mt-2 relative volume-chart-container">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart 
                   data={chartDataWithPercentage}
