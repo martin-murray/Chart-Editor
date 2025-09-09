@@ -1056,7 +1056,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                     dataKey="time"
                     tickFormatter={(value) => formatTime(value, selectedTimeframe)}
                     tick={{ fontSize: 12, fill: '#F7F7F7' }}
-                    axisLine={{ stroke: '#F7F7F7' }}
+                    axisLine={false}
                     tickLine={{ stroke: '#F7F7F7' }}
                   />
                   
@@ -1064,9 +1064,11 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                     orientation="right"
                     tickFormatter={(value) => formatNumber(value)}
                     tick={{ fontSize: 12, fill: '#F7F7F7' }}
-                    axisLine={{ stroke: '#F7F7F7' }}
+                    axisLine={{ stroke: '#F7F7F7', strokeDasharray: 'none' }}
                     tickLine={{ stroke: '#F7F7F7' }}
                     width={60}
+                    type="number"
+                    domain={[0, 'dataMax']}
                   />
                   
                   <Tooltip 
