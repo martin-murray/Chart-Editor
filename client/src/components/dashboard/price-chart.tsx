@@ -326,7 +326,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart
                 data={chartDataWithPercentage}
-                margin={{ top: 15, right: 0, left: 0, bottom: 15 }}
+                margin={{ top: 15, right: 25, left: 25, bottom: 15 }}
               >
                 <defs>
                   <linearGradient id="positiveGradient" x1="0" y1="0" x2="0" y2="1">
