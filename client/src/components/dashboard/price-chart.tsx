@@ -811,13 +811,13 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             No chart data available for {symbol}
           </div>
         ) : (
-          <div className="space-y-2">
-            {/* Price Chart */}
-            <div ref={chartRef} className="h-80 w-full rounded-lg" style={{ backgroundColor: '#1C1C1C' }}>
+          <div ref={chartRef} className="w-full rounded-lg" style={{ backgroundColor: '#1C1C1C' }}>
+            {/* Price Chart - No X-axis */}
+            <div className="h-80 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart
                   data={chartDataWithPercentage}
-                  margin={{ top: 15, right: 0, left: 0, bottom: 15 }}
+                  margin={{ top: 15, right: 0, left: 0, bottom: 0 }}
                 >
                   <defs>
                     <linearGradient id="positiveGradient" x1="0" y1="0" x2="0" y2="1">
@@ -837,14 +837,6 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                     opacity={0.6}
                     horizontal={true}
                     vertical={false}
-                  />
-                  
-                  <XAxis 
-                    dataKey="time"
-                    tickFormatter={(value) => formatTime(value, selectedTimeframe)}
-                    tick={{ fontSize: 12, fill: '#F7F7F7' }}
-                    axisLine={{ stroke: '#F7F7F7' }}
-                    tickLine={{ stroke: '#F7F7F7' }}
                   />
                   
                   {/* Primary Y-axis for price (right side) */}
@@ -891,12 +883,12 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
               </ResponsiveContainer>
             </div>
 
-            {/* Volume Bar Chart - Below Price Chart */}
-            <div className="h-32 w-full rounded-lg" style={{ backgroundColor: '#1C1C1C' }}>
+            {/* Volume Bar Chart - Directly below with shared X-axis */}
+            <div className="h-32 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart 
                   data={chartDataWithPercentage}
-                  margin={{ top: 5, right: 0, left: 0, bottom: 15 }}
+                  margin={{ top: 0, right: 0, left: 0, bottom: 15 }}
                 >
                   <CartesianGrid 
                     strokeDasharray="1 1" 
@@ -910,8 +902,8 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                     dataKey="time"
                     tickFormatter={(value) => formatTime(value, selectedTimeframe)}
                     tick={{ fontSize: 12, fill: '#F7F7F7' }}
-                    axisLine={{ stroke: '#F7F7F7', opacity: 0.3 }}
-                    tickLine={{ stroke: '#F7F7F7', opacity: 0.3 }}
+                    axisLine={{ stroke: '#F7F7F7' }}
+                    tickLine={{ stroke: '#F7F7F7' }}
                   />
                   
                   <YAxis 
