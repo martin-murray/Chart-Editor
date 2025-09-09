@@ -107,9 +107,9 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
     switch (timeframe) {
       case '1D':
         return date.toLocaleTimeString('en-US', { 
-          hour: 'numeric', 
+          hour: '2-digit', 
           minute: '2-digit',
-          hour12: true 
+          hour12: false 
         });
       case '1W':
         return date.toLocaleDateString('en-US', { 
