@@ -883,6 +883,9 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
               </ResponsiveContainer>
             </div>
 
+            {/* White separator line */}
+            <div className="w-full h-px bg-white"></div>
+
             {/* Volume Bar Chart - Directly below with shared X-axis */}
             <div className="h-40 w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -910,8 +913,8 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                     orientation="right"
                     tickFormatter={(value) => formatNumber(value)}
                     tick={{ fontSize: 12, fill: '#F7F7F7' }}
-                    axisLine={{ stroke: '#F7F7F7', opacity: 0.3 }}
-                    tickLine={{ stroke: '#F7F7F7', opacity: 0.3 }}
+                    axisLine={{ stroke: '#F7F7F7' }}
+                    tickLine={{ stroke: '#F7F7F7' }}
                     width={60}
                   />
                   
