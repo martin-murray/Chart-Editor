@@ -433,6 +433,76 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         const lastDate = formatTime(chartData.data[chartData.data.length - 1].time, selectedTimeframe);
         ctx.fillText(firstDate, volumeArea.x, volumeArea.y + volumeArea.height + 40);
         ctx.fillText(lastDate, volumeArea.x + volumeArea.width - ctx.measureText(lastDate).width, volumeArea.y + volumeArea.height + 40);
+        
+        // Draw annotations
+        if (annotations.length > 0) {
+          annotations.forEach((annotation) => {
+            // Find the data index for this annotation
+            const dataIndex = chartData.data.findIndex(d => d.timestamp === annotation.timestamp);
+            if (dataIndex === -1) return;
+            
+            // Calculate annotation position
+            const x = priceArea.x + (dataIndex / (chartData.data.length - 1)) * priceArea.width;
+            
+            // Draw vertical annotation line
+            ctx.strokeStyle = '#FCD34D'; // Yellow-400
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(x, priceArea.y);
+            ctx.lineTo(x, volumeArea.y + volumeArea.height);
+            ctx.stroke();
+            
+            // Draw annotation dot
+            ctx.fillStyle = '#FCD34D';
+            ctx.beginPath();
+            ctx.arc(x, priceArea.y, 8, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Draw annotation text box
+            const textBoxWidth = 240;
+            const textBoxHeight = 80;
+            const textBoxX = Math.min(x + 10, priceArea.x + priceArea.width - textBoxWidth);
+            const textBoxY = priceArea.y + 20;
+            
+            // Text box background
+            ctx.fillStyle = '#1C1C1C';
+            ctx.strokeStyle = '#374151';
+            ctx.lineWidth = 1;
+            ctx.fillRect(textBoxX, textBoxY, textBoxWidth, textBoxHeight);
+            ctx.strokeRect(textBoxX, textBoxY, textBoxWidth, textBoxHeight);
+            
+            // Text content
+            ctx.fillStyle = '#FCD34D';
+            ctx.font = 'bold 16px system-ui, -apple-system, sans-serif';
+            ctx.fillText(formatTime(annotation.time, selectedTimeframe), textBoxX + 8, textBoxY + 20);
+            
+            ctx.fillStyle = '#9CA3AF';
+            ctx.font = '14px system-ui, -apple-system, sans-serif';
+            ctx.fillText(formatPrice(annotation.price), textBoxX + 8, textBoxY + 40);
+            
+            ctx.fillStyle = '#F7F7F7';
+            ctx.font = '14px system-ui, -apple-system, sans-serif';
+            // Wrap text if too long
+            const maxWidth = textBoxWidth - 16;
+            const words = annotation.text.split(' ');
+            let line = '';
+            let y = textBoxY + 60;
+            
+            for (let n = 0; n < words.length; n++) {
+              const testLine = line + words[n] + ' ';
+              const metrics = ctx.measureText(testLine);
+              if (metrics.width > maxWidth && n > 0) {
+                ctx.fillText(line, textBoxX + 8, y);
+                line = words[n] + ' ';
+                y += 16;
+                if (y > textBoxY + textBoxHeight - 5) break; // Prevent overflow
+              } else {
+                line = testLine;
+              }
+            }
+            ctx.fillText(line, textBoxX + 8, y);
+          });
+        }
       } else {
         // Fallback if no chart data
         ctx.strokeStyle = '#5AF5FA';
@@ -648,6 +718,76 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         const lastDate = formatTime(chartData.data[chartData.data.length - 1].time, selectedTimeframe);
         ctx.fillText(firstDate, volumeArea.x, volumeArea.y + volumeArea.height + 40);
         ctx.fillText(lastDate, volumeArea.x + volumeArea.width - ctx.measureText(lastDate).width, volumeArea.y + volumeArea.height + 40);
+        
+        // Draw annotations
+        if (annotations.length > 0) {
+          annotations.forEach((annotation) => {
+            // Find the data index for this annotation
+            const dataIndex = chartData.data.findIndex(d => d.timestamp === annotation.timestamp);
+            if (dataIndex === -1) return;
+            
+            // Calculate annotation position
+            const x = priceArea.x + (dataIndex / (chartData.data.length - 1)) * priceArea.width;
+            
+            // Draw vertical annotation line
+            ctx.strokeStyle = '#FCD34D'; // Yellow-400
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(x, priceArea.y);
+            ctx.lineTo(x, volumeArea.y + volumeArea.height);
+            ctx.stroke();
+            
+            // Draw annotation dot
+            ctx.fillStyle = '#FCD34D';
+            ctx.beginPath();
+            ctx.arc(x, priceArea.y, 8, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Draw annotation text box
+            const textBoxWidth = 240;
+            const textBoxHeight = 80;
+            const textBoxX = Math.min(x + 10, priceArea.x + priceArea.width - textBoxWidth);
+            const textBoxY = priceArea.y + 20;
+            
+            // Text box background
+            ctx.fillStyle = '#1C1C1C';
+            ctx.strokeStyle = '#374151';
+            ctx.lineWidth = 1;
+            ctx.fillRect(textBoxX, textBoxY, textBoxWidth, textBoxHeight);
+            ctx.strokeRect(textBoxX, textBoxY, textBoxWidth, textBoxHeight);
+            
+            // Text content
+            ctx.fillStyle = '#FCD34D';
+            ctx.font = 'bold 16px system-ui, -apple-system, sans-serif';
+            ctx.fillText(formatTime(annotation.time, selectedTimeframe), textBoxX + 8, textBoxY + 20);
+            
+            ctx.fillStyle = '#9CA3AF';
+            ctx.font = '14px system-ui, -apple-system, sans-serif';
+            ctx.fillText(formatPrice(annotation.price), textBoxX + 8, textBoxY + 40);
+            
+            ctx.fillStyle = '#F7F7F7';
+            ctx.font = '14px system-ui, -apple-system, sans-serif';
+            // Wrap text if too long
+            const maxWidth = textBoxWidth - 16;
+            const words = annotation.text.split(' ');
+            let line = '';
+            let y = textBoxY + 60;
+            
+            for (let n = 0; n < words.length; n++) {
+              const testLine = line + words[n] + ' ';
+              const metrics = ctx.measureText(testLine);
+              if (metrics.width > maxWidth && n > 0) {
+                ctx.fillText(line, textBoxX + 8, y);
+                line = words[n] + ' ';
+                y += 16;
+                if (y > textBoxY + textBoxHeight - 5) break; // Prevent overflow
+              } else {
+                line = testLine;
+              }
+            }
+            ctx.fillText(line, textBoxX + 8, y);
+          });
+        }
       } else {
         // Fallback if no chart data
         ctx.strokeStyle = '#5AF5FA';
@@ -814,6 +954,68 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         svgContent += `
           <text x="${volumeArea.x}" y="${volumeArea.y + volumeArea.height + 40}" class="label-text">${firstDate}</text>
           <text x="${volumeArea.x + volumeArea.width - 60}" y="${volumeArea.y + volumeArea.height + 40}" class="label-text">${lastDate}</text>`;
+        
+        // Add annotations
+        if (annotations.length > 0) {
+          annotations.forEach((annotation) => {
+            // Find the data index for this annotation
+            const dataIndex = chartData.data.findIndex(d => d.timestamp === annotation.timestamp);
+            if (dataIndex === -1) return;
+            
+            // Calculate annotation position
+            const x = priceArea.x + (dataIndex / (chartData.data.length - 1)) * priceArea.width;
+            
+            // Add vertical annotation line
+            svgContent += `
+              <line x1="${x}" y1="${priceArea.y}" x2="${x}" y2="${volumeArea.y + volumeArea.height}" stroke="#FCD34D" stroke-width="3"/>`;
+            
+            // Add annotation dot
+            svgContent += `
+              <circle cx="${x}" cy="${priceArea.y}" r="8" fill="#FCD34D"/>`;
+            
+            // Add annotation text box
+            const textBoxWidth = 240;
+            const textBoxHeight = 80;
+            const textBoxX = Math.min(x + 10, priceArea.x + priceArea.width - textBoxWidth);
+            const textBoxY = priceArea.y + 20;
+            
+            // Text box background
+            svgContent += `
+              <rect x="${textBoxX}" y="${textBoxY}" width="${textBoxWidth}" height="${textBoxHeight}" fill="#1C1C1C" stroke="#374151" stroke-width="1"/>`;
+            
+            // Text content
+            svgContent += `
+              <text x="${textBoxX + 8}" y="${textBoxY + 20}" fill="#FCD34D" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="bold">${formatTime(annotation.time, selectedTimeframe)}</text>
+              <text x="${textBoxX + 8}" y="${textBoxY + 40}" fill="#9CA3AF" font-family="system-ui, -apple-system, sans-serif" font-size="14">${formatPrice(annotation.price)}</text>`;
+            
+            // Wrap annotation text
+            const maxWidth = textBoxWidth - 16;
+            const words = annotation.text.split(' ');
+            let line = '';
+            let y = textBoxY + 60;
+            
+            // Simple text wrapping for SVG
+            const lines: string[] = [];
+            for (let n = 0; n < words.length; n++) {
+              const testLine = line + words[n] + ' ';
+              if (testLine.length > 30 && n > 0) { // Rough character count for wrapping
+                lines.push(line.trim());
+                line = words[n] + ' ';
+                if (lines.length >= 2) break; // Limit to 2 lines
+              } else {
+                line = testLine;
+              }
+            }
+            if (line.trim() && lines.length < 2) {
+              lines.push(line.trim());
+            }
+            
+            lines.forEach((textLine, index) => {
+              svgContent += `
+                <text x="${textBoxX + 8}" y="${y + (index * 16)}" fill="#F7F7F7" font-family="system-ui, -apple-system, sans-serif" font-size="14">${textLine}</text>`;
+            });
+          });
+        }
         
       } else {
         // Fallback if no chart data
