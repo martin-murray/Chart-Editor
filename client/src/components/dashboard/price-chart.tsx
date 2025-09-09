@@ -909,7 +909,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                   <XAxis 
                     dataKey="time"
                     tickFormatter={(value) => formatTime(value, selectedTimeframe)}
-                    tick={{ fontSize: 10, fill: '#999999' }}
+                    tick={{ fontSize: 12, fill: '#F7F7F7' }}
                     axisLine={{ stroke: '#F7F7F7', opacity: 0.3 }}
                     tickLine={{ stroke: '#F7F7F7', opacity: 0.3 }}
                   />
@@ -917,7 +917,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                   <YAxis 
                     orientation="right"
                     tickFormatter={(value) => formatNumber(value)}
-                    tick={{ fontSize: 10, fill: '#999999' }}
+                    tick={{ fontSize: 12, fill: '#F7F7F7' }}
                     axisLine={{ stroke: '#F7F7F7', opacity: 0.3 }}
                     tickLine={{ stroke: '#F7F7F7', opacity: 0.3 }}
                     width={60}
