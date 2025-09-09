@@ -187,10 +187,10 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
   // Export functions
   const exportAsPNG = async () => {
     try {
-      // High resolution canvas - 1920px width
+      // High resolution canvas - 1920px width with space for volume chart
       const canvas = document.createElement('canvas');
       canvas.width = 1920;
-      canvas.height = 1152; // 16:9.6 ratio
+      canvas.height = 1400; // Increased height for price + volume charts
       const ctx = canvas.getContext('2d');
       
       if (!ctx) {
@@ -226,22 +226,23 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         : `Timeframe: ${selectedTimeframe}`;
       ctx.fillText(timeframeText, 60, 240);
       
-      // Draw actual chart if data is available
+      // Draw actual charts if data is available
       if (chartData?.data && chartData.data.length > 0) {
-        const chartArea = { x: 120, y: 300, width: 1680, height: 700 };
+        // Price chart area (upper portion)
+        const priceArea = { x: 120, y: 300, width: 1680, height: 500 };
         
-        // Draw chart background
+        // Draw price chart background
         ctx.fillStyle = '#1C1C1C';
-        ctx.fillRect(chartArea.x, chartArea.y, chartArea.width, chartArea.height);
+        ctx.fillRect(priceArea.x, priceArea.y, priceArea.width, priceArea.height);
         
-        // Draw grid lines to match UI
+        // Draw grid lines for price chart
         ctx.strokeStyle = '#333333';
         ctx.lineWidth = 2;
         for (let i = 0; i <= 5; i++) {
-          const y = chartArea.y + (i * chartArea.height / 5);
+          const y = priceArea.y + (i * priceArea.height / 5);
           ctx.beginPath();
-          ctx.moveTo(chartArea.x, y);
-          ctx.lineTo(chartArea.x + chartArea.width, y);
+          ctx.moveTo(priceArea.x, y);
+          ctx.lineTo(priceArea.x + priceArea.width, y);
           ctx.stroke();
         }
         
@@ -251,8 +252,8 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         const maxPrice = Math.max(...prices);
         const priceRange = maxPrice - minPrice;
         
-        // Create gradient mountain fill
-        const gradient = ctx.createLinearGradient(0, chartArea.y, 0, chartArea.y + chartArea.height);
+        // Create gradient mountain fill for price
+        const gradient = ctx.createLinearGradient(0, priceArea.y, 0, priceArea.y + priceArea.height);
         if (isPositive) {
           gradient.addColorStop(0, '#5AF5FA40'); // Cyan with transparency
           gradient.addColorStop(1, '#5AF5FA00'); // Transparent
@@ -263,11 +264,11 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         
         // Draw gradient area fill first
         ctx.beginPath();
-        ctx.moveTo(chartArea.x, chartArea.y + chartArea.height);
+        ctx.moveTo(priceArea.x, priceArea.y + priceArea.height);
         
         chartData.data.forEach((point, index) => {
-          const x = chartArea.x + (index / (chartData.data.length - 1)) * chartArea.width;
-          const y = chartArea.y + chartArea.height - ((point.close - minPrice) / priceRange) * chartArea.height;
+          const x = priceArea.x + (index / (chartData.data.length - 1)) * priceArea.width;
+          const y = priceArea.y + priceArea.height - ((point.close - minPrice) / priceRange) * priceArea.height;
           
           if (index === 0) {
             ctx.lineTo(x, y);
@@ -276,7 +277,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
           }
         });
         
-        ctx.lineTo(chartArea.x + chartArea.width, chartArea.y + chartArea.height);
+        ctx.lineTo(priceArea.x + priceArea.width, priceArea.y + priceArea.height);
         ctx.closePath();
         ctx.fillStyle = gradient;
         ctx.fill();
@@ -288,8 +289,8 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         ctx.beginPath();
         
         chartData.data.forEach((point, index) => {
-          const x = chartArea.x + (index / (chartData.data.length - 1)) * chartArea.width;
-          const y = chartArea.y + chartArea.height - ((point.close - minPrice) / priceRange) * chartArea.height;
+          const x = priceArea.x + (index / (chartData.data.length - 1)) * priceArea.width;
+          const y = priceArea.y + priceArea.height - ((point.close - minPrice) / priceRange) * priceArea.height;
           
           if (index === 0) {
             ctx.moveTo(x, y);
@@ -304,13 +305,65 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         ctx.font = '24px system-ui, -apple-system, sans-serif';
         for (let i = 0; i <= 5; i++) {
           const price = minPrice + (i / 5) * priceRange;
-          const y = chartArea.y + chartArea.height - (i * chartArea.height / 5);
-          ctx.fillText(formatPrice(price), chartArea.x + chartArea.width + 20, y + 8);
+          const y = priceArea.y + priceArea.height - (i * priceArea.height / 5);
+          ctx.fillText(formatPrice(price), priceArea.x + priceArea.width + 20, y + 8);
         }
         
-        // Draw X-axis labels
-        ctx.fillText('Start', chartArea.x, chartArea.y + chartArea.height + 40);
-        ctx.fillText('End', chartArea.x + chartArea.width - 60, chartArea.y + chartArea.height + 40);
+        // Draw white separator line
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(priceArea.x, priceArea.y + priceArea.height + 5);
+        ctx.lineTo(priceArea.x + priceArea.width, priceArea.y + priceArea.height + 5);
+        ctx.stroke();
+        
+        // Volume chart area (lower portion)
+        const volumeArea = { x: 120, y: priceArea.y + priceArea.height + 10, width: 1680, height: 250 };
+        
+        // Draw volume chart background
+        ctx.fillStyle = '#1C1C1C';
+        ctx.fillRect(volumeArea.x, volumeArea.y, volumeArea.width, volumeArea.height);
+        
+        // Draw grid lines for volume chart
+        ctx.strokeStyle = '#333333';
+        ctx.lineWidth = 2;
+        for (let i = 0; i <= 3; i++) {
+          const y = volumeArea.y + (i * volumeArea.height / 3);
+          ctx.beginPath();
+          ctx.moveTo(volumeArea.x, y);
+          ctx.lineTo(volumeArea.x + volumeArea.width, y);
+          ctx.stroke();
+        }
+        
+        // Get volume data and calculate bounds
+        const volumes = chartData.data.map(d => d.volume);
+        const maxVolume = Math.max(...volumes);
+        
+        // Draw volume bars
+        ctx.fillStyle = '#5AF5FAB3'; // Cyan with opacity for volume bars
+        chartData.data.forEach((point, index) => {
+          const barWidth = volumeArea.width / chartData.data.length * 0.8;
+          const x = volumeArea.x + (index / chartData.data.length) * volumeArea.width + barWidth * 0.1;
+          const barHeight = (point.volume / maxVolume) * volumeArea.height;
+          const y = volumeArea.y + volumeArea.height - barHeight;
+          
+          ctx.fillRect(x, y, barWidth, barHeight);
+        });
+        
+        // Draw Y-axis labels (volume)
+        ctx.fillStyle = '#F7F7F7';
+        ctx.font = '20px system-ui, -apple-system, sans-serif';
+        for (let i = 0; i <= 3; i++) {
+          const volume = (i / 3) * maxVolume;
+          const y = volumeArea.y + volumeArea.height - (i * volumeArea.height / 3);
+          ctx.fillText(formatNumber(volume), volumeArea.x + volumeArea.width + 20, y + 8);
+        }
+        
+        // Draw X-axis labels at bottom
+        ctx.fillStyle = '#F7F7F7';
+        ctx.font = '24px system-ui, -apple-system, sans-serif';
+        ctx.fillText('Start', volumeArea.x, volumeArea.y + volumeArea.height + 40);
+        ctx.fillText('End', volumeArea.x + volumeArea.width - 60, volumeArea.y + volumeArea.height + 40);
       } else {
         // Fallback if no chart data
         ctx.strokeStyle = '#5AF5FA';
@@ -350,7 +403,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
       // Create the same high-resolution canvas as PNG export with gradient mountain
       const canvas = document.createElement('canvas');
       canvas.width = 1920;
-      canvas.height = 1152; // 16:9.6 ratio
+      canvas.height = 1400; // Increased height for price + volume charts
       const ctx = canvas.getContext('2d');
       
       if (!ctx) {
@@ -386,22 +439,23 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         : `Timeframe: ${selectedTimeframe}`;
       ctx.fillText(timeframeText, 60, 240);
       
-      // Draw actual chart if data is available
+      // Draw actual charts if data is available
       if (chartData?.data && chartData.data.length > 0) {
-        const chartArea = { x: 120, y: 300, width: 1680, height: 700 };
+        // Price chart area (upper portion)
+        const priceArea = { x: 120, y: 300, width: 1680, height: 500 };
         
-        // Draw chart background
+        // Draw price chart background
         ctx.fillStyle = '#1C1C1C';
-        ctx.fillRect(chartArea.x, chartArea.y, chartArea.width, chartArea.height);
+        ctx.fillRect(priceArea.x, priceArea.y, priceArea.width, priceArea.height);
         
-        // Draw grid lines to match UI
+        // Draw grid lines for price chart
         ctx.strokeStyle = '#333333';
         ctx.lineWidth = 2;
         for (let i = 0; i <= 5; i++) {
-          const y = chartArea.y + (i * chartArea.height / 5);
+          const y = priceArea.y + (i * priceArea.height / 5);
           ctx.beginPath();
-          ctx.moveTo(chartArea.x, y);
-          ctx.lineTo(chartArea.x + chartArea.width, y);
+          ctx.moveTo(priceArea.x, y);
+          ctx.lineTo(priceArea.x + priceArea.width, y);
           ctx.stroke();
         }
         
@@ -411,8 +465,8 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         const maxPrice = Math.max(...prices);
         const priceRange = maxPrice - minPrice;
         
-        // Create gradient mountain fill
-        const gradient = ctx.createLinearGradient(0, chartArea.y, 0, chartArea.y + chartArea.height);
+        // Create gradient mountain fill for price
+        const gradient = ctx.createLinearGradient(0, priceArea.y, 0, priceArea.y + priceArea.height);
         if (isPositive) {
           gradient.addColorStop(0, '#5AF5FA40'); // Cyan with transparency
           gradient.addColorStop(1, '#5AF5FA00'); // Transparent
@@ -423,11 +477,11 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         
         // Draw gradient area fill first
         ctx.beginPath();
-        ctx.moveTo(chartArea.x, chartArea.y + chartArea.height);
+        ctx.moveTo(priceArea.x, priceArea.y + priceArea.height);
         
         chartData.data.forEach((point, index) => {
-          const x = chartArea.x + (index / (chartData.data.length - 1)) * chartArea.width;
-          const y = chartArea.y + chartArea.height - ((point.close - minPrice) / priceRange) * chartArea.height;
+          const x = priceArea.x + (index / (chartData.data.length - 1)) * priceArea.width;
+          const y = priceArea.y + priceArea.height - ((point.close - minPrice) / priceRange) * priceArea.height;
           
           if (index === 0) {
             ctx.lineTo(x, y);
@@ -436,7 +490,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
           }
         });
         
-        ctx.lineTo(chartArea.x + chartArea.width, chartArea.y + chartArea.height);
+        ctx.lineTo(priceArea.x + priceArea.width, priceArea.y + priceArea.height);
         ctx.closePath();
         ctx.fillStyle = gradient;
         ctx.fill();
@@ -448,8 +502,8 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         ctx.beginPath();
         
         chartData.data.forEach((point, index) => {
-          const x = chartArea.x + (index / (chartData.data.length - 1)) * chartArea.width;
-          const y = chartArea.y + chartArea.height - ((point.close - minPrice) / priceRange) * chartArea.height;
+          const x = priceArea.x + (index / (chartData.data.length - 1)) * priceArea.width;
+          const y = priceArea.y + priceArea.height - ((point.close - minPrice) / priceRange) * priceArea.height;
           
           if (index === 0) {
             ctx.moveTo(x, y);
@@ -464,13 +518,65 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         ctx.font = '24px system-ui, -apple-system, sans-serif';
         for (let i = 0; i <= 5; i++) {
           const price = minPrice + (i / 5) * priceRange;
-          const y = chartArea.y + chartArea.height - (i * chartArea.height / 5);
-          ctx.fillText(formatPrice(price), chartArea.x + chartArea.width + 20, y + 8);
+          const y = priceArea.y + priceArea.height - (i * priceArea.height / 5);
+          ctx.fillText(formatPrice(price), priceArea.x + priceArea.width + 20, y + 8);
         }
         
-        // Draw X-axis labels
-        ctx.fillText('Start', chartArea.x, chartArea.y + chartArea.height + 40);
-        ctx.fillText('End', chartArea.x + chartArea.width - 60, chartArea.y + chartArea.height + 40);
+        // Draw white separator line
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(priceArea.x, priceArea.y + priceArea.height + 5);
+        ctx.lineTo(priceArea.x + priceArea.width, priceArea.y + priceArea.height + 5);
+        ctx.stroke();
+        
+        // Volume chart area (lower portion)
+        const volumeArea = { x: 120, y: priceArea.y + priceArea.height + 10, width: 1680, height: 250 };
+        
+        // Draw volume chart background
+        ctx.fillStyle = '#1C1C1C';
+        ctx.fillRect(volumeArea.x, volumeArea.y, volumeArea.width, volumeArea.height);
+        
+        // Draw grid lines for volume chart
+        ctx.strokeStyle = '#333333';
+        ctx.lineWidth = 2;
+        for (let i = 0; i <= 3; i++) {
+          const y = volumeArea.y + (i * volumeArea.height / 3);
+          ctx.beginPath();
+          ctx.moveTo(volumeArea.x, y);
+          ctx.lineTo(volumeArea.x + volumeArea.width, y);
+          ctx.stroke();
+        }
+        
+        // Get volume data and calculate bounds
+        const volumes = chartData.data.map(d => d.volume);
+        const maxVolume = Math.max(...volumes);
+        
+        // Draw volume bars
+        ctx.fillStyle = '#5AF5FAB3'; // Cyan with opacity for volume bars
+        chartData.data.forEach((point, index) => {
+          const barWidth = volumeArea.width / chartData.data.length * 0.8;
+          const x = volumeArea.x + (index / chartData.data.length) * volumeArea.width + barWidth * 0.1;
+          const barHeight = (point.volume / maxVolume) * volumeArea.height;
+          const y = volumeArea.y + volumeArea.height - barHeight;
+          
+          ctx.fillRect(x, y, barWidth, barHeight);
+        });
+        
+        // Draw Y-axis labels (volume)
+        ctx.fillStyle = '#F7F7F7';
+        ctx.font = '20px system-ui, -apple-system, sans-serif';
+        for (let i = 0; i <= 3; i++) {
+          const volume = (i / 3) * maxVolume;
+          const y = volumeArea.y + volumeArea.height - (i * volumeArea.height / 3);
+          ctx.fillText(formatNumber(volume), volumeArea.x + volumeArea.width + 20, y + 8);
+        }
+        
+        // Draw X-axis labels at bottom
+        ctx.fillStyle = '#F7F7F7';
+        ctx.font = '24px system-ui, -apple-system, sans-serif';
+        ctx.fillText('Start', volumeArea.x, volumeArea.y + volumeArea.height + 40);
+        ctx.fillText('End', volumeArea.x + volumeArea.width - 60, volumeArea.y + volumeArea.height + 40);
       } else {
         // Fallback if no chart data
         ctx.strokeStyle = '#5AF5FA';
@@ -520,7 +626,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         : `Timeframe: ${selectedTimeframe}`;
       
       // Create high-resolution SVG with complete UI duplication
-      let svgContent = `<svg width="1920" height="1152" xmlns="http://www.w3.org/2000/svg" style="background-color: #1C1C1C;">
+      let svgContent = `<svg width="1920" height="1400" xmlns="http://www.w3.org/2000/svg" style="background-color: #1C1C1C;">
         <defs>
           <!-- Define gradient for mountain fill -->
           <linearGradient id="mountainGradient" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -539,7 +645,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         </defs>
         
         <!-- Background -->
-        <rect width="1920" height="1152" fill="#1C1C1C"/>
+        <rect width="1920" height="1400" fill="#1C1C1C"/>
         
         <!-- Title and metadata -->
         <text x="60" y="80" class="title-text">${symbol} - ${name}</text>
@@ -547,29 +653,30 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         <text x="60" y="190" class="info-text">Market Cap: ${cap}</text>
         <text x="60" y="240" class="info-text">${timeframeText}</text>`;
       
-      // Add chart if data is available
+      // Add charts if data is available
       if (chartData?.data && chartData.data.length > 0) {
-        const chartArea = { x: 120, y: 300, width: 1680, height: 700 };
+        // Price chart area (upper portion)
+        const priceArea = { x: 120, y: 300, width: 1680, height: 500 };
         const prices = chartData.data.map(d => d.close);
         const minPrice = Math.min(...prices);
         const maxPrice = Math.max(...prices);
         const priceRange = maxPrice - minPrice;
         
-        // Add grid lines
+        // Add grid lines for price chart
         for (let i = 0; i <= 5; i++) {
-          const y = chartArea.y + (i * chartArea.height / 5);
+          const y = priceArea.y + (i * priceArea.height / 5);
           svgContent += `
-            <line x1="${chartArea.x}" y1="${y}" x2="${chartArea.x + chartArea.width}" y2="${y}" class="grid-line"/>`;
+            <line x1="${priceArea.x}" y1="${y}" x2="${priceArea.x + priceArea.width}" y2="${y}" class="grid-line"/>`;
         }
         
         // Create path for mountain area fill
-        let areaPath = `M${chartArea.x},${chartArea.y + chartArea.height}`;
+        let areaPath = `M${priceArea.x},${priceArea.y + priceArea.height}`;
         chartData.data.forEach((point, index) => {
-          const x = chartArea.x + (index / (chartData.data.length - 1)) * chartArea.width;
-          const y = chartArea.y + chartArea.height - ((point.close - minPrice) / priceRange) * chartArea.height;
+          const x = priceArea.x + (index / (chartData.data.length - 1)) * priceArea.width;
+          const y = priceArea.y + priceArea.height - ((point.close - minPrice) / priceRange) * priceArea.height;
           areaPath += ` L${x},${y}`;
         });
-        areaPath += ` L${chartArea.x + chartArea.width},${chartArea.y + chartArea.height} Z`;
+        areaPath += ` L${priceArea.x + priceArea.width},${priceArea.y + priceArea.height} Z`;
         
         // Add mountain gradient fill
         svgContent += `
@@ -578,8 +685,8 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         // Create path for price line
         let linePath = '';
         chartData.data.forEach((point, index) => {
-          const x = chartArea.x + (index / (chartData.data.length - 1)) * chartArea.width;
-          const y = chartArea.y + chartArea.height - ((point.close - minPrice) / priceRange) * chartArea.height;
+          const x = priceArea.x + (index / (chartData.data.length - 1)) * priceArea.width;
+          const y = priceArea.y + priceArea.height - ((point.close - minPrice) / priceRange) * priceArea.height;
           linePath += index === 0 ? `M${x},${y}` : ` L${x},${y}`;
         });
         
@@ -590,15 +697,50 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         // Add Y-axis price labels
         for (let i = 0; i <= 5; i++) {
           const price = minPrice + (i / 5) * priceRange;
-          const y = chartArea.y + chartArea.height - (i * chartArea.height / 5);
+          const y = priceArea.y + priceArea.height - (i * priceArea.height / 5);
           svgContent += `
-            <text x="${chartArea.x + chartArea.width + 20}" y="${y + 8}" class="label-text">${formatPrice(price)}</text>`;
+            <text x="${priceArea.x + priceArea.width + 20}" y="${y + 8}" class="label-text">${formatPrice(price)}</text>`;
         }
         
-        // Add X-axis labels
+        // Add white separator line
         svgContent += `
-          <text x="${chartArea.x}" y="${chartArea.y + chartArea.height + 40}" class="label-text">Start</text>
-          <text x="${chartArea.x + chartArea.width - 60}" y="${chartArea.y + chartArea.height + 40}" class="label-text">End</text>`;
+          <line x1="${priceArea.x}" y1="${priceArea.y + priceArea.height + 5}" x2="${priceArea.x + priceArea.width}" y2="${priceArea.y + priceArea.height + 5}" stroke="#FFFFFF" stroke-width="3"/>`;
+        
+        // Volume chart area (lower portion)
+        const volumeArea = { x: 120, y: priceArea.y + priceArea.height + 10, width: 1680, height: 250 };
+        const volumes = chartData.data.map(d => d.volume);
+        const maxVolume = Math.max(...volumes);
+        
+        // Add grid lines for volume chart
+        for (let i = 0; i <= 3; i++) {
+          const y = volumeArea.y + (i * volumeArea.height / 3);
+          svgContent += `
+            <line x1="${volumeArea.x}" y1="${y}" x2="${volumeArea.x + volumeArea.width}" y2="${y}" class="grid-line"/>`;
+        }
+        
+        // Add volume bars
+        chartData.data.forEach((point, index) => {
+          const barWidth = volumeArea.width / chartData.data.length * 0.8;
+          const x = volumeArea.x + (index / chartData.data.length) * volumeArea.width + barWidth * 0.1;
+          const barHeight = (point.volume / maxVolume) * volumeArea.height;
+          const y = volumeArea.y + volumeArea.height - barHeight;
+          
+          svgContent += `
+            <rect x="${x}" y="${y}" width="${barWidth}" height="${barHeight}" fill="#5AF5FA" opacity="0.7" rx="1"/>`;
+        });
+        
+        // Add Y-axis volume labels
+        for (let i = 0; i <= 3; i++) {
+          const volume = (i / 3) * maxVolume;
+          const y = volumeArea.y + volumeArea.height - (i * volumeArea.height / 3);
+          svgContent += `
+            <text x="${volumeArea.x + volumeArea.width + 20}" y="${y + 8}" class="label-text" font-size="20">${formatNumber(volume)}</text>`;
+        }
+        
+        // Add X-axis labels at bottom
+        svgContent += `
+          <text x="${volumeArea.x}" y="${volumeArea.y + volumeArea.height + 40}" class="label-text">Start</text>
+          <text x="${volumeArea.x + volumeArea.width - 60}" y="${volumeArea.y + volumeArea.height + 40}" class="label-text">End</text>`;
         
       } else {
         // Fallback if no chart data
