@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { RefreshCwIcon } from "lucide-react";
+import { Link } from "wouter";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { MarketMoversTabs } from "@/components/dashboard/market-movers-tabs";
 import { SlackPanel } from "@/components/dashboard/slack-panel";
@@ -196,8 +197,13 @@ function Dashboard() {
       <header className="bg-card border-b shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div>
+            <div className="flex items-center gap-6">
               <h1 className="text-2xl font-semibold">Market Movers (US)</h1>
+              <Link href="/chartmaker">
+                <a className="text-[#5AF5FA] hover:text-[#5AF5FA]/80 font-medium transition-colors">
+                  ChartMaker
+                </a>
+              </Link>
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
