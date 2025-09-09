@@ -196,6 +196,57 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
     return num?.toLocaleString() || 'N/A';
   };
 
+  // Handle chart click for annotations
+  const handleChartClick = (event: any) => {
+    if (!event || !chartDataWithPercentage) return;
+    
+    // Get the active payload from the click event
+    const { activePayload, activeLabel } = event;
+    
+    if (activePayload && activePayload.length > 0 && activeLabel) {
+      const clickedData = activePayload[0].payload;
+      const timestamp = clickedData.timestamp;
+      const price = clickedData.close;
+      const time = clickedData.time;
+      
+      // Create pending annotation
+      const newAnnotation: Omit<Annotation, 'id' | 'text'> = {
+        x: 0, // Will be set by chart rendering
+        y: 0, // Will be set by chart rendering  
+        timestamp,
+        price,
+        time
+      };
+      
+      setPendingAnnotation(newAnnotation);
+      setShowAnnotationInput(true);
+      setAnnotationInput('');
+    }
+  };
+
+  // Save annotation with user text
+  const saveAnnotation = () => {
+    if (pendingAnnotation && annotationInput.trim()) {
+      const newAnnotation: Annotation = {
+        ...pendingAnnotation,
+        id: `annotation-${Date.now()}`,
+        text: annotationInput.trim()
+      };
+      
+      setAnnotations(prev => [...prev, newAnnotation]);
+      setShowAnnotationInput(false);
+      setAnnotationInput('');
+      setPendingAnnotation(null);
+    }
+  };
+
+  // Cancel annotation
+  const cancelAnnotation = () => {
+    setShowAnnotationInput(false);
+    setAnnotationInput('');
+    setPendingAnnotation(null);
+  };
+
   const formatPercent = (value: number) => {
     return value ? `${(value * 100).toFixed(2)}%` : 'N/A';
   };
@@ -982,6 +1033,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                 <AreaChart
                   data={chartDataWithPercentage}
                   margin={{ top: 15, right: 0, left: 0, bottom: -5 }}
+                  onClick={handleChartClick}
                 >
                   <defs>
                     <linearGradient id="positiveGradient" x1="0" y1="0" x2="0" y2="1">
