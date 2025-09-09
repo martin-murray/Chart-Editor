@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -135,7 +135,14 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
 
   const parseChange = parseFloat(percentChange);
   const isPositive = parseChange >= 0;
-  const lineColor = isPositive ? '#10b981' : '#ef4444'; // Green for positive, red for negative
+  const lineColor = isPositive ? '#5AF5FA' : '#FFA5FF'; // Cyan for positive, Pink for negative
+  
+  // Calculate percentage change for each data point relative to first price
+  const chartDataWithPercentage = chartData?.data?.map((item, index) => {
+    const firstPrice = chartData.data[0]?.close || item.close;
+    const percentageChange = ((item.close - firstPrice) / firstPrice) * 100;
+    return { ...item, percentageChange };
+  }) || [];
 
   const formatMarketCap = (marketCapInMillions: number) => {
     // Finnhub returns market cap in millions of dollars
@@ -317,11 +324,30 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         ) : (
           <div className="h-80 w-full rounded-lg" style={{ backgroundColor: '#1C1C1C' }}>
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart
-                data={chartData.data}
-                margin={{ top: 15, right: 30, left: 20, bottom: 15 }}
+              <AreaChart
+                data={chartDataWithPercentage}
+                margin={{ top: 15, right: 40, left: 40, bottom: 15 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="#333333" opacity={0.3} />
+                <defs>
+                  <linearGradient id="positiveGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#5AF5FA" stopOpacity={0.5} />
+                    <stop offset="100%" stopColor="#5AF5FA" stopOpacity={0.2} />
+                  </linearGradient>
+                  <linearGradient id="negativeGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#FFA5FF" stopOpacity={0.5} />
+                    <stop offset="100%" stopColor="#FFA5FF" stopOpacity={0.2} />
+                  </linearGradient>
+                </defs>
+                
+                {/* Enhanced horizontal grid lines */}
+                <CartesianGrid 
+                  strokeDasharray="1 1" 
+                  stroke="#333333" 
+                  opacity={0.6}
+                  horizontal={true}
+                  vertical={false}
+                />
+                
                 <XAxis 
                   dataKey="time"
                   tickFormatter={(value) => formatTime(value, selectedTimeframe)}
@@ -329,16 +355,39 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                   axisLine={{ stroke: '#F7F7F7' }}
                   tickLine={{ stroke: '#F7F7F7' }}
                 />
+                
+                {/* Primary Y-axis for price (right side) */}
                 <YAxis 
+                  yAxisId="price"
+                  orientation="right"
                   domain={['dataMin - 1', 'dataMax + 1']}
                   tickFormatter={formatPrice}
                   tick={{ fontSize: 12, fill: '#F7F7F7' }}
                   axisLine={{ stroke: '#F7F7F7' }}
                   tickLine={{ stroke: '#F7F7F7' }}
                 />
+                
+                {/* Secondary Y-axis for percentage (left side) */}
+                <YAxis 
+                  yAxisId="percentage"
+                  orientation="left"
+                  domain={['dataMin', 'dataMax']}
+                  tickFormatter={(value) => `${value.toFixed(1)}%`}
+                  tick={{ fontSize: 12, fill: '#F7F7F7' }}
+                  axisLine={{ stroke: '#F7F7F7' }}
+                  tickLine={{ stroke: '#F7F7F7' }}
+                />
+                
                 <Tooltip 
                   labelFormatter={(value) => formatTime(value, selectedTimeframe)}
-                  formatter={(value: number) => [formatPrice(value), 'Price']}
+                  formatter={(value: number, name: string) => {
+                    if (name === 'close') {
+                      return [formatPrice(value), 'Price'];
+                    } else if (name === 'percentageChange') {
+                      return [`${value.toFixed(2)}%`, 'Change'];
+                    }
+                    return [value, name];
+                  }}
                   contentStyle={{
                     backgroundColor: '#1C1C1C',
                     border: '1px solid #333333',
@@ -346,15 +395,19 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                     color: '#F7F7F7'
                   }}
                 />
-                <Line 
+                
+                {/* Mountain area chart with gradient fill */}
+                <Area
+                  yAxisId="price"
                   type="monotone" 
                   dataKey="close" 
                   stroke={lineColor}
                   strokeWidth={2}
+                  fill={`url(#${isPositive ? 'positiveGradient' : 'negativeGradient'})`}
                   dot={false}
                   activeDot={{ r: 4, fill: lineColor, stroke: '#1C1C1C', strokeWidth: 2 }}
                 />
-              </LineChart>
+              </AreaChart>
             </ResponsiveContainer>
           </div>
         )}
