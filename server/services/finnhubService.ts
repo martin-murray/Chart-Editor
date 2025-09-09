@@ -1,6 +1,6 @@
 import type { InsertStock } from "@shared/schema";
 
-const FINNHUB_API_KEY = "cg9jh3pr01qg418a9q9gcg9jh3pr01qg418a9qa0";
+const FINNHUB_API_KEY = process.env.FINNHUB_API_KEY || "cg9jh3pr01qg418a9q9gcg9jh3pr01qg418a9qa0";
 const BASE_URL = "https://finnhub.io/api/v1";
 
 interface FinnhubQuote {
