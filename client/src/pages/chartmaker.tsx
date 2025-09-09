@@ -213,8 +213,7 @@ function ChartMaker() {
                 href="/" 
                 className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
               >
-                <ArrowLeft className="w-4 h-4" />
-                <span className="font-medium">Back to Dashboard</span>
+                <span className="font-medium">← Back</span>
               </Link>
               <h1 className="text-2xl font-semibold">ChartMaker - Global Stock Charts</h1>
             </div>
