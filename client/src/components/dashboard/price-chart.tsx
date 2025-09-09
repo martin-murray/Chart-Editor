@@ -487,7 +487,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             const x = priceArea.x + (dataIndex / (chartData.data.length - 1)) * priceArea.width;
             
             // Draw vertical annotation line
-            ctx.strokeStyle = '#FCD34D'; // Yellow-400
+            ctx.strokeStyle = '#FAFF50'; // Brand yellow
             ctx.lineWidth = 3;
             ctx.beginPath();
             ctx.moveTo(x, priceArea.y);
@@ -495,7 +495,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             ctx.stroke();
             
             // Draw annotation dot
-            ctx.fillStyle = '#FCD34D';
+            ctx.fillStyle = '#FAFF50';
             ctx.beginPath();
             ctx.arc(x, priceArea.y, 8, 0, 2 * Math.PI);
             ctx.fill();
@@ -514,7 +514,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             ctx.strokeRect(textBoxX, textBoxY, textBoxWidth, textBoxHeight);
             
             // Text content
-            ctx.fillStyle = '#FCD34D';
+            ctx.fillStyle = '#FAFF50';
             ctx.font = 'bold 16px system-ui, -apple-system, sans-serif';
             ctx.fillText(formatTime(annotation.time, selectedTimeframe), textBoxX + 8, textBoxY + 20);
             
@@ -772,7 +772,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             const x = priceArea.x + (dataIndex / (chartData.data.length - 1)) * priceArea.width;
             
             // Draw vertical annotation line
-            ctx.strokeStyle = '#FCD34D'; // Yellow-400
+            ctx.strokeStyle = '#FAFF50'; // Brand yellow
             ctx.lineWidth = 3;
             ctx.beginPath();
             ctx.moveTo(x, priceArea.y);
@@ -780,7 +780,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             ctx.stroke();
             
             // Draw annotation dot
-            ctx.fillStyle = '#FCD34D';
+            ctx.fillStyle = '#FAFF50';
             ctx.beginPath();
             ctx.arc(x, priceArea.y, 8, 0, 2 * Math.PI);
             ctx.fill();
@@ -799,7 +799,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             ctx.strokeRect(textBoxX, textBoxY, textBoxWidth, textBoxHeight);
             
             // Text content
-            ctx.fillStyle = '#FCD34D';
+            ctx.fillStyle = '#FAFF50';
             ctx.font = 'bold 16px system-ui, -apple-system, sans-serif';
             ctx.fillText(formatTime(annotation.time, selectedTimeframe), textBoxX + 8, textBoxY + 20);
             
@@ -1009,11 +1009,11 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             
             // Add vertical annotation line
             svgContent += `
-              <line x1="${x}" y1="${priceArea.y}" x2="${x}" y2="${volumeArea.y + volumeArea.height}" stroke="#FCD34D" stroke-width="3"/>`;
+              <line x1="${x}" y1="${priceArea.y}" x2="${x}" y2="${volumeArea.y + volumeArea.height}" stroke="#FAFF50" stroke-width="3"/>`;
             
             // Add annotation dot
             svgContent += `
-              <circle cx="${x}" cy="${priceArea.y}" r="8" fill="#FCD34D"/>`;
+              <circle cx="${x}" cy="${priceArea.y}" r="8" fill="#FAFF50"/>`;
             
             // Add annotation text box
             const textBoxWidth = 240;
@@ -1027,7 +1027,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             
             // Text content
             svgContent += `
-              <text x="${textBoxX + 8}" y="${textBoxY + 20}" fill="#FCD34D" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="bold">${formatTime(annotation.time, selectedTimeframe)}</text>
+              <text x="${textBoxX + 8}" y="${textBoxY + 20}" fill="#FAFF50" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="bold">${formatTime(annotation.time, selectedTimeframe)}</text>
               <text x="${textBoxX + 8}" y="${textBoxY + 40}" fill="#9CA3AF" font-family="system-ui, -apple-system, sans-serif" font-size="14">${formatPrice(annotation.price)}</text>`;
             
             // Wrap annotation text
@@ -1370,9 +1370,9 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                         style={{ left: xPos, top: '15px', height: 'calc(100% - 20px)' }}
                       >
                         {/* Vertical annotation line */}
-                        <div className="w-0.5 h-full bg-yellow-400 relative">
+                        <div className="w-0.5 h-full relative" style={{ backgroundColor: '#FAFF50' }}>
                           {/* Annotation dot */}
-                          <div className="absolute -top-1 -left-1 w-3 h-3 bg-yellow-400 rounded-full border-2 border-background"></div>
+                          <div className="absolute -top-1 -left-1 w-3 h-3 rounded-full border-2 border-background" style={{ backgroundColor: '#FAFF50' }}></div>
                           
                           {/* Annotation text */}
                           <div className="absolute top-0 left-2 bg-background border border-border rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-pointer hover:bg-muted">
