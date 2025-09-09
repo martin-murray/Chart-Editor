@@ -171,37 +171,60 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
 
   // Export functions
   const exportAsPNG = async () => {
-    if (!chartRef.current) return;
+    if (!chartRef.current) {
+      console.error('Chart reference not found');
+      return;
+    }
     
     try {
+      // Wait a bit for any animations to complete
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       const canvas = await html2canvas(chartRef.current, {
         backgroundColor: '#1C1C1C',
         scale: 2,
-        logging: false,
-        useCORS: true
+        logging: true,
+        useCORS: true,
+        allowTaint: true,
+        foreignObjectRendering: true,
+        width: chartRef.current.offsetWidth,
+        height: chartRef.current.offsetHeight
       });
       
       const filename = `${symbol}_chart_${selectedTimeframe}${
         startDate && endDate ? `_${format(startDate, 'yyyy-MM-dd')}_${format(endDate, 'yyyy-MM-dd')}` : ''
       }.png`;
       
-      canvas.toBlob((blob) => {
-        if (blob) saveAs(blob, filename);
-      }, 'image/png');
+      // Create and download the image
+      const link = document.createElement('a');
+      link.download = filename;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
     } catch (error) {
       console.error('PNG export failed:', error);
+      alert('PNG export failed. Please try again.');
     }
   };
 
   const exportAsPDF = async () => {
-    if (!chartRef.current) return;
+    if (!chartRef.current) {
+      console.error('Chart reference not found');
+      return;
+    }
     
     try {
+      // Wait a bit for any animations to complete
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       const canvas = await html2canvas(chartRef.current, {
         backgroundColor: '#1C1C1C',
         scale: 2,
-        logging: false,
-        useCORS: true
+        logging: true,
+        useCORS: true,
+        allowTaint: true,
+        foreignObjectRendering: true,
+        width: chartRef.current.offsetWidth,
+        height: chartRef.current.offsetHeight
       });
       
       const pdf = new jsPDF('landscape', 'mm', 'a4');
@@ -231,6 +254,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
       pdf.save(filename);
     } catch (error) {
       console.error('PDF export failed:', error);
+      alert('PDF export failed. Please try again.');
     }
   };
 
