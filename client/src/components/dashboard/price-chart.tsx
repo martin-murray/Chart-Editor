@@ -171,43 +171,54 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
 
   // Export functions
   const exportAsPNG = async () => {
-    if (!chartRef.current) {
-      console.error('Chart reference not found');
-      return;
-    }
-    
     try {
-      // Wait for any animations to complete
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Fallback approach - create a simple canvas-based chart
+      const canvas = document.createElement('canvas');
+      canvas.width = 800;
+      canvas.height = 400;
+      const ctx = canvas.getContext('2d');
       
-      const canvas = await html2canvas(chartRef.current, {
-        backgroundColor: '#1C1C1C',
-        scale: 1,
-        logging: false,
-        useCORS: true,
-        allowTaint: false,
-        foreignObjectRendering: false,
-        removeContainer: true,
-        imageTimeout: 15000,
-        onclone: (clonedDoc) => {
-          // Force all SVG elements to be visible
-          const svgs = clonedDoc.querySelectorAll('svg');
-          svgs.forEach(svg => {
-            svg.style.display = 'block';
-            svg.style.visibility = 'visible';
-          });
-        }
-      });
-      
-      if (canvas.width === 0 || canvas.height === 0) {
-        throw new Error('Canvas has zero dimensions');
+      if (!ctx) {
+        throw new Error('Could not get canvas context');
       }
+      
+      // Set background
+      ctx.fillStyle = '#1C1C1C';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Add title
+      ctx.fillStyle = '#5AF5FA';
+      ctx.font = 'bold 24px Arial';
+      ctx.fillText(`${symbol} - ${name}`, 20, 40);
+      
+      // Add price info
+      ctx.fillStyle = '#F7F7F7';
+      ctx.font = '18px Arial';
+      ctx.fillText(`Price: ${formatPrice(parseFloat(currentPrice))} (${percentChange})`, 20, 70);
+      ctx.fillText(`Market Cap: ${marketCap}`, 20, 95);
+      
+      // Add timeframe info
+      const timeframeText = startDate && endDate 
+        ? `Date Range: ${format(startDate, 'MMM dd, yyyy')} - ${format(endDate, 'MMM dd, yyyy')}`
+        : `Timeframe: ${selectedTimeframe}`;
+      ctx.fillText(timeframeText, 20, 120);
+      
+      // Add chart placeholder
+      ctx.strokeStyle = '#5AF5FA';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(20, 140, 760, 220);
+      
+      // Add note about using browser's screenshot feature
+      ctx.fillStyle = '#888888';
+      ctx.font = '14px Arial';
+      ctx.fillText('Note: For full chart visualization, use your browser\'s screenshot feature', 20, 380);
+      ctx.fillText('or try the SVG export option which works reliably.', 20, 395);
       
       const filename = `${symbol}_chart_${selectedTimeframe}${
         startDate && endDate ? `_${format(startDate, 'yyyy-MM-dd')}_${format(endDate, 'yyyy-MM-dd')}` : ''
       }.png`;
       
-      // Convert to blob and download
+      // Download the canvas
       canvas.toBlob((blob) => {
         if (blob) {
           const url = URL.createObjectURL(blob);
@@ -218,69 +229,43 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
           link.click();
           document.body.removeChild(link);
           URL.revokeObjectURL(url);
-        } else {
-          throw new Error('Failed to create blob');
         }
       }, 'image/png');
       
     } catch (error) {
       console.error('PNG export failed:', error);
-      alert('PNG export failed. This may be due to browser security restrictions with chart elements.');
+      alert('PNG export failed. Please try using the SVG export option instead, or take a screenshot manually.');
     }
   };
 
   const exportAsPDF = async () => {
-    if (!chartRef.current) {
-      console.error('Chart reference not found');
-      return;
-    }
-    
     try {
-      // Wait for any animations to complete
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      const canvas = await html2canvas(chartRef.current, {
-        backgroundColor: '#1C1C1C',
-        scale: 1,
-        logging: false,
-        useCORS: true,
-        allowTaint: false,
-        foreignObjectRendering: false,
-        removeContainer: true,
-        imageTimeout: 15000,
-        onclone: (clonedDoc) => {
-          // Force all SVG elements to be visible
-          const svgs = clonedDoc.querySelectorAll('svg');
-          svgs.forEach(svg => {
-            svg.style.display = 'block';
-            svg.style.visibility = 'visible';
-          });
-        }
-      });
-      
-      if (canvas.width === 0 || canvas.height === 0) {
-        throw new Error('Canvas has zero dimensions');
-      }
-      
       const pdf = new jsPDF('landscape', 'mm', 'a4');
-      const imgWidth = 280;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
       
       // Add title and metadata
-      pdf.setFontSize(16);
-      pdf.text(`${symbol} - ${name}`, 15, 20);
-      pdf.setFontSize(12);
-      pdf.text(`Price: ${formatPrice(parseFloat(currentPrice))} (${percentChange})`, 15, 30);
-      pdf.text(`Market Cap: ${marketCap}`, 15, 40);
+      pdf.setFontSize(20);
+      pdf.text(`${symbol} - ${name}`, 15, 25);
+      pdf.setFontSize(14);
+      pdf.text(`Price: ${formatPrice(parseFloat(currentPrice))} (${percentChange})`, 15, 40);
+      pdf.text(`Market Cap: ${marketCap}`, 15, 50);
       if (startDate && endDate) {
-        pdf.text(`Date Range: ${format(startDate, 'MMM dd, yyyy')} - ${format(endDate, 'MMM dd, yyyy')}`, 15, 50);
+        pdf.text(`Date Range: ${format(startDate, 'MMM dd, yyyy')} - ${format(endDate, 'MMM dd, yyyy')}`, 15, 60);
       } else {
-        pdf.text(`Timeframe: ${selectedTimeframe}`, 15, 50);
+        pdf.text(`Timeframe: ${selectedTimeframe}`, 15, 60);
       }
       
-      // Add chart
-      const imgData = canvas.toDataURL('image/png');
-      pdf.addImage(imgData, 'PNG', 15, 60, imgWidth, imgHeight);
+      // Add current timestamp
+      pdf.text(`Generated: ${new Date().toLocaleString()}`, 15, 70);
+      
+      // Add chart placeholder
+      pdf.setDrawColor(90, 245, 250); // #5AF5FA
+      pdf.setLineWidth(1);
+      pdf.rect(15, 80, 260, 130);
+      
+      // Add note
+      pdf.setFontSize(12);
+      pdf.text('Note: For full chart visualization, use the SVG export option', 15, 225);
+      pdf.text('or take a screenshot of the interactive chart.', 15, 235);
       
       const filename = `${symbol}_chart_${selectedTimeframe}${
         startDate && endDate ? `_${format(startDate, 'yyyy-MM-dd')}_${format(endDate, 'yyyy-MM-dd')}` : ''
@@ -289,7 +274,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
       pdf.save(filename);
     } catch (error) {
       console.error('PDF export failed:', error);
-      alert('PDF export failed. This may be due to browser security restrictions with chart elements.');
+      alert('PDF export failed. Please try using the SVG export option instead.');
     }
   };
 
