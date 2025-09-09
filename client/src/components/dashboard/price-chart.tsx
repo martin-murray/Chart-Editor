@@ -959,7 +959,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart
                   data={chartDataWithPercentage}
-                  margin={{ top: 15, right: 0, left: 0, bottom: 0 }}
+                  margin={{ top: 15, right: 0, left: 0, bottom: -5 }}
                 >
                   <defs>
                     <linearGradient id="positiveGradient" x1="0" y1="0" x2="0" y2="1">
@@ -981,6 +981,14 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                     vertical={false}
                   />
                   
+                  {/* Hidden X-axis for bottom line connection */}
+                  <XAxis 
+                    dataKey="time"
+                    tick={false}
+                    tickLine={false}
+                    axisLine={{ stroke: '#F7F7F7' }}
+                  />
+
                   {/* Primary Y-axis for price (right side) */}
                   <YAxis 
                     yAxisId="price"
@@ -990,6 +998,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                     tick={{ fontSize: 12, fill: '#F7F7F7' }}
                     axisLine={{ stroke: '#F7F7F7' }}
                     tickLine={{ stroke: '#F7F7F7' }}
+                    width={60}
                   />
                   
                   <Tooltip 
@@ -1033,7 +1042,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart 
                   data={chartDataWithPercentage}
-                  margin={{ top: 0, right: 0, left: 0, bottom: 15 }}
+                  margin={{ top: -5, right: 0, left: 0, bottom: 15 }}
                 >
                   <CartesianGrid 
                     strokeDasharray="1 1" 
