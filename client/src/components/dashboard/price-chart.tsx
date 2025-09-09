@@ -359,11 +359,13 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
           ctx.fillText(formatNumber(volume), volumeArea.x + volumeArea.width + 20, y + 8);
         }
         
-        // Draw X-axis labels at bottom
+        // Draw X-axis labels at bottom with actual dates
         ctx.fillStyle = '#F7F7F7';
         ctx.font = '24px system-ui, -apple-system, sans-serif';
-        ctx.fillText('Start', volumeArea.x, volumeArea.y + volumeArea.height + 40);
-        ctx.fillText('End', volumeArea.x + volumeArea.width - 60, volumeArea.y + volumeArea.height + 40);
+        const firstDate = formatTime(chartData.data[0].time, selectedTimeframe);
+        const lastDate = formatTime(chartData.data[chartData.data.length - 1].time, selectedTimeframe);
+        ctx.fillText(firstDate, volumeArea.x, volumeArea.y + volumeArea.height + 40);
+        ctx.fillText(lastDate, volumeArea.x + volumeArea.width - ctx.measureText(lastDate).width, volumeArea.y + volumeArea.height + 40);
       } else {
         // Fallback if no chart data
         ctx.strokeStyle = '#5AF5FA';
@@ -572,11 +574,13 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
           ctx.fillText(formatNumber(volume), volumeArea.x + volumeArea.width + 20, y + 8);
         }
         
-        // Draw X-axis labels at bottom
+        // Draw X-axis labels at bottom with actual dates
         ctx.fillStyle = '#F7F7F7';
         ctx.font = '24px system-ui, -apple-system, sans-serif';
-        ctx.fillText('Start', volumeArea.x, volumeArea.y + volumeArea.height + 40);
-        ctx.fillText('End', volumeArea.x + volumeArea.width - 60, volumeArea.y + volumeArea.height + 40);
+        const firstDate = formatTime(chartData.data[0].time, selectedTimeframe);
+        const lastDate = formatTime(chartData.data[chartData.data.length - 1].time, selectedTimeframe);
+        ctx.fillText(firstDate, volumeArea.x, volumeArea.y + volumeArea.height + 40);
+        ctx.fillText(lastDate, volumeArea.x + volumeArea.width - ctx.measureText(lastDate).width, volumeArea.y + volumeArea.height + 40);
       } else {
         // Fallback if no chart data
         ctx.strokeStyle = '#5AF5FA';
@@ -737,10 +741,12 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             <text x="${volumeArea.x + volumeArea.width + 20}" y="${y + 8}" class="label-text" font-size="20">${formatNumber(volume)}</text>`;
         }
         
-        // Add X-axis labels at bottom
+        // Add X-axis labels at bottom with actual dates
+        const firstDate = formatTime(chartData.data[0].time, selectedTimeframe);
+        const lastDate = formatTime(chartData.data[chartData.data.length - 1].time, selectedTimeframe);
         svgContent += `
-          <text x="${volumeArea.x}" y="${volumeArea.y + volumeArea.height + 40}" class="label-text">Start</text>
-          <text x="${volumeArea.x + volumeArea.width - 60}" y="${volumeArea.y + volumeArea.height + 40}" class="label-text">End</text>`;
+          <text x="${volumeArea.x}" y="${volumeArea.y + volumeArea.height + 40}" class="label-text">${firstDate}</text>
+          <text x="${volumeArea.x + volumeArea.width - 60}" y="${volumeArea.y + volumeArea.height + 40}" class="label-text">${lastDate}</text>`;
         
       } else {
         // Fallback if no chart data
