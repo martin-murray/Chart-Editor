@@ -313,12 +313,12 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         ctx.strokeStyle = '#FFFFFF';
         ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.moveTo(priceArea.x, priceArea.y + priceArea.height + 5);
-        ctx.lineTo(priceArea.x + priceArea.width, priceArea.y + priceArea.height + 5);
+        ctx.moveTo(priceArea.x, priceArea.y + priceArea.height + 10);
+        ctx.lineTo(priceArea.x + priceArea.width, priceArea.y + priceArea.height + 10);
         ctx.stroke();
         
         // Volume chart area (lower portion)
-        const volumeArea = { x: 120, y: priceArea.y + priceArea.height + 10, width: 1680, height: 250 };
+        const volumeArea = { x: 120, y: priceArea.y + priceArea.height + 20, width: 1680, height: 250 };
         
         // Draw volume chart background
         ctx.fillStyle = '#1C1C1C';
@@ -526,12 +526,12 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         ctx.strokeStyle = '#FFFFFF';
         ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.moveTo(priceArea.x, priceArea.y + priceArea.height + 5);
-        ctx.lineTo(priceArea.x + priceArea.width, priceArea.y + priceArea.height + 5);
+        ctx.moveTo(priceArea.x, priceArea.y + priceArea.height + 10);
+        ctx.lineTo(priceArea.x + priceArea.width, priceArea.y + priceArea.height + 10);
         ctx.stroke();
         
         // Volume chart area (lower portion)
-        const volumeArea = { x: 120, y: priceArea.y + priceArea.height + 10, width: 1680, height: 250 };
+        const volumeArea = { x: 120, y: priceArea.y + priceArea.height + 20, width: 1680, height: 250 };
         
         // Draw volume chart background
         ctx.fillStyle = '#1C1C1C';
@@ -704,10 +704,10 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         
         // Add white separator line
         svgContent += `
-          <line x1="${priceArea.x}" y1="${priceArea.y + priceArea.height + 5}" x2="${priceArea.x + priceArea.width}" y2="${priceArea.y + priceArea.height + 5}" stroke="#FFFFFF" stroke-width="3"/>`;
+          <line x1="${priceArea.x}" y1="${priceArea.y + priceArea.height + 10}" x2="${priceArea.x + priceArea.width}" y2="${priceArea.y + priceArea.height + 10}" stroke="#FFFFFF" stroke-width="3"/>`;
         
         // Volume chart area (lower portion)
-        const volumeArea = { x: 120, y: priceArea.y + priceArea.height + 10, width: 1680, height: 250 };
+        const volumeArea = { x: 120, y: priceArea.y + priceArea.height + 20, width: 1680, height: 250 };
         const volumes = chartData.data.map(d => d.volume);
         const maxVolume = Math.max(...volumes);
         
