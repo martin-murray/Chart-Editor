@@ -884,7 +884,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             </div>
 
             {/* Volume Bar Chart - Directly below with shared X-axis */}
-            <div className="h-32 w-full">
+            <div className="h-40 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart 
                   data={chartDataWithPercentage}
