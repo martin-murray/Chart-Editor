@@ -244,9 +244,8 @@
     border-color: #5AF5FA !important;
   }
   
-  /* Extend volume chart Y-axis to connect with price chart */
+  /* Make volume chart Y-axis line full height */
   .volume-chart-container .recharts-cartesian-axis-line {
-    transform: translateY(-20px);
-    height: calc(100% + 40px) !important;
+    height: 100% !important;
   }
 }
