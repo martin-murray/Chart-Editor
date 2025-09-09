@@ -1026,9 +1026,9 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             No chart data available for {symbol}
           </div>
         ) : (
-          <div ref={chartRef} className="w-full rounded-lg" style={{ backgroundColor: '#1C1C1C' }}>
+          <div ref={chartRef} className="w-full rounded-lg relative" style={{ backgroundColor: '#1C1C1C' }}>
             {/* Price Chart - No X-axis */}
-            <div className="h-80 w-full">
+            <div className="h-80 w-full relative">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart
                   data={chartDataWithPercentage}
@@ -1106,6 +1106,42 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                   />
                 </AreaChart>
               </ResponsiveContainer>
+              
+              {/* Annotation Overlay */}
+              {annotations.length > 0 && chartDataWithPercentage && (
+                <div className="absolute inset-0 pointer-events-none">
+                  {annotations.map((annotation) => {
+                    // Calculate position based on timestamp
+                    const dataIndex = chartDataWithPercentage.findIndex(d => d.timestamp === annotation.timestamp);
+                    if (dataIndex === -1) return null;
+                    
+                    const xPercent = (dataIndex / (chartDataWithPercentage.length - 1)) * 100;
+                    // Account for chart margins (60px right margin for Y-axis)
+                    const xPos = `calc(${xPercent}% - 30px)`;
+                    
+                    return (
+                      <div
+                        key={annotation.id}
+                        className="absolute"
+                        style={{ left: xPos, top: '15px', height: 'calc(100% - 20px)' }}
+                      >
+                        {/* Vertical annotation line */}
+                        <div className="w-0.5 h-full bg-yellow-400 relative">
+                          {/* Annotation dot */}
+                          <div className="absolute -top-1 -left-1 w-3 h-3 bg-yellow-400 rounded-full border-2 border-background"></div>
+                          
+                          {/* Annotation text */}
+                          <div className="absolute top-0 left-2 bg-background border border-border rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-pointer hover:bg-muted">
+                            <div className="font-medium text-yellow-400">{formatTime(annotation.time, selectedTimeframe)}</div>
+                            <div className="text-muted-foreground">{formatPrice(annotation.price)}</div>
+                            <div className="text-foreground mt-1">{annotation.text}</div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Spacing between charts */}
