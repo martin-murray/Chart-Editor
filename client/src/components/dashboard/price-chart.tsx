@@ -1025,11 +1025,11 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
               </ResponsiveContainer>
             </div>
 
-            {/* White separator line */}
-            <div className="w-full h-px bg-white"></div>
+            {/* White separator line with spacing */}
+            <div className="w-full h-px bg-white my-3"></div>
 
-            {/* Volume Bar Chart - Directly below with shared X-axis */}
-            <div className="h-40 w-full">
+            {/* Volume Bar Chart - Below with spacing */}
+            <div className="h-40 w-full mt-2">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart 
                   data={chartDataWithPercentage}
