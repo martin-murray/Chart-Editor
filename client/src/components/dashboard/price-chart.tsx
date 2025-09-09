@@ -172,51 +172,56 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
   // Export functions
   const exportAsPNG = async () => {
     try {
+      // High resolution canvas - 1920px width
       const canvas = document.createElement('canvas');
-      canvas.width = 1000;
-      canvas.height = 600;
+      canvas.width = 1920;
+      canvas.height = 1152; // 16:9.6 ratio
       const ctx = canvas.getContext('2d');
       
       if (!ctx) {
         throw new Error('Could not get canvas context');
       }
       
-      // Set background
+      // Enable high-quality rendering
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      
+      // Set background to match UI
       ctx.fillStyle = '#1C1C1C';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       
-      // Add title
+      // Add title with proper font
       ctx.fillStyle = '#5AF5FA';
-      ctx.font = 'bold 24px Arial';
-      ctx.fillText(`${symbol} - ${name}`, 30, 40);
+      ctx.font = 'bold 48px system-ui, -apple-system, sans-serif';
+      ctx.fillText(`${symbol} - ${name}`, 60, 80);
       
       // Add price info - fix the NaN issue
       ctx.fillStyle = '#F7F7F7';
-      ctx.font = '18px Arial';
+      ctx.font = '36px system-ui, -apple-system, sans-serif';
       const price = currentPrice && currentPrice !== 'NaN' ? formatPrice(parseFloat(currentPrice)) : 'N/A';
       const change = percentChange && percentChange !== '0' ? percentChange : 'N/A';
       const cap = marketCap && marketCap !== '--' ? marketCap : 'N/A';
       
-      ctx.fillText(`Price: ${price} (${change}%)`, 30, 70);
-      ctx.fillText(`Market Cap: ${cap}`, 30, 95);
+      ctx.fillText(`Price: ${price} (${change}%)`, 60, 140);
+      ctx.fillText(`Market Cap: ${cap}`, 60, 190);
       
       // Add timeframe info
       const timeframeText = startDate && endDate 
         ? `Date Range: ${format(startDate, 'MMM dd, yyyy')} - ${format(endDate, 'MMM dd, yyyy')}`
         : `Timeframe: ${selectedTimeframe}`;
-      ctx.fillText(timeframeText, 30, 120);
+      ctx.fillText(timeframeText, 60, 240);
       
       // Draw actual chart if data is available
       if (chartData?.data && chartData.data.length > 0) {
-        const chartArea = { x: 60, y: 150, width: 880, height: 350 };
+        const chartArea = { x: 120, y: 300, width: 1680, height: 700 };
         
         // Draw chart background
         ctx.fillStyle = '#1C1C1C';
         ctx.fillRect(chartArea.x, chartArea.y, chartArea.width, chartArea.height);
         
-        // Draw grid lines
+        // Draw grid lines to match UI
         ctx.strokeStyle = '#333333';
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 2;
         for (let i = 0; i <= 5; i++) {
           const y = chartArea.y + (i * chartArea.height / 5);
           ctx.beginPath();
@@ -231,10 +236,40 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         const maxPrice = Math.max(...prices);
         const priceRange = maxPrice - minPrice;
         
-        // Draw price line
+        // Create gradient mountain fill
+        const gradient = ctx.createLinearGradient(0, chartArea.y, 0, chartArea.y + chartArea.height);
+        if (isPositive) {
+          gradient.addColorStop(0, '#5AF5FA40'); // Cyan with transparency
+          gradient.addColorStop(1, '#5AF5FA00'); // Transparent
+        } else {
+          gradient.addColorStop(0, '#FFA5FF40'); // Pink with transparency  
+          gradient.addColorStop(1, '#FFA5FF00'); // Transparent
+        }
+        
+        // Draw gradient area fill first
+        ctx.beginPath();
+        ctx.moveTo(chartArea.x, chartArea.y + chartArea.height);
+        
+        chartData.data.forEach((point, index) => {
+          const x = chartArea.x + (index / (chartData.data.length - 1)) * chartArea.width;
+          const y = chartArea.y + chartArea.height - ((point.close - minPrice) / priceRange) * chartArea.height;
+          
+          if (index === 0) {
+            ctx.lineTo(x, y);
+          } else {
+            ctx.lineTo(x, y);
+          }
+        });
+        
+        ctx.lineTo(chartArea.x + chartArea.width, chartArea.y + chartArea.height);
+        ctx.closePath();
+        ctx.fillStyle = gradient;
+        ctx.fill();
+        
+        // Draw price line on top
         const lineColor = isPositive ? '#5AF5FA' : '#FFA5FF';
         ctx.strokeStyle = lineColor;
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 6;
         ctx.beginPath();
         
         chartData.data.forEach((point, index) => {
@@ -251,24 +286,24 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         
         // Draw Y-axis labels (prices)
         ctx.fillStyle = '#F7F7F7';
-        ctx.font = '12px Arial';
+        ctx.font = '24px system-ui, -apple-system, sans-serif';
         for (let i = 0; i <= 5; i++) {
           const price = minPrice + (i / 5) * priceRange;
           const y = chartArea.y + chartArea.height - (i * chartArea.height / 5);
-          ctx.fillText(formatPrice(price), chartArea.x + chartArea.width + 10, y + 4);
+          ctx.fillText(formatPrice(price), chartArea.x + chartArea.width + 20, y + 8);
         }
         
-        // Draw X-axis labels (simplified)
-        ctx.fillText('Start', chartArea.x, chartArea.y + chartArea.height + 20);
-        ctx.fillText('End', chartArea.x + chartArea.width - 30, chartArea.y + chartArea.height + 20);
+        // Draw X-axis labels
+        ctx.fillText('Start', chartArea.x, chartArea.y + chartArea.height + 40);
+        ctx.fillText('End', chartArea.x + chartArea.width - 60, chartArea.y + chartArea.height + 40);
       } else {
         // Fallback if no chart data
         ctx.strokeStyle = '#5AF5FA';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(60, 150, 880, 350);
+        ctx.lineWidth = 4;
+        ctx.strokeRect(120, 300, 1680, 700);
         ctx.fillStyle = '#888888';
-        ctx.font = '16px Arial';
-        ctx.fillText('Chart data not available', 450, 325);
+        ctx.font = '32px system-ui, -apple-system, sans-serif';
+        ctx.fillText('Chart data not available', 860, 650);
       }
       
       const filename = `${symbol}_chart_${selectedTimeframe}${
@@ -287,7 +322,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
           document.body.removeChild(link);
           URL.revokeObjectURL(url);
         }
-      }, 'image/png');
+      }, 'image/png', 1.0); // Maximum quality
       
     } catch (error) {
       console.error('PNG export failed:', error);
@@ -297,52 +332,56 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
 
   const exportAsPDF = async () => {
     try {
-      // First create the same canvas chart as PNG export
+      // Create the same high-resolution canvas as PNG export with gradient mountain
       const canvas = document.createElement('canvas');
-      canvas.width = 1000;
-      canvas.height = 600;
+      canvas.width = 1920;
+      canvas.height = 1152; // 16:9.6 ratio
       const ctx = canvas.getContext('2d');
       
       if (!ctx) {
         throw new Error('Could not get canvas context');
       }
       
-      // Set background
+      // Enable high-quality rendering
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      
+      // Set background to match UI
       ctx.fillStyle = '#1C1C1C';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       
-      // Add title
+      // Add title with proper font
       ctx.fillStyle = '#5AF5FA';
-      ctx.font = 'bold 24px Arial';
-      ctx.fillText(`${symbol} - ${name}`, 30, 40);
+      ctx.font = 'bold 48px system-ui, -apple-system, sans-serif';
+      ctx.fillText(`${symbol} - ${name}`, 60, 80);
       
       // Add price info - fix the NaN issue
       ctx.fillStyle = '#F7F7F7';
-      ctx.font = '18px Arial';
+      ctx.font = '36px system-ui, -apple-system, sans-serif';
       const price = currentPrice && currentPrice !== 'NaN' ? formatPrice(parseFloat(currentPrice)) : 'N/A';
       const change = percentChange && percentChange !== '0' ? percentChange : 'N/A';
       const cap = marketCap && marketCap !== '--' ? marketCap : 'N/A';
       
-      ctx.fillText(`Price: ${price} (${change}%)`, 30, 70);
-      ctx.fillText(`Market Cap: ${cap}`, 30, 95);
+      ctx.fillText(`Price: ${price} (${change}%)`, 60, 140);
+      ctx.fillText(`Market Cap: ${cap}`, 60, 190);
       
       // Add timeframe info
       const timeframeText = startDate && endDate 
         ? `Date Range: ${format(startDate, 'MMM dd, yyyy')} - ${format(endDate, 'MMM dd, yyyy')}`
         : `Timeframe: ${selectedTimeframe}`;
-      ctx.fillText(timeframeText, 30, 120);
+      ctx.fillText(timeframeText, 60, 240);
       
       // Draw actual chart if data is available
       if (chartData?.data && chartData.data.length > 0) {
-        const chartArea = { x: 60, y: 150, width: 880, height: 350 };
+        const chartArea = { x: 120, y: 300, width: 1680, height: 700 };
         
         // Draw chart background
         ctx.fillStyle = '#1C1C1C';
         ctx.fillRect(chartArea.x, chartArea.y, chartArea.width, chartArea.height);
         
-        // Draw grid lines
+        // Draw grid lines to match UI
         ctx.strokeStyle = '#333333';
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 2;
         for (let i = 0; i <= 5; i++) {
           const y = chartArea.y + (i * chartArea.height / 5);
           ctx.beginPath();
@@ -357,10 +396,40 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         const maxPrice = Math.max(...prices);
         const priceRange = maxPrice - minPrice;
         
-        // Draw price line
+        // Create gradient mountain fill
+        const gradient = ctx.createLinearGradient(0, chartArea.y, 0, chartArea.y + chartArea.height);
+        if (isPositive) {
+          gradient.addColorStop(0, '#5AF5FA40'); // Cyan with transparency
+          gradient.addColorStop(1, '#5AF5FA00'); // Transparent
+        } else {
+          gradient.addColorStop(0, '#FFA5FF40'); // Pink with transparency  
+          gradient.addColorStop(1, '#FFA5FF00'); // Transparent
+        }
+        
+        // Draw gradient area fill first
+        ctx.beginPath();
+        ctx.moveTo(chartArea.x, chartArea.y + chartArea.height);
+        
+        chartData.data.forEach((point, index) => {
+          const x = chartArea.x + (index / (chartData.data.length - 1)) * chartArea.width;
+          const y = chartArea.y + chartArea.height - ((point.close - minPrice) / priceRange) * chartArea.height;
+          
+          if (index === 0) {
+            ctx.lineTo(x, y);
+          } else {
+            ctx.lineTo(x, y);
+          }
+        });
+        
+        ctx.lineTo(chartArea.x + chartArea.width, chartArea.y + chartArea.height);
+        ctx.closePath();
+        ctx.fillStyle = gradient;
+        ctx.fill();
+        
+        // Draw price line on top
         const lineColor = isPositive ? '#5AF5FA' : '#FFA5FF';
         ctx.strokeStyle = lineColor;
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 6;
         ctx.beginPath();
         
         chartData.data.forEach((point, index) => {
@@ -377,21 +446,29 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         
         // Draw Y-axis labels (prices)
         ctx.fillStyle = '#F7F7F7';
-        ctx.font = '12px Arial';
+        ctx.font = '24px system-ui, -apple-system, sans-serif';
         for (let i = 0; i <= 5; i++) {
           const price = minPrice + (i / 5) * priceRange;
           const y = chartArea.y + chartArea.height - (i * chartArea.height / 5);
-          ctx.fillText(formatPrice(price), chartArea.x + chartArea.width + 10, y + 4);
+          ctx.fillText(formatPrice(price), chartArea.x + chartArea.width + 20, y + 8);
         }
         
-        // Draw X-axis labels (simplified)
-        ctx.fillText('Start', chartArea.x, chartArea.y + chartArea.height + 20);
-        ctx.fillText('End', chartArea.x + chartArea.width - 30, chartArea.y + chartArea.height + 20);
+        // Draw X-axis labels
+        ctx.fillText('Start', chartArea.x, chartArea.y + chartArea.height + 40);
+        ctx.fillText('End', chartArea.x + chartArea.width - 60, chartArea.y + chartArea.height + 40);
+      } else {
+        // Fallback if no chart data
+        ctx.strokeStyle = '#5AF5FA';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(120, 300, 1680, 700);
+        ctx.fillStyle = '#888888';
+        ctx.font = '32px system-ui, -apple-system, sans-serif';
+        ctx.fillText('Chart data not available', 860, 650);
       }
       
-      // Now create PDF and add the canvas as image
+      // Now create PDF and add the high-resolution canvas as image
       const pdf = new jsPDF('landscape', 'mm', 'a4');
-      const imgData = canvas.toDataURL('image/png');
+      const imgData = canvas.toDataURL('image/png', 1.0); // Maximum quality
       
       // Calculate dimensions to fit the chart nicely in PDF
       const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -418,22 +495,104 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
   };
 
   const exportAsSVG = async () => {
-    // SVG export is more complex and would require recreating the chart in SVG format
-    // For now, we'll provide a simplified implementation that creates a basic SVG
     try {
-      const dateRange = startDate && endDate 
-        ? `${format(startDate, 'MMM dd, yyyy')} - ${format(endDate, 'MMM dd, yyyy')}`
-        : selectedTimeframe;
+      const price = currentPrice && currentPrice !== 'NaN' ? formatPrice(parseFloat(currentPrice)) : 'N/A';
+      const change = percentChange && percentChange !== '0' ? percentChange : 'N/A';
+      const cap = marketCap && marketCap !== '--' ? marketCap : 'N/A';
       
-      const svgContent = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" style="background: #1C1C1C; color: #F7F7F7;">
-          <text x="20" y="30" font-family="Arial" font-size="18" fill="#5AF5FA">${symbol} - ${name}</text>
-          <text x="20" y="55" font-family="Arial" font-size="14" fill="#F7F7F7">Price: ${formatPrice(parseFloat(currentPrice))} (${percentChange})</text>
-          <text x="20" y="75" font-family="Arial" font-size="14" fill="#F7F7F7">Market Cap: ${marketCap}</text>
-          <text x="20" y="95" font-family="Arial" font-size="14" fill="#F7F7F7">Period: ${dateRange}</text>
-          <text x="20" y="130" font-family="Arial" font-size="12" fill="#888">Note: Full chart visualization requires PNG or PDF export</text>
-        </svg>
-      `;
+      const timeframeText = startDate && endDate 
+        ? `Date Range: ${format(startDate, 'MMM dd, yyyy')} - ${format(endDate, 'MMM dd, yyyy')}`
+        : `Timeframe: ${selectedTimeframe}`;
+      
+      // Create high-resolution SVG with complete UI duplication
+      let svgContent = `<svg width="1920" height="1152" xmlns="http://www.w3.org/2000/svg" style="background-color: #1C1C1C;">
+        <defs>
+          <!-- Define gradient for mountain fill -->
+          <linearGradient id="mountainGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:${isPositive ? '#5AF5FA' : '#FFA5FF'};stop-opacity:0.25" />
+            <stop offset="100%" style="stop-color:${isPositive ? '#5AF5FA' : '#FFA5FF'};stop-opacity:0" />
+          </linearGradient>
+          
+          <!-- Grid line style -->
+          <style>
+            .grid-line { stroke: #333333; stroke-width: 2; }
+            .price-line { stroke: ${isPositive ? '#5AF5FA' : '#FFA5FF'}; stroke-width: 6; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+            .title-text { fill: #5AF5FA; font-family: system-ui, -apple-system, sans-serif; font-size: 48px; font-weight: bold; }
+            .info-text { fill: #F7F7F7; font-family: system-ui, -apple-system, sans-serif; font-size: 36px; }
+            .label-text { fill: #F7F7F7; font-family: system-ui, -apple-system, sans-serif; font-size: 24px; }
+          </style>
+        </defs>
+        
+        <!-- Background -->
+        <rect width="1920" height="1152" fill="#1C1C1C"/>
+        
+        <!-- Title and metadata -->
+        <text x="60" y="80" class="title-text">${symbol} - ${name}</text>
+        <text x="60" y="140" class="info-text">Price: ${price} (${change}%)</text>
+        <text x="60" y="190" class="info-text">Market Cap: ${cap}</text>
+        <text x="60" y="240" class="info-text">${timeframeText}</text>`;
+      
+      // Add chart if data is available
+      if (chartData?.data && chartData.data.length > 0) {
+        const chartArea = { x: 120, y: 300, width: 1680, height: 700 };
+        const prices = chartData.data.map(d => d.close);
+        const minPrice = Math.min(...prices);
+        const maxPrice = Math.max(...prices);
+        const priceRange = maxPrice - minPrice;
+        
+        // Add grid lines
+        for (let i = 0; i <= 5; i++) {
+          const y = chartArea.y + (i * chartArea.height / 5);
+          svgContent += `
+            <line x1="${chartArea.x}" y1="${y}" x2="${chartArea.x + chartArea.width}" y2="${y}" class="grid-line"/>`;
+        }
+        
+        // Create path for mountain area fill
+        let areaPath = `M${chartArea.x},${chartArea.y + chartArea.height}`;
+        chartData.data.forEach((point, index) => {
+          const x = chartArea.x + (index / (chartData.data.length - 1)) * chartArea.width;
+          const y = chartArea.y + chartArea.height - ((point.close - minPrice) / priceRange) * chartArea.height;
+          areaPath += ` L${x},${y}`;
+        });
+        areaPath += ` L${chartArea.x + chartArea.width},${chartArea.y + chartArea.height} Z`;
+        
+        // Add mountain gradient fill
+        svgContent += `
+          <path d="${areaPath}" fill="url(#mountainGradient)"/>`;
+        
+        // Create path for price line
+        let linePath = '';
+        chartData.data.forEach((point, index) => {
+          const x = chartArea.x + (index / (chartData.data.length - 1)) * chartArea.width;
+          const y = chartArea.y + chartArea.height - ((point.close - minPrice) / priceRange) * chartArea.height;
+          linePath += index === 0 ? `M${x},${y}` : ` L${x},${y}`;
+        });
+        
+        // Add price line
+        svgContent += `
+          <path d="${linePath}" class="price-line"/>`;
+        
+        // Add Y-axis price labels
+        for (let i = 0; i <= 5; i++) {
+          const price = minPrice + (i / 5) * priceRange;
+          const y = chartArea.y + chartArea.height - (i * chartArea.height / 5);
+          svgContent += `
+            <text x="${chartArea.x + chartArea.width + 20}" y="${y + 8}" class="label-text">${formatPrice(price)}</text>`;
+        }
+        
+        // Add X-axis labels
+        svgContent += `
+          <text x="${chartArea.x}" y="${chartArea.y + chartArea.height + 40}" class="label-text">Start</text>
+          <text x="${chartArea.x + chartArea.width - 60}" y="${chartArea.y + chartArea.height + 40}" class="label-text">End</text>`;
+        
+      } else {
+        // Fallback if no chart data
+        svgContent += `
+          <rect x="120" y="300" width="1680" height="700" fill="none" stroke="#5AF5FA" stroke-width="4"/>
+          <text x="960" y="650" class="info-text" text-anchor="middle">Chart data not available</text>`;
+      }
+      
+      svgContent += '</svg>';
       
       const blob = new Blob([svgContent], { type: 'image/svg+xml' });
       const filename = `${symbol}_chart_${selectedTimeframe}${
@@ -443,6 +602,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
       saveAs(blob, filename);
     } catch (error) {
       console.error('SVG export failed:', error);
+      alert('SVG export failed. Please try again.');
     }
   };
 
