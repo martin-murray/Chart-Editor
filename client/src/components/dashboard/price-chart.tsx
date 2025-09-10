@@ -1581,7 +1581,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                                 <circle
                                   cx={x}
                                   cy={y}
-                                  r={5}
+                                  r={10}
                                   fill="#FAFF50"
                                   stroke="#121212"
                                   strokeWidth={1}
@@ -1591,7 +1591,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                                   x={x}
                                   y={y + 2}
                                   textAnchor="middle"
-                                  fontSize={8}
+                                  fontSize={12}
                                   fontWeight="bold"
                                   fill="#121212"
                                 >
@@ -1746,7 +1746,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                                 <circle
                                   cx={x}
                                   cy={y}
-                                  r={5}
+                                  r={10}
                                   fill="#FAFF50"
                                   stroke="#121212"
                                   strokeWidth={1}
@@ -1756,7 +1756,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                                   x={x}
                                   y={y + 2}
                                   textAnchor="middle"
-                                  fontSize={8}
+                                  fontSize={12}
                                   fontWeight="bold"
                                   fill="#121212"
                                 >
