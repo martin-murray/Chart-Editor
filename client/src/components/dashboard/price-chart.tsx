@@ -99,6 +99,17 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
   const [editingAnnotation, setEditingAnnotation] = useState<Annotation | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
 
+  // Earnings data state
+  const { data: earningsData } = useQuery({
+    queryKey: ['/api/stocks', symbol, 'earnings'],
+    queryFn: async (): Promise<{ symbol: string; earnings: any[] }> => {
+      const response = await fetch(`/api/stocks/${symbol}/earnings`);
+      if (!response.ok) throw new Error('Failed to fetch earnings data');
+      return await response.json();
+    },
+    enabled: !!symbol
+  });
+
   const { data: chartData, isLoading, error } = useQuery({
     queryKey: ['/api/stocks', symbol, 'chart', selectedTimeframe, startDate, endDate],
     queryFn: async (): Promise<ChartResponse> => {
@@ -1533,6 +1544,66 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                       strokeWidth={3}
                     />
                   ))}
+
+                  {/* Earnings Markers - small yellow dots with 'E' */}
+                  <Customized 
+                    component={(props: any) => {
+                      const { payload, xAxisMap, yAxisMap } = props;
+                      if (!earningsData?.earnings || !chartData?.data) return null;
+                      
+                      const xAxis = xAxisMap[Object.keys(xAxisMap)[0]];
+                      const yAxis = yAxisMap['price'];
+                      
+                      if (!xAxis || !yAxis) return null;
+                      
+                      return (
+                        <>
+                          {earningsData.earnings.map((earning: any, index: number) => {
+                            // Find if this earnings date falls within our chart data
+                            const earningsDate = new Date(earning.date);
+                            const earningsTime = earningsDate.toISOString();
+                            
+                            // Find corresponding data point in chart
+                            const dataPoint = chartData.data.find(d => {
+                              const chartDate = new Date(d.time);
+                              return Math.abs(chartDate.getTime() - earningsDate.getTime()) < 24 * 60 * 60 * 1000; // Within 1 day
+                            });
+                            
+                            if (!dataPoint) return null;
+                            
+                            // Calculate position using chart scales
+                            const x = xAxis.scale(dataPoint.time) + (xAxis.offset?.left || 0);
+                            const y = xAxis.y - 10; // Position on timeline (x-axis baseline)
+                            
+                            return (
+                              <g key={`earning-${earning.date}-${index}`}>
+                                {/* Yellow circle */}
+                                <circle
+                                  cx={x}
+                                  cy={y}
+                                  r={5}
+                                  fill="#FAFF50"
+                                  stroke="#121212"
+                                  strokeWidth={1}
+                                />
+                                {/* 'E' text inside circle */}
+                                <text
+                                  x={x}
+                                  y={y + 2}
+                                  textAnchor="middle"
+                                  fontSize={8}
+                                  fontWeight="bold"
+                                  fill="#121212"
+                                >
+                                  E
+                                </text>
+                              </g>
+                            );
+                          })}
+                        </>
+                      );
+                    }}
+                  />
                 </AreaChart>
               </ResponsiveContainer>
               
@@ -1639,6 +1710,65 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                       strokeWidth={3}
                     />
                   ))}
+
+                  {/* Earnings Markers for volume chart */}
+                  <Customized 
+                    component={(props: any) => {
+                      const { payload, xAxisMap, yAxisMap } = props;
+                      if (!earningsData?.earnings || !chartData?.data) return null;
+                      
+                      const xAxis = xAxisMap[Object.keys(xAxisMap)[0]];
+                      const yAxis = yAxisMap[Object.keys(yAxisMap)[0]];
+                      
+                      if (!xAxis || !yAxis) return null;
+                      
+                      return (
+                        <>
+                          {earningsData.earnings.map((earning: any, index: number) => {
+                            // Find if this earnings date falls within our chart data
+                            const earningsDate = new Date(earning.date);
+                            
+                            // Find corresponding data point in chart
+                            const dataPoint = chartData.data.find(d => {
+                              const chartDate = new Date(d.time);
+                              return Math.abs(chartDate.getTime() - earningsDate.getTime()) < 24 * 60 * 60 * 1000;
+                            });
+                            
+                            if (!dataPoint) return null;
+                            
+                            // Calculate position using chart scales
+                            const x = xAxis.scale(dataPoint.time) + (xAxis.offset?.left || 0);
+                            const y = xAxis.y - 10; // Position on timeline (x-axis baseline)
+                            
+                            return (
+                              <g key={`earning-volume-${earning.date}-${index}`}>
+                                {/* Small yellow circle */}
+                                <circle
+                                  cx={x}
+                                  cy={y}
+                                  r={5}
+                                  fill="#FAFF50"
+                                  stroke="#121212"
+                                  strokeWidth={1}
+                                />
+                                {/* 'E' text inside circle */}
+                                <text
+                                  x={x}
+                                  y={y + 2}
+                                  textAnchor="middle"
+                                  fontSize={8}
+                                  fontWeight="bold"
+                                  fill="#121212"
+                                >
+                                  E
+                                </text>
+                              </g>
+                            );
+                          })}
+                        </>
+                      );
+                    }}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>

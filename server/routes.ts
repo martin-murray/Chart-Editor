@@ -195,7 +195,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { symbol } = req.params;
       console.log(`📈 Earnings request for: ${symbol}`);
       
-      const earningsData = await stockDataService.finnhubService.getEarningsCalendar(symbol);
+      const earningsData = await stockDataService.getEarningsCalendar(symbol);
       
       res.json({
         symbol,

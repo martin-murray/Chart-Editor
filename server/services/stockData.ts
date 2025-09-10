@@ -51,6 +51,18 @@ export class StockDataService {
   }
 
   /**
+   * Get earnings calendar data for a specific symbol
+   */
+  async getEarningsCalendar(symbol: string): Promise<any> {
+    try {
+      return await finnhubService.getEarningsCalendar(symbol);
+    } catch (error) {
+      console.error("Error getting earnings calendar:", error);
+      return [];
+    }
+  }
+
+  /**
    * Get API status - placeholder for new API
    */
   async getApiStatus(): Promise<{remainingRequests: number, resetTime?: string}> {
