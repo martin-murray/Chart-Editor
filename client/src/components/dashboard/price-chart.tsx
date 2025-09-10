@@ -550,7 +550,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             const textBoxWidth = 240;
             const textBoxHeight = 80;
             const textBoxX = Math.min(x + 10, priceArea.x + priceArea.width - textBoxWidth);
-            const textBoxY = priceArea.y + 20;
+            const textBoxY = priceArea.y - textBoxHeight - 10;
             
             // Text box background
             ctx.fillStyle = '#121212';
@@ -874,7 +874,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             const textBoxWidth = 240;
             const textBoxHeight = 80;
             const textBoxX = Math.min(x + 10, priceArea.x + priceArea.width - textBoxWidth);
-            const textBoxY = priceArea.y + 20;
+            const textBoxY = priceArea.y - textBoxHeight - 10;
             
             // Text box background
             ctx.fillStyle = '#121212';
@@ -1139,7 +1139,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             const textBoxWidth = 240;
             const textBoxHeight = 80;
             const textBoxX = Math.min(x + 10, priceArea.x + priceArea.width - textBoxWidth);
-            const textBoxY = priceArea.y + 20;
+            const textBoxY = priceArea.y - textBoxHeight - 10;
             
             // Text box background
             svgContent += `
@@ -1390,7 +1390,41 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             No chart data available for {symbol}
           </div>
         ) : (
-          <div ref={chartRef} className="w-full rounded-lg relative" style={{ backgroundColor: '#121212' }}>
+          <div ref={chartRef} className="w-full rounded-lg relative pt-20" style={{ backgroundColor: '#121212' }}>
+            {/* Annotation Labels - positioned in reserved padding space above charts */}
+            {annotations.length > 0 && (
+              <div className="absolute top-0 left-0 w-full h-20 pointer-events-none">
+                {annotations.map((annotation) => {
+                  // Calculate position based on timestamp to align with ReferenceLine
+                  const dataIndex = chartData?.data?.findIndex(d => d.timestamp === annotation.timestamp) ?? -1;
+                  if (dataIndex === -1) return null;
+                  
+                  // Use same positioning logic as ReferenceLine for perfect alignment
+                  const totalDataPoints = (chartData?.data?.length ?? 1) - 1;
+                  const xPercent = totalDataPoints > 0 ? (dataIndex / totalDataPoints) * 100 : 0;
+                  
+                  return (
+                    <div
+                      key={annotation.id}
+                      className="absolute"
+                      style={{ left: `${xPercent}%`, top: '0px', transform: 'translateX(-50%)' }}
+                    >
+                      {/* Annotation text label - positioned in padding area above charts */}
+                      <div 
+                        className="bg-background border border-border rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-pointer hover:bg-muted shadow-lg"
+                        onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
+                        title="Double-click to edit"
+                      >
+                          <div className="font-medium" style={{ color: '#FAFF50' }}>{formatTime(annotation.time, selectedTimeframe)}</div>
+                          <div className="text-muted-foreground">{formatPrice(annotation.price)}</div>
+                          <div className="text-foreground mt-1">{annotation.text}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
             {/* Price Chart - No X-axis */}
             <div className="h-80 w-full relative">
               <ResponsiveContainer width="100%" height="100%">
@@ -1502,43 +1536,6 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                 </AreaChart>
               </ResponsiveContainer>
               
-              {/* Annotation Overlay */}
-              {annotations.length > 0 && chartDataWithPercentage && (
-                <div className="absolute inset-0 pointer-events-none">
-                  {annotations.map((annotation) => {
-                    // Calculate position based on timestamp - precise positioning
-                    const dataIndex = chartData?.data?.findIndex(d => d.timestamp === annotation.timestamp) ?? -1;
-                    if (dataIndex === -1) return null;
-                    
-                    // More precise calculation: account for chart area margins
-                    // AreaChart has margin: { top: 15, right: 0, left: 0, bottom: -5 }
-                    const totalDataPoints = (chartData?.data?.length ?? 1) - 1;
-                    const xPercent = totalDataPoints > 0 ? (dataIndex / totalDataPoints) * 100 : 0;
-                    
-                    // No manual offset - let the percentage calculation be exact
-                    const xPos = `${xPercent}%`;
-                    
-                    return (
-                      <div
-                        key={annotation.id}
-                        className="absolute"
-                        style={{ left: xPos, top: '15px', height: 'calc(100% - 20px)' }}
-                      >
-                        {/* Annotation text label - positioned above ReferenceLine */}
-                        <div 
-                          className="absolute top-0 left-2 bg-background border border-border rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-pointer hover:bg-muted transform -translate-x-1/2"
-                          onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
-                          title="Double-click to edit"
-                        >
-                            <div className="font-medium" style={{ color: '#FAFF50' }}>{formatTime(annotation.time, selectedTimeframe)}</div>
-                            <div className="text-muted-foreground">{formatPrice(annotation.price)}</div>
-                            <div className="text-foreground mt-1">{annotation.text}</div>
-                          </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
             </div>
 
             {/* Spacing between charts */}
