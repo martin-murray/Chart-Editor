@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { AreaChart, Area, LineChart, Line, BarChart, Bar, ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { AreaChart, Area, LineChart, Line, BarChart, Bar, ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine, Customized } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -1488,6 +1488,17 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                     dot={false}
                     activeDot={{ r: 4, fill: lineColor, stroke: '#121212', strokeWidth: 2 }}
                   />
+                  
+                  {/* Annotation Reference Lines - rendered inside chart coordinate system */}
+                  {annotations.map((annotation) => (
+                    <ReferenceLine 
+                      key={annotation.id}
+                      x={annotation.time}
+                      yAxisId="price"
+                      stroke="#FAFF50"
+                      strokeWidth={3}
+                    />
+                  ))}
                 </AreaChart>
               </ResponsiveContainer>
               
@@ -1495,13 +1506,17 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
               {annotations.length > 0 && chartDataWithPercentage && (
                 <div className="absolute inset-0 pointer-events-none">
                   {annotations.map((annotation) => {
-                    // Calculate position based on timestamp - use exact same logic as exports
+                    // Calculate position based on timestamp - precise positioning
                     const dataIndex = chartData?.data?.findIndex(d => d.timestamp === annotation.timestamp) ?? -1;
                     if (dataIndex === -1) return null;
                     
-                    const xPercent = (dataIndex / ((chartData?.data?.length ?? 1) - 1)) * 100;
-                    // Account for chart margins (60px right margin for Y-axis)
-                    const xPos = `calc(${xPercent}% - 30px)`;
+                    // More precise calculation: account for chart area margins
+                    // AreaChart has margin: { top: 15, right: 0, left: 0, bottom: -5 }
+                    const totalDataPoints = (chartData?.data?.length ?? 1) - 1;
+                    const xPercent = totalDataPoints > 0 ? (dataIndex / totalDataPoints) * 100 : 0;
+                    
+                    // No manual offset - let the percentage calculation be exact
+                    const xPos = `${xPercent}%`;
                     
                     return (
                       <div
@@ -1509,22 +1524,16 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                         className="absolute"
                         style={{ left: xPos, top: '15px', height: 'calc(100% - 20px)' }}
                       >
-                        {/* Vertical annotation line */}
-                        <div className="w-0.5 h-full relative" style={{ backgroundColor: '#FAFF50' }}>
-                          {/* Annotation dot */}
-                          <div className="absolute -top-1 -left-1 w-3 h-3 rounded-full border-2 border-background" style={{ backgroundColor: '#FAFF50' }}></div>
-                          
-                          {/* Annotation text */}
-                          <div 
-                            className="absolute top-0 left-2 bg-background border border-border rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-pointer hover:bg-muted"
-                            onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
-                            title="Double-click to edit"
-                          >
+                        {/* Annotation text label - positioned above ReferenceLine */}
+                        <div 
+                          className="absolute top-0 left-2 bg-background border border-border rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-pointer hover:bg-muted transform -translate-x-1/2"
+                          onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
+                          title="Double-click to edit"
+                        >
                             <div className="font-medium" style={{ color: '#FAFF50' }}>{formatTime(annotation.time, selectedTimeframe)}</div>
                             <div className="text-muted-foreground">{formatPrice(annotation.price)}</div>
                             <div className="text-foreground mt-1">{annotation.text}</div>
                           </div>
-                        </div>
                       </div>
                     );
                   })}
@@ -1623,6 +1632,16 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                       );
                     })}
                   </Bar>
+                  
+                  {/* Annotation Reference Lines for volume chart */}
+                  {annotations.map((annotation) => (
+                    <ReferenceLine 
+                      key={`volume-${annotation.id}`}
+                      x={annotation.time}
+                      stroke="#FAFF50"
+                      strokeWidth={3}
+                    />
+                  ))}
                 </BarChart>
               </ResponsiveContainer>
             </div>
