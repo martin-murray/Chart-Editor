@@ -1711,64 +1711,6 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                     />
                   ))}
 
-                  {/* Earnings Markers for volume chart */}
-                  <Customized 
-                    component={(props: any) => {
-                      const { payload, xAxisMap, yAxisMap } = props;
-                      if (!earningsData?.earnings || !chartData?.data) return null;
-                      
-                      const xAxis = xAxisMap[Object.keys(xAxisMap)[0]];
-                      const yAxis = yAxisMap[Object.keys(yAxisMap)[0]];
-                      
-                      if (!xAxis || !yAxis) return null;
-                      
-                      return (
-                        <>
-                          {earningsData.earnings.map((earning: any, index: number) => {
-                            // Find if this earnings date falls within our chart data
-                            const earningsDate = new Date(earning.date);
-                            
-                            // Find corresponding data point in chart
-                            const dataPoint = chartData.data.find(d => {
-                              const chartDate = new Date(d.time);
-                              return Math.abs(chartDate.getTime() - earningsDate.getTime()) < 24 * 60 * 60 * 1000;
-                            });
-                            
-                            if (!dataPoint) return null;
-                            
-                            // Calculate position using chart scales
-                            const x = xAxis.scale(dataPoint.time) + (xAxis.offset?.left || 0);
-                            const y = xAxis.y - 10; // Position on timeline (x-axis baseline)
-                            
-                            return (
-                              <g key={`earning-volume-${earning.date}-${index}`}>
-                                {/* Small yellow circle */}
-                                <circle
-                                  cx={x}
-                                  cy={y}
-                                  r={10}
-                                  fill="#FAFF50"
-                                  stroke="#121212"
-                                  strokeWidth={1}
-                                />
-                                {/* 'E' text inside circle */}
-                                <text
-                                  x={x}
-                                  y={y + 2}
-                                  textAnchor="middle"
-                                  fontSize={12}
-                                  fontWeight="bold"
-                                  fill="#121212"
-                                >
-                                  E
-                                </text>
-                              </g>
-                            );
-                          })}
-                        </>
-                      );
-                    }}
-                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>
