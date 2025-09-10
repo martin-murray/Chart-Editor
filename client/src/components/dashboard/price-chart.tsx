@@ -1410,11 +1410,21 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                     </linearGradient>
                   </defs>
                   
-                  {/* Enhanced horizontal and vertical grid lines */}
+                  {/* Custom grid lines - horizontal dashed, vertical solid */}
+                  {/* Horizontal grid lines (dashed) */}
                   <CartesianGrid 
+                    strokeDasharray="3 3" 
                     stroke="white" 
                     opacity={0.5}
                     horizontal={true}
+                    vertical={false}
+                  />
+                  {/* Vertical grid lines (solid) */}
+                  <CartesianGrid 
+                    stroke="white" 
+                    strokeWidth={1}
+                    opacity={0.3}
+                    horizontal={false}
                     vertical={true}
                   />
                   
@@ -1531,10 +1541,21 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                   data={chartDataWithPercentage}
                   margin={{ top: -15, right: 0, left: 0, bottom: 15 }}
                 >
+                  {/* Custom grid lines - horizontal dashed, vertical solid */}
+                  {/* Horizontal grid lines (dashed) */}
                   <CartesianGrid 
+                    strokeDasharray="3 3" 
                     stroke="white" 
                     opacity={0.5}
                     horizontal={true}
+                    vertical={false}
+                  />
+                  {/* Vertical grid lines (solid) */}
+                  <CartesianGrid 
+                    stroke="white" 
+                    strokeWidth={1}
+                    opacity={0.3}
+                    horizontal={false}
                     vertical={true}
                   />
                   
