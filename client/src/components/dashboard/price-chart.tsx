@@ -1428,11 +1428,12 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                     vertical={true}
                   />
                   
-                  {/* Hidden X-axis for bottom line connection */}
+                  {/* X-axis with date/time labels */}
                   <XAxis 
                     dataKey="time"
-                    tick={false}
-                    tickLine={false}
+                    tickFormatter={(value) => formatTime(value, selectedTimeframe)}
+                    tick={{ fontSize: 12, fill: '#F7F7F7' }}
+                    tickLine={{ stroke: '#F7F7F7' }}
                     axisLine={{ stroke: '#F7F7F7' }}
                   />
 
