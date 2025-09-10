@@ -118,9 +118,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             from = now - (24 * 60 * 60); // 1 day
             resolution = '5'; // 5-minute intervals
             break;
-          case '1W':
-            from = now - (7 * 24 * 60 * 60); // 1 week  
+          case '5D':
+            from = now - (5 * 24 * 60 * 60); // 5 days
             resolution = '15'; // 15-minute intervals
+            break;
+          case '2W':
+            from = now - (14 * 24 * 60 * 60); // 2 weeks
+            resolution = '60'; // 1-hour intervals
             break;
           case '1M':
             from = now - (30 * 24 * 60 * 60); // 1 month

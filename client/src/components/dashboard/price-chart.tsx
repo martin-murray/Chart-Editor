@@ -317,9 +317,8 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
       
-      // Set background to match UI
-      ctx.fillStyle = '#1C1C1C';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Set transparent background
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       
       // Add title with proper font
       ctx.fillStyle = '#5AF5FA';
@@ -347,9 +346,8 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         // Price chart area (upper portion)
         const priceArea = { x: 120, y: 300, width: 1680, height: 500 };
         
-        // Draw price chart background
-        ctx.fillStyle = '#1C1C1C';
-        ctx.fillRect(priceArea.x, priceArea.y, priceArea.width, priceArea.height);
+        // Price chart area (transparent background)
+        // No background fill needed for transparency
         
         // Draw grid lines for price chart
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
@@ -436,9 +434,8 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         // Volume chart area (lower portion)
         const volumeArea = { x: 120, y: priceArea.y + priceArea.height + 30, width: 1680, height: 250 };
         
-        // Draw volume chart background
-        ctx.fillStyle = '#1C1C1C';
-        ctx.fillRect(volumeArea.x, volumeArea.y, volumeArea.width, volumeArea.height);
+        // Volume chart area (transparent background)
+        // No background fill needed for transparency
         
         // Draw grid lines for volume chart
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
@@ -605,9 +602,8 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
       
-      // Set background to match UI
-      ctx.fillStyle = '#1C1C1C';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Set transparent background
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       
       // Add title with proper font
       ctx.fillStyle = '#5AF5FA';
@@ -635,9 +631,8 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         // Price chart area (upper portion)
         const priceArea = { x: 120, y: 300, width: 1680, height: 500 };
         
-        // Draw price chart background
-        ctx.fillStyle = '#1C1C1C';
-        ctx.fillRect(priceArea.x, priceArea.y, priceArea.width, priceArea.height);
+        // Price chart area (transparent background)
+        // No background fill needed for transparency
         
         // Draw grid lines for price chart
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
@@ -724,9 +719,8 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         // Volume chart area (lower portion)
         const volumeArea = { x: 120, y: priceArea.y + priceArea.height + 30, width: 1680, height: 250 };
         
-        // Draw volume chart background
-        ctx.fillStyle = '#1C1C1C';
-        ctx.fillRect(volumeArea.x, volumeArea.y, volumeArea.width, volumeArea.height);
+        // Volume chart area (transparent background)
+        // No background fill needed for transparency
         
         // Draw grid lines for volume chart
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
@@ -892,7 +886,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         : `Timeframe: ${selectedTimeframe}`;
       
       // Create high-resolution SVG with complete UI duplication
-      let svgContent = `<svg width="1920" height="1400" xmlns="http://www.w3.org/2000/svg" style="background-color: #1C1C1C;">
+      let svgContent = `<svg width="1920" height="1400" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <!-- Define gradient for mountain fill -->
           <linearGradient id="mountainGradient" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -910,8 +904,8 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
           </style>
         </defs>
         
-        <!-- Background -->
-        <rect width="1920" height="1400" fill="#1C1C1C"/>
+        <!-- Transparent background -->
+        <!-- Background removed for transparency -->
         
         <!-- Title and metadata -->
         <text x="60" y="80" class="title-text">${symbol} - ${name}</text>
