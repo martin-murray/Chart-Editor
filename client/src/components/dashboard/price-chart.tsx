@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Tooltip as HoverTooltip, TooltipContent as HoverTooltipContent, TooltipProvider, TooltipTrigger as HoverTooltipTrigger } from '@/components/ui/tooltip';
 import { Loader2, TrendingUp, TrendingDown, Plus, Calendar as CalendarIcon, X, Download, ChevronDown } from 'lucide-react';
 import { format, subDays, subMonths, subYears } from 'date-fns';
 import html2canvas from 'html2canvas';
@@ -98,6 +99,14 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
   const [pendingAnnotation, setPendingAnnotation] = useState<Omit<Annotation, 'id' | 'text'> | null>(null);
   const [editingAnnotation, setEditingAnnotation] = useState<Annotation | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  
+  // Earnings tooltip state
+  const [earningsTooltip, setEarningsTooltip] = useState<{
+    visible: boolean;
+    x: number;
+    y: number;
+    data: any;
+  }>({ visible: false, x: 0, y: 0, data: null });
 
   // Earnings data state
   const { data: earningsData } = useQuery({
@@ -1576,7 +1585,22 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                             const y = xAxis.y - 10; // Position on timeline (x-axis baseline)
                             
                             return (
-                              <g key={`earning-${earning.date}-${index}`}>
+                              <g 
+                                key={`earning-${earning.date}-${index}`}
+                                style={{ cursor: 'pointer' }}
+                                onMouseEnter={(e) => {
+                                  const rect = e.currentTarget.getBoundingClientRect();
+                                  setEarningsTooltip({
+                                    visible: true,
+                                    x: rect.left + 10,
+                                    y: rect.top - 80,
+                                    data: earning
+                                  });
+                                }}
+                                onMouseLeave={() => {
+                                  setEarningsTooltip({ visible: false, x: 0, y: 0, data: null });
+                                }}
+                              >
                                 {/* Yellow circle */}
                                 <circle
                                   cx={x}
@@ -1594,6 +1618,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                                   fontSize={12}
                                   fontWeight="bold"
                                   fill="#121212"
+                                  style={{ pointerEvents: 'none' }}
                                 >
                                   E
                                 </text>
@@ -1770,6 +1795,53 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             <div className="mt-2 text-xs text-muted-foreground">
               Press Ctrl+Enter to save, Escape to cancel
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Earnings Tooltip */}
+      {earningsTooltip.visible && earningsTooltip.data && (
+        <div
+          className="fixed z-50 bg-popover border border-border rounded-md shadow-lg p-3 text-sm pointer-events-none"
+          style={{
+            left: `${earningsTooltip.x}px`,
+            top: `${earningsTooltip.y}px`,
+          }}
+        >
+          <div className="font-semibold text-[#FAFF50] mb-2">📈 Quarterly Earnings</div>
+          <div className="space-y-1 text-xs">
+            <div className="flex justify-between gap-4">
+              <span className="text-muted-foreground">Date:</span>
+              <span className="font-medium">{new Date(earningsTooltip.data.date).toLocaleDateString()}</span>
+            </div>
+            <div className="flex justify-between gap-4">
+              <span className="text-muted-foreground">Quarter:</span>
+              <span className="font-medium">Q{earningsTooltip.data.quarter} {earningsTooltip.data.year}</span>
+            </div>
+            {earningsTooltip.data.epsActual !== null && (
+              <div className="flex justify-between gap-4">
+                <span className="text-muted-foreground">EPS Actual:</span>
+                <span className="font-medium text-[#5AF5FA]">${earningsTooltip.data.epsActual}</span>
+              </div>
+            )}
+            {earningsTooltip.data.epsEstimate !== null && (
+              <div className="flex justify-between gap-4">
+                <span className="text-muted-foreground">EPS Estimate:</span>
+                <span className="font-medium">${earningsTooltip.data.epsEstimate}</span>
+              </div>
+            )}
+            {earningsTooltip.data.epsActual !== null && earningsTooltip.data.epsEstimate !== null && (
+              <div className="flex justify-between gap-4 pt-1 border-t border-border">
+                <span className="text-muted-foreground">Beat/Miss:</span>
+                <span className={`font-medium ${
+                  earningsTooltip.data.epsActual >= earningsTooltip.data.epsEstimate 
+                    ? 'text-green-500' 
+                    : 'text-red-500'
+                }`}>
+                  {earningsTooltip.data.epsActual >= earningsTooltip.data.epsEstimate ? '✓ Beat' : '✗ Miss'}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       )}
