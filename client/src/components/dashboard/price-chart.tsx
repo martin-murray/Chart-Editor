@@ -76,7 +76,8 @@ interface PriceChartProps {
 
 const timeframes = [
   { label: '1D', value: '1D' },
-  { label: '1W', value: '1W' },
+  { label: '5D', value: '5D' },
+  { label: '2W', value: '2W' },
   { label: '1M', value: '1M' },
   { label: '3M', value: '3M' },
   { label: '1Y', value: '1Y' },

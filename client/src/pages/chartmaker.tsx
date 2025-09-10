@@ -227,7 +227,7 @@ function ChartMaker() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="max-w-4xl mx-auto">
           {/* Search Section */}
-          <Card className="p-6 mb-8">
+          <Card className="p-6 mb-8" style={{ backgroundColor: '#121212' }}>
             <div className="mb-6">
               <div className="flex items-center gap-3 mb-4">
                 <BarChart3 className="w-6 h-6 text-[#5AF5FA]" />
