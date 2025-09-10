@@ -581,7 +581,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             
             // Draw vertical annotation line
             ctx.strokeStyle = '#FAFF50'; // Brand yellow
-            ctx.lineWidth = 3;
+            ctx.lineWidth = 1;
             ctx.beginPath();
             ctx.moveTo(x, priceArea.y);
             ctx.lineTo(x, volumeArea.y + volumeArea.height);
@@ -597,7 +597,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             const textBoxWidth = 240;
             const textBoxHeight = 80;
             const textBoxX = Math.min(x + 10, priceArea.x + priceArea.width - textBoxWidth);
-            const textBoxY = priceArea.y - textBoxHeight - 10;
+            const textBoxY = priceArea.y - textBoxHeight + 5;
             
             // Text box background
             ctx.fillStyle = '#121212';
@@ -932,7 +932,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             
             // Draw vertical annotation line
             ctx.strokeStyle = '#FAFF50'; // Brand yellow
-            ctx.lineWidth = 3;
+            ctx.lineWidth = 1;
             ctx.beginPath();
             ctx.moveTo(x, priceArea.y);
             ctx.lineTo(x, volumeArea.y + volumeArea.height);
@@ -948,7 +948,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             const textBoxWidth = 240;
             const textBoxHeight = 80;
             const textBoxX = Math.min(x + 10, priceArea.x + priceArea.width - textBoxWidth);
-            const textBoxY = priceArea.y - textBoxHeight - 10;
+            const textBoxY = priceArea.y - textBoxHeight + 5;
             
             // Text box background
             ctx.fillStyle = '#121212';
@@ -1224,7 +1224,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             
             // Add vertical annotation line
             svgContent += `
-              <line x1="${x}" y1="${priceArea.y}" x2="${x}" y2="${volumeArea.y + volumeArea.height}" stroke="#FAFF50" stroke-width="3"/>`;
+              <line x1="${x}" y1="${priceArea.y}" x2="${x}" y2="${volumeArea.y + volumeArea.height}" stroke="#FAFF50" stroke-width="1"/>`;
             
             // Add annotation dot
             svgContent += `
@@ -1234,7 +1234,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             const textBoxWidth = 240;
             const textBoxHeight = 80;
             const textBoxX = Math.min(x + 10, priceArea.x + priceArea.width - textBoxWidth);
-            const textBoxY = priceArea.y - textBoxHeight - 10;
+            const textBoxY = priceArea.y - textBoxHeight + 5;
             
             // Text box background
             svgContent += `
