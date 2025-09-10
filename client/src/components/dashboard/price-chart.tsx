@@ -317,8 +317,9 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
       
-      // Set transparent background
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // Set background to #121212
+      ctx.fillStyle = '#121212';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
       
       // Add title with proper font
       ctx.fillStyle = '#5AF5FA';
@@ -346,8 +347,9 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         // Price chart area (upper portion)
         const priceArea = { x: 120, y: 300, width: 1680, height: 500 };
         
-        // Price chart area (transparent background)
-        // No background fill needed for transparency
+        // Price chart area
+        ctx.fillStyle = '#121212';
+        ctx.fillRect(priceArea.x, priceArea.y, priceArea.width, priceArea.height);
         
         // Draw grid lines for price chart
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
@@ -434,8 +436,9 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         // Volume chart area (lower portion)
         const volumeArea = { x: 120, y: priceArea.y + priceArea.height + 30, width: 1680, height: 250 };
         
-        // Volume chart area (transparent background)
-        // No background fill needed for transparency
+        // Volume chart area
+        ctx.fillStyle = '#121212';
+        ctx.fillRect(volumeArea.x, volumeArea.y, volumeArea.width, volumeArea.height);
         
         // Draw grid lines for volume chart
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
@@ -514,7 +517,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             const textBoxY = priceArea.y + 20;
             
             // Text box background
-            ctx.fillStyle = '#1C1C1C';
+            ctx.fillStyle = '#121212';
             ctx.strokeStyle = '#374151';
             ctx.lineWidth = 1;
             ctx.fillRect(textBoxX, textBoxY, textBoxWidth, textBoxHeight);
@@ -602,8 +605,9 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
       
-      // Set transparent background
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // Set background to #121212
+      ctx.fillStyle = '#121212';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
       
       // Add title with proper font
       ctx.fillStyle = '#5AF5FA';
@@ -631,8 +635,9 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         // Price chart area (upper portion)
         const priceArea = { x: 120, y: 300, width: 1680, height: 500 };
         
-        // Price chart area (transparent background)
-        // No background fill needed for transparency
+        // Price chart area
+        ctx.fillStyle = '#121212';
+        ctx.fillRect(priceArea.x, priceArea.y, priceArea.width, priceArea.height);
         
         // Draw grid lines for price chart
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
@@ -719,8 +724,9 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         // Volume chart area (lower portion)
         const volumeArea = { x: 120, y: priceArea.y + priceArea.height + 30, width: 1680, height: 250 };
         
-        // Volume chart area (transparent background)
-        // No background fill needed for transparency
+        // Volume chart area
+        ctx.fillStyle = '#121212';
+        ctx.fillRect(volumeArea.x, volumeArea.y, volumeArea.width, volumeArea.height);
         
         // Draw grid lines for volume chart
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
@@ -799,7 +805,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             const textBoxY = priceArea.y + 20;
             
             // Text box background
-            ctx.fillStyle = '#1C1C1C';
+            ctx.fillStyle = '#121212';
             ctx.strokeStyle = '#374151';
             ctx.lineWidth = 1;
             ctx.fillRect(textBoxX, textBoxY, textBoxWidth, textBoxHeight);
@@ -904,8 +910,8 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
           </style>
         </defs>
         
-        <!-- Transparent background -->
-        <!-- Background removed for transparency -->
+        <!-- Background -->
+        <rect width="1920" height="1400" fill="#121212"/>
         
         <!-- Title and metadata -->
         <text x="60" y="80" class="title-text">${symbol} - ${name}</text>
@@ -1034,7 +1040,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             
             // Text box background
             svgContent += `
-              <rect x="${textBoxX}" y="${textBoxY}" width="${textBoxWidth}" height="${textBoxHeight}" fill="#1C1C1C" stroke="#374151" stroke-width="1"/>`;
+              <rect x="${textBoxX}" y="${textBoxY}" width="${textBoxWidth}" height="${textBoxHeight}" fill="#121212" stroke="#374151" stroke-width="1"/>`;
             
             // Text content
             svgContent += `
@@ -1281,7 +1287,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             No chart data available for {symbol}
           </div>
         ) : (
-          <div ref={chartRef} className="w-full rounded-lg relative" style={{ backgroundColor: '#1C1C1C' }}>
+          <div ref={chartRef} className="w-full rounded-lg relative" style={{ backgroundColor: '#121212' }}>
             {/* Price Chart - No X-axis */}
             <div className="h-80 w-full relative">
               <ResponsiveContainer width="100%" height="100%">
@@ -1351,7 +1357,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                       return [value, name];
                     }}
                     contentStyle={{
-                      backgroundColor: '#1C1C1C',
+                      backgroundColor: '#121212',
                       border: '1px solid #333333',
                       borderRadius: '6px',
                       color: '#F7F7F7'
@@ -1367,7 +1373,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                     strokeWidth={2}
                     fill={`url(#${isPositive ? 'positiveGradient' : 'negativeGradient'})`}
                     dot={false}
-                    activeDot={{ r: 4, fill: lineColor, stroke: '#1C1C1C', strokeWidth: 2 }}
+                    activeDot={{ r: 4, fill: lineColor, stroke: '#121212', strokeWidth: 2 }}
                   />
                 </AreaChart>
               </ResponsiveContainer>
@@ -1464,7 +1470,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                     }}
                     formatter={(value: number) => [formatNumber(value), 'Volume']}
                     contentStyle={{
-                      backgroundColor: '#1C1C1C',
+                      backgroundColor: '#121212',
                       border: '1px solid #333333',
                       borderRadius: '6px',
                       color: '#F7F7F7',
