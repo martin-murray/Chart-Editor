@@ -542,6 +542,33 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
           ctx.fillText(date, textX, volumeArea.y + volumeArea.height + 40);
         }
         
+        // Draw earnings markers on export
+        if (earningsData?.earnings?.length) {
+          const toMs = (ts: number) => (String(ts).length === 10 ? ts * 1000 : ts);
+          earningsData.earnings.forEach(e => {
+            const eMs = new Date(e.date || e.datetime || e.announcementDate).getTime();
+            let nearestIdx = 0;
+            let best = Number.POSITIVE_INFINITY;
+            chartData.data.forEach((d, i) => {
+              const diff = Math.abs(toMs(d.timestamp) - eMs);
+              if (diff < best) { best = diff; nearestIdx = i; }
+            });
+            const x = priceArea.x + (chartData.data.length > 1 ? (nearestIdx / (chartData.data.length - 1)) * priceArea.width : 0);
+            const dotY = volumeArea.y + volumeArea.height - 10; // sits on timeline above labels
+            ctx.fillStyle = '#FAFF50';
+            ctx.beginPath();
+            ctx.arc(x, dotY, 10, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#121212';
+            ctx.font = 'bold 14px system-ui, -apple-system, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('E', x, dotY);
+            ctx.textAlign = 'start';
+            ctx.textBaseline = 'alphabetic';
+          });
+        }
+        
         // Draw annotations
         if (annotations.length > 0) {
           annotations.forEach((annotation) => {
@@ -866,6 +893,33 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
           ctx.fillText(date, textX, volumeArea.y + volumeArea.height + 40);
         }
         
+        // Draw earnings markers on export
+        if (earningsData?.earnings?.length) {
+          const toMs = (ts: number) => (String(ts).length === 10 ? ts * 1000 : ts);
+          earningsData.earnings.forEach(e => {
+            const eMs = new Date(e.date || e.datetime || e.announcementDate).getTime();
+            let nearestIdx = 0;
+            let best = Number.POSITIVE_INFINITY;
+            chartData.data.forEach((d, i) => {
+              const diff = Math.abs(toMs(d.timestamp) - eMs);
+              if (diff < best) { best = diff; nearestIdx = i; }
+            });
+            const x = priceArea.x + (chartData.data.length > 1 ? (nearestIdx / (chartData.data.length - 1)) * priceArea.width : 0);
+            const dotY = volumeArea.y + volumeArea.height - 10; // sits on timeline above labels
+            ctx.fillStyle = '#FAFF50';
+            ctx.beginPath();
+            ctx.arc(x, dotY, 10, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#121212';
+            ctx.font = 'bold 14px system-ui, -apple-system, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('E', x, dotY);
+            ctx.textAlign = 'start';
+            ctx.textBaseline = 'alphabetic';
+          });
+        }
+        
         // Draw annotations
         if (annotations.length > 0) {
           annotations.forEach((annotation) => {
@@ -1135,6 +1189,27 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
           
           svgContent += `
             <text x="${textX}" y="${volumeArea.y + volumeArea.height + 40}" class="label-text" text-anchor="${textAnchor}">${date}</text>`;
+        }
+        
+        // Add earnings markers to SVG export
+        if (earningsData?.earnings?.length) {
+          const toMs = (ts: number) => (String(ts).length === 10 ? ts * 1000 : ts);
+          earningsData.earnings.forEach(e => {
+            const eMs = new Date(e.date || e.datetime || e.announcementDate).getTime();
+            let nearestIdx = 0;
+            let best = Number.POSITIVE_INFINITY;
+            chartData.data.forEach((d, i) => {
+              const diff = Math.abs(toMs(d.timestamp) - eMs);
+              if (diff < best) { best = diff; nearestIdx = i; }
+            });
+            const x = priceArea.x + (chartData.data.length > 1 ? (nearestIdx / (chartData.data.length - 1)) * priceArea.width : 0);
+            const dotY = volumeArea.y + volumeArea.height - 10; // sits on timeline above labels
+            
+            // Add earnings circle and text to SVG
+            svgContent += `
+              <circle cx="${x}" cy="${dotY}" r="10" fill="#FAFF50" stroke="#121212" stroke-width="1"/>
+              <text x="${x}" y="${dotY}" text-anchor="middle" dominant-baseline="central" fill="#121212" font-weight="bold" font-size="12" font-family="system-ui, -apple-system, sans-serif">E</text>`;
+          });
         }
         
         // Add annotations
