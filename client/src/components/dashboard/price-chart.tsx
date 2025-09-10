@@ -1354,13 +1354,13 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                     </linearGradient>
                   </defs>
                   
-                  {/* Enhanced horizontal grid lines */}
+                  {/* Enhanced horizontal and vertical grid lines */}
                   <CartesianGrid 
                     strokeDasharray="1 1" 
                     stroke="white" 
                     opacity={0.5}
                     horizontal={true}
-                    vertical={false}
+                    vertical={true}
                   />
                   
                   {/* Hidden X-axis for bottom line connection */}
@@ -1481,7 +1481,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                     stroke="white" 
                     opacity={0.5}
                     horizontal={true}
-                    vertical={false}
+                    vertical={true}
                   />
                   
                   <XAxis 
@@ -1515,7 +1515,16 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                       });
                       return `${dateStr} ${timeStr}`;
                     }}
-                    formatter={(value: number) => [formatNumber(value), 'Volume']}
+                    formatter={(value: number, name: string, props: any) => {
+                      // Get the data point to determine color based on close vs open
+                      const dataPoint = props.payload;
+                      const isBullish = dataPoint ? dataPoint.close >= dataPoint.open : true;
+                      const color = isBullish ? '#22c55e' : '#ef4444';
+                      return [
+                        <span style={{ color }}>{formatNumber(value)}</span>, 
+                        <span style={{ color: '#F7F7F7' }}>Volume</span>
+                      ];
+                    }}
                     contentStyle={{
                       backgroundColor: '#121212',
                       border: '1px solid #333333',
