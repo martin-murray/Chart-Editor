@@ -428,13 +428,25 @@ export class FinnhubService {
     try {
       console.log(`📈 Fetching earnings calendar for ${symbol} from Finnhub...`);
       
-      // Get earnings calendar for the symbol
-      const earningsData = await this.makeRequest(`/calendar/earnings?symbol=${symbol}`);
+      // Get date range for the past 2 years to cover historical earnings
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setFullYear(endDate.getFullYear() - 2);
+      
+      const fromDate = startDate.toISOString().split('T')[0]; // YYYY-MM-DD format
+      const toDate = endDate.toISOString().split('T')[0];
+      
+      console.log(`📅 Fetching earnings from ${fromDate} to ${toDate} for ${symbol}`);
+      
+      // Get earnings calendar for the symbol with date range
+      const earningsData = await this.makeRequest(`/calendar/earnings?from=${fromDate}&to=${toDate}&symbol=${symbol}`);
       
       if (!earningsData || !earningsData.earningsCalendar) {
-        console.log(`No earnings data found for ${symbol}`);
+        console.log(`No earnings data found for ${symbol} in date range ${fromDate} to ${toDate}`);
         return [];
       }
+      
+      console.log(`📊 Found ${earningsData.earningsCalendar.length} earnings records for ${symbol}`);
       
       // Return earnings data with date and quarter info
       return earningsData.earningsCalendar.map((earning: any) => ({
