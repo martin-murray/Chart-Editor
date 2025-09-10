@@ -354,11 +354,21 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         // Draw grid lines for price chart
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
         ctx.lineWidth = 2;
+        // Horizontal grid lines
         for (let i = 0; i <= 5; i++) {
           const y = priceArea.y + (i * priceArea.height / 5);
           ctx.beginPath();
           ctx.moveTo(priceArea.x, y);
           ctx.lineTo(priceArea.x + priceArea.width, y);
+          ctx.stroke();
+        }
+        // Vertical grid lines
+        const priceVerticalLines = Math.min(7, chartData.data.length);
+        for (let i = 0; i < priceVerticalLines; i++) {
+          const x = priceArea.x + (i / (priceVerticalLines - 1)) * priceArea.width;
+          ctx.beginPath();
+          ctx.moveTo(x, priceArea.y);
+          ctx.lineTo(x, priceArea.y + priceArea.height);
           ctx.stroke();
         }
         
@@ -443,11 +453,21 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         // Draw grid lines for volume chart
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
         ctx.lineWidth = 2;
+        // Horizontal grid lines
         for (let i = 0; i <= 3; i++) {
           const y = volumeArea.y + (i * volumeArea.height / 3);
           ctx.beginPath();
           ctx.moveTo(volumeArea.x, y);
           ctx.lineTo(volumeArea.x + volumeArea.width, y);
+          ctx.stroke();
+        }
+        // Vertical grid lines
+        const volumeVerticalLines = Math.min(7, chartData.data.length);
+        for (let i = 0; i < volumeVerticalLines; i++) {
+          const x = volumeArea.x + (i / (volumeVerticalLines - 1)) * volumeArea.width;
+          ctx.beginPath();
+          ctx.moveTo(x, volumeArea.y);
+          ctx.lineTo(x, volumeArea.y + volumeArea.height);
           ctx.stroke();
         }
         
@@ -658,11 +678,21 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         // Draw grid lines for price chart
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
         ctx.lineWidth = 2;
+        // Horizontal grid lines
         for (let i = 0; i <= 5; i++) {
           const y = priceArea.y + (i * priceArea.height / 5);
           ctx.beginPath();
           ctx.moveTo(priceArea.x, y);
           ctx.lineTo(priceArea.x + priceArea.width, y);
+          ctx.stroke();
+        }
+        // Vertical grid lines
+        const priceVerticalLines = Math.min(7, chartData.data.length);
+        for (let i = 0; i < priceVerticalLines; i++) {
+          const x = priceArea.x + (i / (priceVerticalLines - 1)) * priceArea.width;
+          ctx.beginPath();
+          ctx.moveTo(x, priceArea.y);
+          ctx.lineTo(x, priceArea.y + priceArea.height);
           ctx.stroke();
         }
         
@@ -747,11 +777,21 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         // Draw grid lines for volume chart
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
         ctx.lineWidth = 2;
+        // Horizontal grid lines
         for (let i = 0; i <= 3; i++) {
           const y = volumeArea.y + (i * volumeArea.height / 3);
           ctx.beginPath();
           ctx.moveTo(volumeArea.x, y);
           ctx.lineTo(volumeArea.x + volumeArea.width, y);
+          ctx.stroke();
+        }
+        // Vertical grid lines
+        const volumeVerticalLines = Math.min(7, chartData.data.length);
+        for (let i = 0; i < volumeVerticalLines; i++) {
+          const x = volumeArea.x + (i / (volumeVerticalLines - 1)) * volumeArea.width;
+          ctx.beginPath();
+          ctx.moveTo(x, volumeArea.y);
+          ctx.lineTo(x, volumeArea.y + volumeArea.height);
           ctx.stroke();
         }
         
@@ -961,10 +1001,18 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         const priceRange = maxPrice - minPrice;
         
         // Add grid lines for price chart
+        // Horizontal grid lines
         for (let i = 0; i <= 5; i++) {
           const y = priceArea.y + (i * priceArea.height / 5);
           svgContent += `
             <line x1="${priceArea.x}" y1="${y}" x2="${priceArea.x + priceArea.width}" y2="${y}" class="grid-line"/>`;
+        }
+        // Vertical grid lines
+        const svgPriceVerticalLines = Math.min(7, chartData.data.length);
+        for (let i = 0; i < svgPriceVerticalLines; i++) {
+          const x = priceArea.x + (i / (svgPriceVerticalLines - 1)) * priceArea.width;
+          svgContent += `
+            <line x1="${x}" y1="${priceArea.y}" x2="${x}" y2="${priceArea.y + priceArea.height}" class="grid-line"/>`;
         }
         
         // Create path for mountain area fill
@@ -1010,10 +1058,18 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         const maxVolume = Math.max(...volumes);
         
         // Add grid lines for volume chart
+        // Horizontal grid lines
         for (let i = 0; i <= 3; i++) {
           const y = volumeArea.y + (i * volumeArea.height / 3);
           svgContent += `
             <line x1="${volumeArea.x}" y1="${y}" x2="${volumeArea.x + volumeArea.width}" y2="${y}" class="grid-line"/>`;
+        }
+        // Vertical grid lines
+        const svgVolumeVerticalLines = Math.min(7, chartData.data.length);
+        for (let i = 0; i < svgVolumeVerticalLines; i++) {
+          const x = volumeArea.x + (i / (svgVolumeVerticalLines - 1)) * volumeArea.width;
+          svgContent += `
+            <line x1="${x}" y1="${volumeArea.y}" x2="${x}" y2="${volumeArea.y + volumeArea.height}" class="grid-line"/>`;
         }
         
         // Add volume bars
