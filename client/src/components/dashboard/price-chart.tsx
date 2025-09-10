@@ -1495,11 +1495,11 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
               {annotations.length > 0 && chartDataWithPercentage && (
                 <div className="absolute inset-0 pointer-events-none">
                   {annotations.map((annotation) => {
-                    // Calculate position based on timestamp
-                    const dataIndex = chartDataWithPercentage.findIndex(d => d.timestamp === annotation.timestamp);
+                    // Calculate position based on timestamp - use exact same logic as exports
+                    const dataIndex = chartData?.data?.findIndex(d => d.timestamp === annotation.timestamp) ?? -1;
                     if (dataIndex === -1) return null;
                     
-                    const xPercent = (dataIndex / (chartDataWithPercentage.length - 1)) * 100;
+                    const xPercent = (dataIndex / ((chartData?.data?.length ?? 1) - 1)) * 100;
                     // Account for chart margins (60px right margin for Y-axis)
                     const xPos = `calc(${xPercent}% - 30px)`;
                     
