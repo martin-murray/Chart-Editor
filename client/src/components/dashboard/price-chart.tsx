@@ -158,21 +158,32 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
           minute: '2-digit',
           hour12: false 
         });
-      case '1W':
+      case '5D':
+      case '2W':
+        // New format: 3/9/25 instead of Wed, Sep 3
         return date.toLocaleDateString('en-US', { 
-          weekday: 'short',
-          month: 'short',
-          day: 'numeric'
+          month: 'numeric',
+          day: 'numeric',
+          year: '2-digit'
         });
       case '1M':
       case '3M':
+        // Month view: 11/8/25 format
         return date.toLocaleDateString('en-US', { 
-          month: 'short',
-          day: 'numeric'
+          month: 'numeric',
+          day: 'numeric',
+          year: '2-digit'
         });
       case '1Y':
         return date.toLocaleDateString('en-US', { 
           month: 'short',
+          year: '2-digit'
+        });
+      case 'Custom':
+        // For custom ranges, use the compact format
+        return date.toLocaleDateString('en-US', { 
+          month: 'numeric',
+          day: 'numeric',
           year: '2-digit'
         });
       default:
@@ -445,8 +456,11 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         const maxVolume = Math.max(...volumes);
         
         // Draw volume bars
-        ctx.fillStyle = '#5AF5FAB3'; // Cyan with opacity for volume bars
         chartData.data.forEach((point, index) => {
+          // Green for buying pressure (close >= open), red for selling pressure (close < open)
+          const isBullish = point.close >= point.open;
+          ctx.fillStyle = isBullish ? '#22c55e' : '#ef4444';
+          
           const barWidth = volumeArea.width / chartData.data.length * 0.8;
           const x = volumeArea.x + (index / chartData.data.length) * volumeArea.width + barWidth * 0.1;
           const barHeight = (point.volume / maxVolume) * volumeArea.height;
@@ -730,8 +744,11 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         const maxVolume = Math.max(...volumes);
         
         // Draw volume bars
-        ctx.fillStyle = '#5AF5FAB3'; // Cyan with opacity for volume bars
         chartData.data.forEach((point, index) => {
+          // Green for buying pressure (close >= open), red for selling pressure (close < open)
+          const isBullish = point.close >= point.open;
+          ctx.fillStyle = isBullish ? '#22c55e' : '#ef4444';
+          
           const barWidth = volumeArea.width / chartData.data.length * 0.8;
           const x = volumeArea.x + (index / chartData.data.length) * volumeArea.width + barWidth * 0.1;
           const barHeight = (point.volume / maxVolume) * volumeArea.height;
@@ -969,13 +986,17 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         
         // Add volume bars
         chartData.data.forEach((point, index) => {
+          // Green for buying pressure (close >= open), red for selling pressure (close < open)
+          const isBullish = point.close >= point.open;
+          const fillColor = isBullish ? '#22c55e' : '#ef4444';
+          
           const barWidth = volumeArea.width / chartData.data.length * 0.8;
           const x = volumeArea.x + (index / chartData.data.length) * volumeArea.width + barWidth * 0.1;
           const barHeight = (point.volume / maxVolume) * volumeArea.height;
           const y = volumeArea.y + volumeArea.height - barHeight;
           
           svgContent += `
-            <rect x="${x}" y="${y}" width="${barWidth}" height="${barHeight}" fill="#5AF5FA" opacity="0.7" rx="1"/>`;
+            <rect x="${x}" y="${y}" width="${barWidth}" height="${barHeight}" fill="${fillColor}" opacity="0.7" rx="1"/>`;
         });
         
         // Add Y-axis volume labels
