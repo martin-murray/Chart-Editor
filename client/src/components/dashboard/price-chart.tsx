@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { AreaChart, Area, LineChart, Line, BarChart, Bar, ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, LineChart, Line, BarChart, Bar, ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -1316,7 +1316,17 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                   />
                   
                   <Tooltip 
-                    labelFormatter={(value) => formatTime(value, selectedTimeframe)}
+                    labelFormatter={(value) => {
+                      const date = new Date(value);
+                      const dateStr = formatTime(value, selectedTimeframe);
+                      const timeStr = date.toLocaleTimeString('en-US', { 
+                        hour: '2-digit', 
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: false 
+                      });
+                      return `${dateStr} ${timeStr}`;
+                    }}
                     formatter={(value: number, name: string) => {
                       if (name === 'close') {
                         return [formatPrice(value), 'Price'];
@@ -1426,7 +1436,17 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                   />
                   
                   <Tooltip 
-                    labelFormatter={(value) => formatTime(value, selectedTimeframe)}
+                    labelFormatter={(value) => {
+                      const date = new Date(value);
+                      const dateStr = formatTime(value, selectedTimeframe);
+                      const timeStr = date.toLocaleTimeString('en-US', { 
+                        hour: '2-digit', 
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: false 
+                      });
+                      return `${dateStr} ${timeStr}`;
+                    }}
                     formatter={(value: number) => [formatNumber(value), 'Volume']}
                     contentStyle={{
                       backgroundColor: '#1C1C1C',
@@ -1439,10 +1459,17 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                   
                   <Bar 
                     dataKey="volume" 
-                    fill="#5AF5FA"
                     opacity={0.7}
                     radius={[1, 1, 0, 0]}
-                  />
+                  >
+                    {chartDataWithPercentage?.map((entry, index) => {
+                      // Green for buying pressure (close > open), red for selling pressure (close < open)
+                      const isBullish = entry.close >= entry.open;
+                      return (
+                        <Cell key={`cell-${index}`} fill={isBullish ? '#22c55e' : '#ef4444'} />
+                      );
+                    })}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
