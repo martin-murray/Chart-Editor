@@ -1412,7 +1412,6 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                   
                   {/* Enhanced horizontal and vertical grid lines */}
                   <CartesianGrid 
-                    strokeDasharray="1 1" 
                     stroke="white" 
                     opacity={0.5}
                     horizontal={true}
@@ -1533,7 +1532,6 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                   margin={{ top: -15, right: 0, left: 0, bottom: 15 }}
                 >
                   <CartesianGrid 
-                    strokeDasharray="1 1" 
                     stroke="white" 
                     opacity={0.5}
                     horizontal={true}
