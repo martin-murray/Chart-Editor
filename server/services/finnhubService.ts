@@ -424,6 +424,33 @@ export class FinnhubService {
     }
   }
 
+  async getEarningsCalendar(symbol: string): Promise<any> {
+    try {
+      console.log(`📈 Fetching earnings calendar for ${symbol} from Finnhub...`);
+      
+      // Get earnings calendar for the symbol
+      const earningsData = await this.makeRequest(`/calendar/earnings?symbol=${symbol}`);
+      
+      if (!earningsData || !earningsData.earningsCalendar) {
+        console.log(`No earnings data found for ${symbol}`);
+        return [];
+      }
+      
+      // Return earnings data with date and quarter info
+      return earningsData.earningsCalendar.map((earning: any) => ({
+        date: earning.date,
+        quarter: earning.quarter,
+        year: earning.year,
+        epsActual: earning.epsActual,
+        epsEstimate: earning.epsEstimate
+      }));
+      
+    } catch (error) {
+      console.error(`Error fetching earnings calendar for ${symbol}:`, error);
+      return [];
+    }
+  }
+
   async getDetailedQuote(symbol: string): Promise<any> {
     try {
       // Get quote first (faster), then profile and metrics with fallback handling

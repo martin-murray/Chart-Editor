@@ -189,6 +189,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Earnings calendar endpoint
+  app.get("/api/stocks/:symbol/earnings", async (req, res) => {
+    try {
+      const { symbol } = req.params;
+      console.log(`📈 Earnings request for: ${symbol}`);
+      
+      const earningsData = await stockDataService.finnhubService.getEarningsCalendar(symbol);
+      
+      res.json({
+        symbol,
+        earnings: earningsData
+      });
+    } catch (error) {
+      console.error("Error fetching earnings calendar:", error);
+      res.status(500).json({ message: "Failed to fetch earnings calendar" });
+    }
+  });
+
   app.get("/api/stocks/gainers", async (req, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 10;
