@@ -478,13 +478,29 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
           ctx.fillText(formatNumber(volume), volumeArea.x + volumeArea.width + 20, y + 8);
         }
         
-        // Draw X-axis labels at bottom with actual dates
+        // Draw X-axis labels at bottom with actual dates (more comprehensive)
         ctx.fillStyle = '#F7F7F7';
         ctx.font = '24px system-ui, -apple-system, sans-serif';
-        const firstDate = formatTime(chartData.data[0].time, selectedTimeframe);
-        const lastDate = formatTime(chartData.data[chartData.data.length - 1].time, selectedTimeframe);
-        ctx.fillText(firstDate, volumeArea.x, volumeArea.y + volumeArea.height + 40);
-        ctx.fillText(lastDate, volumeArea.x + volumeArea.width - ctx.measureText(lastDate).width, volumeArea.y + volumeArea.height + 40);
+        
+        // Show 6-8 date labels across the X-axis
+        const numLabels = Math.min(7, chartData.data.length);
+        for (let i = 0; i < numLabels; i++) {
+          const dataIndex = Math.floor((i / (numLabels - 1)) * (chartData.data.length - 1));
+          const date = formatTime(chartData.data[dataIndex].time, selectedTimeframe);
+          const x = volumeArea.x + (i / (numLabels - 1)) * volumeArea.width;
+          
+          // Center the text, but adjust for edge labels
+          let textX = x;
+          if (i === 0) {
+            textX = volumeArea.x; // Left align first label
+          } else if (i === numLabels - 1) {
+            textX = volumeArea.x + volumeArea.width - ctx.measureText(date).width; // Right align last label
+          } else {
+            textX = x - ctx.measureText(date).width / 2; // Center align middle labels
+          }
+          
+          ctx.fillText(date, textX, volumeArea.y + volumeArea.height + 40);
+        }
         
         // Draw annotations
         if (annotations.length > 0) {
@@ -766,13 +782,29 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
           ctx.fillText(formatNumber(volume), volumeArea.x + volumeArea.width + 20, y + 8);
         }
         
-        // Draw X-axis labels at bottom with actual dates
+        // Draw X-axis labels at bottom with actual dates (more comprehensive)
         ctx.fillStyle = '#F7F7F7';
         ctx.font = '24px system-ui, -apple-system, sans-serif';
-        const firstDate = formatTime(chartData.data[0].time, selectedTimeframe);
-        const lastDate = formatTime(chartData.data[chartData.data.length - 1].time, selectedTimeframe);
-        ctx.fillText(firstDate, volumeArea.x, volumeArea.y + volumeArea.height + 40);
-        ctx.fillText(lastDate, volumeArea.x + volumeArea.width - ctx.measureText(lastDate).width, volumeArea.y + volumeArea.height + 40);
+        
+        // Show 6-8 date labels across the X-axis
+        const numLabels = Math.min(7, chartData.data.length);
+        for (let i = 0; i < numLabels; i++) {
+          const dataIndex = Math.floor((i / (numLabels - 1)) * (chartData.data.length - 1));
+          const date = formatTime(chartData.data[dataIndex].time, selectedTimeframe);
+          const x = volumeArea.x + (i / (numLabels - 1)) * volumeArea.width;
+          
+          // Center the text, but adjust for edge labels
+          let textX = x;
+          if (i === 0) {
+            textX = volumeArea.x; // Left align first label
+          } else if (i === numLabels - 1) {
+            textX = volumeArea.x + volumeArea.width - ctx.measureText(date).width; // Right align last label
+          } else {
+            textX = x - ctx.measureText(date).width / 2; // Center align middle labels
+          }
+          
+          ctx.fillText(date, textX, volumeArea.y + volumeArea.height + 40);
+        }
         
         // Draw annotations
         if (annotations.length > 0) {
@@ -1007,12 +1039,27 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             <text x="${volumeArea.x + volumeArea.width + 20}" y="${y + 8}" class="label-text" font-size="20">${formatNumber(volume)}</text>`;
         }
         
-        // Add X-axis labels at bottom with actual dates
-        const firstDate = formatTime(chartData.data[0].time, selectedTimeframe);
-        const lastDate = formatTime(chartData.data[chartData.data.length - 1].time, selectedTimeframe);
-        svgContent += `
-          <text x="${volumeArea.x}" y="${volumeArea.y + volumeArea.height + 40}" class="label-text">${firstDate}</text>
-          <text x="${volumeArea.x + volumeArea.width - 60}" y="${volumeArea.y + volumeArea.height + 40}" class="label-text">${lastDate}</text>`;
+        // Add X-axis labels at bottom with actual dates (more comprehensive)
+        const numLabels = Math.min(7, chartData.data.length);
+        for (let i = 0; i < numLabels; i++) {
+          const dataIndex = Math.floor((i / (numLabels - 1)) * (chartData.data.length - 1));
+          const date = formatTime(chartData.data[dataIndex].time, selectedTimeframe);
+          const x = volumeArea.x + (i / (numLabels - 1)) * volumeArea.width;
+          
+          // Position text appropriately
+          let textX = x;
+          let textAnchor = 'middle';
+          if (i === 0) {
+            textX = volumeArea.x;
+            textAnchor = 'start';
+          } else if (i === numLabels - 1) {
+            textX = volumeArea.x + volumeArea.width;
+            textAnchor = 'end';
+          }
+          
+          svgContent += `
+            <text x="${textX}" y="${volumeArea.y + volumeArea.height + 40}" class="label-text" text-anchor="${textAnchor}">${date}</text>`;
+        }
         
         // Add annotations
         if (annotations.length > 0) {
