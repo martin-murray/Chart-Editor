@@ -100,13 +100,11 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
   const [editingAnnotation, setEditingAnnotation] = useState<Annotation | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   
-  // Earnings tooltip state
-  const [earningsTooltip, setEarningsTooltip] = useState<{
+  // Earnings modal state
+  const [earningsModal, setEarningsModal] = useState<{
     visible: boolean;
-    x: number;
-    y: number;
     data: any;
-  }>({ visible: false, x: 0, y: 0, data: null });
+  }>({ visible: false, data: null });
 
   // Earnings data state
   const { data: earningsData } = useQuery({
@@ -1665,17 +1663,13 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                               <g 
                                 key={`earning-${earning.date}-${index}`}
                                 style={{ cursor: 'pointer' }}
-                                onMouseEnter={(e) => {
-                                  const rect = e.currentTarget.getBoundingClientRect();
-                                  setEarningsTooltip({
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  setEarningsModal({
                                     visible: true,
-                                    x: rect.left + 10,
-                                    y: rect.top - 80,
                                     data: earning
                                   });
-                                }}
-                                onMouseLeave={() => {
-                                  setEarningsTooltip({ visible: false, x: 0, y: 0, data: null });
                                 }}
                               >
                                 {/* Yellow circle */}
@@ -1867,61 +1861,93 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         </div>
       )}
 
-      {/* Earnings Tooltip */}
-      {earningsTooltip.visible && earningsTooltip.data && (
+      {/* Earnings Modal Lightbox */}
+      {earningsModal.visible && earningsModal.data && (
         <div
-          className="fixed z-50 bg-popover border border-border rounded-md shadow-lg p-3 text-sm pointer-events-none"
-          style={{
-            left: `${earningsTooltip.x}px`,
-            top: `${earningsTooltip.y}px`,
-          }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          onClick={() => setEarningsModal({ visible: false, data: null })}
         >
-          <div className="font-semibold text-[#FAFF50] mb-2">📈 Quarterly Earnings</div>
-          <div className="space-y-1 text-xs">
-            <div className="flex justify-between gap-4">
-              <span className="text-muted-foreground">Date:</span>
-              <span className="font-medium">{new Date(earningsTooltip.data.date).toLocaleDateString()}</span>
+          <div
+            className="bg-card border border-border rounded-lg shadow-2xl p-6 max-w-md w-full mx-4 relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <button
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-muted hover:bg-muted/80 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+              onClick={() => setEarningsModal({ visible: false, data: null })}
+              aria-label="Close earnings modal"
+            >
+              ×
+            </button>
+            
+            {/* Modal Content */}
+            <div className="pr-8">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 bg-[#FAFF50] rounded-full flex items-center justify-center">
+                  <span className="text-black font-bold text-sm">E</span>
+                </div>
+                <div className="font-semibold text-lg">Quarterly Earnings</div>
+              </div>
+              
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between gap-4">
+                  <span className="text-muted-foreground">Date:</span>
+                  <span className="font-medium">{new Date(earningsModal.data.date).toLocaleDateString()}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-muted-foreground">Quarter:</span>
+                  <span className="font-medium">Q{earningsModal.data.quarter} {earningsModal.data.year}</span>
+                </div>
+                
+                {/* EPS Section */}
+                <div className="pt-2 border-t border-border">
+                  <div className="font-medium text-[#5AF5FA] mb-2">Earnings Per Share</div>
+                  {earningsModal.data.epsActual !== null && (
+                    <div className="flex justify-between gap-4">
+                      <span className="text-muted-foreground">EPS Actual:</span>
+                      <span className="font-medium text-[#5AF5FA]">${earningsModal.data.epsActual}</span>
+                    </div>
+                  )}
+                  {earningsModal.data.epsEstimate !== null && (
+                    <div className="flex justify-between gap-4">
+                      <span className="text-muted-foreground">EPS Estimate:</span>
+                      <span className="font-medium">${earningsModal.data.epsEstimate}</span>
+                    </div>
+                  )}
+                  {earningsModal.data.epsActual !== null && earningsModal.data.epsEstimate !== null && (
+                    <div className="flex justify-between gap-4 mt-2 pt-2 border-t border-border/50">
+                      <span className="text-muted-foreground">Beat/Miss:</span>
+                      <span className={`font-medium ${
+                        earningsModal.data.epsActual >= earningsModal.data.epsEstimate 
+                          ? 'text-green-500' 
+                          : 'text-red-500'
+                      }`}>
+                        {earningsModal.data.epsActual >= earningsModal.data.epsEstimate ? '✓ Beat' : '✗ Miss'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Revenue Section */}
+                {(earningsModal.data.revenueActual !== null || earningsModal.data.revenueEstimate !== null) && (
+                  <div className="pt-3 border-t border-border">
+                    <div className="font-medium text-[#5AF5FA] mb-2">Revenue</div>
+                    {earningsModal.data.revenueActual !== null && (
+                      <div className="flex justify-between gap-4">
+                        <span className="text-muted-foreground">Revenue Actual:</span>
+                        <span className="font-medium text-[#5AF5FA]">${(earningsModal.data.revenueActual / 1000000).toFixed(1)}M</span>
+                      </div>
+                    )}
+                    {earningsModal.data.revenueEstimate !== null && (
+                      <div className="flex justify-between gap-4">
+                        <span className="text-muted-foreground">Revenue Estimate:</span>
+                        <span className="font-medium">${(earningsModal.data.revenueEstimate / 1000000).toFixed(1)}M</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="flex justify-between gap-4">
-              <span className="text-muted-foreground">Quarter:</span>
-              <span className="font-medium">Q{earningsTooltip.data.quarter} {earningsTooltip.data.year}</span>
-            </div>
-            {earningsTooltip.data.epsActual !== null && (
-              <div className="flex justify-between gap-4">
-                <span className="text-muted-foreground">EPS Actual:</span>
-                <span className="font-medium text-[#5AF5FA]">${earningsTooltip.data.epsActual}</span>
-              </div>
-            )}
-            {earningsTooltip.data.epsEstimate !== null && (
-              <div className="flex justify-between gap-4">
-                <span className="text-muted-foreground">EPS Estimate:</span>
-                <span className="font-medium">${earningsTooltip.data.epsEstimate}</span>
-              </div>
-            )}
-            {earningsTooltip.data.epsActual !== null && earningsTooltip.data.epsEstimate !== null && (
-              <div className="flex justify-between gap-4 pt-1 border-t border-border">
-                <span className="text-muted-foreground">Beat/Miss:</span>
-                <span className={`font-medium ${
-                  earningsTooltip.data.epsActual >= earningsTooltip.data.epsEstimate 
-                    ? 'text-green-500' 
-                    : 'text-red-500'
-                }`}>
-                  {earningsTooltip.data.epsActual >= earningsTooltip.data.epsEstimate ? '✓ Beat' : '✗ Miss'}
-                </span>
-              </div>
-            )}
-            {earningsTooltip.data.revenueActual !== null && (
-              <div className="flex justify-between gap-4 pt-1 border-t border-border">
-                <span className="text-muted-foreground">Revenue Actual:</span>
-                <span className="font-medium text-[#5AF5FA]">${(earningsTooltip.data.revenueActual / 1000000).toFixed(1)}M</span>
-              </div>
-            )}
-            {earningsTooltip.data.revenueEstimate !== null && (
-              <div className="flex justify-between gap-4">
-                <span className="text-muted-foreground">Revenue Estimate:</span>
-                <span className="font-medium">${(earningsTooltip.data.revenueEstimate / 1000000).toFixed(1)}M</span>
-              </div>
-            )}
           </div>
         </div>
       )}
