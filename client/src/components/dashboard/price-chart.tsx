@@ -4,6 +4,7 @@ import { AreaChart, Area, LineChart, Line, BarChart, Bar, ComposedChart, XAxis, 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -1648,8 +1649,26 @@ export function PriceChart({
         )}
       </div>
 
-      {/* Chart Section */}
-      <div className="bg-background relative z-10">
+      {/* Chart Tabs Section */}
+      <Tabs defaultValue="price-volume" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 mb-4">
+          <TabsTrigger 
+            value="price-volume" 
+            className="data-[state=active]:bg-[#5AF5FA] data-[state=active]:text-black"
+            data-testid="trigger-price-volume"
+          >
+            Price & Volume
+          </TabsTrigger>
+          <TabsTrigger 
+            value="comparison" 
+            className="data-[state=active]:bg-[#5AF5FA] data-[state=active]:text-black"
+            data-testid="trigger-comparison"
+          >
+            Comparison Chart
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="price-volume" className="bg-background relative z-10" data-testid="tabpanel-price-volume">
         {isLoading ? (
           <div className="h-80 flex items-center justify-center">
             <div className="flex items-center gap-2 text-muted-foreground">
@@ -2176,7 +2195,7 @@ export function PriceChart({
             </div>
           </div>
         )}
-      </div>
+        </TabsContent>
 
       {/* Annotation Input Modal */}
       {showAnnotationInput && (pendingAnnotation || editingAnnotation) && (
@@ -2324,6 +2343,16 @@ export function PriceChart({
           </div>
         </div>
       )}
+        
+        <TabsContent value="comparison" className="bg-background relative z-10" data-testid="tabpanel-comparison">
+          <div className="h-80 flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-lg font-medium text-foreground mb-2">Comparison Chart</div>
+              <div className="text-sm text-muted-foreground">Coming soon...</div>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
 
       {/* Stats Grid - 4 Columns */}
       {stockDetails && stockDetails.quote && (
