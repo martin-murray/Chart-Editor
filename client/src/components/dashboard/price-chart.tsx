@@ -1530,26 +1530,6 @@ export function PriceChart({
             </div>
           )}
 
-          {/* Watch Button */}
-          <Button
-            size="sm"
-            onClick={() => {
-              if (window.addToWatchlist) {
-                window.addToWatchlist({
-                  symbol,
-                  name,
-                  price: actualCurrentPrice,
-                  percentChange: actualPercentChange,
-                  marketCap: actualMarketCap
-                });
-              }
-            }}
-            className="h-8 px-3 text-xs bg-[#5AF5FA]/10 text-[#5AF5FA] hover:bg-[#5AF5FA]/20 border border-[#5AF5FA]/30"
-            variant="outline"
-          >
-            <Plus className="w-3 h-3 mr-1" />
-            Watch
-          </Button>
         </div>
         
         {/* Timeframe selector */}
