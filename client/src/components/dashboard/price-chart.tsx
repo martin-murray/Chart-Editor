@@ -728,11 +728,10 @@ export function PriceChart({
               ctx.fill();
               ctx.stroke();
               
-              // Draw annotation text box for text annotations
-              if (annotation.type === 'text') {
-                const textBoxWidth = 240;
-                const textBoxHeight = 80;
-                const textBoxX = Math.min(x + 10, priceArea.x + priceArea.width - textBoxWidth);
+              // Draw percentage display text box
+              const textBoxWidth = 240;
+              const textBoxHeight = 80;
+              const textBoxX = Math.min(x2 + 10, priceArea.x + priceArea.width - textBoxWidth);
                 const textBoxY = priceArea.y - textBoxHeight - 3;
             
             // Text box background
@@ -772,6 +771,7 @@ export function PriceChart({
               }
             }
             ctx.fillText(line, textBoxX + 8, y);
+            }
           });
         }
       } else {
@@ -1130,11 +1130,10 @@ export function PriceChart({
               ctx.fill();
               ctx.stroke();
               
-              // Draw annotation text box for text annotations
-              if (annotation.type === 'text') {
-                const textBoxWidth = 240;
-                const textBoxHeight = 80;
-                const textBoxX = Math.min(x + 10, priceArea.x + priceArea.width - textBoxWidth);
+              // Draw percentage display text box
+              const textBoxWidth = 240;
+              const textBoxHeight = 80;
+              const textBoxX = Math.min(x2 + 10, priceArea.x + priceArea.width - textBoxWidth);
                 const textBoxY = priceArea.y - textBoxHeight - 3;
             
             // Text box background
@@ -1174,6 +1173,7 @@ export function PriceChart({
               }
             }
             ctx.fillText(line, textBoxX + 8, y);
+            }
           });
         }
       } else {
