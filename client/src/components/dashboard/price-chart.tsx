@@ -1502,7 +1502,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                     <div
                       key={annotation.id}
                       className="absolute"
-                      style={{ left: `${xPercent}%`, top: '0px', transform: 'translateX(-50%)' }}
+                      style={{ left: `${xPercent}%`, top: '20px', transform: 'translateX(-50%)' }}
                     >
                       {/* Annotation text label - positioned in padding area above charts */}
                       <div 
