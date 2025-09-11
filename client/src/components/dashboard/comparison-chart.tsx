@@ -1,11 +1,18 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Search, X, Plus } from "lucide-react";
+import { createPortal } from "react-dom";
+import { TrendingUp, TrendingDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Search, X, Plus, Download, FileText, Image } from "lucide-react";
 import { useQueries } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { saveAs } from 'file-saver';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 // Color palette for different tickers (max 5 tickers)
 const TICKER_COLORS = [
@@ -28,6 +35,14 @@ interface TickerData {
   visible: boolean;
 }
 
+interface SearchResult {
+  symbol: string;
+  name: string;
+  price: string;
+  percentChange: string;
+  marketCap: string;
+}
+
 interface ComparisonChartProps {
   timeframe: string;
 }
@@ -35,7 +50,49 @@ interface ComparisonChartProps {
 export function ComparisonChart({ timeframe }: ComparisonChartProps) {
   const [tickers, setTickers] = useState<TickerData[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const [isSearchVisible, setIsSearchVisible] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
+  const [recentSearches, setRecentSearches] = useState<SearchResult[]>([]);
+  const { toast } = useToast();
+  const inputRef = useRef<HTMLInputElement>(null);
+  
+  // Load recent searches from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('recentComparisonSearches');
+    if (saved) {
+      try {
+        setRecentSearches(JSON.parse(saved));
+      } catch (error) {
+        console.error('Error parsing recent searches:', error);
+      }
+    }
+  }, []);
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(searchTerm);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Fetch search results
+  const { data: searchResults = [], isLoading: isSearchLoading } = useQueries({
+    queries: [{
+      queryKey: ["/api/stocks/search", debouncedQuery],
+      queryFn: async (): Promise<SearchResult[]> => {
+        if (!debouncedQuery || debouncedQuery.trim().length < 2) {
+          return [];
+        }
+        const response = await fetch(`/api/stocks/search?q=${encodeURIComponent(debouncedQuery.trim())}`);
+        if (!response.ok) throw new Error("Search failed");
+        return await response.json();
+      },
+      enabled: debouncedQuery.trim().length >= 2,
+    }]
+  })[0];
 
   // Fetch chart data for all tickers using useQueries for dynamic queries
   const tickerQueries = useQueries({
@@ -154,6 +211,15 @@ export function ComparisonChart({ timeframe }: ComparisonChartProps) {
     setTickers(prev => [...prev, newTicker]);
     setSearchTerm('');
     setIsSearchVisible(false);
+    setIsDropdownOpen(false);
+  };
+
+  const formatPercentChange = (change: string) => {
+    const numChange = parseFloat(change);
+    return {
+      value: Math.abs(numChange).toFixed(2),
+      isPositive: numChange >= 0
+    };
   };
 
   const removeTicker = (symbol: string) => {
@@ -172,6 +238,133 @@ export function ComparisonChart({ timeframe }: ComparisonChartProps) {
   const errorMessages = tickerQueries
     .filter(query => query.isError)
     .map((query, index) => `${tickers[index]?.symbol}: ${query.error?.message || 'Unknown error'}`);
+
+  // Export functions
+  const exportCSV = () => {
+    if (chartData.length === 0) {
+      toast({
+        title: "No Data",
+        description: "No chart data available to export",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Create CSV header
+      const headers = ['Date', ...tickers.filter(t => t.visible).map(t => `${t.symbol} %`), ...tickers.filter(t => t.visible).map(t => `${t.symbol} Price`)];
+      
+      // Create CSV rows
+      const csvRows = chartData.map(dataPoint => {
+        const row = [dataPoint.date];
+        
+        // Add percentage values
+        tickers.filter(t => t.visible).forEach(ticker => {
+          row.push(dataPoint[`${ticker.symbol}_percentage`]?.toString() || '');
+        });
+        
+        // Add price values
+        tickers.filter(t => t.visible).forEach(ticker => {
+          row.push(dataPoint[`${ticker.symbol}_price`]?.toString() || '');
+        });
+        
+        return row.join(',');
+      });
+      
+      // Combine header and rows
+      const csvContent = [headers.join(','), ...csvRows].join('\n');
+      
+      // Create and download file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const fileName = `comparison-chart-${tickers.map(t => t.symbol).join('-')}-${new Date().toISOString().split('T')[0]}.csv`;
+      saveAs(blob, fileName);
+      
+      toast({
+        title: "Export Successful",
+        description: "CSV file has been downloaded",
+      });
+    } catch (error) {
+      toast({
+        title: "Export Failed", 
+        description: "Unable to export CSV file",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const exportPNG = async () => {
+    if (chartData.length === 0) {
+      toast({
+        title: "No Data",
+        description: "No chart data available to export",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Find the chart container element
+      const chartElement = document.querySelector('[data-testid="comparison-chart-container"]') as HTMLElement;
+      if (!chartElement) {
+        console.error('Chart element not found');
+        throw new Error('Chart element not found');
+      }
+
+      console.log('Capturing chart with html2canvas...');
+      
+      // Alternative approach: Create a simple fallback without modern CSS
+      const canvas = await html2canvas(chartElement, {
+        backgroundColor: '#121212',
+        scale: 1, // Reduced scale to avoid issues
+        useCORS: true,
+        allowTaint: true,
+        logging: true, // Enable logging to see issues
+        foreignObjectRendering: true, // Enable modern rendering for SVG support
+        removeContainer: true,
+        width: chartElement.offsetWidth,
+        height: chartElement.offsetHeight,
+        ignoreElements: (element) => {
+          // Skip only truly problematic elements (keep SVG for chart!)
+          const tagName = element.tagName?.toLowerCase();
+          return tagName === 'script' || tagName === 'style';
+        }
+      });
+
+      console.log('Canvas created successfully, converting to blob...');
+      
+      // Convert to blob and download
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const fileName = `comparison-chart-${tickers.map(t => t.symbol).join('-')}-${new Date().toISOString().split('T')[0]}.png`;
+          saveAs(blob, fileName);
+          
+          toast({
+            title: "Export Successful",
+            description: "PNG file has been downloaded",
+          });
+        } else {
+          throw new Error('Failed to create blob from canvas');
+        }
+      }, 'image/png', 0.8);
+    } catch (error) {
+      console.error('PNG export error:', error);
+      
+      // Fallback: Try a simpler approach without html2canvas
+      try {
+        toast({
+          title: "Export Alternative",
+          description: "PNG export temporarily unavailable, use CSV export instead",
+          variant: "destructive",
+        });
+      } catch (fallbackError) {
+        toast({
+          title: "Export Failed",
+          description: "Unable to export PNG file - try CSV export instead", 
+          variant: "destructive",
+        });
+      }
+    }
+  };
 
   // Custom tooltip that shows actual prices
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -214,8 +407,9 @@ export function ComparisonChart({ timeframe }: ComparisonChartProps) {
 
   return (
     <div className="space-y-4">
-      {/* Ticker Management */}
-      <div className="flex flex-wrap items-center gap-2">
+      {/* Header with Ticker Management and Export */}
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+        <div className="flex flex-wrap items-center gap-2">
         {/* Active Tickers */}
         {tickers.map((ticker) => (
           <div
@@ -257,6 +451,33 @@ export function ComparisonChart({ timeframe }: ComparisonChartProps) {
             Add Ticker
           </Button>
         )}
+        </div>
+        
+        {/* Export Buttons */}
+        {tickers.length > 0 && (
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={exportCSV}
+              disabled={isLoading || chartData.length === 0}
+              data-testid="button-export-csv"
+            >
+              <FileText className="h-3 w-3 mr-1" />
+              Export CSV
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={exportPNG}
+              disabled={isLoading || chartData.length === 0}
+              data-testid="button-export-png"
+            >
+              <Image className="h-3 w-3 mr-1" />
+              Export PNG
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Search Input */}
@@ -293,7 +514,7 @@ export function ComparisonChart({ timeframe }: ComparisonChartProps) {
       )}
 
       {/* Chart */}
-      <div className="h-80">
+      <div className="h-[600px] w-full" data-testid="comparison-chart-container"> {/* Increased from h-80 (320px) to h-[600px] for much larger chart */}
         {tickers.length === 0 ? (
           <div className="h-full flex items-center justify-center">
             <div className="text-center">
@@ -330,9 +551,9 @@ export function ComparisonChart({ timeframe }: ComparisonChartProps) {
             </div>
           </div>
         ) : (
-          <ChartContainer config={chartConfig} className="h-full">
+          <ChartContainer config={chartConfig} className="h-full w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+              <LineChart data={chartData} margin={{ top: 30, right: 50, left: 30, bottom: 40 }}> {/* Increased margins for better spacing */}
                 <CartesianGrid strokeDasharray="3 3" stroke="#3B3B3B" strokeOpacity={0.5} />
                 <XAxis 
                   dataKey="date"
