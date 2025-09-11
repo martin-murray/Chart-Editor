@@ -73,6 +73,9 @@ interface PriceChartProps {
   currentPrice: string;
   percentChange: string;
   marketCap: string;
+  annotations?: Annotation[];
+  onAnnotationsChange?: (annotations: Annotation[]) => void;
+  rememberPerTicker?: boolean;
 }
 
 const timeframes = [
@@ -85,20 +88,46 @@ const timeframes = [
   { label: 'Custom', value: 'Custom' }
 ];
 
-export function PriceChart({ symbol, name, currentPrice, percentChange, marketCap }: PriceChartProps) {
+export function PriceChart({ 
+  symbol, 
+  name, 
+  currentPrice, 
+  percentChange, 
+  marketCap,
+  annotations: controlledAnnotations,
+  onAnnotationsChange,
+  rememberPerTicker = true
+}: PriceChartProps) {
   const [selectedTimeframe, setSelectedTimeframe] = useState('1D');
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const chartRef = useRef<HTMLDivElement>(null);
   
-  // Annotation state
-  const [annotations, setAnnotations] = useState<Annotation[]>([]);
+  // Annotation state - controlled if parent provides annotations
+  const [internalAnnotations, setInternalAnnotations] = useState<Annotation[]>([]);
   const [showAnnotationInput, setShowAnnotationInput] = useState(false);
   const [annotationInput, setAnnotationInput] = useState('');
   const [pendingAnnotation, setPendingAnnotation] = useState<Omit<Annotation, 'id' | 'text'> | null>(null);
   const [editingAnnotation, setEditingAnnotation] = useState<Annotation | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  
+  // Use controlled annotations if provided, otherwise use internal state
+  const annotations = controlledAnnotations || internalAnnotations;
+  
+  // Helper function to update annotations in both controlled and uncontrolled modes
+  const updateAnnotations = (newAnnotations: Annotation[] | ((prev: Annotation[]) => Annotation[])) => {
+    if (onAnnotationsChange) {
+      // Controlled mode - resolve function to actual array
+      const resolvedAnnotations = typeof newAnnotations === 'function' 
+        ? newAnnotations(annotations)
+        : newAnnotations;
+      onAnnotationsChange(resolvedAnnotations);
+    } else {
+      // Uncontrolled mode - use internal state setter
+      setInternalAnnotations(newAnnotations);
+    }
+  };
   
   // Earnings modal state
   const [earningsModal, setEarningsModal] = useState<{
@@ -270,7 +299,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
   const saveAnnotation = () => {
     if (isEditMode && editingAnnotation && annotationInput.trim()) {
       // Update existing annotation
-      setAnnotations(prev => prev.map(annotation => 
+      updateAnnotations(prev => prev.map(annotation => 
         annotation.id === editingAnnotation.id 
           ? { ...annotation, text: annotationInput.trim() }
           : annotation
@@ -287,7 +316,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
         text: annotationInput.trim()
       };
       
-      setAnnotations(prev => [...prev, newAnnotation]);
+      updateAnnotations(prev => [...prev, newAnnotation]);
       setShowAnnotationInput(false);
       setAnnotationInput('');
       setPendingAnnotation(null);
@@ -297,7 +326,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
   // Delete annotation
   const deleteAnnotation = () => {
     if (editingAnnotation) {
-      setAnnotations(prev => prev.filter(annotation => annotation.id !== editingAnnotation.id));
+      updateAnnotations(prev => prev.filter(annotation => annotation.id !== editingAnnotation.id));
       setShowAnnotationInput(false);
       setAnnotationInput('');
       setEditingAnnotation(null);

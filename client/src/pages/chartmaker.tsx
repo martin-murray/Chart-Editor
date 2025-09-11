@@ -4,7 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Search, TrendingUp, TrendingDown, BarChart3, ArrowLeft } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Search, TrendingUp, TrendingDown, BarChart3, ArrowLeft, Trash2, RotateCcw } from "lucide-react";
 import { Link } from "wouter";
 import { cn } from "@/lib/utils";
 import { PriceChart } from "@/components/dashboard/price-chart";
@@ -17,9 +18,54 @@ interface GlobalSearchResult {
   type: string;
 }
 
+interface Annotation {
+  id: string;
+  x: number;
+  y: number;
+  timestamp: number;
+  price: number;
+  text: string;
+  time: string;
+}
+
 interface GlobalTickerSearchProps {
   onSelectStock?: (stock: GlobalSearchResult) => void;
 }
+
+// Annotation persistence helpers
+const getStoredAnnotations = (): Record<string, Annotation[]> => {
+  try {
+    const stored = localStorage.getItem('chartmaker-annotations');
+    return stored ? JSON.parse(stored) : {};
+  } catch {
+    return {};
+  }
+};
+
+const saveAnnotations = (annotationsBySymbol: Record<string, Annotation[]>) => {
+  try {
+    localStorage.setItem('chartmaker-annotations', JSON.stringify(annotationsBySymbol));
+  } catch {
+    // Ignore localStorage errors
+  }
+};
+
+const getRememberSetting = (): boolean => {
+  try {
+    const stored = localStorage.getItem('chartmaker-remember-per-ticker');
+    return stored !== null ? JSON.parse(stored) : true; // Default to true
+  } catch {
+    return true;
+  }
+};
+
+const saveRememberSetting = (remember: boolean) => {
+  try {
+    localStorage.setItem('chartmaker-remember-per-ticker', JSON.stringify(remember));
+  } catch {
+    // Ignore localStorage errors
+  }
+};
 
 function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -29,6 +75,15 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
+  
+  // Annotation state management
+  const [annotationsBySymbol, setAnnotationsBySymbol] = useState<Record<string, Annotation[]>>(() => getStoredAnnotations());
+  const [rememberPerTicker, setRememberPerTicker] = useState(() => getRememberSetting());
+  
+  // Current annotations for selected stock
+  const currentAnnotations = selectedStock && rememberPerTicker 
+    ? annotationsBySymbol[selectedStock.displaySymbol] || []
+    : [];
 
   // Debounce search query
   useEffect(() => {
@@ -86,6 +141,37 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
     setIsOpen(false);
     setSelectedStock(stock);
     onSelectStock?.(stock);
+  };
+  
+  // Annotation management functions
+  const handleAnnotationsChange = (newAnnotations: Annotation[]) => {
+    if (selectedStock && rememberPerTicker) {
+      const updated = {
+        ...annotationsBySymbol,
+        [selectedStock.displaySymbol]: newAnnotations
+      };
+      setAnnotationsBySymbol(updated);
+      saveAnnotations(updated);
+    }
+  };
+  
+  const handleRememberToggle = (remember: boolean) => {
+    setRememberPerTicker(remember);
+    saveRememberSetting(remember);
+  };
+  
+  const clearCurrentTickerAnnotations = () => {
+    if (selectedStock) {
+      const updated = { ...annotationsBySymbol };
+      delete updated[selectedStock.displaySymbol];
+      setAnnotationsBySymbol(updated);
+      saveAnnotations(updated);
+    }
+  };
+  
+  const clearAllAnnotations = () => {
+    setAnnotationsBySymbol({});
+    saveAnnotations({});
   };
 
   const getTypeColor = (type: string) => {
@@ -185,6 +271,61 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
         />
       )}
 
+      {/* Annotation Controls */}
+      {selectedStock && (
+        <div className="mt-6 mb-4">
+          <Card className="p-4">
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Switch 
+                    id="remember-annotations"
+                    checked={rememberPerTicker}
+                    onCheckedChange={handleRememberToggle}
+                    data-testid="switch-remember-annotations"
+                  />
+                  <label htmlFor="remember-annotations" className="text-sm font-medium cursor-pointer">
+                    Remember annotations per ticker
+                  </label>
+                </div>
+                {rememberPerTicker && currentAnnotations.length > 0 && (
+                  <span className="text-xs text-muted-foreground px-2 py-1 bg-muted rounded">
+                    {currentAnnotations.length} annotation{currentAnnotations.length !== 1 ? 's' : ''}
+                  </span>
+                )}
+              </div>
+              
+              <div className="flex items-center gap-2">
+                {selectedStock && currentAnnotations.length > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={clearCurrentTickerAnnotations}
+                    className="text-xs"
+                    data-testid="button-clear-current"
+                  >
+                    <Trash2 className="w-3 h-3 mr-1" />
+                    Clear {selectedStock.displaySymbol}
+                  </Button>
+                )}
+                {Object.keys(annotationsBySymbol).length > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={clearAllAnnotations}
+                    className="text-xs text-destructive hover:text-destructive"
+                    data-testid="button-clear-all"
+                  >
+                    <RotateCcw className="w-3 h-3 mr-1" />
+                    Clear All
+                  </Button>
+                )}
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
+
       {/* Price Chart */}
       {selectedStock && (
         <div className="mt-6">
@@ -194,6 +335,9 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
             currentPrice="--"
             percentChange="0"
             marketCap="--"
+            annotations={currentAnnotations}
+            onAnnotationsChange={handleAnnotationsChange}
+            rememberPerTicker={rememberPerTicker}
           />
         </div>
       )}
