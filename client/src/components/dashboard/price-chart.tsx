@@ -1860,6 +1860,74 @@ export function PriceChart({
                     />
                   ))}
 
+                  {/* Click Capture Overlay for Annotations - only active in annotation mode */}
+                  {annotationMode === 'percentage' && (
+                    <Customized 
+                      component={(props: any) => {
+                        const { offset, xAxisMap, payload } = props;
+                        if (!offset || !xAxisMap || !chartDataWithPercentage) return null;
+                        
+                        const xAxis = xAxisMap[0];
+                        if (!xAxis) return null;
+                      
+                      const handleOverlayClick = (e: React.MouseEvent) => {
+                        if (!chartDataWithPercentage) return;
+                        
+                        // Get SVG coordinates with fallback
+                        const svg = (e.currentTarget as SVGElement).ownerSVGElement;
+                        let relativeX: number;
+                        
+                        if (svg && svg.getScreenCTM()) {
+                          // Preferred method: SVG coordinate transformation
+                          const pt = svg.createSVGPoint();
+                          pt.x = e.clientX;
+                          pt.y = e.clientY;
+                          const inverse = svg.getScreenCTM()?.inverse();
+                          if (inverse) {
+                            const svgCoords = pt.matrixTransform(inverse);
+                            relativeX = svgCoords.x - offset.left;
+                          } else {
+                            // Fallback: use bounding rect
+                            const rect = svg.getBoundingClientRect();
+                            relativeX = e.clientX - rect.left - offset.left;
+                          }
+                        } else {
+                          // Fallback: use element bounding rect
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          relativeX = e.clientX - rect.left;
+                        }
+                        
+                        // Find closest data point by x coordinate
+                        const xPercent = Math.max(0, Math.min(relativeX / offset.width, 1));
+                        const dataIndex = Math.round(xPercent * (chartDataWithPercentage.length - 1));
+                        const clampedIndex = Math.max(0, Math.min(dataIndex, chartDataWithPercentage.length - 1));
+                        const clickedData = chartDataWithPercentage[clampedIndex];
+                        
+                        if (clickedData) {
+                          // Create synthetic event for handleChartClick
+                          const syntheticEvent = {
+                            activePayload: [{ payload: clickedData }],
+                            activeLabel: clickedData.time
+                          };
+                          handleChartClick(syntheticEvent);
+                        }
+                      };
+                      
+                      return (
+                        <rect
+                          x={offset.left}
+                          y={offset.top}
+                          width={offset.width}
+                          height={offset.height}
+                          fill="transparent"
+                          style={{ pointerEvents: 'all', cursor: 'crosshair' }}
+                          onClick={handleOverlayClick}
+                        />
+                      );
+                    }}
+                  />
+                  )}
+
                   {/* Percentage Measurement Lines - white diagonal arrows */}
                   <Customized 
                     component={(props: any) => {
