@@ -8,7 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tooltip as HoverTooltip, TooltipContent as HoverTooltipContent, TooltipProvider, TooltipTrigger as HoverTooltipTrigger } from '@/components/ui/tooltip';
-import { Loader2, TrendingUp, TrendingDown, Plus, Calendar as CalendarIcon, X, Download, ChevronDown } from 'lucide-react';
+import { Loader2, TrendingUp, TrendingDown, Plus, Calendar as CalendarIcon, X, Download, ChevronDown, MessageSquare, Ruler } from 'lucide-react';
 import { format, subDays, subMonths, subYears } from 'date-fns';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -59,12 +59,21 @@ interface StockDetails {
 
 interface Annotation {
   id: string;
+  type: 'text' | 'percentage';
   x: number; // X coordinate on chart
   y: number; // Y coordinate on chart
   timestamp: number; // Data point timestamp
   price: number; // Price at this point
-  text: string; // User annotation text
+  text?: string; // User annotation text (for text type)
   time: string; // Formatted time string
+  // For percentage measurements
+  startTimestamp?: number;
+  startPrice?: number;
+  startTime?: string;
+  endTimestamp?: number;
+  endPrice?: number;
+  endTime?: string;
+  percentage?: number;
 }
 
 interface PriceChartProps {
@@ -111,6 +120,14 @@ export function PriceChart({
   const [pendingAnnotation, setPendingAnnotation] = useState<Omit<Annotation, 'id' | 'text'> | null>(null);
   const [editingAnnotation, setEditingAnnotation] = useState<Annotation | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  
+  // Percentage measurement state
+  const [annotationMode, setAnnotationMode] = useState<'text' | 'percentage'>('text');
+  const [pendingPercentageStart, setPendingPercentageStart] = useState<{
+    timestamp: number;
+    price: number;
+    time: string;
+  } | null>(null);
   
   // Use controlled annotations if provided, otherwise use internal state
   const annotations = controlledAnnotations || internalAnnotations;
@@ -270,29 +287,70 @@ export function PriceChart({
       const price = clickedData.close;
       const time = clickedData.time;
       
-      // Only create new annotations on chart click, not edit existing ones
-      const newAnnotation: Omit<Annotation, 'id' | 'text'> = {
-        x: 0, // Will be set by chart rendering
-        y: 0, // Will be set by chart rendering  
-        timestamp,
-        price,
-        time
-      };
-      
-      setPendingAnnotation(newAnnotation);
-      setShowAnnotationInput(true);
-      setAnnotationInput('');
-      setEditingAnnotation(null);
-      setIsEditMode(false);
+      if (annotationMode === 'text') {
+        // Text annotation mode - single click
+        const newAnnotation: Omit<Annotation, 'id' | 'text'> = {
+          type: 'text',
+          x: 0, // Will be set by chart rendering
+          y: 0, // Will be set by chart rendering  
+          timestamp,
+          price,
+          time
+        };
+        
+        setPendingAnnotation(newAnnotation);
+        setShowAnnotationInput(true);
+        setAnnotationInput('');
+        setEditingAnnotation(null);
+        setIsEditMode(false);
+      } else if (annotationMode === 'percentage') {
+        // Percentage measurement mode - two clicks
+        if (!pendingPercentageStart) {
+          // First click - set start point
+          setPendingPercentageStart({
+            timestamp,
+            price,
+            time
+          });
+        } else {
+          // Second click - create percentage measurement
+          const startPrice = pendingPercentageStart.price;
+          const endPrice = price;
+          const percentage = ((endPrice - startPrice) / startPrice) * 100;
+          
+          const newAnnotation: Annotation = {
+            id: `percentage-${Date.now()}`,
+            type: 'percentage',
+            x: 0,
+            y: 0,
+            timestamp: pendingPercentageStart.timestamp, // Use start timestamp as primary
+            price: startPrice,
+            time: pendingPercentageStart.time,
+            startTimestamp: pendingPercentageStart.timestamp,
+            startPrice,
+            startTime: pendingPercentageStart.time,
+            endTimestamp: timestamp,
+            endPrice,
+            endTime: time,
+            percentage
+          };
+          
+          updateAnnotations(prev => [...prev, newAnnotation]);
+          setPendingPercentageStart(null);
+        }
+      }
     }
   };
 
   // Handle annotation double-click for editing
   const handleAnnotationDoubleClick = (annotation: Annotation) => {
-    setEditingAnnotation(annotation);
-    setIsEditMode(true);
-    setAnnotationInput(annotation.text);
-    setShowAnnotationInput(true);
+    if (annotation.type === 'text') {
+      setEditingAnnotation(annotation);
+      setIsEditMode(true);
+      setAnnotationInput(annotation.text || '');
+      setShowAnnotationInput(true);
+    }
+    // Percentage annotations are not editable
   };
 
   // Save annotation with user text
@@ -599,32 +657,83 @@ export function PriceChart({
         // Draw annotations
         if (annotations.length > 0) {
           annotations.forEach((annotation) => {
-            // Find the data index for this annotation
-            const dataIndex = chartData.data.findIndex(d => d.timestamp === annotation.timestamp);
-            if (dataIndex === -1) return;
-            
-            // Calculate annotation position
-            const x = priceArea.x + (dataIndex / (chartData.data.length - 1)) * priceArea.width;
-            
-            // Draw vertical annotation line
-            ctx.strokeStyle = '#FAFF50'; // Brand yellow
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(x + 0.5, priceArea.y);
-            ctx.lineTo(x + 0.5, volumeArea.y + volumeArea.height);
-            ctx.stroke();
-            
-            // Draw annotation dot
-            ctx.fillStyle = '#FAFF50';
-            ctx.beginPath();
-            ctx.arc(x + 0.5, priceArea.y, 3, 0, 2 * Math.PI);
-            ctx.fill();
-            
-            // Draw annotation text box
-            const textBoxWidth = 240;
-            const textBoxHeight = 80;
-            const textBoxX = Math.min(x + 10, priceArea.x + priceArea.width - textBoxWidth);
-            const textBoxY = priceArea.y - textBoxHeight - 3;
+            if (annotation.type === 'text') {
+              // Text annotations - yellow vertical lines
+              const dataIndex = chartData.data.findIndex(d => d.timestamp === annotation.timestamp);
+              if (dataIndex === -1) return;
+              
+              const x = priceArea.x + (dataIndex / (chartData.data.length - 1)) * priceArea.width;
+              
+              // Draw vertical annotation line
+              ctx.strokeStyle = '#FAFF50'; // Brand yellow
+              ctx.lineWidth = 1;
+              ctx.beginPath();
+              ctx.moveTo(x + 0.5, priceArea.y);
+              ctx.lineTo(x + 0.5, volumeArea.y + volumeArea.height);
+              ctx.stroke();
+              
+              // Draw annotation dot
+              ctx.fillStyle = '#FAFF50';
+              ctx.beginPath();
+              ctx.arc(x + 0.5, priceArea.y, 3, 0, 2 * Math.PI);
+              ctx.fill();
+            } else if (annotation.type === 'percentage' && annotation.startTimestamp && annotation.endTimestamp) {
+              // Percentage measurements - white diagonal arrows
+              const startIndex = chartData.data.findIndex(d => d.timestamp === annotation.startTimestamp);
+              const endIndex = chartData.data.findIndex(d => d.timestamp === annotation.endTimestamp);
+              if (startIndex === -1 || endIndex === -1) return;
+              
+              const x1 = priceArea.x + (startIndex / (chartData.data.length - 1)) * priceArea.width;
+              const x2 = priceArea.x + (endIndex / (chartData.data.length - 1)) * priceArea.width;
+              
+              // Map prices to Y coordinates 
+              const minPrice = Math.min(...chartData.data.map(d => d.low));
+              const maxPrice = Math.max(...chartData.data.map(d => d.high));
+              const priceRange = maxPrice - minPrice;
+              const y1 = priceArea.y + priceArea.height - ((annotation.startPrice! - minPrice) / priceRange) * priceArea.height;
+              const y2 = priceArea.y + priceArea.height - ((annotation.endPrice! - minPrice) / priceRange) * priceArea.height;
+              
+              // Draw main line
+              ctx.strokeStyle = 'white';
+              ctx.lineWidth = 2;
+              ctx.beginPath();
+              ctx.moveTo(x1, y1);
+              ctx.lineTo(x2, y2);
+              ctx.stroke();
+              
+              // Draw arrow head
+              const arrowSize = 8;
+              const angle = Math.atan2(y2 - y1, x2 - x1);
+              
+              ctx.fillStyle = 'white';
+              ctx.beginPath();
+              ctx.moveTo(x2, y2);
+              ctx.lineTo(x2 - arrowSize * Math.cos(angle - Math.PI / 6), y2 - arrowSize * Math.sin(angle - Math.PI / 6));
+              ctx.lineTo(x2 - arrowSize * Math.cos(angle + Math.PI / 6), y2 - arrowSize * Math.sin(angle + Math.PI / 6));
+              ctx.closePath();
+              ctx.fill();
+              
+              // Draw start and end points
+              ctx.fillStyle = 'white';
+              ctx.strokeStyle = '#121212';
+              ctx.lineWidth = 1;
+              
+              ctx.beginPath();
+              ctx.arc(x1, y1, 3, 0, 2 * Math.PI);
+              ctx.fill();
+              ctx.stroke();
+              
+              ctx.beginPath();
+              ctx.arc(x2, y2, 3, 0, 2 * Math.PI);
+              ctx.fill();
+              ctx.stroke();
+              
+              // Draw annotation text box for text annotations
+              if (annotation.type === 'text') {
+                const textBoxWidth = 240;
+                const textBoxHeight = 80;
+                const textBoxX = Math.min(x + 10, priceArea.x + priceArea.width - textBoxWidth);
+                const textBoxY = priceArea.y - textBoxHeight - 3;
             
             // Text box background
             ctx.fillStyle = '#121212';
@@ -646,7 +755,7 @@ export function PriceChart({
             ctx.font = '14px system-ui, -apple-system, sans-serif';
             // Wrap text if too long
             const maxWidth = textBoxWidth - 16;
-            const words = annotation.text.split(' ');
+            const words = (annotation.text || '').split(' ');
             let line = '';
             let y = textBoxY + 60;
             
@@ -950,32 +1059,83 @@ export function PriceChart({
         // Draw annotations
         if (annotations.length > 0) {
           annotations.forEach((annotation) => {
-            // Find the data index for this annotation
-            const dataIndex = chartData.data.findIndex(d => d.timestamp === annotation.timestamp);
-            if (dataIndex === -1) return;
-            
-            // Calculate annotation position
-            const x = priceArea.x + (dataIndex / (chartData.data.length - 1)) * priceArea.width;
-            
-            // Draw vertical annotation line
-            ctx.strokeStyle = '#FAFF50'; // Brand yellow
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(x + 0.5, priceArea.y);
-            ctx.lineTo(x + 0.5, volumeArea.y + volumeArea.height);
-            ctx.stroke();
-            
-            // Draw annotation dot
-            ctx.fillStyle = '#FAFF50';
-            ctx.beginPath();
-            ctx.arc(x + 0.5, priceArea.y, 3, 0, 2 * Math.PI);
-            ctx.fill();
-            
-            // Draw annotation text box
-            const textBoxWidth = 240;
-            const textBoxHeight = 80;
-            const textBoxX = Math.min(x + 10, priceArea.x + priceArea.width - textBoxWidth);
-            const textBoxY = priceArea.y - textBoxHeight - 3;
+            if (annotation.type === 'text') {
+              // Text annotations - yellow vertical lines
+              const dataIndex = chartData.data.findIndex(d => d.timestamp === annotation.timestamp);
+              if (dataIndex === -1) return;
+              
+              const x = priceArea.x + (dataIndex / (chartData.data.length - 1)) * priceArea.width;
+              
+              // Draw vertical annotation line
+              ctx.strokeStyle = '#FAFF50'; // Brand yellow
+              ctx.lineWidth = 1;
+              ctx.beginPath();
+              ctx.moveTo(x + 0.5, priceArea.y);
+              ctx.lineTo(x + 0.5, volumeArea.y + volumeArea.height);
+              ctx.stroke();
+              
+              // Draw annotation dot
+              ctx.fillStyle = '#FAFF50';
+              ctx.beginPath();
+              ctx.arc(x + 0.5, priceArea.y, 3, 0, 2 * Math.PI);
+              ctx.fill();
+            } else if (annotation.type === 'percentage' && annotation.startTimestamp && annotation.endTimestamp) {
+              // Percentage measurements - white diagonal arrows
+              const startIndex = chartData.data.findIndex(d => d.timestamp === annotation.startTimestamp);
+              const endIndex = chartData.data.findIndex(d => d.timestamp === annotation.endTimestamp);
+              if (startIndex === -1 || endIndex === -1) return;
+              
+              const x1 = priceArea.x + (startIndex / (chartData.data.length - 1)) * priceArea.width;
+              const x2 = priceArea.x + (endIndex / (chartData.data.length - 1)) * priceArea.width;
+              
+              // Map prices to Y coordinates 
+              const minPrice = Math.min(...chartData.data.map(d => d.low));
+              const maxPrice = Math.max(...chartData.data.map(d => d.high));
+              const priceRange = maxPrice - minPrice;
+              const y1 = priceArea.y + priceArea.height - ((annotation.startPrice! - minPrice) / priceRange) * priceArea.height;
+              const y2 = priceArea.y + priceArea.height - ((annotation.endPrice! - minPrice) / priceRange) * priceArea.height;
+              
+              // Draw main line
+              ctx.strokeStyle = 'white';
+              ctx.lineWidth = 2;
+              ctx.beginPath();
+              ctx.moveTo(x1, y1);
+              ctx.lineTo(x2, y2);
+              ctx.stroke();
+              
+              // Draw arrow head
+              const arrowSize = 8;
+              const angle = Math.atan2(y2 - y1, x2 - x1);
+              
+              ctx.fillStyle = 'white';
+              ctx.beginPath();
+              ctx.moveTo(x2, y2);
+              ctx.lineTo(x2 - arrowSize * Math.cos(angle - Math.PI / 6), y2 - arrowSize * Math.sin(angle - Math.PI / 6));
+              ctx.lineTo(x2 - arrowSize * Math.cos(angle + Math.PI / 6), y2 - arrowSize * Math.sin(angle + Math.PI / 6));
+              ctx.closePath();
+              ctx.fill();
+              
+              // Draw start and end points
+              ctx.fillStyle = 'white';
+              ctx.strokeStyle = '#121212';
+              ctx.lineWidth = 1;
+              
+              ctx.beginPath();
+              ctx.arc(x1, y1, 3, 0, 2 * Math.PI);
+              ctx.fill();
+              ctx.stroke();
+              
+              ctx.beginPath();
+              ctx.arc(x2, y2, 3, 0, 2 * Math.PI);
+              ctx.fill();
+              ctx.stroke();
+              
+              // Draw annotation text box for text annotations
+              if (annotation.type === 'text') {
+                const textBoxWidth = 240;
+                const textBoxHeight = 80;
+                const textBoxX = Math.min(x + 10, priceArea.x + priceArea.width - textBoxWidth);
+                const textBoxY = priceArea.y - textBoxHeight - 3;
             
             // Text box background
             ctx.fillStyle = '#121212';
@@ -997,7 +1157,7 @@ export function PriceChart({
             ctx.font = '14px system-ui, -apple-system, sans-serif';
             // Wrap text if too long
             const maxWidth = textBoxWidth - 16;
-            const words = annotation.text.split(' ');
+            const words = (annotation.text || '').split(' ');
             let line = '';
             let y = textBoxY + 60;
             
@@ -1274,7 +1434,7 @@ export function PriceChart({
             
             // Wrap annotation text
             const maxWidth = textBoxWidth - 16;
-            const words = annotation.text.split(' ');
+            const words = (annotation.text || '').split(' ');
             let line = '';
             let y = textBoxY + 60;
             
@@ -1358,6 +1518,43 @@ export function PriceChart({
             )}
           </div>
           
+          {/* Annotation Mode Toggle */}
+          <div className="flex border border-border rounded-md overflow-hidden bg-background">
+            <Button
+              size="sm"
+              variant={annotationMode === 'text' ? 'default' : 'ghost'}
+              onClick={() => {
+                setAnnotationMode('text');
+                setPendingPercentageStart(null);
+              }}
+              className="h-8 px-3 text-xs rounded-none border-0"
+              data-testid="button-annotation-text"
+            >
+              <MessageSquare className="w-3 h-3 mr-1" />
+              Text
+            </Button>
+            <Button
+              size="sm"
+              variant={annotationMode === 'percentage' ? 'default' : 'ghost'}
+              onClick={() => {
+                setAnnotationMode('percentage');
+                setPendingPercentageStart(null);
+              }}
+              className="h-8 px-3 text-xs rounded-none border-0"
+              data-testid="button-annotation-percentage"
+            >
+              <Ruler className="w-3 h-3 mr-1" />
+              Measure
+            </Button>
+          </div>
+          
+          {/* Pending Percentage Indicator */}
+          {annotationMode === 'percentage' && pendingPercentageStart && (
+            <div className="text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded border">
+              Click second point to measure
+            </div>
+          )}
+
           {/* Watch Button */}
           <Button
             size="sm"
@@ -1517,32 +1714,62 @@ export function PriceChart({
             {annotations.length > 0 && (
               <div className="absolute top-0 left-0 w-full h-20 pointer-events-none">
                 {annotations.map((annotation) => {
-                  // Calculate position based on timestamp to align with ReferenceLine
-                  const dataIndex = chartData?.data?.findIndex(d => d.timestamp === annotation.timestamp) ?? -1;
-                  if (dataIndex === -1) return null;
-                  
-                  // Use same positioning logic as ReferenceLine for perfect alignment
-                  const totalDataPoints = (chartData?.data?.length ?? 1) - 1;
-                  const xPercent = totalDataPoints > 0 ? (dataIndex / totalDataPoints) * 100 : 0;
-                  
-                  return (
-                    <div
-                      key={annotation.id}
-                      className="absolute"
-                      style={{ left: `${xPercent}%`, top: '20px', transform: 'translateX(-50%)' }}
-                    >
-                      {/* Annotation text label - positioned in padding area above charts */}
-                      <div 
-                        className="bg-background border border-border rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-pointer hover:bg-muted shadow-lg"
-                        onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
-                        title="Double-click to edit"
+                  if (annotation.type === 'text') {
+                    // Text annotations - display at single point
+                    const dataIndex = chartData?.data?.findIndex(d => d.timestamp === annotation.timestamp) ?? -1;
+                    if (dataIndex === -1) return null;
+                    
+                    const totalDataPoints = (chartData?.data?.length ?? 1) - 1;
+                    const xPercent = totalDataPoints > 0 ? (dataIndex / totalDataPoints) * 100 : 0;
+                    
+                    return (
+                      <div
+                        key={annotation.id}
+                        className="absolute"
+                        style={{ left: `${xPercent}%`, top: '20px', transform: 'translateX(-50%)' }}
                       >
+                        <div 
+                          className="bg-background border border-border rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-pointer hover:bg-muted shadow-lg"
+                          onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
+                          title="Double-click to edit"
+                        >
                           <div className="font-medium" style={{ color: '#FAFF50' }}>{formatTime(annotation.time, selectedTimeframe)}</div>
                           <div className="text-muted-foreground">{formatPrice(annotation.price)}</div>
-                          <div className="text-foreground mt-1">{annotation.text}</div>
+                          <div className="text-foreground mt-1">{annotation.text || ''}</div>
+                        </div>
                       </div>
-                    </div>
-                  );
+                    );
+                  } else if (annotation.type === 'percentage' && annotation.startTimestamp && annotation.endTimestamp) {
+                    // Percentage measurements - display at midpoint
+                    const startIndex = chartData?.data?.findIndex(d => d.timestamp === annotation.startTimestamp) ?? -1;
+                    const endIndex = chartData?.data?.findIndex(d => d.timestamp === annotation.endTimestamp) ?? -1;
+                    if (startIndex === -1 || endIndex === -1) return null;
+                    
+                    const totalDataPoints = (chartData?.data?.length ?? 1) - 1;
+                    const startPercent = totalDataPoints > 0 ? (startIndex / totalDataPoints) * 100 : 0;
+                    const endPercent = totalDataPoints > 0 ? (endIndex / totalDataPoints) * 100 : 0;
+                    const midPercent = (startPercent + endPercent) / 2;
+                    
+                    const isPositive = (annotation.percentage || 0) >= 0;
+                    
+                    return (
+                      <div
+                        key={annotation.id}
+                        className="absolute"
+                        style={{ left: `${midPercent}%`, top: '10px', transform: 'translateX(-50%)' }}
+                      >
+                        <div className="bg-background border border-white/30 rounded px-2 py-1 text-xs pointer-events-auto shadow-lg">
+                          <div className={`font-bold text-center ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
+                            {isPositive ? '↗' : '↘'} {(annotation.percentage || 0).toFixed(2)}%
+                          </div>
+                          <div className="text-xs text-muted-foreground text-center">
+                            {formatPrice(annotation.startPrice || 0)} → {formatPrice(annotation.endPrice || 0)}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return null;
                 })}
               </div>
             )}
@@ -1645,8 +1872,8 @@ export function PriceChart({
                     activeDot={{ r: 4, fill: lineColor, stroke: '#121212', strokeWidth: 2 }}
                   />
                   
-                  {/* Annotation Reference Lines - rendered inside chart coordinate system */}
-                  {annotations.map((annotation) => (
+                  {/* Text Annotation Reference Lines - yellow vertical lines */}
+                  {annotations.filter(annotation => annotation.type === 'text').map((annotation) => (
                     <ReferenceLine 
                       key={annotation.id}
                       x={annotation.time}
@@ -1657,6 +1884,95 @@ export function PriceChart({
                       shapeRendering="crispEdges"
                     />
                   ))}
+
+                  {/* Percentage Measurement Lines - white diagonal arrows */}
+                  <Customized 
+                    component={(props: any) => {
+                      const { payload, xAxisMap, yAxisMap } = props;
+                      if (!xAxisMap || !yAxisMap || !chartData?.data) return null;
+                      
+                      const xAxis = xAxisMap[0];
+                      const yAxis = yAxisMap.price;
+                      if (!xAxis || !yAxis) return null;
+                      
+                      return (
+                        <g>
+                          {annotations.filter(annotation => 
+                            annotation.type === 'percentage' && 
+                            annotation.startTimestamp && 
+                            annotation.endTimestamp &&
+                            annotation.startPrice !== undefined &&
+                            annotation.endPrice !== undefined
+                          ).map((annotation) => {
+                            const startIndex = chartData.data.findIndex(d => d.timestamp === annotation.startTimestamp);
+                            const endIndex = chartData.data.findIndex(d => d.timestamp === annotation.endTimestamp);
+                            if (startIndex === -1 || endIndex === -1) return null;
+                            
+                            // Calculate positions using chart coordinate system
+                            const x1 = xAxis.x + (startIndex / (chartData.data.length - 1)) * xAxis.width;
+                            const x2 = xAxis.x + (endIndex / (chartData.data.length - 1)) * xAxis.width;
+                            
+                            // Map prices to Y coordinates
+                            const priceRange = yAxis.domain[1] - yAxis.domain[0];
+                            const y1 = yAxis.y + yAxis.height - ((annotation.startPrice! - yAxis.domain[0]) / priceRange) * yAxis.height;
+                            const y2 = yAxis.y + yAxis.height - ((annotation.endPrice! - yAxis.domain[0]) / priceRange) * yAxis.height;
+                            
+                            const isPositive = (annotation.percentage || 0) >= 0;
+                            
+                            // Calculate arrow direction
+                            const arrowSize = 8;
+                            const angle = Math.atan2(y2 - y1, x2 - x1);
+                            
+                            // Arrow head points
+                            const arrowX1 = x2 - arrowSize * Math.cos(angle - Math.PI / 6);
+                            const arrowY1 = y2 - arrowSize * Math.sin(angle - Math.PI / 6);
+                            const arrowX2 = x2 - arrowSize * Math.cos(angle + Math.PI / 6);
+                            const arrowY2 = y2 - arrowSize * Math.sin(angle + Math.PI / 6);
+                            
+                            return (
+                              <g key={annotation.id}>
+                                {/* Main line */}
+                                <line
+                                  x1={x1}
+                                  y1={y1}
+                                  x2={x2}
+                                  y2={y2}
+                                  stroke="white"
+                                  strokeWidth={2}
+                                  vectorEffect="non-scaling-stroke"
+                                />
+                                {/* Arrow head */}
+                                <polygon
+                                  points={`${x2},${y2} ${arrowX1},${arrowY1} ${arrowX2},${arrowY2}`}
+                                  fill="white"
+                                  stroke="white"
+                                  strokeWidth={1}
+                                />
+                                {/* Start point dot */}
+                                <circle
+                                  cx={x1}
+                                  cy={y1}
+                                  r={3}
+                                  fill="white"
+                                  stroke="#121212"
+                                  strokeWidth={1}
+                                />
+                                {/* End point dot */}
+                                <circle
+                                  cx={x2}
+                                  cy={y2}
+                                  r={3}
+                                  fill="white"
+                                  stroke="#121212"
+                                  strokeWidth={1}
+                                />
+                              </g>
+                            );
+                          })}
+                        </g>
+                      );
+                    }}
+                  />
 
                   {/* Earnings Markers - small yellow dots with 'E' */}
                   <Customized 

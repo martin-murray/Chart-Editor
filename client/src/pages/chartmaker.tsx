@@ -20,12 +20,21 @@ interface GlobalSearchResult {
 
 interface Annotation {
   id: string;
+  type: 'text' | 'percentage';
   x: number;
   y: number;
   timestamp: number;
   price: number;
-  text: string;
+  text?: string;
   time: string;
+  // For percentage measurements
+  startTimestamp?: number;
+  startPrice?: number;
+  startTime?: string;
+  endTimestamp?: number;
+  endPrice?: number;
+  endTime?: string;
+  percentage?: number;
 }
 
 interface GlobalTickerSearchProps {
