@@ -14,6 +14,7 @@ import { format, subDays, subMonths, subYears } from 'date-fns';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { saveAs } from 'file-saver';
+import { ComparisonChart } from './comparison-chart';
 
 interface ChartData {
   timestamp: number;
@@ -2345,12 +2346,7 @@ export function PriceChart({
       )}
         
         <TabsContent value="comparison" className="bg-background relative z-10" data-testid="tabpanel-comparison">
-          <div className="h-80 flex items-center justify-center">
-            <div className="text-center">
-              <div className="text-lg font-medium text-foreground mb-2">Comparison Chart</div>
-              <div className="text-sm text-muted-foreground">Coming soon...</div>
-            </div>
-          </div>
+          <ComparisonChart timeframe={selectedTimeframe} />
         </TabsContent>
       </Tabs>
 
