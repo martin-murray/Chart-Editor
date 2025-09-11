@@ -454,7 +454,9 @@ export class FinnhubService {
         quarter: earning.quarter,
         year: earning.year,
         epsActual: earning.epsActual,
-        epsEstimate: earning.epsEstimate
+        epsEstimate: earning.epsEstimate,
+        revenueActual: earning.revenueActual,
+        revenueEstimate: earning.revenueEstimate
       }));
       
     } catch (error) {

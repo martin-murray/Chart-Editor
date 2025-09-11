@@ -1921,6 +1921,18 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                 </span>
               </div>
             )}
+            {earningsTooltip.data.revenueActual !== null && (
+              <div className="flex justify-between gap-4 pt-1 border-t border-border">
+                <span className="text-muted-foreground">Revenue Actual:</span>
+                <span className="font-medium text-[#5AF5FA]">${(earningsTooltip.data.revenueActual / 1000000).toFixed(1)}M</span>
+              </div>
+            )}
+            {earningsTooltip.data.revenueEstimate !== null && (
+              <div className="flex justify-between gap-4">
+                <span className="text-muted-foreground">Revenue Estimate:</span>
+                <span className="font-medium">${(earningsTooltip.data.revenueEstimate / 1000000).toFixed(1)}M</span>
+              </div>
+            )}
           </div>
         </div>
       )}
