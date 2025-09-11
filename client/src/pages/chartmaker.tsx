@@ -84,6 +84,7 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
+  const [recentSearches, setRecentSearches] = useState<GlobalSearchResult[]>([]);
   
   // Annotation state management
   const [annotationsBySymbol, setAnnotationsBySymbol] = useState<Record<string, Annotation[]>>(() => getStoredAnnotations());
@@ -93,6 +94,18 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
   const currentAnnotations = selectedStock && rememberPerTicker 
     ? annotationsBySymbol[selectedStock.displaySymbol] || []
     : [];
+
+  // Load recent searches from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('recentTickerSearches');
+    if (saved) {
+      try {
+        setRecentSearches(JSON.parse(saved));
+      } catch (error) {
+        console.error('Error parsing recent searches:', error);
+      }
+    }
+  }, []);
 
   // Debounce search query
   useEffect(() => {
@@ -130,19 +143,22 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
 
   const handleInputChange = (value: string) => {
     setSearchQuery(value);
-    if (value.length > 0) {
-      updateDropdownPosition();
-      setIsOpen(true);
-    } else {
-      setIsOpen(false);
-    }
+    updateDropdownPosition();
+    setIsOpen(true);
   };
 
   const handleInputFocus = () => {
-    if (searchQuery.length > 0) {
-      updateDropdownPosition();
-      setIsOpen(true);
+    // Check actual input value to handle cases where state might be out of sync
+    const actualValue = inputRef.current?.value || '';
+    const isActuallyEmpty = actualValue.trim() === '';
+    
+    // Sync state with actual input if they're different
+    if (isActuallyEmpty && searchQuery !== '') {
+      setSearchQuery('');
     }
+    
+    updateDropdownPosition();
+    setIsOpen(true);
   };
 
   const handleSelectStock = (stock: GlobalSearchResult) => {
@@ -150,6 +166,15 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
     setIsOpen(false);
     setSelectedStock(stock);
     onSelectStock?.(stock);
+    
+    // Add to recent searches
+    addToRecentSearches(stock);
+  };
+
+  const addToRecentSearches = (stock: GlobalSearchResult) => {
+    const newRecent = [stock, ...recentSearches.filter(s => s.displaySymbol !== stock.displaySymbol)].slice(0, 6);
+    setRecentSearches(newRecent);
+    localStorage.setItem('recentTickerSearches', JSON.stringify(newRecent));
   };
   
   // Annotation management functions
@@ -226,18 +251,15 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
             zIndex: 10000
           }}
         >
-          {isLoading ? (
-            <div className="p-4 text-center text-muted-foreground">
-              <div className="flex items-center justify-center gap-2">
-                <div className="w-4 h-4 border-2 border-[#5AF5FA] border-t-transparent rounded-full animate-spin" />
-                Searching global markets...
-              </div>
-            </div>
-          ) : searchResults.length > 0 ? (
+          {/* Show recent searches when query is empty */}
+          {(searchQuery.trim() === '' && recentSearches.length > 0) ? (
             <div className="py-2">
-              {searchResults.map((stock, index) => (
+              <div className="px-4 py-2 text-xs font-medium text-muted-foreground border-b border-border/50">
+                Recent Searches
+              </div>
+              {recentSearches.map((stock, index) => (
                 <div
-                  key={`${stock.symbol}-${index}`}
+                  key={`recent-${stock.symbol}-${index}`}
                   className="w-full px-4 py-3 hover:bg-muted/50 transition-colors border-b border-border/50 last:border-b-0 cursor-pointer"
                   onClick={() => handleSelectStock(stock)}
                 >
@@ -263,10 +285,50 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
                 </div>
               ))}
             </div>
-          ) : debouncedQuery && !isLoading ? (
-            <div className="p-4 text-center text-muted-foreground">
-              No global stocks found for "{debouncedQuery}"
-            </div>
+          ) : searchQuery ? (
+            // Show search results when typing
+            isLoading ? (
+              <div className="p-4 text-center text-muted-foreground">
+                <div className="flex items-center justify-center gap-2">
+                  <div className="w-4 h-4 border-2 border-[#5AF5FA] border-t-transparent rounded-full animate-spin" />
+                  Searching global markets...
+                </div>
+              </div>
+            ) : searchResults.length > 0 ? (
+              <div className="py-2">
+                {searchResults.map((stock, index) => (
+                  <div
+                    key={`${stock.symbol}-${index}`}
+                    className="w-full px-4 py-3 hover:bg-muted/50 transition-colors border-b border-border/50 last:border-b-0 cursor-pointer"
+                    onClick={() => handleSelectStock(stock)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-3">
+                          <span className="font-semibold text-foreground text-lg">{stock.displaySymbol}</span>
+                          <div className={cn(
+                            "px-2 py-1 rounded-md text-xs font-medium",
+                            getTypeColor(stock.type)
+                          )}>
+                            {stock.type}
+                          </div>
+                        </div>
+                        <div className="text-sm text-muted-foreground mt-1 truncate">
+                          {stock.description}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 ml-4">
+                        <BarChart3 className="w-4 h-4 text-[#5AF5FA]" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : debouncedQuery && !isLoading ? (
+              <div className="p-4 text-center text-muted-foreground">
+                No global stocks found for "{debouncedQuery}"
+              </div>
+            ) : null
           ) : null}
         </Card>,
         document.body
