@@ -1803,17 +1803,6 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                     })}
                   </Bar>
                   
-                  {/* Annotation Reference Lines for volume chart */}
-                  {annotations.map((annotation) => (
-                    <ReferenceLine 
-                      key={`volume-${annotation.id}`}
-                      x={annotation.time}
-                      stroke="#FAFF50"
-                      strokeWidth={1}
-                      vectorEffect="non-scaling-stroke"
-                      shapeRendering="crispEdges"
-                    />
-                  ))}
 
                 </BarChart>
               </ResponsiveContainer>
