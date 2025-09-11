@@ -322,7 +322,7 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
                     variant="outline"
                     size="sm"
                     onClick={clearAllAnnotations}
-                    className="text-xs text-destructive hover:text-destructive"
+                    className="text-xs text-destructive hover:text-black hover:bg-red-50 dark:hover:bg-red-950"
                     data-testid="button-clear-all"
                   >
                     <RotateCcw className="w-3 h-3 mr-1" />
