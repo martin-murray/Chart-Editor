@@ -457,7 +457,7 @@ export function PriceChart({
         ctx.fillRect(priceArea.x, priceArea.y, priceArea.width, priceArea.height);
         
         // Draw grid lines for price chart
-        ctx.strokeStyle = 'rgba(41, 41, 41, 0.5)';
+        ctx.strokeStyle = 'rgba(59, 59, 59, 0.5)';
         ctx.lineWidth = 2;
         // Horizontal grid lines
         for (let i = 0; i <= 5; i++) {
@@ -556,7 +556,7 @@ export function PriceChart({
         ctx.fillRect(volumeArea.x, volumeArea.y, volumeArea.width, volumeArea.height);
         
         // Draw grid lines for volume chart
-        ctx.strokeStyle = 'rgba(41, 41, 41, 0.5)';
+        ctx.strokeStyle = 'rgba(59, 59, 59, 0.5)';
         ctx.lineWidth = 2;
         // Horizontal grid lines
         for (let i = 0; i <= 3; i++) {
@@ -846,7 +846,7 @@ export function PriceChart({
         ctx.fillRect(priceArea.x, priceArea.y, priceArea.width, priceArea.height);
         
         // Draw grid lines for price chart
-        ctx.strokeStyle = 'rgba(41, 41, 41, 0.5)';
+        ctx.strokeStyle = 'rgba(59, 59, 59, 0.5)';
         ctx.lineWidth = 2;
         // Horizontal grid lines
         for (let i = 0; i <= 5; i++) {
@@ -945,7 +945,7 @@ export function PriceChart({
         ctx.fillRect(volumeArea.x, volumeArea.y, volumeArea.width, volumeArea.height);
         
         // Draw grid lines for volume chart
-        ctx.strokeStyle = 'rgba(41, 41, 41, 0.5)';
+        ctx.strokeStyle = 'rgba(59, 59, 59, 0.5)';
         ctx.lineWidth = 2;
         // Horizontal grid lines
         for (let i = 0; i <= 3; i++) {
@@ -1209,7 +1209,7 @@ export function PriceChart({
           
           <!-- Grid line style -->
           <style>
-            .grid-line { stroke: #292929; stroke-width: 2; stroke-opacity: 0.5; }
+            .grid-line { stroke: #3B3B3B; stroke-width: 2; stroke-opacity: 0.5; }
             .price-line { stroke: ${isPositive ? '#5AF5FA' : '#FFA5FF'}; stroke-width: 3; fill: none; stroke-linecap: round; stroke-linejoin: round; }
             .title-text { fill: #5AF5FA; font-family: system-ui, -apple-system, sans-serif; font-size: 48px; font-weight: bold; }
             .info-text { fill: #F7F7F7; font-family: system-ui, -apple-system, sans-serif; font-size: 36px; }
@@ -1772,14 +1772,14 @@ export function PriceChart({
                   {/* Horizontal grid lines (dashed) */}
                   <CartesianGrid 
                     strokeDasharray="3 3" 
-                    stroke="#292929" 
+                    stroke="#3B3B3B" 
                     opacity={0.5}
                     horizontal={true}
                     vertical={false}
                   />
                   {/* Vertical grid lines (solid) */}
                   <CartesianGrid 
-                    stroke="#292929" 
+                    stroke="#3B3B3B" 
                     strokeWidth={1}
                     opacity={0.3}
                     horizontal={false}
@@ -1983,7 +1983,7 @@ export function PriceChart({
                                   y1={y1}
                                   x2={x2}
                                   y2={y2}
-                                  stroke="#292929"
+                                  stroke="white"
                                   strokeWidth={2}
                                   vectorEffect="non-scaling-stroke"
                                 />
@@ -1991,7 +1991,7 @@ export function PriceChart({
                                 <polygon
                                   points={`${x2},${y2} ${arrowX1},${arrowY1} ${arrowX2},${arrowY2}`}
                                   fill="white"
-                                  stroke="#292929"
+                                  stroke="#3B3B3B"
                                   strokeWidth={1}
                                 />
                                 {/* Start point dot */}
@@ -2110,14 +2110,14 @@ export function PriceChart({
                   {/* Horizontal grid lines (dashed) */}
                   <CartesianGrid 
                     strokeDasharray="3 3" 
-                    stroke="#292929" 
+                    stroke="#3B3B3B" 
                     opacity={0.5}
                     horizontal={true}
                     vertical={false}
                   />
                   {/* Vertical grid lines (solid) */}
                   <CartesianGrid 
-                    stroke="#292929" 
+                    stroke="#3B3B3B" 
                     strokeWidth={1}
                     opacity={0.3}
                     horizontal={false}
