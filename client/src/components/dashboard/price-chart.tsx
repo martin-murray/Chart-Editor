@@ -516,7 +516,7 @@ export function PriceChart({
         // Draw price line on top
         const lineColor = isPositive ? '#5AF5FA' : '#FFA5FF';
         ctx.strokeStyle = lineColor;
-        ctx.lineWidth = 6;
+        ctx.lineWidth = 3;
         ctx.beginPath();
         
         chartData.data.forEach((point, index) => {
@@ -905,7 +905,7 @@ export function PriceChart({
         // Draw price line on top
         const lineColor = isPositive ? '#5AF5FA' : '#FFA5FF';
         ctx.strokeStyle = lineColor;
-        ctx.lineWidth = 6;
+        ctx.lineWidth = 3;
         ctx.beginPath();
         
         chartData.data.forEach((point, index) => {
@@ -1210,7 +1210,7 @@ export function PriceChart({
           <!-- Grid line style -->
           <style>
             .grid-line { stroke: white; stroke-width: 2; stroke-opacity: 0.5; }
-            .price-line { stroke: ${isPositive ? '#5AF5FA' : '#FFA5FF'}; stroke-width: 6; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+            .price-line { stroke: ${isPositive ? '#5AF5FA' : '#FFA5FF'}; stroke-width: 3; fill: none; stroke-linecap: round; stroke-linejoin: round; }
             .title-text { fill: #5AF5FA; font-family: system-ui, -apple-system, sans-serif; font-size: 48px; font-weight: bold; }
             .info-text { fill: #F7F7F7; font-family: system-ui, -apple-system, sans-serif; font-size: 36px; }
             .label-text { fill: #F7F7F7; font-family: system-ui, -apple-system, sans-serif; font-size: 24px; }
