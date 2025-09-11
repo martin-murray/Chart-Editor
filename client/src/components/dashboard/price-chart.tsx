@@ -728,11 +728,13 @@ export function PriceChart({
               ctx.fill();
               ctx.stroke();
               
-              // Draw percentage display text box
+              // Draw percentage display text box positioned next to the measurement line
               const textBoxWidth = 240;
               const textBoxHeight = 80;
               const textBoxX = Math.min(x2 + 10, priceArea.x + priceArea.width - textBoxWidth);
-                const textBoxY = priceArea.y - textBoxHeight - 3;
+              // Position tooltip at the midpoint of the measurement line, offset to the side
+              const midY = (y1 + y2) / 2;
+              const textBoxY = Math.max(priceArea.y, Math.min(midY - textBoxHeight / 2, priceArea.y + priceArea.height - textBoxHeight));
             
             // Text box background
             ctx.fillStyle = '#121212';
@@ -1130,11 +1132,13 @@ export function PriceChart({
               ctx.fill();
               ctx.stroke();
               
-              // Draw percentage display text box
+              // Draw percentage display text box positioned next to the measurement line
               const textBoxWidth = 240;
               const textBoxHeight = 80;
               const textBoxX = Math.min(x2 + 10, priceArea.x + priceArea.width - textBoxWidth);
-                const textBoxY = priceArea.y - textBoxHeight - 3;
+              // Position tooltip at the midpoint of the measurement line, offset to the side
+              const midY = (y1 + y2) / 2;
+              const textBoxY = Math.max(priceArea.y, Math.min(midY - textBoxHeight / 2, priceArea.y + priceArea.height - textBoxHeight));
             
             // Text box background
             ctx.fillStyle = '#121212';
@@ -1417,11 +1421,12 @@ export function PriceChart({
             svgContent += `
               <circle cx="${x}" cy="${priceArea.y}" r="8" fill="#FAFF50"/>`;
             
-            // Add annotation text box
+            // Add annotation text box positioned next to the annotation line
             const textBoxWidth = 240;
             const textBoxHeight = 80;
             const textBoxX = Math.min(x + 10, priceArea.x + priceArea.width - textBoxWidth);
-            const textBoxY = priceArea.y - textBoxHeight - 3;
+            // Position tooltip within the chart area, offset from the annotation line
+            const textBoxY = Math.max(priceArea.y + 10, Math.min(priceArea.y + 100, priceArea.y + priceArea.height - textBoxHeight - 10));
             
             // Text box background
             svgContent += `
