@@ -743,36 +743,21 @@ export function PriceChart({
             ctx.fillRect(textBoxX, textBoxY, textBoxWidth, textBoxHeight);
             ctx.strokeRect(textBoxX, textBoxY, textBoxWidth, textBoxHeight);
             
-            // Text content
+            // Text content - show percentage measurement data
             ctx.fillStyle = '#FAFF50';
             ctx.font = 'bold 16px system-ui, -apple-system, sans-serif';
-            ctx.fillText(formatTime(annotation.time, selectedTimeframe), textBoxX + 8, textBoxY + 20);
+            const percentageText = `${annotation.percentage !== undefined ? (annotation.percentage > 0 ? '+' : '') + annotation.percentage.toFixed(2) + '%' : 'N/A'}`;
+            ctx.fillText(percentageText, textBoxX + 8, textBoxY + 20);
             
             ctx.fillStyle = '#9CA3AF';
             ctx.font = '14px system-ui, -apple-system, sans-serif';
-            ctx.fillText(formatPrice(annotation.price), textBoxX + 8, textBoxY + 40);
+            ctx.fillText(`${formatPrice(annotation.startPrice!)} → ${formatPrice(annotation.endPrice!)}`, textBoxX + 8, textBoxY + 40);
             
             ctx.fillStyle = '#F7F7F7';
             ctx.font = '14px system-ui, -apple-system, sans-serif';
-            // Wrap text if too long
-            const maxWidth = textBoxWidth - 16;
-            const words = (annotation.text || '').split(' ');
-            let line = '';
-            let y = textBoxY + 60;
-            
-            for (let n = 0; n < words.length; n++) {
-              const testLine = line + words[n] + ' ';
-              const metrics = ctx.measureText(testLine);
-              if (metrics.width > maxWidth && n > 0) {
-                ctx.fillText(line, textBoxX + 8, y);
-                line = words[n] + ' ';
-                y += 16;
-                if (y > textBoxY + textBoxHeight - 5) break; // Prevent overflow
-              } else {
-                line = testLine;
-              }
-            }
-            ctx.fillText(line, textBoxX + 8, y);
+            const priceDiff = annotation.endPrice! - annotation.startPrice!;
+            const priceDiffText = `${priceDiff > 0 ? '+' : ''}${formatPrice(Math.abs(priceDiff))}`;
+            ctx.fillText(priceDiffText, textBoxX + 8, textBoxY + 60);
             }
           });
         }
@@ -1147,36 +1132,21 @@ export function PriceChart({
             ctx.fillRect(textBoxX, textBoxY, textBoxWidth, textBoxHeight);
             ctx.strokeRect(textBoxX, textBoxY, textBoxWidth, textBoxHeight);
             
-            // Text content
+            // Text content - show percentage measurement data
             ctx.fillStyle = '#FAFF50';
             ctx.font = 'bold 16px system-ui, -apple-system, sans-serif';
-            ctx.fillText(formatTime(annotation.time, selectedTimeframe), textBoxX + 8, textBoxY + 20);
+            const percentageText = `${annotation.percentage !== undefined ? (annotation.percentage > 0 ? '+' : '') + annotation.percentage.toFixed(2) + '%' : 'N/A'}`;
+            ctx.fillText(percentageText, textBoxX + 8, textBoxY + 20);
             
             ctx.fillStyle = '#9CA3AF';
             ctx.font = '14px system-ui, -apple-system, sans-serif';
-            ctx.fillText(formatPrice(annotation.price), textBoxX + 8, textBoxY + 40);
+            ctx.fillText(`${formatPrice(annotation.startPrice!)} → ${formatPrice(annotation.endPrice!)}`, textBoxX + 8, textBoxY + 40);
             
             ctx.fillStyle = '#F7F7F7';
             ctx.font = '14px system-ui, -apple-system, sans-serif';
-            // Wrap text if too long
-            const maxWidth = textBoxWidth - 16;
-            const words = (annotation.text || '').split(' ');
-            let line = '';
-            let y = textBoxY + 60;
-            
-            for (let n = 0; n < words.length; n++) {
-              const testLine = line + words[n] + ' ';
-              const metrics = ctx.measureText(testLine);
-              if (metrics.width > maxWidth && n > 0) {
-                ctx.fillText(line, textBoxX + 8, y);
-                line = words[n] + ' ';
-                y += 16;
-                if (y > textBoxY + textBoxHeight - 5) break; // Prevent overflow
-              } else {
-                line = testLine;
-              }
-            }
-            ctx.fillText(line, textBoxX + 8, y);
+            const priceDiff = annotation.endPrice! - annotation.startPrice!;
+            const priceDiffText = `${priceDiff > 0 ? '+' : ''}${formatPrice(Math.abs(priceDiff))}`;
+            ctx.fillText(priceDiffText, textBoxX + 8, textBoxY + 60);
             }
           });
         }
@@ -1917,10 +1887,13 @@ export function PriceChart({
                             const x1 = xAxis.x + (startIndex / (chartData.data.length - 1)) * xAxis.width;
                             const x2 = xAxis.x + (endIndex / (chartData.data.length - 1)) * xAxis.width;
                             
-                            // Map prices to Y coordinates
+                            // Map prices to Y coordinates - ensure they stay within chart bounds
                             const priceRange = yAxis.domain[1] - yAxis.domain[0];
-                            const y1 = yAxis.y + yAxis.height - ((annotation.startPrice! - yAxis.domain[0]) / priceRange) * yAxis.height;
-                            const y2 = yAxis.y + yAxis.height - ((annotation.endPrice! - yAxis.domain[0]) / priceRange) * yAxis.height;
+                            const rawY1 = yAxis.y + yAxis.height - ((annotation.startPrice! - yAxis.domain[0]) / priceRange) * yAxis.height;
+                            const rawY2 = yAxis.y + yAxis.height - ((annotation.endPrice! - yAxis.domain[0]) / priceRange) * yAxis.height;
+                            // Clamp Y coordinates to stay within chart area
+                            const y1 = Math.max(yAxis.y, Math.min(rawY1, yAxis.y + yAxis.height));
+                            const y2 = Math.max(yAxis.y, Math.min(rawY2, yAxis.y + yAxis.height));
                             
                             const isPositive = (annotation.percentage || 0) >= 0;
                             
