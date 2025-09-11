@@ -583,21 +583,21 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             ctx.strokeStyle = '#FAFF50'; // Brand yellow
             ctx.lineWidth = 1;
             ctx.beginPath();
-            ctx.moveTo(x, priceArea.y);
-            ctx.lineTo(x, volumeArea.y + volumeArea.height);
+            ctx.moveTo(x + 0.5, priceArea.y);
+            ctx.lineTo(x + 0.5, volumeArea.y + volumeArea.height);
             ctx.stroke();
             
             // Draw annotation dot
             ctx.fillStyle = '#FAFF50';
             ctx.beginPath();
-            ctx.arc(x, priceArea.y, 8, 0, 2 * Math.PI);
+            ctx.arc(x + 0.5, priceArea.y, 3, 0, 2 * Math.PI);
             ctx.fill();
             
             // Draw annotation text box
             const textBoxWidth = 240;
             const textBoxHeight = 80;
             const textBoxX = Math.min(x + 10, priceArea.x + priceArea.width - textBoxWidth);
-            const textBoxY = priceArea.y - textBoxHeight + 5;
+            const textBoxY = priceArea.y - textBoxHeight - 3;
             
             // Text box background
             ctx.fillStyle = '#121212';
@@ -934,21 +934,21 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             ctx.strokeStyle = '#FAFF50'; // Brand yellow
             ctx.lineWidth = 1;
             ctx.beginPath();
-            ctx.moveTo(x, priceArea.y);
-            ctx.lineTo(x, volumeArea.y + volumeArea.height);
+            ctx.moveTo(x + 0.5, priceArea.y);
+            ctx.lineTo(x + 0.5, volumeArea.y + volumeArea.height);
             ctx.stroke();
             
             // Draw annotation dot
             ctx.fillStyle = '#FAFF50';
             ctx.beginPath();
-            ctx.arc(x, priceArea.y, 8, 0, 2 * Math.PI);
+            ctx.arc(x + 0.5, priceArea.y, 3, 0, 2 * Math.PI);
             ctx.fill();
             
             // Draw annotation text box
             const textBoxWidth = 240;
             const textBoxHeight = 80;
             const textBoxX = Math.min(x + 10, priceArea.x + priceArea.width - textBoxWidth);
-            const textBoxY = priceArea.y - textBoxHeight + 5;
+            const textBoxY = priceArea.y - textBoxHeight - 3;
             
             // Text box background
             ctx.fillStyle = '#121212';
@@ -1234,7 +1234,7 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
             const textBoxWidth = 240;
             const textBoxHeight = 80;
             const textBoxX = Math.min(x + 10, priceArea.x + priceArea.width - textBoxWidth);
-            const textBoxY = priceArea.y - textBoxHeight + 5;
+            const textBoxY = priceArea.y - textBoxHeight - 3;
             
             // Text box background
             svgContent += `
@@ -1625,7 +1625,9 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                       x={annotation.time}
                       yAxisId="price"
                       stroke="#FAFF50"
-                      strokeWidth={3}
+                      strokeWidth={1}
+                      vectorEffect="non-scaling-stroke"
+                      shapeRendering="crispEdges"
                     />
                   ))}
 
@@ -1807,7 +1809,9 @@ export function PriceChart({ symbol, name, currentPrice, percentChange, marketCa
                       key={`volume-${annotation.id}`}
                       x={annotation.time}
                       stroke="#FAFF50"
-                      strokeWidth={3}
+                      strokeWidth={1}
+                      vectorEffect="non-scaling-stroke"
+                      shapeRendering="crispEdges"
                     />
                   ))}
 
