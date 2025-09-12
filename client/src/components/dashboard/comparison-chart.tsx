@@ -739,187 +739,179 @@ export function ComparisonChart({
     }
   };
 
-  // Helper function to capture chart as SVG and convert to canvas (bypasses OKLCH issues)
+  // Helper function to manually draw comparison chart to canvas (completely bypasses OKLCH and SVG issues)
   const captureFullChartAsCanvas = async (): Promise<HTMLCanvasElement> => {
-    const fullContainer = document.querySelector('[data-testid="comparison-chart-full-container"]') as HTMLElement;
-    if (!fullContainer) {
-      throw new Error('Full chart container element not found');
+    console.log('Creating manual canvas export to bypass all OKLCH and SVG issues...');
+
+    if (chartData.length === 0) {
+      throw new Error('No chart data available for export');
     }
 
-    console.log('Using SVG-based export to bypass OKLCH issues...');
-
-    // Wait for chart to render completely
-    await new Promise(resolve => setTimeout(resolve, 200));
-
-    // Find the SVG chart element
-    const svgChart = fullContainer.querySelector('svg');
-    if (!svgChart) {
-      throw new Error('SVG chart element not found');
-    }
-
-    // Clone and clean the SVG
-    const svgClone = svgChart.cloneNode(true) as SVGElement;
+    // Create high-resolution canvas
+    const canvas = document.createElement('canvas');
+    canvas.width = 2000; // High resolution width
+    canvas.height = 1400; // Height for chart + legend + title
+    const ctx = canvas.getContext('2d')!;
     
-    // Remove all classes and normalize colors directly in the SVG
-    const normalizeSVGColors = (element: Element) => {
-      if (element instanceof SVGElement || element instanceof HTMLElement) {
-        // Remove all classes to avoid CSS conflicts
-        element.removeAttribute('class');
-        element.removeAttribute('style');
-        
-        // Set explicit colors for different SVG elements
-        if (element.tagName === 'text') {
-          element.setAttribute('fill', '#ffffff');
-          element.setAttribute('font-family', 'system-ui, sans-serif');
-          element.setAttribute('font-size', '12');
-        } else if (element.tagName === 'path') {
-          const existingStroke = element.getAttribute('stroke');
-          if (existingStroke && existingStroke !== 'none') {
-            // Use different colors for different paths (lines)
-            const pathIndex = Array.from(element.parentNode?.children || []).indexOf(element);
-            const colors = ['#7c3aed', '#6730d0', '#5d38c0', '#5238a6', '#493195'];
-            element.setAttribute('stroke', colors[pathIndex % colors.length] || '#7c3aed');
-          }
-        } else if (element.tagName === 'line') {
-          const stroke = element.getAttribute('stroke');
-          if (stroke && stroke !== 'none') {
-            element.setAttribute('stroke', '#888888'); // Grid lines
-          }
-        }
-        
-        // Remove any attributes that might contain OKLCH
-        const attributes = ['data-color', 'data-fill', 'data-stroke'];
-        attributes.forEach(attr => element.removeAttribute(attr));
-      }
-      
-      // Process children
-      Array.from(element.children).forEach(normalizeSVGColors);
-    };
+    // Enable high-quality rendering
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
     
-    normalizeSVGColors(svgClone);
-
-    // Create a new container for the chart + legend
-    const exportContainer = document.createElement('div');
-    exportContainer.style.cssText = `
-      padding: 20px;
-      background: transparent;
-      width: ${svgChart.clientWidth + 40}px;
-      font-family: system-ui, sans-serif;
-      color: white;
-    `;
-
-    // Add the cleaned SVG
-    exportContainer.appendChild(svgClone);
-
-    // Create legend
-    const legendDiv = document.createElement('div');
-    legendDiv.style.cssText = `
-      margin-top: 20px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 16px;
-      font-size: 14px;
-      color: white;
-    `;
-
-    // Add legend items for visible tickers
+    // Use transparent background
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Add title
+    ctx.fillStyle = '#5AF5FA';
+    ctx.font = 'bold 48px system-ui, -apple-system, sans-serif';
     const visibleTickers = tickers.filter(ticker => ticker.visible);
+    const title = `Stock Comparison: ${visibleTickers.map(t => t.symbol).join(' vs ')}`;
+    ctx.fillText(title, 60, 80);
+    
+    // Add date range
+    ctx.fillStyle = '#F7F7F7';
+    ctx.font = '36px system-ui, -apple-system, sans-serif';
+    const startDate = new Date(chartData[0].date);
+    const endDate = new Date(chartData[chartData.length - 1].date);
+    const dateRange = `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`;
+    ctx.fillText(`Date Range: ${dateRange}`, 60, 140);
+    
+    // Chart area
+    const chartArea = { x: 120, y: 220, width: 1680, height: 800 };
+    
+    // Draw grid lines
+    ctx.strokeStyle = 'rgba(136, 136, 136, 0.3)';
+    ctx.lineWidth = 1;
+    
+    // Horizontal grid lines (percentage levels)
+    const ySteps = 10;
+    for (let i = 0; i <= ySteps; i++) {
+      const y = chartArea.y + (i * chartArea.height / ySteps);
+      ctx.beginPath();
+      ctx.moveTo(chartArea.x, y);
+      ctx.lineTo(chartArea.x + chartArea.width, y);
+      ctx.stroke();
+    }
+    
+    // Vertical grid lines (time)
+    const xSteps = 8;
+    for (let i = 0; i <= xSteps; i++) {
+      const x = chartArea.x + (i * chartArea.width / xSteps);
+      ctx.beginPath();
+      ctx.moveTo(x, chartArea.y);
+      ctx.lineTo(x, chartArea.y + chartArea.height);
+      ctx.stroke();
+    }
+    
+    // Draw 0% reference line (more prominent)
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    const zeroY = chartArea.y + chartArea.height / 2; // Assuming 0% is in the middle
+    ctx.beginPath();
+    ctx.moveTo(chartArea.x, zeroY);
+    ctx.lineTo(chartArea.x + chartArea.width, zeroY);
+    ctx.stroke();
+    
+    // Draw Y-axis labels (percentages)
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '24px system-ui, sans-serif';
+    ctx.textAlign = 'right';
+    
+    // Calculate min/max percentages for scaling
+    let minPercent = 0, maxPercent = 0;
+    visibleTickers.forEach(ticker => {
+      chartData.forEach(dataPoint => {
+        const percentage = Number(dataPoint[`${ticker.symbol}_percentage`] || 0);
+        minPercent = Math.min(minPercent, percentage);
+        maxPercent = Math.max(maxPercent, percentage);
+      });
+    });
+    
+    // Add some padding to the range
+    const range = Math.max(Math.abs(minPercent), Math.abs(maxPercent)) * 1.1;
+    minPercent = -range;
+    maxPercent = range;
+    
+    for (let i = 0; i <= ySteps; i++) {
+      const percentage = maxPercent - (i * (maxPercent - minPercent) / ySteps);
+      const y = chartArea.y + (i * chartArea.height / ySteps);
+      ctx.fillText(`${percentage.toFixed(1)}%`, chartArea.x - 20, y + 8);
+    }
+    
+    // Draw lines for each visible ticker
     const colors = ['#7c3aed', '#6730d0', '#5d38c0', '#5238a6', '#493195'];
-
+    
+    visibleTickers.forEach((ticker, tickerIndex) => {
+      ctx.strokeStyle = colors[tickerIndex % colors.length];
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      
+      let firstPoint = true;
+      chartData.forEach((dataPoint, dataIndex) => {
+        const percentage = Number(dataPoint[`${ticker.symbol}_percentage`] || 0);
+        
+        // Calculate position
+        const x = chartArea.x + (dataIndex * chartArea.width / (chartData.length - 1));
+        const y = chartArea.y + chartArea.height - ((percentage - minPercent) / (maxPercent - minPercent)) * chartArea.height;
+        
+        if (firstPoint) {
+          ctx.moveTo(x, y);
+          firstPoint = false;
+        } else {
+          ctx.lineTo(x, y);
+        }
+      });
+      
+      ctx.stroke();
+    });
+    
+    // Draw X-axis labels (dates)
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '20px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    
+    const labelStep = Math.max(1, Math.floor(chartData.length / 6)); // Show ~6 date labels
+    for (let i = 0; i < chartData.length; i += labelStep) {
+      const date = new Date(chartData[i].date);
+      const x = chartArea.x + (i * chartArea.width / (chartData.length - 1));
+      ctx.fillText(date.toLocaleDateString(), x, chartArea.y + chartArea.height + 40);
+    }
+    
+    // Draw legend
+    ctx.textAlign = 'left';
+    ctx.font = 'bold 32px system-ui, sans-serif';
+    
+    let legendY = chartArea.y + chartArea.height + 100;
+    let legendX = 120;
+    
     visibleTickers.forEach((ticker, index) => {
-      const legendItem = document.createElement('div');
-      legendItem.style.cssText = 'display: flex; align-items: center; gap: 8px;';
+      // Draw color circle
+      ctx.fillStyle = colors[index % colors.length];
+      ctx.beginPath();
+      ctx.arc(legendX + 20, legendY, 15, 0, 2 * Math.PI);
+      ctx.fill();
       
-      const colorDot = document.createElement('div');
-      colorDot.style.cssText = `
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        background-color: ${colors[index % colors.length]};
-      `;
-      
+      // Draw ticker symbol and percentage
+      ctx.fillStyle = '#ffffff';
       const latestData = chartData[chartData.length - 1];
       const percentage = latestData ? Number(latestData[`${ticker.symbol}_percentage`] || 0) : 0;
       const percentageStr = percentage > 0 ? `+${percentage.toFixed(2)}%` : `${percentage.toFixed(2)}%`;
+      const text = `${ticker.symbol} ${percentageStr}`;
       
-      const label = document.createElement('span');
-      label.textContent = `${ticker.symbol} ${percentageStr}`;
-      label.style.color = 'white';
+      ctx.fillText(text, legendX + 50, legendY + 10);
       
-      legendItem.appendChild(colorDot);
-      legendItem.appendChild(label);
-      legendDiv.appendChild(legendItem);
+      // Move to next position
+      const textWidth = ctx.measureText(text).width;
+      legendX += textWidth + 120;
+      
+      // Wrap to next line if needed
+      if (legendX > canvas.width - 300) {
+        legendX = 120;
+        legendY += 60;
+      }
     });
-
-    exportContainer.appendChild(legendDiv);
-
-    // Create canvas and draw the export container
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d')!;
     
-    // Set canvas size (high resolution for quality)
-    const scale = 2;
-    canvas.width = exportContainer.offsetWidth * scale;
-    canvas.height = (svgChart.clientHeight + 80) * scale; // Extra height for legend
-    
-    ctx.scale(scale, scale);
-    
-    // Draw background (transparent)
-    ctx.clearRect(0, 0, canvas.width / scale, canvas.height / scale);
-    
-    // Convert SVG to data URL
-    const svgData = new XMLSerializer().serializeToString(svgClone);
-    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-    const svgUrl = URL.createObjectURL(svgBlob);
-    
-    return new Promise<HTMLCanvasElement>((resolve, reject) => {
-      const img = document.createElement('img') as HTMLImageElement;
-      img.onload = () => {
-        // Draw the SVG
-        ctx.drawImage(img, 20, 10);
-        
-        // Draw legend manually
-        ctx.fillStyle = 'white';
-        ctx.font = '14px system-ui, sans-serif';
-        
-        let legendY = svgChart.clientHeight + 40;
-        let legendX = 20;
-        
-        visibleTickers.forEach((ticker, index) => {
-          // Draw color dot
-          ctx.fillStyle = colors[index % colors.length];
-          ctx.beginPath();
-          ctx.arc(legendX + 5, legendY, 5, 0, 2 * Math.PI);
-          ctx.fill();
-          
-          // Draw text
-          ctx.fillStyle = 'white';
-          const latestData = chartData[chartData.length - 1];
-          const percentage = latestData ? Number(latestData[`${ticker.symbol}_percentage`] || 0) : 0;
-          const percentageStr = percentage > 0 ? `+${percentage.toFixed(2)}%` : `${percentage.toFixed(2)}%`;
-          const text = `${ticker.symbol} ${percentageStr}`;
-          
-          ctx.fillText(text, legendX + 20, legendY + 5);
-          
-          // Move to next position
-          legendX += ctx.measureText(text).width + 50;
-          if (legendX > canvas.width / scale - 100) {
-            legendX = 20;
-            legendY += 25;
-          }
-        });
-        
-        URL.revokeObjectURL(svgUrl);
-        resolve(canvas);
-      };
-      
-      img.onerror = () => {
-        URL.revokeObjectURL(svgUrl);
-        reject(new Error('Failed to load SVG'));
-      };
-      
-      img.src = svgUrl;
-    });
+    console.log('Manual canvas export completed successfully');
+    return canvas;
   };
 
   // PNG export function
@@ -934,7 +926,7 @@ export function ComparisonChart({
     }
 
     try {
-      console.log('Capturing full comparison chart with legend using html2canvas...');
+      console.log('Creating manual canvas export to bypass all export issues...');
       const canvas = await captureFullChartAsCanvas();
       
       // Ensure minimum width for high quality
@@ -992,7 +984,7 @@ export function ComparisonChart({
       // Import jsPDF dynamically
       const { jsPDF } = await import('jspdf');
       
-      console.log('Capturing full comparison chart with legend for PDF...');
+      console.log('Creating manual canvas export for PDF to bypass all export issues...');
       const canvas = await captureFullChartAsCanvas();
 
       // Calculate dimensions for PDF (use actual canvas dimensions for best quality)
