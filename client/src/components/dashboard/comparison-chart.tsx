@@ -1439,6 +1439,7 @@ export function ComparisonChart({
                   axisLine={{ stroke: '#888' }}
                 />
                 <YAxis 
+                  orientation="right"
                   tick={{ fontSize: 12, fill: '#888' }}
                   tickLine={{ stroke: '#888' }}
                   axisLine={{ stroke: '#888' }}
