@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, Customized } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, Customized, ResponsiveContainer } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -106,7 +106,7 @@ const AnnotationLayer: React.FC<any> = ({
         if (idx == null) return null;
         
         // Get x position with offset
-        const x = (formattedGraphicalItems?.[0]?.props?.points?.[idx]?.x) ?? 
+        const x = (formattedGraphicalItems && formattedGraphicalItems[0]?.props?.points?.[idx as number]?.x as number) ?? 
                   (xAxis.scale((chartData as any)[idx].date) + offset.left);
         
         if (annotation.type === 'text') {
@@ -144,9 +144,9 @@ const AnnotationLayer: React.FC<any> = ({
           
           if (i1 == null || i2 == null) return null;
           
-          const x1 = (formattedGraphicalItems?.[0]?.props?.points?.[i1]?.x) ?? 
+          const x1 = (formattedGraphicalItems && formattedGraphicalItems[0]?.props?.points?.[i1 as number]?.x as number) ?? 
                      (xAxis.scale((chartData as any)[i1].date) + offset.left);
-          const x2 = (formattedGraphicalItems?.[0]?.props?.points?.[i2]?.x) ?? 
+          const x2 = (formattedGraphicalItems && formattedGraphicalItems[0]?.props?.points?.[i2 as number]?.x as number) ?? 
                      (xAxis.scale((chartData as any)[i2].date) + offset.left);
           const y = yAxis.scale(annotation.price || 0) + offset.top;
           
@@ -1423,12 +1423,10 @@ export function ComparisonChart({
           </div>
         ) : (
           <ChartContainer config={chartConfig} className="h-full w-full">
-            <div style={{ width: '100%', height: '100%' }}>
+            <ResponsiveContainer width="100%" height="100%">
               <LineChart 
                 data={chartData} 
-                width={846}
-                height={600}
-                margin={{ top: 30, right: 50, left: 30, bottom: 40 }}
+                margin={{ top: 15, right: 22, left: 22, bottom: 15 }}
                 onClick={handleChartClick}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#3B3B3B" strokeOpacity={0.5} />
@@ -1477,7 +1475,7 @@ export function ComparisonChart({
                     />
                   ))}
               </LineChart>
-            </div>
+            </ResponsiveContainer>
           </ChartContainer>
         )}
       </div>
