@@ -105,7 +105,8 @@ export function ComparisonChart({ timeframe }: ComparisonChartProps) {
         return response.json();
       },
       enabled: !!ticker.symbol,
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      staleTime: 0, // Always refetch when timeframe changes
+      cacheTime: 2 * 60 * 1000, // Keep in cache for 2 minutes
     }))
   });
 
