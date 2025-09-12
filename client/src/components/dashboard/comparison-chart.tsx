@@ -842,8 +842,8 @@ export function ComparisonChart({
           canvas.width = Math.max(minWidth, img.width);
           canvas.height = canvas.width * aspectRatio;
           
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          // Use transparent background for PNG export
+          // No background fill - canvas starts transparent
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
           URL.revokeObjectURL(svgUrl);
           resolve();

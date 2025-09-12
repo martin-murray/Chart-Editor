@@ -428,9 +428,8 @@ export function PriceChart({
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
       
-      // Set background to #121212
-      ctx.fillStyle = '#121212';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Use transparent background for PNG export
+      // No background fill - canvas starts transparent
       
       // Add title with proper font
       ctx.fillStyle = '#5AF5FA';
