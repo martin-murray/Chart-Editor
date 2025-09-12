@@ -457,9 +457,7 @@ export function PriceChart({
         // Price chart area (upper portion)
         const priceArea = { x: 120, y: 300, width: 1680, height: 500 };
         
-        // Price chart area
-        ctx.fillStyle = '#121212';
-        ctx.fillRect(priceArea.x, priceArea.y, priceArea.width, priceArea.height);
+        // Price chart area - transparent background for PNG export
         
         // Draw grid lines for price chart
         ctx.strokeStyle = 'rgba(59, 59, 59, 0.5)';
@@ -557,8 +555,7 @@ export function PriceChart({
         const volumeArea = { x: 120, y: priceArea.y + priceArea.height + 30, width: 1680, height: 250 };
         
         // Volume chart area
-        ctx.fillStyle = '#121212';
-        ctx.fillRect(volumeArea.x, volumeArea.y, volumeArea.width, volumeArea.height);
+
         
         // Draw grid lines for volume chart
         ctx.strokeStyle = 'rgba(59, 59, 59, 0.5)';
@@ -946,8 +943,7 @@ export function PriceChart({
         const volumeArea = { x: 120, y: priceArea.y + priceArea.height + 30, width: 1680, height: 250 };
         
         // Volume chart area
-        ctx.fillStyle = '#121212';
-        ctx.fillRect(volumeArea.x, volumeArea.y, volumeArea.width, volumeArea.height);
+
         
         // Draw grid lines for volume chart
         ctx.strokeStyle = 'rgba(59, 59, 59, 0.5)';
