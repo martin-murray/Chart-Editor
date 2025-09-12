@@ -46,9 +46,11 @@ interface SearchResult {
 
 interface ComparisonChartProps {
   timeframe: string;
+  startDate?: Date;
+  endDate?: Date;
 }
 
-export function ComparisonChart({ timeframe }: ComparisonChartProps) {
+export function ComparisonChart({ timeframe, startDate, endDate }: ComparisonChartProps) {
   const [tickers, setTickers] = useState<TickerData[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
@@ -98,9 +100,18 @@ export function ComparisonChart({ timeframe }: ComparisonChartProps) {
   // Fetch chart data for all tickers using useQueries for dynamic queries
   const tickerQueries = useQueries({
     queries: tickers.map(ticker => ({
-      queryKey: ['/api/stocks', ticker.symbol, 'chart', timeframe],
+      queryKey: ['/api/stocks', ticker.symbol, 'chart', timeframe, startDate?.getTime(), endDate?.getTime()],
       queryFn: async () => {
-        const response = await fetch(`/api/stocks/${ticker.symbol}/chart?timeframe=${timeframe}`);
+        let url = `/api/stocks/${ticker.symbol}/chart?timeframe=${timeframe}`;
+        
+        // Add custom date range parameters for Custom timeframe
+        if (timeframe === 'Custom' && startDate && endDate) {
+          const fromTimestamp = Math.floor(startDate.getTime() / 1000);
+          const toTimestamp = Math.floor(endDate.getTime() / 1000);
+          url = `/api/stocks/${ticker.symbol}/chart?from=${fromTimestamp}&to=${toTimestamp}&timeframe=Custom`;
+        }
+        
+        const response = await fetch(url);
         if (!response.ok) throw new Error('Failed to fetch chart data');
         return response.json();
       },

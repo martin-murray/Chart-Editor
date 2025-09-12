@@ -2346,7 +2346,7 @@ export function PriceChart({
       )}
         
         <TabsContent value="comparison" className="bg-background relative z-10" data-testid="tabpanel-comparison">
-          <ComparisonChart timeframe={selectedTimeframe} />
+          <ComparisonChart timeframe={selectedTimeframe} startDate={startDate} endDate={endDate} />
         </TabsContent>
       </Tabs>
 
