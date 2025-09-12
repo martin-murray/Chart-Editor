@@ -9,7 +9,7 @@ import { createPortal } from "react-dom";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Search, X, Plus, Download, FileText, Image } from "lucide-react";
-import { useQueries } from "@tanstack/react-query";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { saveAs } from 'file-saver';
 import html2canvas from 'html2canvas';
@@ -61,11 +61,14 @@ export function ComparisonChart({ timeframe, startDate, endDate }: ComparisonCha
   const { toast } = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Click outside handler
+  // Click outside handler - works with portal
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (containerRef.current && !containerRef.current.contains(target) &&
+          dropdownRef.current && !dropdownRef.current.contains(target)) {
         setIsDropdownOpen(false);
       }
     };
@@ -95,20 +98,18 @@ export function ComparisonChart({ timeframe, startDate, endDate }: ComparisonCha
   }, [searchTerm]);
 
   // Fetch search results
-  const { data: searchResults = [], isLoading: isSearchLoading } = useQueries({
-    queries: [{
-      queryKey: ["/api/stocks/search", debouncedQuery],
-      queryFn: async (): Promise<SearchResult[]> => {
-        if (!debouncedQuery || debouncedQuery.trim().length < 2) {
-          return [];
-        }
-        const response = await fetch(`/api/stocks/search?q=${encodeURIComponent(debouncedQuery.trim())}`);
-        if (!response.ok) throw new Error("Search failed");
-        return await response.json();
-      },
-      enabled: debouncedQuery.trim().length >= 2,
-    }]
-  })[0];
+  const { data: searchResults = [], isLoading: isSearchLoading } = useQuery({
+    queryKey: ["/api/stocks/search", debouncedQuery],
+    queryFn: async (): Promise<SearchResult[]> => {
+      if (!debouncedQuery || debouncedQuery.trim().length < 2) {
+        return [];
+      }
+      const response = await fetch(`/api/stocks/search?q=${encodeURIComponent(debouncedQuery.trim())}`);
+      if (!response.ok) throw new Error("Search failed");
+      return await response.json();
+    },
+    enabled: debouncedQuery.trim().length >= 2,
+  });
 
   // Fetch chart data for all tickers using useQueries for dynamic queries
   const tickerQueries = useQueries({
@@ -298,11 +299,10 @@ export function ComparisonChart({ timeframe, startDate, endDate }: ComparisonCha
   };
 
   const handleSelectStock = (stock: SearchResult) => {
-    addTicker(stock.symbol);
-    addToRecentSearches(stock);
+    addTicker(stock.symbol, stock);
   };
 
-  const addTicker = (symbol: string) => {
+  const addTicker = (symbol: string, stock?: SearchResult) => {
     if (tickers.length >= 5) {
       return; // Max 5 tickers
     }
@@ -318,6 +318,12 @@ export function ComparisonChart({ timeframe, startDate, endDate }: ComparisonCha
     };
 
     setTickers(prev => [...prev, newTicker]);
+    
+    // Add to recent searches if stock data is provided
+    if (stock) {
+      addToRecentSearches(stock);
+    }
+    
     setSearchTerm('');
     setIsSearchVisible(false);
     setIsDropdownOpen(false);
@@ -700,7 +706,11 @@ export function ComparisonChart({ timeframe, startDate, endDate }: ComparisonCha
                 onFocus={handleInputFocus}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && searchTerm.trim()) {
-                    addTicker(searchTerm.trim());
+                    // Try to find exact match in search results for recent searches
+                    const exactMatch = searchResults.find(s => 
+                      s.symbol.toLowerCase() === searchTerm.trim().toLowerCase()
+                    );
+                    addTicker(searchTerm.trim(), exactMatch);
                   }
                   if (e.key === 'Escape') {
                     setIsSearchVisible(false);
@@ -712,7 +722,15 @@ export function ComparisonChart({ timeframe, startDate, endDate }: ComparisonCha
                 data-testid="input-ticker-search"
               />
               <Button
-                onClick={() => searchTerm.trim() && addTicker(searchTerm.trim())}
+                onClick={() => {
+                  if (searchTerm.trim()) {
+                    // Try to find exact match in search results for recent searches
+                    const exactMatch = searchResults.find(s => 
+                      s.symbol.toLowerCase() === searchTerm.trim().toLowerCase()
+                    );
+                    addTicker(searchTerm.trim(), exactMatch);
+                  }
+                }}
                 disabled={!searchTerm.trim()}
                 size="sm"
                 data-testid="button-add-ticker-search"
@@ -725,6 +743,7 @@ export function ComparisonChart({ timeframe, startDate, endDate }: ComparisonCha
           {/* Search Results Dropdown */}
           {isDropdownOpen && createPortal(
             <Card 
+              ref={dropdownRef}
               className="max-h-80 overflow-y-auto shadow-xl border-border bg-card"
               style={{
                 position: 'absolute',
@@ -747,6 +766,7 @@ export function ComparisonChart({ timeframe, startDate, endDate }: ComparisonCha
                         key={`recent-${stock.symbol}-${stock.name}`}
                         className="w-full px-4 py-3 hover:bg-muted/50 transition-colors border-b border-border/50 last:border-b-0 cursor-pointer"
                         onClick={() => handleSelectStock(stock)}
+                        data-testid={`recent-search-${stock.symbol}`}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex-1 min-w-0">
@@ -797,6 +817,7 @@ export function ComparisonChart({ timeframe, startDate, endDate }: ComparisonCha
                           key={`search-${stock.symbol}-${stock.name}`}
                           className="w-full px-4 py-3 hover:bg-muted/50 transition-colors border-b border-border/50 last:border-b-0 cursor-pointer"
                           onClick={() => handleSelectStock(stock)}
+                          data-testid={`search-result-${stock.symbol}`}
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex-1 min-w-0">
