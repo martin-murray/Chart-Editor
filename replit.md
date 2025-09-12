@@ -139,6 +139,12 @@ Testing preference: User prefers to handle testing themselves rather than intern
 - **Persistent Storage**: All market data, alerts, and summaries stored in PostgreSQL
 
 ## Recent Changes
+- **September 12, 2025**: Enhanced annotation functionality with unified controls across chart tabs
+  - **DUAL FUNCTION ANNOTATION BUTTONS**: Text and Measure buttons in price chart header now control annotations for both price/volume tabs AND comparison chart
+  - **Streamlined UI**: Removed duplicate annotation buttons from comparison chart for cleaner interface
+  - **Removed redundant exports**: Eliminated PNG/PDF export buttons from comparison chart (functionality covered in export dropdown)
+  - **Unified state management**: Lifted annotation state from ComparisonChart to PriceChart for consistent behavior across tabs
+  - **Technical improvement**: Added proper null checks and error handling for optional annotation props
 - **August 5, 2025**: CRITICAL FIX - Resolved week-old stale data AND market cap calculation issues
   - **RESOLVED DATA STALENESS**: Yahoo Finance providing week-old data (APLD showing +31% vs actual +11.42% with +0.51% pre-market)
   - **RESOLVED MARKET CAP**: Fixed wildly incorrect market caps (VERB was $424B, now realistic $13.48M)
