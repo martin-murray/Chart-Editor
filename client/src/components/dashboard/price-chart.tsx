@@ -115,7 +115,9 @@ export function PriceChart({
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [activeTab, setActiveTab] = useState('price-volume');
   const chartRef = useRef<HTMLDivElement>(null);
+  const comparisonRef = useRef<HTMLDivElement>(null);
   
   // Annotation state - controlled if parent provides annotations
   const [internalAnnotations, setInternalAnnotations] = useState<Annotation[]>([]);
@@ -1461,6 +1463,50 @@ export function PriceChart({
     }
   };
 
+  // Comparison chart export functions
+  const exportComparisonAsPNG = async () => {
+    try {
+      // Find the comparison chart container element
+      const chartElement = document.querySelector('[data-testid="comparison-chart-container"]') as HTMLElement;
+      if (!chartElement) {
+        alert('Comparison chart not found. Please ensure the comparison chart is visible.');
+        return;
+      }
+
+      const canvas = await html2canvas(chartElement, {
+        backgroundColor: '#121212',
+        scale: 1,
+        useCORS: true,
+        allowTaint: true
+      });
+
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const fileName = `comparison-chart-${new Date().toISOString().split('T')[0]}.png`;
+          saveAs(blob, fileName);
+        } else {
+          alert('Failed to export comparison chart as PNG');
+        }
+      }, 'image/png', 0.8);
+    } catch (error) {
+      console.error('Comparison PNG export error:', error);
+      alert('PNG export failed - try CSV export instead');
+    }
+  };
+
+  const exportComparisonAsCSV = () => {
+    // Get the comparison chart data from the comparison chart component
+    // This will trigger a CSV export by dispatching a custom event
+    const comparisonChart = document.querySelector('[data-testid="comparison-chart-container"]');
+    if (comparisonChart) {
+      // Dispatch a custom event to trigger CSV export in the comparison chart
+      const event = new CustomEvent('exportCSV');
+      comparisonChart.dispatchEvent(event);
+    } else {
+      alert('Comparison chart not found. Please ensure the comparison chart is visible.');
+    }
+  };
+
   return (
     <div className="w-full space-y-6">
       {/* Header Section */}
@@ -1563,34 +1609,6 @@ export function PriceChart({
             </Button>
           ))}
           
-          {/* Export Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 px-3 text-xs border-[#5AF5FA]/30 text-[#5AF5FA] hover:bg-[#5AF5FA]/10"
-              >
-                <Download className="w-3 h-3 mr-1" />
-                Export
-                <ChevronDown className="w-3 h-3 ml-1" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="center" className="w-36">
-              <DropdownMenuItem onClick={exportAsPNG} className="cursor-pointer">
-                <Download className="w-4 h-4 mr-2" />
-                Export as PNG
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={exportAsPDF} className="cursor-pointer">
-                <Download className="w-4 h-4 mr-2" />
-                Export as PDF
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={exportAsSVG} className="cursor-pointer">
-                <Download className="w-4 h-4 mr-2" />
-                Export as SVG
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
         
         {/* Custom Date Range Picker - Positioned Below Timeframes */}
@@ -1650,25 +1668,72 @@ export function PriceChart({
         )}
       </div>
 
-      {/* Chart Tabs Section */}
-      <Tabs defaultValue="price-volume" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 mb-4">
-          <TabsTrigger 
-            value="price-volume" 
-            className="data-[state=active]:bg-[#5AF5FA] data-[state=active]:text-black"
-            data-testid="trigger-price-volume"
-          >
-            Price & Volume
-          </TabsTrigger>
-          <TabsTrigger 
-            value="comparison" 
-            className="data-[state=active]:bg-[#5AF5FA] data-[state=active]:text-black"
-            data-testid="trigger-comparison"
-          >
-            Comparison Chart
-          </TabsTrigger>
-        </TabsList>
-        
+      {/* Chart Tabs Section with Export Button */}
+      <div className="flex items-center justify-between mb-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <div className="flex items-center justify-between">
+            <TabsList className="grid grid-cols-2">
+              <TabsTrigger 
+                value="price-volume" 
+                className="data-[state=active]:bg-[#5AF5FA] data-[state=active]:text-black"
+                data-testid="trigger-price-volume"
+              >
+                Price & Volume
+              </TabsTrigger>
+              <TabsTrigger 
+                value="comparison" 
+                className="data-[state=active]:bg-[#5AF5FA] data-[state=active]:text-black"
+                data-testid="trigger-comparison"
+              >
+                Comparison Chart
+              </TabsTrigger>
+            </TabsList>
+            
+            {/* Shared Export Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 px-3 text-xs border-[#5AF5FA]/30 text-[#5AF5FA] hover:bg-[#5AF5FA]/10 ml-4"
+                >
+                  <Download className="w-3 h-3 mr-1" />
+                  Export
+                  <ChevronDown className="w-3 h-3 ml-1" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="center" className="w-36">
+                {activeTab === 'price-volume' ? (
+                  <>
+                    <DropdownMenuItem onClick={exportAsPNG} className="cursor-pointer">
+                      <Download className="w-4 h-4 mr-2" />
+                      Export as PNG
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={exportAsPDF} className="cursor-pointer">
+                      <Download className="w-4 h-4 mr-2" />
+                      Export as PDF
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={exportAsSVG} className="cursor-pointer">
+                      <Download className="w-4 h-4 mr-2" />
+                      Export as SVG
+                    </DropdownMenuItem>
+                  </>
+                ) : (
+                  <>
+                    <DropdownMenuItem onClick={exportComparisonAsPNG} className="cursor-pointer">
+                      <Download className="w-4 h-4 mr-2" />
+                      Export as PNG
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={exportComparisonAsCSV} className="cursor-pointer">
+                      <Download className="w-4 h-4 mr-2" />
+                      Export as CSV
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          
         <TabsContent value="price-volume" className="bg-background relative z-10" data-testid="tabpanel-price-volume">
         {isLoading ? (
           <div className="h-80 flex items-center justify-center">
@@ -2348,7 +2413,8 @@ export function PriceChart({
         <TabsContent value="comparison" className="bg-background relative z-10" data-testid="tabpanel-comparison">
           <ComparisonChart timeframe={selectedTimeframe} startDate={startDate} endDate={endDate} />
         </TabsContent>
-      </Tabs>
+        </Tabs>
+      </div>
 
       {/* Stats Grid - 4 Columns */}
       {stockDetails && stockDetails.quote && (

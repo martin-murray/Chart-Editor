@@ -296,7 +296,7 @@ export function ComparisonChart({ timeframe, startDate, endDate }: ComparisonCha
     .filter(query => query.isError)
     .map((query, index) => `${tickers[index]?.symbol}: ${query.error?.message || 'Unknown error'}`);
 
-  // Export functions
+  // Export CSV function for shared export functionality  
   const exportCSV = () => {
     if (chartData.length === 0) {
       toast({
@@ -349,79 +349,19 @@ export function ComparisonChart({ timeframe, startDate, endDate }: ComparisonCha
     }
   };
 
-  const exportPNG = async () => {
-    if (chartData.length === 0) {
-      toast({
-        title: "No Data",
-        description: "No chart data available to export",
-        variant: "destructive",
-      });
-      return;
+  // Add event listener for shared export functionality
+  useEffect(() => {
+    const chartContainer = document.querySelector('[data-testid="comparison-chart-container"]');
+    if (chartContainer) {
+      const handleExportCSV = () => exportCSV();
+      chartContainer.addEventListener('exportCSV', handleExportCSV);
+      
+      return () => {
+        chartContainer.removeEventListener('exportCSV', handleExportCSV);
+      };
     }
+  }, [chartData, tickers]);
 
-    try {
-      // Find the chart container element
-      const chartElement = document.querySelector('[data-testid="comparison-chart-container"]') as HTMLElement;
-      if (!chartElement) {
-        console.error('Chart element not found');
-        throw new Error('Chart element not found');
-      }
-
-      console.log('Capturing chart with html2canvas...');
-      
-      // Alternative approach: Create a simple fallback without modern CSS
-      const canvas = await html2canvas(chartElement, {
-        backgroundColor: '#121212',
-        scale: 1, // Reduced scale to avoid issues
-        useCORS: true,
-        allowTaint: true,
-        logging: true, // Enable logging to see issues
-        foreignObjectRendering: true, // Enable modern rendering for SVG support
-        removeContainer: true,
-        width: chartElement.offsetWidth,
-        height: chartElement.offsetHeight,
-        ignoreElements: (element) => {
-          // Skip only truly problematic elements (keep SVG for chart!)
-          const tagName = element.tagName?.toLowerCase();
-          return tagName === 'script' || tagName === 'style';
-        }
-      });
-
-      console.log('Canvas created successfully, converting to blob...');
-      
-      // Convert to blob and download
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const fileName = `comparison-chart-${tickers.map(t => t.symbol).join('-')}-${new Date().toISOString().split('T')[0]}.png`;
-          saveAs(blob, fileName);
-          
-          toast({
-            title: "Export Successful",
-            description: "PNG file has been downloaded",
-          });
-        } else {
-          throw new Error('Failed to create blob from canvas');
-        }
-      }, 'image/png', 0.8);
-    } catch (error) {
-      console.error('PNG export error:', error);
-      
-      // Fallback: Try a simpler approach without html2canvas
-      try {
-        toast({
-          title: "Export Alternative",
-          description: "PNG export temporarily unavailable, use CSV export instead",
-          variant: "destructive",
-        });
-      } catch (fallbackError) {
-        toast({
-          title: "Export Failed",
-          description: "Unable to export PNG file - try CSV export instead", 
-          variant: "destructive",
-        });
-      }
-    }
-  };
 
   // Custom tooltip that shows actual prices with better date formatting
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -514,30 +454,6 @@ export function ComparisonChart({ timeframe, startDate, endDate }: ComparisonCha
         </div>
         
         {/* Export Buttons */}
-        {tickers.length > 0 && (
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={exportCSV}
-              disabled={isLoading || chartData.length === 0}
-              data-testid="button-export-csv"
-            >
-              <FileText className="h-3 w-3 mr-1" />
-              Export CSV
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={exportPNG}
-              disabled={isLoading || chartData.length === 0}
-              data-testid="button-export-png"
-            >
-              <Image className="h-3 w-3 mr-1" />
-              Export PNG
-            </Button>
-          </div>
-        )}
       </div>
 
       {/* Search Input */}
