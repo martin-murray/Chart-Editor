@@ -408,6 +408,139 @@ export function ComparisonChart({
     ));
   };
 
+  // Annotation handling methods
+  const handleChartClick = (event: any) => {
+    if (!event || !chartData) return;
+    
+    // Get the active payload from the click event
+    const { activePayload, activeLabel } = event;
+    
+    if (activePayload && activePayload.length > 0 && activeLabel) {
+      const clickedData = activePayload[0].payload;
+      const timestamp = clickedData.timestamp;
+      const time = clickedData.date;
+      // For comparison chart, we'll use a reference price of 100 (percentage base)
+      const price = 100; // Since this is a percentage comparison chart
+      
+      if (annotationMode === 'text') {
+        // Text annotation mode - single click
+        const newAnnotation: Omit<Annotation, 'id' | 'text'> = {
+          type: 'text',
+          x: 0, // Will be set by chart rendering
+          y: 0, // Will be set by chart rendering  
+          timestamp,
+          price,
+          time
+        };
+        
+        setPendingAnnotation(newAnnotation);
+        setShowAnnotationInput(true);
+        setAnnotationInput('');
+        setEditingAnnotation(null);
+        setIsEditMode(false);
+      } else if (annotationMode === 'percentage') {
+        // Percentage measurement mode - two clicks
+        if (!pendingPercentageStart) {
+          // First click - set start point
+          setPendingPercentageStart({
+            timestamp,
+            price,
+            time
+          });
+        } else {
+          // Second click - create percentage measurement
+          const startPrice = pendingPercentageStart.price;
+          const endPrice = price;
+          const percentage = ((endPrice - startPrice) / startPrice) * 100;
+          
+          const newAnnotation: Annotation = {
+            id: `percentage-${Date.now()}`,
+            type: 'percentage',
+            x: 0,
+            y: 0,
+            timestamp: pendingPercentageStart.timestamp, // Use start timestamp as primary
+            price: startPrice,
+            time: pendingPercentageStart.time,
+            startTimestamp: pendingPercentageStart.timestamp,
+            startPrice,
+            startTime: pendingPercentageStart.time,
+            endTimestamp: timestamp,
+            endPrice,
+            endTime: time,
+            percentage
+          };
+          
+          updateAnnotations(prev => [...prev, newAnnotation]);
+          setPendingPercentageStart(null);
+        }
+      }
+    }
+  };
+
+  // Handle annotation double-click for editing
+  const handleAnnotationDoubleClick = (annotation: Annotation) => {
+    if (annotation.type === 'text') {
+      setEditingAnnotation(annotation);
+      setIsEditMode(true);
+      setAnnotationInput(annotation.text || '');
+      setShowAnnotationInput(true);
+    }
+    // Percentage annotations are not editable
+  };
+
+  // Save annotation with user text
+  const saveAnnotation = () => {
+    if (isEditMode && editingAnnotation && annotationInput.trim()) {
+      // Update existing annotation
+      updateAnnotations(prev => prev.map(annotation => 
+        annotation.id === editingAnnotation.id 
+          ? { ...annotation, text: annotationInput.trim() }
+          : annotation
+      ));
+      setShowAnnotationInput(false);
+      setAnnotationInput('');
+      setEditingAnnotation(null);
+      setIsEditMode(false);
+    } else if (pendingAnnotation && annotationInput.trim()) {
+      // Create new annotation
+      const newAnnotation: Annotation = {
+        ...pendingAnnotation,
+        id: `annotation-${Date.now()}`,
+        text: annotationInput.trim()
+      };
+      
+      updateAnnotations(prev => [...prev, newAnnotation]);
+      setShowAnnotationInput(false);
+      setAnnotationInput('');
+      setPendingAnnotation(null);
+    }
+  };
+
+  // Delete annotation
+  const deleteAnnotation = () => {
+    if (editingAnnotation) {
+      updateAnnotations(prev => prev.filter(annotation => annotation.id !== editingAnnotation.id));
+      setShowAnnotationInput(false);
+      setAnnotationInput('');
+      setEditingAnnotation(null);
+      setIsEditMode(false);
+    }
+  };
+
+  // Cancel annotation
+  const cancelAnnotation = () => {
+    setShowAnnotationInput(false);
+    setAnnotationInput('');
+    setPendingAnnotation(null);
+    setEditingAnnotation(null);
+    setIsEditMode(false);
+  };
+
+  // Format price helper
+  const formatPrice = (price: number) => {
+    return price.toFixed(2);
+  };
+
   // Check loading and error states
   const isLoading = tickerQueries.some(query => query.isLoading);
   const hasErrors = tickerQueries.some(query => query.isError);
@@ -750,7 +883,70 @@ export function ComparisonChart({
         )}
         </div>
         
-        {/* Export Buttons */}
+        <div className="flex items-center gap-2">
+          {/* Annotation Mode Toggle */}
+          {tickers.length > 0 && (
+            <div className="flex border border-border rounded-md overflow-hidden bg-background">
+              <Button
+                size="sm"
+                variant={annotationMode === 'text' ? 'default' : 'ghost'}
+                onClick={() => {
+                  setAnnotationMode('text');
+                  setPendingPercentageStart(null);
+                }}
+                className="h-7 px-2 text-xs rounded-none border-0"
+                data-testid="button-annotation-text"
+              >
+                <MessageSquare className="w-3 h-3 mr-1" />
+                Text
+              </Button>
+              <Button
+                size="sm"
+                variant={annotationMode === 'percentage' ? 'default' : 'ghost'}
+                onClick={() => {
+                  setAnnotationMode('percentage');
+                  setPendingPercentageStart(null);
+                }}
+                className="h-7 px-2 text-xs rounded-none border-0"
+                data-testid="button-annotation-percentage"
+              >
+                <Ruler className="w-3 h-3 mr-1" />
+                Measure
+              </Button>
+            </div>
+          )}
+          
+          {/* Pending Percentage Indicator */}
+          {annotationMode === 'percentage' && pendingPercentageStart && (
+            <div className="text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded border">
+              Click second point to measure
+            </div>
+          )}
+        
+          {/* Export Buttons */}
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={exportPNG}
+              className="h-7 text-xs"
+              data-testid="button-export-png"
+            >
+              <Image className="h-3 w-3 mr-1" />
+              PNG
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={exportPDF}
+              className="h-7 text-xs"
+              data-testid="button-export-pdf"
+            >
+              <FileText className="h-3 w-3 mr-1" />
+              PDF
+            </Button>
+          </div>
+        </div>
       </div>
 
       {/* Search Input with Predictive Search */}
@@ -971,7 +1167,11 @@ export function ComparisonChart({
         ) : (
           <ChartContainer config={chartConfig} className="h-full w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ top: 30, right: 50, left: 30, bottom: 40 }}> {/* Increased margins for better spacing */}
+              <LineChart 
+                data={chartData} 
+                margin={{ top: 30, right: 50, left: 30, bottom: 40 }}
+                onClick={handleChartClick}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="#3B3B3B" strokeOpacity={0.5} />
                 <XAxis 
                   dataKey="date"
@@ -1012,6 +1212,62 @@ export function ComparisonChart({
       {tickers.length > 0 && (
         <div className="text-xs text-muted-foreground text-center">
           Showing percentage change from {timeframe} starting point • Click color dots to toggle visibility
+        </div>
+      )}
+
+      {/* Annotation Input Modal */}
+      {showAnnotationInput && (pendingAnnotation || editingAnnotation) && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-card border border-border rounded-lg p-6 w-96 max-w-[90vw]">
+            <h3 className="text-lg font-semibold mb-4">
+              {isEditMode ? 'Edit Annotation' : 'Add Annotation'}
+            </h3>
+            <div className="mb-4 text-sm text-muted-foreground">
+              <div>Time: {isEditMode ? editingAnnotation?.time : pendingAnnotation?.time}</div>
+              <div>Reference: {formatPrice(isEditMode ? editingAnnotation?.price || 0 : pendingAnnotation?.price || 0)}%</div>
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2">Event Description</label>
+              <textarea
+                value={annotationInput}
+                onChange={(e) => setAnnotationInput(e.target.value)}
+                placeholder="Enter event description..."
+                className="w-full h-24 px-3 py-2 border border-border rounded-md bg-background text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && e.ctrlKey) {
+                    saveAnnotation();
+                  } else if (e.key === 'Escape') {
+                    cancelAnnotation();
+                  }
+                }}
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={cancelAnnotation}>
+                Cancel
+              </Button>
+              {isEditMode && (
+                <Button 
+                  variant="destructive"
+                  onClick={deleteAnnotation}
+                  className="bg-red-600 text-white hover:bg-red-700"
+                >
+                  Delete
+                </Button>
+              )}
+              <Button 
+                onClick={saveAnnotation}
+                disabled={!annotationInput.trim()}
+                className="bg-[#5AF5FA] text-black hover:bg-[#5AF5FA]/90"
+              >
+                {isEditMode ? 'Update' : 'Save'}
+              </Button>
+            </div>
+            <div className="mt-2 text-xs text-muted-foreground">
+              Press Ctrl+Enter to save, Escape to cancel
+            </div>
+          </div>
         </div>
       )}
     </div>
