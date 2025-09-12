@@ -633,25 +633,78 @@ export function ComparisonChart({
         width: chartElement.offsetWidth,
         height: chartElement.offsetHeight,
         onclone: (doc) => {
-          // Override OKLCH colors with compatible HSL/hex fallbacks
+          // Override ALL OKLCH colors with compatible RGB/HSL fallbacks
           const style = doc.createElement('style');
-          style.textContent = `:root, .dark { 
-            --background: hsl(0,0%,100%) !important;
-            --foreground: hsl(0,0%,12%) !important;
-            --card: hsl(0,0%,100%) !important;
-            --card-foreground: hsl(0,0%,12%) !important;
-            --primary: hsl(226,70%,55%) !important;
-            --primary-foreground: hsl(0,0%,100%) !important;
-            --muted: hsl(220,14%,96%) !important;
-            --muted-foreground: hsl(220,9%,46%) !important;
-            --accent: hsl(280,70%,90%) !important;
-            --accent-foreground: hsl(226,70%,55%) !important;
-            --destructive: hsl(0,73%,42%) !important;
-            --destructive-foreground: hsl(0,0%,100%) !important;
-            --border: hsl(214,32%,91%) !important;
-            --input: hsl(220,14%,96%) !important;
-            --ring: hsl(226,70%,55%) !important;
-          }`;
+          style.textContent = `
+            :root {
+              --background: rgb(255, 255, 255) !important;
+              --foreground: rgb(68, 68, 68) !important;
+              --card: rgb(255, 255, 255) !important;
+              --card-foreground: rgb(68, 68, 68) !important;
+              --popover: rgb(255, 255, 255) !important;
+              --popover-foreground: rgb(68, 68, 68) !important;
+              --primary: rgb(98, 52, 235) !important;
+              --primary-foreground: rgb(248, 248, 248) !important;
+              --secondary: rgb(98, 52, 235) !important;
+              --secondary-foreground: rgb(248, 248, 248) !important;
+              --muted: rgb(251, 252, 253) !important;
+              --muted-foreground: rgb(156, 158, 165) !important;
+              --accent: rgb(243, 232, 255) !important;
+              --accent-foreground: rgb(98, 52, 235) !important;
+              --destructive: rgb(153, 27, 27) !important;
+              --destructive-foreground: rgb(255, 255, 255) !important;
+              --border: rgb(203, 203, 203) !important;
+              --input: rgb(103, 48, 208) !important;
+              --ring: rgb(124, 58, 237) !important;
+              --chart-1: rgb(124, 58, 237) !important;
+              --chart-2: rgb(103, 48, 208) !important;
+              --chart-3: rgb(93, 56, 192) !important;
+              --chart-4: rgb(82, 56, 166) !important;
+              --chart-5: rgb(72, 49, 149) !important;
+              --sidebar: rgb(249, 249, 253) !important;
+              --sidebar-foreground: rgb(0, 0, 0) !important;
+              --sidebar-primary: rgb(124, 58, 237) !important;
+              --sidebar-primary-foreground: rgb(255, 255, 255) !important;
+              --sidebar-accent: rgb(202, 138, 238) !important;
+              --sidebar-accent-foreground: rgb(82, 56, 166) !important;
+              --sidebar-border: rgb(0, 0, 0) !important;
+              --sidebar-ring: rgb(124, 58, 237) !important;
+            }
+            .dark {
+              --background: rgb(46, 46, 46) !important;
+              --foreground: rgb(235, 235, 235) !important;
+              --card: rgb(57, 57, 57) !important;
+              --card-foreground: rgb(235, 235, 235) !important;
+              --popover: rgb(68, 68, 68) !important;
+              --popover-foreground: rgb(235, 235, 235) !important;
+              --primary: rgb(90, 245, 250) !important;
+              --primary-foreground: rgb(46, 46, 46) !important;
+              --secondary: rgb(178, 178, 178) !important;
+              --secondary-foreground: rgb(46, 46, 46) !important;
+              --muted: rgb(68, 68, 68) !important;
+              --muted-foreground: rgb(182, 182, 182) !important;
+              --accent: rgb(90, 245, 250) !important;
+              --accent-foreground: rgb(46, 46, 46) !important;
+              --destructive: rgb(90, 245, 250) !important;
+              --destructive-foreground: rgb(248, 248, 248) !important;
+              --border: rgb(118, 118, 118) !important;
+              --input: rgb(94, 94, 94) !important;
+              --ring: rgb(90, 245, 250) !important;
+              --chart-1: rgb(90, 245, 250) !important;
+              --chart-2: rgb(255, 165, 255) !important;
+              --chart-3: rgb(188, 116, 237) !important;
+              --chart-4: rgb(246, 187, 119) !important;
+              --chart-5: rgb(220, 147, 222) !important;
+              --sidebar: rgb(46, 46, 46) !important;
+              --sidebar-foreground: rgb(248, 248, 248) !important;
+              --sidebar-primary: rgb(90, 245, 250) !important;
+              --sidebar-primary-foreground: rgb(248, 248, 248) !important;
+              --sidebar-accent: rgb(129, 81, 169) !important;
+              --sidebar-accent-foreground: rgb(248, 248, 248) !important;
+              --sidebar-border: rgb(94, 94, 94) !important;
+              --sidebar-ring: rgb(90, 245, 250) !important;
+            }
+          `;
           doc.head.appendChild(style);
         },
         ignoreElements: (element) => {
@@ -720,25 +773,78 @@ export function ComparisonChart({
         width: chartElement.offsetWidth,
         height: chartElement.offsetHeight,
         onclone: (doc) => {
-          // Override OKLCH colors with compatible HSL/hex fallbacks
+          // Override ALL OKLCH colors with compatible RGB/HSL fallbacks
           const style = doc.createElement('style');
-          style.textContent = `:root, .dark { 
-            --background: hsl(0,0%,100%) !important;
-            --foreground: hsl(0,0%,12%) !important;
-            --card: hsl(0,0%,100%) !important;
-            --card-foreground: hsl(0,0%,12%) !important;
-            --primary: hsl(226,70%,55%) !important;
-            --primary-foreground: hsl(0,0%,100%) !important;
-            --muted: hsl(220,14%,96%) !important;
-            --muted-foreground: hsl(220,9%,46%) !important;
-            --accent: hsl(280,70%,90%) !important;
-            --accent-foreground: hsl(226,70%,55%) !important;
-            --destructive: hsl(0,73%,42%) !important;
-            --destructive-foreground: hsl(0,0%,100%) !important;
-            --border: hsl(214,32%,91%) !important;
-            --input: hsl(220,14%,96%) !important;
-            --ring: hsl(226,70%,55%) !important;
-          }`;
+          style.textContent = `
+            :root {
+              --background: rgb(255, 255, 255) !important;
+              --foreground: rgb(68, 68, 68) !important;
+              --card: rgb(255, 255, 255) !important;
+              --card-foreground: rgb(68, 68, 68) !important;
+              --popover: rgb(255, 255, 255) !important;
+              --popover-foreground: rgb(68, 68, 68) !important;
+              --primary: rgb(98, 52, 235) !important;
+              --primary-foreground: rgb(248, 248, 248) !important;
+              --secondary: rgb(98, 52, 235) !important;
+              --secondary-foreground: rgb(248, 248, 248) !important;
+              --muted: rgb(251, 252, 253) !important;
+              --muted-foreground: rgb(156, 158, 165) !important;
+              --accent: rgb(243, 232, 255) !important;
+              --accent-foreground: rgb(98, 52, 235) !important;
+              --destructive: rgb(153, 27, 27) !important;
+              --destructive-foreground: rgb(255, 255, 255) !important;
+              --border: rgb(203, 203, 203) !important;
+              --input: rgb(103, 48, 208) !important;
+              --ring: rgb(124, 58, 237) !important;
+              --chart-1: rgb(124, 58, 237) !important;
+              --chart-2: rgb(103, 48, 208) !important;
+              --chart-3: rgb(93, 56, 192) !important;
+              --chart-4: rgb(82, 56, 166) !important;
+              --chart-5: rgb(72, 49, 149) !important;
+              --sidebar: rgb(249, 249, 253) !important;
+              --sidebar-foreground: rgb(0, 0, 0) !important;
+              --sidebar-primary: rgb(124, 58, 237) !important;
+              --sidebar-primary-foreground: rgb(255, 255, 255) !important;
+              --sidebar-accent: rgb(202, 138, 238) !important;
+              --sidebar-accent-foreground: rgb(82, 56, 166) !important;
+              --sidebar-border: rgb(0, 0, 0) !important;
+              --sidebar-ring: rgb(124, 58, 237) !important;
+            }
+            .dark {
+              --background: rgb(46, 46, 46) !important;
+              --foreground: rgb(235, 235, 235) !important;
+              --card: rgb(57, 57, 57) !important;
+              --card-foreground: rgb(235, 235, 235) !important;
+              --popover: rgb(68, 68, 68) !important;
+              --popover-foreground: rgb(235, 235, 235) !important;
+              --primary: rgb(90, 245, 250) !important;
+              --primary-foreground: rgb(46, 46, 46) !important;
+              --secondary: rgb(178, 178, 178) !important;
+              --secondary-foreground: rgb(46, 46, 46) !important;
+              --muted: rgb(68, 68, 68) !important;
+              --muted-foreground: rgb(182, 182, 182) !important;
+              --accent: rgb(90, 245, 250) !important;
+              --accent-foreground: rgb(46, 46, 46) !important;
+              --destructive: rgb(90, 245, 250) !important;
+              --destructive-foreground: rgb(248, 248, 248) !important;
+              --border: rgb(118, 118, 118) !important;
+              --input: rgb(94, 94, 94) !important;
+              --ring: rgb(90, 245, 250) !important;
+              --chart-1: rgb(90, 245, 250) !important;
+              --chart-2: rgb(255, 165, 255) !important;
+              --chart-3: rgb(188, 116, 237) !important;
+              --chart-4: rgb(246, 187, 119) !important;
+              --chart-5: rgb(220, 147, 222) !important;
+              --sidebar: rgb(46, 46, 46) !important;
+              --sidebar-foreground: rgb(248, 248, 248) !important;
+              --sidebar-primary: rgb(90, 245, 250) !important;
+              --sidebar-primary-foreground: rgb(248, 248, 248) !important;
+              --sidebar-accent: rgb(129, 81, 169) !important;
+              --sidebar-accent-foreground: rgb(248, 248, 248) !important;
+              --sidebar-border: rgb(94, 94, 94) !important;
+              --sidebar-ring: rgb(90, 245, 250) !important;
+            }
+          `;
           doc.head.appendChild(style);
         },
         ignoreElements: (element) => {
