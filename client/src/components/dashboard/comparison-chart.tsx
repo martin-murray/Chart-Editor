@@ -623,7 +623,7 @@ export function ComparisonChart({
       // Wait for chart to render completely
       await new Promise(resolve => setTimeout(resolve, 200));
       
-      // Use html2canvas to capture the chart with more compatible options
+      // Use html2canvas to capture the chart with OKLCH color fallbacks
       const canvas = await html2canvas(chartElement, {
         backgroundColor: '#ffffff',
         scale: 1,
@@ -632,6 +632,28 @@ export function ComparisonChart({
         logging: false,
         width: chartElement.offsetWidth,
         height: chartElement.offsetHeight,
+        onclone: (doc) => {
+          // Override OKLCH colors with compatible HSL/hex fallbacks
+          const style = doc.createElement('style');
+          style.textContent = `:root, .dark { 
+            --background: hsl(0,0%,100%) !important;
+            --foreground: hsl(0,0%,12%) !important;
+            --card: hsl(0,0%,100%) !important;
+            --card-foreground: hsl(0,0%,12%) !important;
+            --primary: hsl(226,70%,55%) !important;
+            --primary-foreground: hsl(0,0%,100%) !important;
+            --muted: hsl(220,14%,96%) !important;
+            --muted-foreground: hsl(220,9%,46%) !important;
+            --accent: hsl(280,70%,90%) !important;
+            --accent-foreground: hsl(226,70%,55%) !important;
+            --destructive: hsl(0,73%,42%) !important;
+            --destructive-foreground: hsl(0,0%,100%) !important;
+            --border: hsl(214,32%,91%) !important;
+            --input: hsl(220,14%,96%) !important;
+            --ring: hsl(226,70%,55%) !important;
+          }`;
+          doc.head.appendChild(style);
+        },
         ignoreElements: (element) => {
           const tagName = element.tagName?.toLowerCase();
           return tagName === 'script' || tagName === 'style';
@@ -688,7 +710,7 @@ export function ComparisonChart({
       // Wait for chart to render completely
       await new Promise(resolve => setTimeout(resolve, 200));
       
-      // Use html2canvas to capture the chart with more compatible options
+      // Use html2canvas to capture the chart with OKLCH color fallbacks
       const canvas = await html2canvas(chartElement, {
         backgroundColor: '#ffffff',
         scale: 1,
@@ -697,6 +719,28 @@ export function ComparisonChart({
         logging: false,
         width: chartElement.offsetWidth,
         height: chartElement.offsetHeight,
+        onclone: (doc) => {
+          // Override OKLCH colors with compatible HSL/hex fallbacks
+          const style = doc.createElement('style');
+          style.textContent = `:root, .dark { 
+            --background: hsl(0,0%,100%) !important;
+            --foreground: hsl(0,0%,12%) !important;
+            --card: hsl(0,0%,100%) !important;
+            --card-foreground: hsl(0,0%,12%) !important;
+            --primary: hsl(226,70%,55%) !important;
+            --primary-foreground: hsl(0,0%,100%) !important;
+            --muted: hsl(220,14%,96%) !important;
+            --muted-foreground: hsl(220,9%,46%) !important;
+            --accent: hsl(280,70%,90%) !important;
+            --accent-foreground: hsl(226,70%,55%) !important;
+            --destructive: hsl(0,73%,42%) !important;
+            --destructive-foreground: hsl(0,0%,100%) !important;
+            --border: hsl(214,32%,91%) !important;
+            --input: hsl(220,14%,96%) !important;
+            --ring: hsl(226,70%,55%) !important;
+          }`;
+          doc.head.appendChild(style);
+        },
         ignoreElements: (element) => {
           const tagName = element.tagName?.toLowerCase();
           return tagName === 'script' || tagName === 'style';
@@ -899,19 +943,7 @@ export function ComparisonChart({
             </div>
           )}
 
-          {/* Annotation Management */}
-          {annotations.length > 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={clearAllAnnotations}
-              className="h-7 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
-              data-testid="button-clear-annotations"
-            >
-              <X className="w-3 h-3 mr-1" />
-              Clear All
-            </Button>
-          )}
+          {/* Annotation Management - removed clear all button per user request */}
         
         </div>
       </div>

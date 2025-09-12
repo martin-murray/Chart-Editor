@@ -139,6 +139,12 @@ Testing preference: User prefers to handle testing themselves rather than intern
 - **Persistent Storage**: All market data, alerts, and summaries stored in PostgreSQL
 
 ## Recent Changes
+- **September 12, 2025**: UI cleanup and fixed OKLCH export issue
+  - **Removed Clear All button**: Eliminated red "Clear All" annotation button from comparison chart per user request for cleaner interface
+  - **Added 0% reference line**: Added solid white 1px horizontal reference line at 0% in comparison chart for better visual guidance
+  - **FIXED OKLCH EXPORT BUG**: Resolved "Unable to export PNG/PDF - Attempting to parse unsupported color function 'oklch'" error
+  - **Export compatibility**: Added onclone function to html2canvas that converts OKLCH colors to HSL fallbacks during PNG/PDF export
+  - **Export reliability**: Both PNG and PDF exports now work properly with modern CSS color functions
 - **September 12, 2025**: Enhanced annotation functionality with unified controls across chart tabs
   - **DUAL FUNCTION ANNOTATION BUTTONS**: Text and Measure buttons in price chart header now control annotations for both price/volume tabs AND comparison chart
   - **Streamlined UI**: Removed duplicate annotation buttons from comparison chart for cleaner interface
