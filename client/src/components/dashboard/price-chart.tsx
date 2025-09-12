@@ -2265,6 +2265,20 @@ export function PriceChart({
                     })}
                   </Bar>
                   
+                  {/* Average Daily Volume Reference Line */}
+                  {chartDataWithPercentage && chartDataWithPercentage.length > 0 && (() => {
+                    const totalVolume = chartDataWithPercentage.reduce((sum, data) => sum + (data.volume || 0), 0);
+                    const avgVolume = totalVolume / chartDataWithPercentage.length;
+                    return (
+                      <ReferenceLine 
+                        y={avgVolume} 
+                        stroke="#FAFF50" 
+                        strokeWidth={1}
+                        strokeDasharray="0"
+                        label={{ value: "Avg Daily Volume", position: "top", fill: "#FAFF50", fontSize: 11 }}
+                      />
+                    );
+                  })()}
 
                 </BarChart>
               </ResponsiveContainer>
