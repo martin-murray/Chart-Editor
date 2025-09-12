@@ -739,7 +739,80 @@ export function ComparisonChart({
     }
   };
 
-  // PNG export function for shared export functionality
+  // Helper function to capture full chart with legend as canvas
+  const captureFullChartAsCanvas = async (): Promise<HTMLCanvasElement> => {
+    const fullContainer = document.querySelector('[data-testid="comparison-chart-full-container"]') as HTMLElement;
+    if (!fullContainer) {
+      throw new Error('Full chart container element not found');
+    }
+
+    // Wait for chart to render completely
+    await new Promise(resolve => setTimeout(resolve, 200));
+
+    // Color mapping for OKLCH fallbacks
+    const colorMap: Record<string, string> = {
+      'oklch(0.4853 0.2967 278.3947)': 'rgb(124, 58, 237)',
+      'oklch(0.4032 0.1861 327.5134)': 'rgb(103, 48, 208)',
+      'oklch(0.3665 0.2460 267.3473)': 'rgb(93, 56, 192)',
+      'oklch(0.3218 0.2190 265.8914)': 'rgb(82, 56, 166)',
+      'oklch(0.2839 0.1937 265.6581)': 'rgb(72, 49, 149)',
+      'oklch(1.0000 0 0)': 'rgb(255, 255, 255)',
+      'oklch(0.2686 0 0)': 'rgb(68, 68, 68)',
+      'oklch(0.1822 0 0)': 'rgb(46, 46, 46)',
+      'oklch(0.9219 0 0)': 'rgb(235, 235, 235)',
+      'oklch(0.1329 0 0)': 'rgb(34, 34, 34)',
+    };
+
+    return await html2canvas(fullContainer, {
+      scale: 2,
+      backgroundColor: null, // Transparent background
+      useCORS: true,
+      allowTaint: true,
+      onclone: (clonedDoc) => {
+        const clonedContainer = clonedDoc.querySelector('[data-testid="comparison-chart-full-container"]') as HTMLElement;
+        if (!clonedContainer) return;
+
+        // Normalize OKLCH colors to RGB in all elements
+        const normalizeColors = (element: Element) => {
+          if (element instanceof HTMLElement) {
+            const computedStyle = window.getComputedStyle(element);
+            const style = element.style;
+            
+            // Normalize color properties
+            ['color', 'backgroundColor', 'borderColor', 'fill', 'stroke'].forEach(prop => {
+              const value = computedStyle.getPropertyValue(prop);
+              if (value && value.includes('oklch')) {
+                const rgbValue = colorMap[value] || 'rgb(68, 68, 68)';
+                (style as any)[prop] = rgbValue;
+              }
+            });
+          }
+        };
+
+        // Apply normalization to all elements
+        normalizeColors(clonedContainer);
+        clonedContainer.querySelectorAll('*').forEach(normalizeColors);
+
+        // Handle SVG elements specifically
+        const svgElement = clonedContainer.querySelector('svg');
+        if (svgElement) {
+          svgElement.querySelectorAll('*').forEach(el => {
+            ['stroke', 'fill', 'stop-color'].forEach(attr => {
+              const value = el.getAttribute(attr);
+              if (value && value.includes('oklch')) {
+                el.setAttribute(attr, colorMap[value] || 'rgb(68, 68, 68)');
+              }
+            });
+          });
+        }
+      },
+      ignoreElements: (element) => {
+        return element.classList.contains('recharts-tooltip-wrapper');
+      }
+    });
+  };
+
+  // PNG export function
   const exportPNG = async () => {
     if (chartData.length === 0) {
       toast({
@@ -751,134 +824,32 @@ export function ComparisonChart({
     }
 
     try {
-      // Find the chart container element
-      const chartElement = document.querySelector('[data-testid="comparison-chart-container"]') as HTMLElement;
-      if (!chartElement) {
-        console.error('Chart element not found');
-        throw new Error('Chart element not found');
+      console.log('Capturing full comparison chart with legend using html2canvas...');
+      const canvas = await captureFullChartAsCanvas();
+      
+      // Ensure minimum width for high quality
+      const minWidth = 2000;
+      let finalCanvas = canvas;
+      
+      if (canvas.width < minWidth) {
+        const scale = minWidth / canvas.width;
+        const scaledCanvas = document.createElement('canvas');
+        const ctx = scaledCanvas.getContext('2d')!;
+        scaledCanvas.width = minWidth;
+        scaledCanvas.height = canvas.height * scale;
+        ctx.drawImage(canvas, 0, 0, scaledCanvas.width, scaledCanvas.height);
+        finalCanvas = scaledCanvas;
       }
-
-      console.log('Capturing comparison chart with html2canvas...');
-      
-      // Wait for chart to render completely
-      await new Promise(resolve => setTimeout(resolve, 200));
-      
-      // Export directly from SVG to avoid html2canvas OKLCH issues
-      const svgElement = chartElement.querySelector('svg') as SVGElement;
-      if (!svgElement) {
-        throw new Error('SVG element not found in chart');
-      }
-      
-      // Clone the SVG and normalize colors to RGB
-      const svgClone = svgElement.cloneNode(true) as SVGElement;
-      
-      // Color mapping for OKLCH fallbacks
-      const colorMap: Record<string, string> = {
-        'oklch(0.4853 0.2967 278.3947)': 'rgb(124, 58, 237)',
-        'oklch(0.4032 0.1861 327.5134)': 'rgb(103, 48, 208)',
-        'oklch(0.3665 0.2460 267.3473)': 'rgb(93, 56, 192)',
-        'oklch(0.3218 0.2190 265.8914)': 'rgb(82, 56, 166)',
-        'oklch(0.2839 0.1937 265.6581)': 'rgb(72, 49, 149)',
-        'oklch(1.0000 0 0)': 'rgb(255, 255, 255)',
-        'oklch(0.2686 0 0)': 'rgb(68, 68, 68)',
-        'oklch(0.1822 0 0)': 'rgb(46, 46, 46)',
-        'oklch(0.9219 0 0)': 'rgb(235, 235, 235)',
-      };
-      
-      // Normalize colors in all SVG elements
-      const normalizeElement = (element: Element) => {
-        const computedStyle = window.getComputedStyle(element as HTMLElement);
-        const attributes = ['stroke', 'fill', 'stop-color'];
-        
-        attributes.forEach(attr => {
-          const computedValue = computedStyle.getPropertyValue(attr);
-          if (computedValue && computedValue !== 'none') {
-            if (computedValue.includes('oklch')) {
-              // Use color mapping for OKLCH values
-              const rgbValue = colorMap[computedValue] || 'rgb(68, 68, 68)';
-              element.setAttribute(attr, rgbValue);
-            } else if (computedValue.startsWith('rgb')) {
-              element.setAttribute(attr, computedValue);
-            }
-          }
-        });
-        
-        // Handle text elements
-        if (element.tagName === 'text') {
-          const textColor = computedStyle.color;
-          if (textColor.includes('oklch')) {
-            element.setAttribute('fill', colorMap[textColor] || 'rgb(68, 68, 68)');
-          } else if (textColor.startsWith('rgb')) {
-            element.setAttribute('fill', textColor);
-          }
-          
-          // Preserve font information for consistency
-          const fontFamily = computedStyle.fontFamily || 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-          const fontSize = computedStyle.fontSize || '12px';
-          const fontWeight = computedStyle.fontWeight || 'normal';
-          
-          element.setAttribute('font-family', fontFamily);
-          element.setAttribute('font-size', fontSize);
-          element.setAttribute('font-weight', fontWeight);
-        }
-        
-        // Remove style attributes that might contain CSS variables
-        if (element.hasAttribute('style')) {
-          const style = element.getAttribute('style') || '';
-          if (style.includes('var(') || style.includes('oklch')) {
-            element.removeAttribute('style');
-          }
-        }
-      };
-      
-      // Process the cloned SVG and all its children
-      normalizeElement(svgClone);
-      const allElements = svgClone.querySelectorAll('*');
-      allElements.forEach(normalizeElement);
-      
-      // Serialize SVG to data URL
-      const svgData = new XMLSerializer().serializeToString(svgClone);
-      const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-      const svgUrl = URL.createObjectURL(svgBlob);
-      
-      // Create canvas and draw SVG
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d')!;
-      const img = document.createElement('img');
-      
-      await new Promise<void>((resolve, reject) => {
-        img.onload = () => {
-          // Ensure minimum 2000px width for PNG export
-          const minWidth = 2000;
-          const aspectRatio = img.height / img.width;
-          
-          canvas.width = Math.max(minWidth, img.width);
-          canvas.height = canvas.width * aspectRatio;
-          
-          // Use transparent background for PNG export
-          // No background fill - canvas starts transparent
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          URL.revokeObjectURL(svgUrl);
-          resolve();
-        };
-        img.onerror = () => {
-          URL.revokeObjectURL(svgUrl);
-          reject(new Error('Failed to load SVG image'));
-        };
-        img.src = svgUrl;
-      });
-
-      console.log('Canvas created successfully, converting to blob...');
       
       // Convert to blob and download
-      canvas.toBlob((blob) => {
+      finalCanvas.toBlob((blob) => {
         if (blob) {
           const fileName = `comparison-chart-${tickers.filter(t => t.visible).map(t => t.symbol).join('-')}-${new Date().toISOString().split('T')[0]}.png`;
           saveAs(blob, fileName);
           
           toast({
-            title: "Export Successful",
-            description: "PNG file has been downloaded",
+            title: "Export Successful", 
+            description: "PNG file with legend has been downloaded",
           });
         } else {
           throw new Error('Failed to create blob from canvas');
@@ -898,7 +869,7 @@ export function ComparisonChart({
   const exportPDF = async () => {
     if (chartData.length === 0) {
       toast({
-        title: "No Data",
+        title: "No Data", 
         description: "No chart data available to export",
         variant: "destructive",
       });
@@ -909,131 +880,27 @@ export function ComparisonChart({
       // Import jsPDF dynamically
       const { jsPDF } = await import('jspdf');
       
-      // Find the chart container element
-      const chartElement = document.querySelector('[data-testid="comparison-chart-container"]') as HTMLElement;
-      if (!chartElement) {
-        throw new Error('Chart element not found');
-      }
+      console.log('Capturing full comparison chart with legend for PDF...');
+      const canvas = await captureFullChartAsCanvas();
 
-      // Wait for chart to render completely
-      await new Promise(resolve => setTimeout(resolve, 200));
-      
-      // Export directly from SVG to avoid html2canvas OKLCH issues
-      const svgElement = chartElement.querySelector('svg') as SVGElement;
-      if (!svgElement) {
-        throw new Error('SVG element not found in chart');
-      }
-      
-      // Clone the SVG and normalize colors to RGB
-      const svgClone = svgElement.cloneNode(true) as SVGElement;
-      
-      // Color mapping for OKLCH fallbacks
-      const colorMap: Record<string, string> = {
-        'oklch(0.4853 0.2967 278.3947)': 'rgb(124, 58, 237)',
-        'oklch(0.4032 0.1861 327.5134)': 'rgb(103, 48, 208)',
-        'oklch(0.3665 0.2460 267.3473)': 'rgb(93, 56, 192)',
-        'oklch(0.3218 0.2190 265.8914)': 'rgb(82, 56, 166)',
-        'oklch(0.2839 0.1937 265.6581)': 'rgb(72, 49, 149)',
-        'oklch(1.0000 0 0)': 'rgb(255, 255, 255)',
-        'oklch(0.2686 0 0)': 'rgb(68, 68, 68)',
-        'oklch(0.1822 0 0)': 'rgb(46, 46, 46)',
-        'oklch(0.9219 0 0)': 'rgb(235, 235, 235)',
-      };
-      
-      // Normalize colors in all SVG elements
-      const normalizeElement = (element: Element) => {
-        const computedStyle = window.getComputedStyle(element as HTMLElement);
-        const attributes = ['stroke', 'fill', 'stop-color'];
-        
-        attributes.forEach(attr => {
-          const computedValue = computedStyle.getPropertyValue(attr);
-          if (computedValue && computedValue !== 'none') {
-            if (computedValue.includes('oklch')) {
-              // Use color mapping for OKLCH values
-              const rgbValue = colorMap[computedValue] || 'rgb(68, 68, 68)';
-              element.setAttribute(attr, rgbValue);
-            } else if (computedValue.startsWith('rgb')) {
-              element.setAttribute(attr, computedValue);
-            }
-          }
-        });
-        
-        // Handle text elements
-        if (element.tagName === 'text') {
-          const textColor = computedStyle.color;
-          if (textColor.includes('oklch')) {
-            element.setAttribute('fill', colorMap[textColor] || 'rgb(68, 68, 68)');
-          } else if (textColor.startsWith('rgb')) {
-            element.setAttribute('fill', textColor);
-          }
-          
-          // Preserve font information for consistency
-          const fontFamily = computedStyle.fontFamily || 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-          const fontSize = computedStyle.fontSize || '12px';
-          const fontWeight = computedStyle.fontWeight || 'normal';
-          
-          element.setAttribute('font-family', fontFamily);
-          element.setAttribute('font-size', fontSize);
-          element.setAttribute('font-weight', fontWeight);
-        }
-        
-        // Remove style attributes that might contain CSS variables
-        if (element.hasAttribute('style')) {
-          const style = element.getAttribute('style') || '';
-          if (style.includes('var(') || style.includes('oklch')) {
-            element.removeAttribute('style');
-          }
-        }
-      };
-      
-      // Process the cloned SVG and all its children
-      normalizeElement(svgClone);
-      const allElements = svgClone.querySelectorAll('*');
-      allElements.forEach(normalizeElement);
-      
-      // Serialize SVG to data URL
-      const svgData = new XMLSerializer().serializeToString(svgClone);
-      const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-      const svgUrl = URL.createObjectURL(svgBlob);
-      
-      // Create canvas and draw SVG
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d')!;
-      const img = document.createElement('img');
-      
-      await new Promise<void>((resolve, reject) => {
-        img.onload = () => {
-          canvas.width = img.width;
-          canvas.height = img.height;
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-          ctx.drawImage(img, 0, 0);
-          URL.revokeObjectURL(svgUrl);
-          resolve();
-        };
-        img.onerror = () => {
-          URL.revokeObjectURL(svgUrl);
-          reject(new Error('Failed to load SVG image'));
-        };
-        img.src = svgUrl;
+      // Calculate dimensions for PDF (use actual canvas dimensions for best quality)
+      const imgData = canvas.toDataURL('image/png', 1.0); // Maximum quality
+      const pdf = new jsPDF({
+        orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
+        unit: 'px',
+        format: [canvas.width, canvas.height]
       });
-
-      // Calculate dimensions for PDF
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('l', 'mm', 'a4'); // landscape orientation
-      const imgWidth = 280; // A4 landscape width minus margins
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
       
-      // Add the image to PDF
-      pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+      // Add the full-quality image to PDF
+      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
       
       // Save the PDF
       const fileName = `comparison-chart-${tickers.filter(t => t.visible).map(t => t.symbol).join('-')}-${new Date().toISOString().split('T')[0]}.pdf`;
       pdf.save(fileName);
       
       toast({
-        title: "Export Successful",
-        description: "PDF file has been downloaded",
+        title: "Export Successful", 
+        description: "PDF file with legend has been downloaded",
       });
     } catch (error) {
       console.error('PDF export error:', error);
@@ -1159,7 +1026,7 @@ export function ComparisonChart({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" data-testid="comparison-chart-full-container">
       {/* Header with Ticker Management and Export */}
       <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
         <div className="flex flex-wrap items-center gap-2">
