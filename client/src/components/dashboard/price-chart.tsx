@@ -1507,6 +1507,42 @@ export function PriceChart({
     }
   };
 
+  const exportComparisonAsPNG = () => {
+    // Get the comparison chart and trigger PNG export
+    const comparisonChart = document.querySelector('[data-testid="comparison-chart-container"]');
+    if (comparisonChart) {
+      // Dispatch a custom event to trigger PNG export in the comparison chart
+      const event = new CustomEvent('exportPNG');
+      comparisonChart.dispatchEvent(event);
+    } else {
+      alert('Comparison chart not found. Please ensure the comparison chart is visible.');
+    }
+  };
+
+  const exportComparisonAsPDF = () => {
+    // Get the comparison chart and trigger PDF export
+    const comparisonChart = document.querySelector('[data-testid="comparison-chart-container"]');
+    if (comparisonChart) {
+      // Dispatch a custom event to trigger PDF export in the comparison chart
+      const event = new CustomEvent('exportPDF');
+      comparisonChart.dispatchEvent(event);
+    } else {
+      alert('Comparison chart not found. Please ensure the comparison chart is visible.');
+    }
+  };
+
+  const exportComparisonAsSVG = () => {
+    // Get the comparison chart and trigger SVG export
+    const comparisonChart = document.querySelector('[data-testid="comparison-chart-container"]');
+    if (comparisonChart) {
+      // Dispatch a custom event to trigger SVG export in the comparison chart
+      const event = new CustomEvent('exportSVG');
+      comparisonChart.dispatchEvent(event);
+    } else {
+      alert('Comparison chart not found. Please ensure the comparison chart is visible.');
+    }
+  };
+
   return (
     <div className="w-full space-y-6">
       {/* Header Section */}
@@ -1723,6 +1759,14 @@ export function PriceChart({
                     <DropdownMenuItem onClick={exportComparisonAsPNG} className="cursor-pointer">
                       <Download className="w-4 h-4 mr-2" />
                       Export as PNG
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={exportComparisonAsPDF} className="cursor-pointer">
+                      <Download className="w-4 h-4 mr-2" />
+                      Export as PDF
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={exportComparisonAsSVG} className="cursor-pointer">
+                      <Download className="w-4 h-4 mr-2" />
+                      Export as SVG
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={exportComparisonAsCSV} className="cursor-pointer">
                       <Download className="w-4 h-4 mr-2" />

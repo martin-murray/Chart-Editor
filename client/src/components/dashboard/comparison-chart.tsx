@@ -349,15 +349,193 @@ export function ComparisonChart({ timeframe, startDate, endDate }: ComparisonCha
     }
   };
 
-  // Add event listener for shared export functionality
+  // PNG export function for shared export functionality
+  const exportPNG = async () => {
+    if (chartData.length === 0) {
+      toast({
+        title: "No Data",
+        description: "No chart data available to export",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Find the chart container element
+      const chartElement = document.querySelector('[data-testid="comparison-chart-container"]') as HTMLElement;
+      if (!chartElement) {
+        console.error('Chart element not found');
+        throw new Error('Chart element not found');
+      }
+
+      console.log('Capturing comparison chart with html2canvas...');
+      
+      // Use html2canvas to capture the chart
+      const canvas = await html2canvas(chartElement, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        foreignObjectRendering: true,
+        width: chartElement.offsetWidth,
+        height: chartElement.offsetHeight,
+        ignoreElements: (element) => {
+          const tagName = element.tagName?.toLowerCase();
+          return tagName === 'script' || tagName === 'style';
+        }
+      });
+
+      console.log('Canvas created successfully, converting to blob...');
+      
+      // Convert to blob and download
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const fileName = `comparison-chart-${tickers.map(t => t.symbol).join('-')}-${new Date().toISOString().split('T')[0]}.png`;
+          saveAs(blob, fileName);
+          
+          toast({
+            title: "Export Successful",
+            description: "PNG file has been downloaded",
+          });
+        } else {
+          throw new Error('Failed to create blob from canvas');
+        }
+      }, 'image/png', 1.0);
+    } catch (error) {
+      console.error('Comparison PNG export error:', error);
+      toast({
+        title: "Export Failed",
+        description: "Unable to export PNG file - try CSV export instead",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // PDF export function for shared export functionality
+  const exportPDF = async () => {
+    if (chartData.length === 0) {
+      toast({
+        title: "No Data",
+        description: "No chart data available to export",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Import jsPDF dynamically
+      const { jsPDF } = await import('jspdf');
+      
+      // Find the chart container element
+      const chartElement = document.querySelector('[data-testid="comparison-chart-container"]') as HTMLElement;
+      if (!chartElement) {
+        throw new Error('Chart element not found');
+      }
+
+      // Use html2canvas to capture the chart
+      const canvas = await html2canvas(chartElement, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        foreignObjectRendering: true,
+        width: chartElement.offsetWidth,
+        height: chartElement.offsetHeight,
+      });
+
+      // Calculate dimensions for PDF
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('l', 'mm', 'a4'); // landscape orientation
+      const imgWidth = 280; // A4 landscape width minus margins
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      // Add the image to PDF
+      pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+      
+      // Save the PDF
+      const fileName = `comparison-chart-${tickers.map(t => t.symbol).join('-')}-${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.save(fileName);
+      
+      toast({
+        title: "Export Successful",
+        description: "PDF file has been downloaded",
+      });
+    } catch (error) {
+      console.error('PDF export error:', error);
+      toast({
+        title: "Export Failed",
+        description: "Unable to export PDF file",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // SVG export function for shared export functionality
+  const exportSVG = async () => {
+    if (chartData.length === 0) {
+      toast({
+        title: "No Data",
+        description: "No chart data available to export",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Find the SVG element within the chart
+      const svgElement = document.querySelector('[data-testid="comparison-chart-container"] svg') as SVGElement;
+      if (!svgElement) {
+        throw new Error('SVG chart element not found');
+      }
+
+      // Clone the SVG to avoid modifying the original
+      const svgClone = svgElement.cloneNode(true) as SVGElement;
+      
+      // Add necessary attributes for standalone SVG
+      svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+      svgClone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+      
+      // Get SVG content as string
+      const svgData = new XMLSerializer().serializeToString(svgClone);
+      const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+      
+      // Download the SVG
+      const fileName = `comparison-chart-${tickers.map(t => t.symbol).join('-')}-${new Date().toISOString().split('T')[0]}.svg`;
+      saveAs(svgBlob, fileName);
+      
+      toast({
+        title: "Export Successful",
+        description: "SVG file has been downloaded",
+      });
+    } catch (error) {
+      console.error('SVG export error:', error);
+      toast({
+        title: "Export Failed",
+        description: "Unable to export SVG file",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Add event listeners for shared export functionality
   useEffect(() => {
     const chartContainer = document.querySelector('[data-testid="comparison-chart-container"]');
     if (chartContainer) {
       const handleExportCSV = () => exportCSV();
+      const handleExportPNG = () => exportPNG();
+      const handleExportPDF = () => exportPDF();
+      const handleExportSVG = () => exportSVG();
+      
       chartContainer.addEventListener('exportCSV', handleExportCSV);
+      chartContainer.addEventListener('exportPNG', handleExportPNG);
+      chartContainer.addEventListener('exportPDF', handleExportPDF);
+      chartContainer.addEventListener('exportSVG', handleExportSVG);
       
       return () => {
         chartContainer.removeEventListener('exportCSV', handleExportCSV);
+        chartContainer.removeEventListener('exportPNG', handleExportPNG);
+        chartContainer.removeEventListener('exportPDF', handleExportPDF);
+        chartContainer.removeEventListener('exportSVG', handleExportSVG);
       };
     }
   }, [chartData, tickers]);
