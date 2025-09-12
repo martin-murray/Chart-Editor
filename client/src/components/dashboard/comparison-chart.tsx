@@ -60,6 +60,19 @@ export function ComparisonChart({ timeframe, startDate, endDate }: ComparisonCha
   const [recentSearches, setRecentSearches] = useState<SearchResult[]>([]);
   const { toast } = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Click outside handler
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
   
   // Load recent searches from localStorage on mount
   useEffect(() => {
@@ -249,6 +262,45 @@ export function ComparisonChart({ timeframe, startDate, endDate }: ComparisonCha
     });
     return config;
   }, [tickers]);
+
+  // Add to recent searches functionality
+  const addToRecentSearches = (stock: SearchResult) => {
+    const newRecent = [stock, ...recentSearches.filter(s => s.symbol !== stock.symbol)].slice(0, 6);
+    setRecentSearches(newRecent);
+    localStorage.setItem('recentComparisonSearches', JSON.stringify(newRecent));
+  };
+
+  // Handle input focus and dropdown positioning
+  const updateDropdownPosition = () => {
+    if (inputRef.current) {
+      const rect = inputRef.current.getBoundingClientRect();
+      setDropdownPosition({
+        top: rect.bottom + window.scrollY + 4,
+        left: rect.left + window.scrollX,
+        width: rect.width
+      });
+    }
+  };
+
+  const handleInputChange = (value: string) => {
+    setSearchTerm(value);
+    if (value.length > 0) {
+      updateDropdownPosition();
+      setIsDropdownOpen(true);
+    } else {
+      setIsDropdownOpen(false);
+    }
+  };
+
+  const handleInputFocus = () => {
+    updateDropdownPosition();
+    setIsDropdownOpen(true);
+  };
+
+  const handleSelectStock = (stock: SearchResult) => {
+    addTicker(stock.symbol);
+    addToRecentSearches(stock);
+  };
 
   const addTicker = (symbol: string) => {
     if (tickers.length >= 5) {
@@ -634,37 +686,167 @@ export function ComparisonChart({ timeframe, startDate, endDate }: ComparisonCha
         {/* Export Buttons */}
       </div>
 
-      {/* Search Input */}
+      {/* Search Input with Predictive Search */}
       {isSearchVisible && (
-        <Card className="p-3">
-          <div className="flex items-center gap-2">
-            <Search className="h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Enter ticker symbol (e.g., AAPL, TSLA)"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && searchTerm.trim()) {
-                  addTicker(searchTerm.trim());
-                }
-                if (e.key === 'Escape') {
-                  setIsSearchVisible(false);
-                  setSearchTerm('');
-                }
+        <div ref={containerRef}>
+          <Card className="p-3">
+            <div className="flex items-center gap-2">
+              <Search className="h-4 w-4 text-muted-foreground" />
+              <Input
+                ref={inputRef}
+                placeholder="Search stocks (e.g., AAPL, Apple Inc)"
+                value={searchTerm}
+                onChange={(e) => handleInputChange(e.target.value)}
+                onFocus={handleInputFocus}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && searchTerm.trim()) {
+                    addTicker(searchTerm.trim());
+                  }
+                  if (e.key === 'Escape') {
+                    setIsSearchVisible(false);
+                    setSearchTerm('');
+                    setIsDropdownOpen(false);
+                  }
+                }}
+                className="flex-1"
+                data-testid="input-ticker-search"
+              />
+              <Button
+                onClick={() => searchTerm.trim() && addTicker(searchTerm.trim())}
+                disabled={!searchTerm.trim()}
+                size="sm"
+                data-testid="button-add-ticker-search"
+              >
+                Add
+              </Button>
+            </div>
+          </Card>
+
+          {/* Search Results Dropdown */}
+          {isDropdownOpen && createPortal(
+            <Card 
+              className="max-h-80 overflow-y-auto shadow-xl border-border bg-card"
+              style={{
+                position: 'absolute',
+                top: dropdownPosition.top,
+                left: dropdownPosition.left,
+                width: dropdownPosition.width,
+                zIndex: 10000
               }}
-              className="flex-1"
-              data-testid="input-ticker-search"
-            />
-            <Button
-              onClick={() => searchTerm.trim() && addTicker(searchTerm.trim())}
-              disabled={!searchTerm.trim()}
-              size="sm"
-              data-testid="button-add-ticker-search"
             >
-              Add
-            </Button>
-          </div>
-        </Card>
+              {/* Show recent searches when query is empty */}
+              {(!searchTerm.trim() && recentSearches.length > 0) ? (
+                <div className="py-2">
+                  <div className="px-4 py-2 text-xs font-medium text-muted-foreground border-b border-border/50">
+                    Recent Searches
+                  </div>
+                  {recentSearches.map((stock) => {
+                    const { value: changeValue, isPositive } = formatPercentChange(stock.percentChange);
+                    return (
+                      <div
+                        key={`recent-${stock.symbol}-${stock.name}`}
+                        className="w-full px-4 py-3 hover:bg-muted/50 transition-colors border-b border-border/50 last:border-b-0 cursor-pointer"
+                        onClick={() => handleSelectStock(stock)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-foreground">{stock.symbol}</span>
+                              <span className="text-sm text-muted-foreground truncate">
+                                {stock.name}
+                              </span>
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {stock.marketCap}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 ml-4">
+                            <span className="font-medium text-foreground">
+                              ${parseFloat(stock.price).toFixed(2)}
+                            </span>
+                            <div className={cn(
+                              "flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium",
+                              isPositive 
+                                ? "bg-green-500/10 text-green-600 dark:text-green-400" 
+                                : "bg-red-500/10 text-red-600 dark:text-red-400"
+                            )}>
+                              {isPositive ? (
+                                <TrendingUp className="w-3 h-3" />
+                              ) : (
+                                <TrendingDown className="w-3 h-3" />
+                              )}
+                              {changeValue}%
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : searchTerm.trim().length >= 2 ? (
+                <div className="py-2">
+                  {isSearchLoading ? (
+                    <div className="px-4 py-3 text-center text-muted-foreground">
+                      Searching...
+                    </div>
+                  ) : searchResults.length > 0 ? (
+                    searchResults.map((stock) => {
+                      const { value: changeValue, isPositive } = formatPercentChange(stock.percentChange);
+                      return (
+                        <div
+                          key={`search-${stock.symbol}-${stock.name}`}
+                          className="w-full px-4 py-3 hover:bg-muted/50 transition-colors border-b border-border/50 last:border-b-0 cursor-pointer"
+                          onClick={() => handleSelectStock(stock)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold text-foreground">{stock.symbol}</span>
+                                <span className="text-sm text-muted-foreground truncate">
+                                  {stock.name}
+                                </span>
+                              </div>
+                              <div className="text-xs text-muted-foreground mt-1">
+                                {stock.marketCap}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 ml-4">
+                              <span className="font-medium text-foreground">
+                                ${parseFloat(stock.price).toFixed(2)}
+                              </span>
+                              <div className={cn(
+                                "flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium",
+                                isPositive 
+                                  ? "bg-green-500/10 text-green-600 dark:text-green-400" 
+                                  : "bg-red-500/10 text-red-600 dark:text-red-400"
+                              )}>
+                                {isPositive ? (
+                                  <TrendingUp className="w-3 h-3" />
+                                ) : (
+                                  <TrendingDown className="w-3 h-3" />
+                                )}
+                                {changeValue}%
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="px-4 py-3 text-center text-muted-foreground">
+                      No results found for "{searchTerm}"
+                    </div>
+                  )}
+                </div>
+              ) : searchTerm.trim().length > 0 && searchTerm.trim().length < 2 ? (
+                <div className="px-4 py-3 text-center text-muted-foreground">
+                  Type at least 2 characters to search
+                </div>
+              ) : null}
+            </Card>,
+            document.body
+          )}
+        </div>
       )}
 
       {/* Chart */}
