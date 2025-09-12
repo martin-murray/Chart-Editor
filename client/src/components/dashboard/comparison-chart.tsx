@@ -620,13 +620,16 @@ export function ComparisonChart({
 
       console.log('Capturing comparison chart with html2canvas...');
       
-      // Use html2canvas to capture the chart
+      // Wait for chart to render completely
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Use html2canvas to capture the chart with more compatible options
       const canvas = await html2canvas(chartElement, {
         backgroundColor: '#ffffff',
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        foreignObjectRendering: true,
+        scale: 1,
+        useCORS: false,
+        allowTaint: false,
+        logging: false,
         width: chartElement.offsetWidth,
         height: chartElement.offsetHeight,
         ignoreElements: (element) => {
@@ -640,7 +643,7 @@ export function ComparisonChart({
       // Convert to blob and download
       canvas.toBlob((blob) => {
         if (blob) {
-          const fileName = `comparison-chart-${tickers.map(t => t.symbol).join('-')}-${new Date().toISOString().split('T')[0]}.png`;
+          const fileName = `comparison-chart-${tickers.filter(t => t.visible).map(t => t.symbol).join('-')}-${new Date().toISOString().split('T')[0]}.png`;
           saveAs(blob, fileName);
           
           toast({
@@ -655,7 +658,7 @@ export function ComparisonChart({
       console.error('Comparison PNG export error:', error);
       toast({
         title: "Export Failed",
-        description: "Unable to export PNG file - try CSV export instead",
+        description: `Unable to export PNG file: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive",
       });
     }
@@ -682,15 +685,22 @@ export function ComparisonChart({
         throw new Error('Chart element not found');
       }
 
-      // Use html2canvas to capture the chart
+      // Wait for chart to render completely
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Use html2canvas to capture the chart with more compatible options
       const canvas = await html2canvas(chartElement, {
         backgroundColor: '#ffffff',
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        foreignObjectRendering: true,
+        scale: 1,
+        useCORS: false,
+        allowTaint: false,
+        logging: false,
         width: chartElement.offsetWidth,
         height: chartElement.offsetHeight,
+        ignoreElements: (element) => {
+          const tagName = element.tagName?.toLowerCase();
+          return tagName === 'script' || tagName === 'style';
+        }
       });
 
       // Calculate dimensions for PDF
@@ -703,7 +713,7 @@ export function ComparisonChart({
       pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
       
       // Save the PDF
-      const fileName = `comparison-chart-${tickers.map(t => t.symbol).join('-')}-${new Date().toISOString().split('T')[0]}.pdf`;
+      const fileName = `comparison-chart-${tickers.filter(t => t.visible).map(t => t.symbol).join('-')}-${new Date().toISOString().split('T')[0]}.pdf`;
       pdf.save(fileName);
       
       toast({
@@ -714,7 +724,7 @@ export function ComparisonChart({
       console.error('PDF export error:', error);
       toast({
         title: "Export Failed",
-        description: "Unable to export PDF file",
+        description: `Unable to export PDF file: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive",
       });
     }
