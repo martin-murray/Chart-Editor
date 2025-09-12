@@ -1464,35 +1464,6 @@ export function PriceChart({
   };
 
   // Comparison chart export functions
-  const exportComparisonAsPNG = async () => {
-    try {
-      // Find the comparison chart container element
-      const chartElement = document.querySelector('[data-testid="comparison-chart-container"]') as HTMLElement;
-      if (!chartElement) {
-        alert('Comparison chart not found. Please ensure the comparison chart is visible.');
-        return;
-      }
-
-      const canvas = await html2canvas(chartElement, {
-        backgroundColor: '#121212',
-        scale: 1,
-        useCORS: true,
-        allowTaint: true
-      });
-
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const fileName = `comparison-chart-${new Date().toISOString().split('T')[0]}.png`;
-          saveAs(blob, fileName);
-        } else {
-          alert('Failed to export comparison chart as PNG');
-        }
-      }, 'image/png', 0.8);
-    } catch (error) {
-      console.error('Comparison PNG export error:', error);
-      alert('PNG export failed - try CSV export instead');
-    }
-  };
 
   const exportComparisonAsCSV = () => {
     // Get the comparison chart data from the comparison chart component
