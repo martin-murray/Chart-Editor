@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, ReferenceLine } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1154,6 +1154,9 @@ export function ComparisonChart({
                   tickFormatter={(value) => `${value > 0 ? '+' : ''}${Number(value).toFixed(1)}%`}
                 />
                 <Tooltip content={<CustomTooltip />} />
+                
+                {/* Zero reference line */}
+                <ReferenceLine y={0} stroke="white" strokeWidth={1} />
                 
                 {/* Render line for each visible ticker */}
                 {tickers
