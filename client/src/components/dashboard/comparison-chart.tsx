@@ -1493,10 +1493,49 @@ export function ComparisonChart({
         )}
       </div>
 
-      {/* Legend/Summary */}
-      {tickers.length > 0 && (
-        <div className="text-xs text-muted-foreground text-center">
-          Showing percentage change from {timeframe} starting point • Click color dots to toggle visibility
+      {/* Color-coded Legend with Percentage Changes */}
+      {tickers.length > 0 && chartData.length > 0 && (
+        <div className="mt-4 space-y-2">
+          <div className="flex flex-wrap gap-4 justify-center">
+            {tickers.map((ticker) => {
+              // Calculate total percentage change over the time period
+              const firstDataPoint = chartData[0];
+              const lastDataPoint = chartData[chartData.length - 1];
+              const startPercentage = Number(firstDataPoint?.[`${ticker.symbol}_percentage`]) || 0;
+              const endPercentage = Number(lastDataPoint?.[`${ticker.symbol}_percentage`]) || 0;
+              const totalChange = endPercentage - startPercentage;
+              
+              return (
+                <div 
+                  key={ticker.symbol}
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-opacity cursor-pointer",
+                    ticker.visible ? "bg-card/50" : "bg-card/20 opacity-50"
+                  )}
+                  onClick={() => toggleTickerVisibility(ticker.symbol)}
+                >
+                  <div 
+                    className="w-3 h-3 rounded-full border border-border/50"
+                    style={{ backgroundColor: ticker.color }}
+                  />
+                  <span className="text-sm font-medium">
+                    {ticker.symbol}
+                  </span>
+                  <span 
+                    className={cn(
+                      "text-sm font-medium",
+                      totalChange >= 0 ? "text-green-400" : "text-red-400"
+                    )}
+                  >
+                    {totalChange >= 0 ? '+' : ''}{totalChange.toFixed(2)}%
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+          <div className="text-xs text-muted-foreground text-center">
+            Showing percentage change from {timeframe} starting point • Click legend items to toggle visibility
+          </div>
         </div>
       )}
 
