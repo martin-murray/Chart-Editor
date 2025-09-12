@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
+import { format } from 'date-fns';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 import { Button } from "@/components/ui/button";
@@ -108,6 +109,45 @@ export function ComparisonChart({ timeframe }: ComparisonChartProps) {
     }))
   });
 
+  // Helper function to format dates properly based on timeframe (like main price chart)
+  const formatTime = (timestamp: number, timeframe: string) => {
+    const date = new Date(timestamp * 1000); // Convert Unix timestamp to Date
+    switch (timeframe) {
+      case '1D':
+      case '5D':
+      case '2W':
+        return date.toLocaleDateString('en-US', { 
+          month: 'numeric',
+          day: 'numeric',
+          year: '2-digit'
+        });
+      case '1M':
+      case '3M':
+        return date.toLocaleDateString('en-US', { 
+          month: 'numeric',
+          day: 'numeric',
+          year: '2-digit'
+        });
+      case '1Y':
+        return date.toLocaleDateString('en-US', { 
+          month: 'short',
+          year: '2-digit'
+        });
+      case 'Custom':
+        return date.toLocaleDateString('en-US', { 
+          month: 'numeric',
+          day: 'numeric',
+          year: '2-digit'
+        });
+      default:
+        return date.toLocaleDateString('en-US', { 
+          month: 'numeric',
+          day: 'numeric',
+          year: '2-digit'
+        });
+    }
+  };
+
   // Process and align chart data for percentage calculation
   const chartData = useMemo(() => {
     if (tickers.length === 0) return [];
@@ -159,7 +199,7 @@ export function ComparisonChart({ timeframe }: ComparisonChartProps) {
     const alignedData: ChartDataPoint[] = commonTimestamps.map(timestamp => {
       const dataPoint: ChartDataPoint = {
         timestamp,
-        date: new Date(timestamp * 1000).toLocaleDateString(),
+        date: formatTime(timestamp, timeframe), // Use proper date formatting
       };
 
       // Add percentage data for each ticker
@@ -366,13 +406,17 @@ export function ComparisonChart({ timeframe }: ComparisonChartProps) {
     }
   };
 
-  // Custom tooltip that shows actual prices
+  // Custom tooltip that shows actual prices with better date formatting
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload || !payload.length) return null;
 
+    // Find the timestamp from the data point to format the date properly
+    const dataPoint = payload[0]?.payload;
+    const formattedDate = dataPoint ? formatTime(dataPoint.timestamp, timeframe) : label;
+
     return (
       <div className="bg-background border border-border rounded-lg p-3 shadow-lg">
-        <div className="font-medium mb-2">{label}</div>
+        <div className="font-medium mb-2">{formattedDate}</div>
         {payload.map((entry: any, index: number) => {
           const ticker = tickers.find(t => `${t.symbol}_percentage` === entry.dataKey);
           if (!ticker || !ticker.visible) return null;
