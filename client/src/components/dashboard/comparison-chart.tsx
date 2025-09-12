@@ -410,69 +410,70 @@ export function ComparisonChart({
 
   // Annotation handling methods
   const handleChartClick = (event: any) => {
-    if (!event || !chartData) return;
+    if (!event || !chartData || !event.activePayload || event.activePayload.length === 0) return;
     
     // Get the active payload from the click event
     const { activePayload, activeLabel } = event;
+    const clickedData = activePayload[0].payload;
+    const timestamp = clickedData.timestamp;
+    const time = clickedData.date;
     
-    if (activePayload && activePayload.length > 0 && activeLabel) {
-      const clickedData = activePayload[0].payload;
-      const timestamp = clickedData.timestamp;
-      const time = clickedData.date;
-      // For comparison chart, we'll use a reference price of 100 (percentage base)
-      const price = 100; // Since this is a percentage comparison chart
+    // For comparison chart, get the first visible ticker's percentage value at this point
+    const firstVisibleTicker = tickers.find(t => t.visible);
+    if (!firstVisibleTicker) return;
+    
+    const percentageValue = clickedData[`${firstVisibleTicker.symbol}_percentage`] || 0;
+    
+    if (annotationMode === 'text') {
+      // Text annotation mode - single click
+      const newAnnotation: Omit<Annotation, 'id' | 'text'> = {
+        type: 'text',
+        x: 0, // Will be calculated during rendering
+        y: 0, // Will be calculated during rendering  
+        timestamp,
+        price: percentageValue,
+        time
+      };
       
-      if (annotationMode === 'text') {
-        // Text annotation mode - single click
-        const newAnnotation: Omit<Annotation, 'id' | 'text'> = {
-          type: 'text',
-          x: 0, // Will be set by chart rendering
-          y: 0, // Will be set by chart rendering  
+      setPendingAnnotation(newAnnotation);
+      setShowAnnotationInput(true);
+      setAnnotationInput('');
+      setEditingAnnotation(null);
+      setIsEditMode(false);
+    } else if (annotationMode === 'percentage') {
+      // Percentage measurement mode - two clicks
+      if (!pendingPercentageStart) {
+        // First click - set start point
+        setPendingPercentageStart({
           timestamp,
-          price,
+          price: percentageValue,
           time
+        });
+      } else {
+        // Second click - create percentage measurement
+        const startPercentage = pendingPercentageStart.price;
+        const endPercentage = percentageValue;
+        const percentageDifference = endPercentage - startPercentage; // Direct percentage point difference
+        
+        const newAnnotation: Annotation = {
+          id: `percentage-${Date.now()}`,
+          type: 'percentage',
+          x: 0,
+          y: 0,
+          timestamp: pendingPercentageStart.timestamp,
+          price: startPercentage,
+          time: pendingPercentageStart.time,
+          startTimestamp: pendingPercentageStart.timestamp,
+          startPrice: startPercentage,
+          startTime: pendingPercentageStart.time,
+          endTimestamp: timestamp,
+          endPrice: endPercentage,
+          endTime: time,
+          percentage: percentageDifference
         };
         
-        setPendingAnnotation(newAnnotation);
-        setShowAnnotationInput(true);
-        setAnnotationInput('');
-        setEditingAnnotation(null);
-        setIsEditMode(false);
-      } else if (annotationMode === 'percentage') {
-        // Percentage measurement mode - two clicks
-        if (!pendingPercentageStart) {
-          // First click - set start point
-          setPendingPercentageStart({
-            timestamp,
-            price,
-            time
-          });
-        } else {
-          // Second click - create percentage measurement
-          const startPrice = pendingPercentageStart.price;
-          const endPrice = price;
-          const percentage = ((endPrice - startPrice) / startPrice) * 100;
-          
-          const newAnnotation: Annotation = {
-            id: `percentage-${Date.now()}`,
-            type: 'percentage',
-            x: 0,
-            y: 0,
-            timestamp: pendingPercentageStart.timestamp, // Use start timestamp as primary
-            price: startPrice,
-            time: pendingPercentageStart.time,
-            startTimestamp: pendingPercentageStart.timestamp,
-            startPrice,
-            startTime: pendingPercentageStart.time,
-            endTimestamp: timestamp,
-            endPrice,
-            endTime: time,
-            percentage
-          };
-          
-          updateAnnotations(prev => [...prev, newAnnotation]);
-          setPendingPercentageStart(null);
-        }
+        updateAnnotations(prev => [...prev, newAnnotation]);
+        setPendingPercentageStart(null);
       }
     }
   };
@@ -484,8 +485,20 @@ export function ComparisonChart({
       setIsEditMode(true);
       setAnnotationInput(annotation.text || '');
       setShowAnnotationInput(true);
+    } else if (annotation.type === 'percentage') {
+      // For percentage annotations, show a delete confirmation
+      if (confirm('Delete this percentage measurement?')) {
+        updateAnnotations(prev => prev.filter(a => a.id !== annotation.id));
+      }
     }
-    // Percentage annotations are not editable
+  };
+
+  // Clear all annotations
+  const clearAllAnnotations = () => {
+    if (confirm('Delete all annotations?')) {
+      updateAnnotations([]);
+      setPendingPercentageStart(null);
+    }
   };
 
   // Save annotation with user text
@@ -536,9 +549,9 @@ export function ComparisonChart({
     setIsEditMode(false);
   };
 
-  // Format price helper
+  // Format price helper for percentage values
   const formatPrice = (price: number) => {
-    return price.toFixed(2);
+    return `${price > 0 ? '+' : ''}${price.toFixed(2)}`;
   };
 
   // Check loading and error states
@@ -922,6 +935,20 @@ export function ComparisonChart({
               Click second point to measure
             </div>
           )}
+
+          {/* Annotation Management */}
+          {annotations.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={clearAllAnnotations}
+              className="h-7 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+              data-testid="button-clear-annotations"
+            >
+              <X className="w-3 h-3 mr-1" />
+              Clear All
+            </Button>
+          )}
         
           {/* Export Buttons */}
           <div className="flex items-center gap-1">
@@ -1224,7 +1251,7 @@ export function ComparisonChart({
             </h3>
             <div className="mb-4 text-sm text-muted-foreground">
               <div>Time: {isEditMode ? editingAnnotation?.time : pendingAnnotation?.time}</div>
-              <div>Reference: {formatPrice(isEditMode ? editingAnnotation?.price || 0 : pendingAnnotation?.price || 0)}%</div>
+              <div>Value: {formatPrice(isEditMode ? editingAnnotation?.price || 0 : pendingAnnotation?.price || 0)}%</div>
             </div>
             <div className="mb-4">
               <label className="block text-sm font-medium mb-2">Event Description</label>
