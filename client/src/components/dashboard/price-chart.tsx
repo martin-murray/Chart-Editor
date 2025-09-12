@@ -414,9 +414,9 @@ export function PriceChart({
   // Export functions
   const exportAsPNG = async () => {
     try {
-      // High resolution canvas - 1920px width with space for volume chart
+      // High resolution canvas - minimum 2000px width with space for volume chart
       const canvas = document.createElement('canvas');
-      canvas.width = 1920;
+      canvas.width = 2000;
       canvas.height = 1400; // Increased height for price + volume charts
       const ctx = canvas.getContext('2d');
       

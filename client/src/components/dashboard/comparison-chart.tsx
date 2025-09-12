@@ -101,13 +101,13 @@ const AnnotationLayer: React.FC<any> = ({
   
   return (
     <g>
-      {annotations.map((annotation) => {
-        const idx = tsToIndex.get(annotation.timestamp);
+      {annotations.map((annotation: any) => {
+        const idx = tsToIndex.get(annotation.timestamp as number);
         if (idx == null) return null;
         
         // Get x position with offset
         const x = (formattedGraphicalItems?.[0]?.props?.points?.[idx]?.x) ?? 
-                  (xAxis.scale(chartData[idx].date) + offset.left);
+                  (xAxis.scale((chartData as any)[idx].date) + offset.left);
         
         if (annotation.type === 'text') {
           const y = yAxis.scale(annotation.price) + offset.top;
@@ -139,15 +139,15 @@ const AnnotationLayer: React.FC<any> = ({
             </g>
           );
         } else if (annotation.type === 'percentage' && annotation.startTimestamp && annotation.endTimestamp) {
-          const i1 = tsToIndex.get(annotation.startTimestamp);
-          const i2 = tsToIndex.get(annotation.endTimestamp);
+          const i1 = tsToIndex.get(annotation.startTimestamp as number);
+          const i2 = tsToIndex.get(annotation.endTimestamp as number);
           
           if (i1 == null || i2 == null) return null;
           
           const x1 = (formattedGraphicalItems?.[0]?.props?.points?.[i1]?.x) ?? 
-                     (xAxis.scale(chartData[i1].date) + offset.left);
+                     (xAxis.scale((chartData as any)[i1].date) + offset.left);
           const x2 = (formattedGraphicalItems?.[0]?.props?.points?.[i2]?.x) ?? 
-                     (xAxis.scale(chartData[i2].date) + offset.left);
+                     (xAxis.scale((chartData as any)[i2].date) + offset.left);
           const y = yAxis.scale(annotation.price || 0) + offset.top;
           
           return (
@@ -835,11 +835,16 @@ export function ComparisonChart({
       
       await new Promise<void>((resolve, reject) => {
         img.onload = () => {
-          canvas.width = img.width;
-          canvas.height = img.height;
+          // Ensure minimum 2000px width for PNG export
+          const minWidth = 2000;
+          const aspectRatio = img.height / img.width;
+          
+          canvas.width = Math.max(minWidth, img.width);
+          canvas.height = canvas.width * aspectRatio;
+          
           ctx.fillStyle = '#ffffff';
           ctx.fillRect(0, 0, canvas.width, canvas.height);
-          ctx.drawImage(img, 0, 0);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
           URL.revokeObjectURL(svgUrl);
           resolve();
         };
