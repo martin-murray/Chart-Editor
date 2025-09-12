@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { createPortal } from "react-dom";
-import { TrendingUp, TrendingDown, MessageSquare, Ruler } from "lucide-react";
+import { TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Search, X, Plus, Download, FileText, Image } from "lucide-react";
 import { useQueries, useQuery } from "@tanstack/react-query";
@@ -69,6 +69,10 @@ interface ComparisonChartProps {
   endDate?: Date;
   annotations?: Annotation[];
   onAnnotationsChange?: (annotations: Annotation[]) => void;
+  annotationMode?: 'text' | 'percentage';
+  pendingPercentageStart?: { timestamp: number; price: number; time: string } | null;
+  setPendingPercentageStart?: (start: { timestamp: number; price: number; time: string } | null) => void;
+  updateAnnotations?: (newAnnotations: Annotation[] | ((prev: Annotation[]) => Annotation[])) => void;
 }
 
 export function ComparisonChart({ 
@@ -76,7 +80,11 @@ export function ComparisonChart({
   startDate, 
   endDate,
   annotations: controlledAnnotations,
-  onAnnotationsChange 
+  onAnnotationsChange,
+  annotationMode = 'text',
+  pendingPercentageStart,
+  setPendingPercentageStart,
+  updateAnnotations
 }: ComparisonChartProps) {
   const [tickers, setTickers] = useState<TickerData[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -87,42 +95,19 @@ export function ComparisonChart({
   const [recentSearches, setRecentSearches] = useState<SearchResult[]>([]);
   const { toast } = useToast();
 
-  // Annotation state - controlled if parent provides annotations
-  const [internalAnnotations, setInternalAnnotations] = useState<Annotation[]>([]);
+  // Annotation UI state (non-conflicting with props)
   const [showAnnotationInput, setShowAnnotationInput] = useState(false);
   const [annotationInput, setAnnotationInput] = useState('');
   const [pendingAnnotation, setPendingAnnotation] = useState<Omit<Annotation, 'id' | 'text'> | null>(null);
   const [editingAnnotation, setEditingAnnotation] = useState<Annotation | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
-  
-  // Percentage measurement state
-  const [annotationMode, setAnnotationMode] = useState<'text' | 'percentage'>('text');
-  const [pendingPercentageStart, setPendingPercentageStart] = useState<{
-    timestamp: number;
-    price: number;
-    time: string;
-  } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<HTMLDivElement>(null);
 
-  // Use controlled annotations if provided, otherwise use internal state
-  const annotations = controlledAnnotations || internalAnnotations;
-  
-  // Helper function to update annotations in both controlled and uncontrolled modes
-  const updateAnnotations = (newAnnotations: Annotation[] | ((prev: Annotation[]) => Annotation[])) => {
-    if (onAnnotationsChange) {
-      // Controlled mode - resolve function to actual array
-      const resolvedAnnotations = typeof newAnnotations === 'function' 
-        ? newAnnotations(annotations)
-        : newAnnotations;
-      onAnnotationsChange(resolvedAnnotations);
-    } else {
-      // Uncontrolled mode - use internal state setter
-      setInternalAnnotations(newAnnotations);
-    }
-  };
+  // Use controlled annotations from parent
+  const annotations = controlledAnnotations || [];
 
   // Click outside handler - works with portal
   useEffect(() => {
@@ -444,7 +429,7 @@ export function ComparisonChart({
       // Percentage measurement mode - two clicks
       if (!pendingPercentageStart) {
         // First click - set start point
-        setPendingPercentageStart({
+        setPendingPercentageStart?.({
           timestamp,
           price: percentageValue,
           time
@@ -472,8 +457,8 @@ export function ComparisonChart({
           percentage: percentageDifference
         };
         
-        updateAnnotations(prev => [...prev, newAnnotation]);
-        setPendingPercentageStart(null);
+        updateAnnotations?.(prev => [...prev, newAnnotation]);
+        setPendingPercentageStart?.(null);
       }
     }
   };
@@ -488,7 +473,7 @@ export function ComparisonChart({
     } else if (annotation.type === 'percentage') {
       // For percentage annotations, show a delete confirmation
       if (confirm('Delete this percentage measurement?')) {
-        updateAnnotations(prev => prev.filter(a => a.id !== annotation.id));
+        updateAnnotations?.(prev => prev.filter(a => a.id !== annotation.id));
       }
     }
   };
@@ -496,8 +481,8 @@ export function ComparisonChart({
   // Clear all annotations
   const clearAllAnnotations = () => {
     if (confirm('Delete all annotations?')) {
-      updateAnnotations([]);
-      setPendingPercentageStart(null);
+      updateAnnotations?.([]);
+      setPendingPercentageStart?.(null);
     }
   };
 
@@ -505,7 +490,7 @@ export function ComparisonChart({
   const saveAnnotation = () => {
     if (isEditMode && editingAnnotation && annotationInput.trim()) {
       // Update existing annotation
-      updateAnnotations(prev => prev.map(annotation => 
+      updateAnnotations?.(prev => prev.map(annotation => 
         annotation.id === editingAnnotation.id 
           ? { ...annotation, text: annotationInput.trim() }
           : annotation
@@ -522,7 +507,7 @@ export function ComparisonChart({
         text: annotationInput.trim()
       };
       
-      updateAnnotations(prev => [...prev, newAnnotation]);
+      updateAnnotations?.(prev => [...prev, newAnnotation]);
       setShowAnnotationInput(false);
       setAnnotationInput('');
       setPendingAnnotation(null);
@@ -532,7 +517,7 @@ export function ComparisonChart({
   // Delete annotation
   const deleteAnnotation = () => {
     if (editingAnnotation) {
-      updateAnnotations(prev => prev.filter(annotation => annotation.id !== editingAnnotation.id));
+      updateAnnotations?.(prev => prev.filter(annotation => annotation.id !== editingAnnotation.id));
       setShowAnnotationInput(false);
       setAnnotationInput('');
       setEditingAnnotation(null);
@@ -897,38 +882,6 @@ export function ComparisonChart({
         </div>
         
         <div className="flex items-center gap-2">
-          {/* Annotation Mode Toggle */}
-          {tickers.length > 0 && (
-            <div className="flex border border-border rounded-md overflow-hidden bg-background">
-              <Button
-                size="sm"
-                variant={annotationMode === 'text' ? 'default' : 'ghost'}
-                onClick={() => {
-                  setAnnotationMode('text');
-                  setPendingPercentageStart(null);
-                }}
-                className="h-7 px-2 text-xs rounded-none border-0"
-                data-testid="button-annotation-text"
-              >
-                <MessageSquare className="w-3 h-3 mr-1" />
-                Text
-              </Button>
-              <Button
-                size="sm"
-                variant={annotationMode === 'percentage' ? 'default' : 'ghost'}
-                onClick={() => {
-                  setAnnotationMode('percentage');
-                  setPendingPercentageStart(null);
-                }}
-                className="h-7 px-2 text-xs rounded-none border-0"
-                data-testid="button-annotation-percentage"
-              >
-                <Ruler className="w-3 h-3 mr-1" />
-                Measure
-              </Button>
-            </div>
-          )}
-          
           {/* Pending Percentage Indicator */}
           {annotationMode === 'percentage' && pendingPercentageStart && (
             <div className="text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded border">
@@ -950,29 +903,6 @@ export function ComparisonChart({
             </Button>
           )}
         
-          {/* Export Buttons */}
-          <div className="flex items-center gap-1">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={exportPNG}
-              className="h-7 text-xs"
-              data-testid="button-export-png"
-            >
-              <Image className="h-3 w-3 mr-1" />
-              PNG
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={exportPDF}
-              className="h-7 text-xs"
-              data-testid="button-export-pdf"
-            >
-              <FileText className="h-3 w-3 mr-1" />
-              PDF
-            </Button>
-          </div>
         </div>
       </div>
 

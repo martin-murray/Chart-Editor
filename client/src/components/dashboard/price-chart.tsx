@@ -2426,7 +2426,17 @@ export function PriceChart({
       )}
         
         <TabsContent value="comparison" className="bg-background relative z-10" data-testid="tabpanel-comparison">
-          <ComparisonChart timeframe={selectedTimeframe} startDate={startDate} endDate={endDate} />
+          <ComparisonChart 
+            timeframe={selectedTimeframe} 
+            startDate={startDate} 
+            endDate={endDate}
+            annotations={annotations}
+            onAnnotationsChange={onAnnotationsChange}
+            annotationMode={annotationMode}
+            pendingPercentageStart={pendingPercentageStart}
+            setPendingPercentageStart={setPendingPercentageStart}
+            updateAnnotations={updateAnnotations}
+          />
         </TabsContent>
         </Tabs>
       </div>
