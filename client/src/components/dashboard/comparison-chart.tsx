@@ -76,7 +76,20 @@ interface ComparisonChartProps {
 }
 
 // Annotation Layer component for rendering annotations with proper scaling
-const AnnotationLayer: React.FC<any> = ({ 
+interface AnnotationLayerProps {
+  // Props passed by Customized component from Recharts
+  xAxisMap?: Record<string, { scale: (v: string | number) => number }>;
+  yAxisMap?: Record<string, { scale: (v: number) => number }>;
+  offset?: { left: number; right: number; top: number; bottom: number };
+  height?: number;
+  formattedGraphicalItems?: Array<{ props?: { points?: Array<{ x: number; y: number }> } }>;
+  // Props passed explicitly
+  annotations: any[];
+  chartData: any[];
+  onAnnotationDoubleClick: (annotation: any) => void;
+}
+
+const AnnotationLayer: React.FC<AnnotationLayerProps> = ({ 
   xAxisMap, 
   yAxisMap, 
   offset, 
@@ -88,10 +101,10 @@ const AnnotationLayer: React.FC<any> = ({
 }) => {
   if (!xAxisMap || !yAxisMap || !offset || !chartData) return null;
   
-  const xAxis = Object.values(xAxisMap)[0] as any;
-  const yAxis = Object.values(yAxisMap)[0] as any;
+  const [xAxis] = Object.values(xAxisMap) as Array<{ scale: (v: string | number) => number }>;
+  const [yAxis] = Object.values(yAxisMap) as Array<{ scale: (v: number) => number }>;
   
-  if (!xAxis || !yAxis) return null;
+  if (!xAxis || !yAxis || !height) return null;
   
   const yTop = offset.top;
   const yBottom = height - offset.bottom;
@@ -1426,7 +1439,7 @@ export function ComparisonChart({
             <ResponsiveContainer width="100%" height="100%">
               <LineChart 
                 data={chartData} 
-                margin={{ top: 15, right: 22, left: 22, bottom: 15 }}
+                margin={{ left: 22, right: 22, top: 10, bottom: 0 }}
                 onClick={handleChartClick}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#3B3B3B" strokeOpacity={0.5} />
