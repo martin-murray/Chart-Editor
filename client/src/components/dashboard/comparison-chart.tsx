@@ -1273,9 +1273,11 @@ export function ComparisonChart({
           </div>
         ) : (
           <ChartContainer config={chartConfig} className="h-full w-full">
-            <ResponsiveContainer width="100%" height="100%">
+            <div style={{ width: '100%', height: '100%' }}>
               <LineChart 
                 data={chartData} 
+                width={846}
+                height={600}
                 margin={{ top: 30, right: 50, left: 30, bottom: 40 }}
                 onClick={handleChartClick}
               >
@@ -1313,7 +1315,7 @@ export function ComparisonChart({
                     />
                   ))}
               </LineChart>
-            </ResponsiveContainer>
+            </div>
           </ChartContainer>
         )}
       </div>
