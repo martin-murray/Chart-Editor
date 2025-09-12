@@ -110,8 +110,9 @@ export function ComparisonChart({ timeframe }: ComparisonChartProps) {
   });
 
   // Helper function to format dates properly based on timeframe (like main price chart)
-  const formatTime = (timestamp: number, timeframe: string) => {
-    const date = new Date(timestamp * 1000); // Convert Unix timestamp to Date
+  const formatTime = (timeValue: any, timeframe: string) => {
+    // Handle both timestamp numbers and time strings like the main chart
+    const date = typeof timeValue === 'string' ? new Date(timeValue) : new Date(timeValue * 1000);
     switch (timeframe) {
       case '1D':
       case '5D':
@@ -197,9 +198,13 @@ export function ComparisonChart({ timeframe }: ComparisonChartProps) {
 
     // Build aligned chart data with percentage calculations
     const alignedData: ChartDataPoint[] = commonTimestamps.map(timestamp => {
+      // Find the time string from the first ticker's data for this timestamp
+      const firstTickerData = allChartData[0]?.data.find((d: any) => d.timestamp === timestamp);
+      const timeString = firstTickerData?.time || new Date(timestamp * 1000).toISOString();
+      
       const dataPoint: ChartDataPoint = {
         timestamp,
-        date: formatTime(timestamp, timeframe), // Use proper date formatting
+        date: formatTime(timeString, timeframe), // Use time string like main chart
       };
 
       // Add percentage data for each ticker
@@ -410,9 +415,8 @@ export function ComparisonChart({ timeframe }: ComparisonChartProps) {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload || !payload.length) return null;
 
-    // Find the timestamp from the data point to format the date properly
-    const dataPoint = payload[0]?.payload;
-    const formattedDate = dataPoint ? formatTime(dataPoint.timestamp, timeframe) : label;
+    // Use the properly formatted date from the chart data
+    const formattedDate = label;
 
     return (
       <div className="bg-background border border-border rounded-lg p-3 shadow-lg">
