@@ -1,0 +1,49 @@
+Console.js:61 Comparison PNG export error: Error: Attempting to parse an unsupported color function "oklch"
+    at Object.parse (html2canvas.js?v=5e057183:1672:15)
+    at parseColor (html2canvas.js?v=5e057183:1789:18)
+    at parseBackgroundColor (html2canvas.js?v=5e057183:7777:50)
+    at html2canvas.js?v=5e057183:7732:30
+    at step (html2canvas.js?v=5e057183:116:17)
+    at Object.next (html2canvas.js?v=5e057183:68:14)
+    at fulfilled (html2canvas.js?v=5e057183:40:24)
+Mt.forEach.n.<computed> @ Console.js:61
+exportPNG @ comparison-chart.tsx:859
+await in exportPNG
+handleExportPNG @ comparison-chart.tsx:967
+exportComparisonAsPNG @ price-chart.tsx:1482
+handleEvent @ chunk-U7IHIBNQ.js?v=5e057183:14
+callCallback2 @ chunk-RPCDYKBN.js?v=5e057183:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=5e057183:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=5e057183:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=5e057183:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=5e057183:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=5e057183:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=5e057183:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=5e057183:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=5e057183:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=5e057183:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=5e057183:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=5e057183:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=5e057183:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=5e057183:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=5e057183:5449Understand this error
+Console.js:61 The width(846) and height(600) are both fixed numbers,
+       maybe you don't need to use a ResponsiveContainer.
+Mt.forEach.n.<computed> @ Console.js:61
+warn2 @ recharts.js?v=5e057183:6146
+(anonymous) @ recharts.js?v=5e057183:9317
+updateMemo @ chunk-RPCDYKBN.js?v=5e057183:12210
+useMemo @ chunk-RPCDYKBN.js?v=5e057183:12726
+useMemo @ chunk-QCHXOAYK.js?v=5e057183:1094
+(anonymous) @ recharts.js?v=5e057183:9312
+renderWithHooks @ chunk-RPCDYKBN.js?v=5e057183:11548
+updateForwardRef @ chunk-RPCDYKBN.js?v=5e057183:14325
+beginWork @ chunk-RPCDYKBN.js?v=5e057183:15946
+beginWork$1 @ chunk-RPCDYKBN.js?v=5e057183:19753
+performUnitOfWork @ chunk-RPCDYKBN.js?v=5e057183:19198
+workLoopSync @ chunk-RPCDYKBN.js?v=5e057183:19137
+renderRootSync @ chunk-RPCDYKBN.js?v=5e057183:19116
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=5e057183:18678
+workLoop @ chunk-RPCDYKBN.js?v=5e057183:197
+flushWork @ chunk-RPCDYKBN.js?v=5e057183:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=5e057183:384Understand this warning

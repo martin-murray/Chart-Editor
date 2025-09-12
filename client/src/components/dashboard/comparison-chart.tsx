@@ -763,53 +763,79 @@ export function ComparisonChart({
       'oklch(0.1329 0 0)': 'rgb(34, 34, 34)',
     };
 
-    return await html2canvas(fullContainer, {
-      scale: 2,
-      backgroundColor: null, // Transparent background
-      useCORS: true,
-      allowTaint: true,
-      onclone: (clonedDoc) => {
-        const clonedContainer = clonedDoc.querySelector('[data-testid="comparison-chart-full-container"]') as HTMLElement;
-        if (!clonedContainer) return;
-
-        // Normalize OKLCH colors to RGB in all elements
-        const normalizeColors = (element: Element) => {
-          if (element instanceof HTMLElement) {
-            const computedStyle = window.getComputedStyle(element);
-            const style = element.style;
-            
-            // Normalize color properties
-            ['color', 'backgroundColor', 'borderColor', 'fill', 'stroke'].forEach(prop => {
-              const value = computedStyle.getPropertyValue(prop);
-              if (value && value.includes('oklch')) {
-                const rgbValue = colorMap[value] || 'rgb(68, 68, 68)';
-                (style as any)[prop] = rgbValue;
-              }
-            });
-          }
-        };
-
-        // Apply normalization to all elements
-        normalizeColors(clonedContainer);
-        clonedContainer.querySelectorAll('*').forEach(normalizeColors);
-
-        // Handle SVG elements specifically
-        const svgElement = clonedContainer.querySelector('svg');
-        if (svgElement) {
-          svgElement.querySelectorAll('*').forEach(el => {
-            ['stroke', 'fill', 'stop-color'].forEach(attr => {
-              const value = el.getAttribute(attr);
-              if (value && value.includes('oklch')) {
-                el.setAttribute(attr, colorMap[value] || 'rgb(68, 68, 68)');
-              }
-            });
+    // Create a temporary container with all OKLCH colors replaced
+    console.log('Creating temporary container with RGB colors...');
+    const tempContainer = document.createElement('div');
+    tempContainer.innerHTML = fullContainer.innerHTML;
+    tempContainer.className = fullContainer.className;
+    tempContainer.style.cssText = fullContainer.style.cssText;
+    tempContainer.style.position = 'absolute';
+    tempContainer.style.left = '-9999px';
+    tempContainer.style.top = '0';
+    tempContainer.style.zIndex = '-1';
+    
+    // Function to replace OKLCH with RGB in all styles
+    const replaceOklchInElement = (element: Element) => {
+      if (element instanceof HTMLElement) {
+        // Replace in inline styles
+        const inlineStyle = element.getAttribute('style');
+        if (inlineStyle && inlineStyle.includes('oklch')) {
+          let newStyle = inlineStyle;
+          Object.entries(colorMap).forEach(([oklchColor, rgbColor]) => {
+            const regex = new RegExp(oklchColor.replace(/[()]/g, '\\$&'), 'g');
+            newStyle = newStyle.replace(regex, rgbColor);
+          });
+          // Also handle any other OKLCH patterns
+          newStyle = newStyle.replace(/oklch\([^)]+\)/g, 'rgb(68, 68, 68)');
+          element.setAttribute('style', newStyle);
+        }
+        
+        // Replace in SVG attributes
+        if (element.tagName && element.tagName.toLowerCase() === 'svg' || element.closest('svg')) {
+          const svgAttrs = ['stroke', 'fill', 'stop-color', 'flood-color'];
+          svgAttrs.forEach(attr => {
+            const value = element.getAttribute(attr);
+            if (value && value.includes('oklch')) {
+              const rgbValue = colorMap[value] || 'rgb(68, 68, 68)';
+              element.setAttribute(attr, rgbValue);
+            }
           });
         }
-      },
-      ignoreElements: (element) => {
-        return element.classList.contains('recharts-tooltip-wrapper');
       }
-    });
+      
+      // Process all children recursively
+      Array.from(element.children).forEach(replaceOklchInElement);
+    };
+    
+    replaceOklchInElement(tempContainer);
+    
+    // Add to DOM temporarily for html2canvas
+    document.body.appendChild(tempContainer);
+    
+    try {
+      console.log('Capturing with html2canvas...');
+      const canvas = await html2canvas(tempContainer, {
+        scale: 2,
+        backgroundColor: null, // Transparent background
+        useCORS: true,
+        allowTaint: true,
+        ignoreElements: (element) => {
+          return element.classList.contains('recharts-tooltip-wrapper');
+        }
+      });
+      
+      // Clean up temp container
+      document.body.removeChild(tempContainer);
+      console.log('Canvas capture successful');
+      return canvas;
+      
+    } catch (error) {
+      // Clean up temp container on error
+      if (document.body.contains(tempContainer)) {
+        document.body.removeChild(tempContainer);
+      }
+      throw error;
+    }
   };
 
   // PNG export function
@@ -857,9 +883,11 @@ export function ComparisonChart({
       }, 'image/png', 1.0);
     } catch (error) {
       console.error('Comparison PNG export error:', error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error('Error details:', { message: errorMessage, stack: error instanceof Error ? error.stack : undefined });
       toast({
         title: "Export Failed",
-        description: `Unable to export PNG file: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        description: `Unable to export PNG file: ${errorMessage}`,
         variant: "destructive",
       });
     }
