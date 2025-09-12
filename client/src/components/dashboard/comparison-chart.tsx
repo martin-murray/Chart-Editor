@@ -837,8 +837,8 @@ export function ComparisonChart({
       ctx.fillText(`${percentage.toFixed(1)}%`, chartArea.x - 20, y + 8);
     }
     
-    // Draw lines for each visible ticker
-    const colors = ['#7c3aed', '#6730d0', '#5d38c0', '#5238a6', '#493195'];
+    // Draw lines for each visible ticker using the actual TICKER_COLORS from the chart
+    const colors = ['#5AF5FA', '#FFA5FF', '#AA99FF', '#FAFF50', '#50FFA5'];
     
     visibleTickers.forEach((ticker, tickerIndex) => {
       ctx.strokeStyle = colors[tickerIndex % colors.length];
@@ -884,7 +884,7 @@ export function ComparisonChart({
     let legendX = 120;
     
     visibleTickers.forEach((ticker, index) => {
-      // Draw color circle
+      // Draw color circle using exact chart colors
       ctx.fillStyle = colors[index % colors.length];
       ctx.beginPath();
       ctx.arc(legendX + 20, legendY, 15, 0, 2 * Math.PI);
