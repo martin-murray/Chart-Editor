@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, ReferenceLine } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, Customized } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -74,6 +74,133 @@ interface ComparisonChartProps {
   setPendingPercentageStart?: (start: { timestamp: number; price: number; time: string } | null) => void;
   updateAnnotations?: (newAnnotations: Annotation[] | ((prev: Annotation[]) => Annotation[])) => void;
 }
+
+// Annotation Layer component for rendering annotations with proper scaling
+const AnnotationLayer: React.FC<any> = ({ 
+  xAxisMap, 
+  yAxisMap, 
+  offset, 
+  height, 
+  formattedGraphicalItems, 
+  annotations, 
+  chartData, 
+  onAnnotationDoubleClick 
+}) => {
+  if (!xAxisMap || !yAxisMap || !offset || !chartData) return null;
+  
+  const xAxis = Object.values(xAxisMap)[0] as any;
+  const yAxis = Object.values(yAxisMap)[0] as any;
+  
+  if (!xAxis || !yAxis) return null;
+  
+  const yTop = offset.top;
+  const yBottom = height - offset.bottom;
+  
+  // Create a map for fast timestamp-to-index lookup
+  const tsToIndex = new Map(chartData.map((d: any, i: number) => [d.timestamp, i]));
+  
+  return (
+    <g>
+      {annotations.map((annotation) => {
+        const idx = tsToIndex.get(annotation.timestamp);
+        if (idx == null) return null;
+        
+        // Get x position with offset
+        const x = (formattedGraphicalItems?.[0]?.props?.points?.[idx]?.x) ?? 
+                  (xAxis.scale(chartData[idx].date) + offset.left);
+        
+        if (annotation.type === 'text') {
+          const y = yAxis.scale(annotation.price) + offset.top;
+          
+          return (
+            <g key={annotation.id}>
+              <line 
+                x1={x} 
+                y1={yTop} 
+                x2={x} 
+                y2={yBottom} 
+                stroke="#5AF5FA" 
+                strokeWidth={2} 
+                strokeDasharray="5 5" 
+                style={{ cursor: 'pointer' }}
+                onDoubleClick={() => onAnnotationDoubleClick(annotation)} 
+              />
+              <text 
+                x={x + 5} 
+                y={y - 10} 
+                fill="#5AF5FA" 
+                fontSize={12} 
+                fontWeight="bold" 
+                style={{ cursor: 'pointer' }}
+                onDoubleClick={() => onAnnotationDoubleClick(annotation)}
+              >
+                {annotation.text || 'Annotation'}
+              </text>
+            </g>
+          );
+        } else if (annotation.type === 'percentage' && annotation.startTimestamp && annotation.endTimestamp) {
+          const i1 = tsToIndex.get(annotation.startTimestamp);
+          const i2 = tsToIndex.get(annotation.endTimestamp);
+          
+          if (i1 == null || i2 == null) return null;
+          
+          const x1 = (formattedGraphicalItems?.[0]?.props?.points?.[i1]?.x) ?? 
+                     (xAxis.scale(chartData[i1].date) + offset.left);
+          const x2 = (formattedGraphicalItems?.[0]?.props?.points?.[i2]?.x) ?? 
+                     (xAxis.scale(chartData[i2].date) + offset.left);
+          const y = yAxis.scale(annotation.price || 0) + offset.top;
+          
+          return (
+            <g key={annotation.id}>
+              <line 
+                x1={x1} 
+                y1={yTop} 
+                x2={x1} 
+                y2={yBottom} 
+                stroke="#FFA500" 
+                strokeWidth={2} 
+                strokeDasharray="5 5" 
+                style={{ cursor: 'pointer' }}
+                onDoubleClick={() => onAnnotationDoubleClick(annotation)} 
+              />
+              <line 
+                x1={x2} 
+                y1={yTop} 
+                x2={x2} 
+                y2={yBottom} 
+                stroke="#FFA500" 
+                strokeWidth={2} 
+                strokeDasharray="5 5" 
+                style={{ cursor: 'pointer' }}
+                onDoubleClick={() => onAnnotationDoubleClick(annotation)} 
+              />
+              <line 
+                x1={x1} 
+                y1={y} 
+                x2={x2} 
+                y2={y} 
+                stroke="#FFA500" 
+                strokeWidth={1} 
+              />
+              <text 
+                x={(x1 + x2) / 2 + 6} 
+                y={y - 8} 
+                fill="#FFA500" 
+                fontSize={12} 
+                fontWeight="bold"
+                style={{ cursor: 'pointer' }}
+                onDoubleClick={() => onAnnotationDoubleClick(annotation)}
+              >
+                {`${((annotation.percentage ?? ((annotation.endPrice || 0) - (annotation.startPrice || 0)))).toFixed(2)}%`}
+              </text>
+            </g>
+          );
+        }
+        return null;
+      })}
+    </g>
+  );
+};
 
 export function ComparisonChart({ 
   timeframe, 
@@ -1317,6 +1444,17 @@ export function ComparisonChart({
                 
                 {/* Zero reference line */}
                 <ReferenceLine y={0} stroke="white" strokeWidth={1} />
+                
+                {/* Render annotations using Customized component for proper scaling */}
+                <Customized 
+                  component={
+                    <AnnotationLayer 
+                      annotations={annotations} 
+                      chartData={chartData} 
+                      onAnnotationDoubleClick={handleAnnotationDoubleClick} 
+                    />
+                  } 
+                />
                 
                 {/* Render line for each visible ticker */}
                 {tickers
