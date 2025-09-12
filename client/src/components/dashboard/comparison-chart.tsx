@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { createPortal } from "react-dom";
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { TrendingUp, TrendingDown, MessageSquare, Ruler } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Search, X, Plus, Download, FileText, Image } from "lucide-react";
 import { useQueries, useQuery } from "@tanstack/react-query";
@@ -44,13 +44,40 @@ interface SearchResult {
   marketCap: string;
 }
 
+interface Annotation {
+  id: string;
+  type: 'text' | 'percentage';
+  x: number; // X coordinate on chart
+  y: number; // Y coordinate on chart
+  timestamp: number; // Data point timestamp
+  price: number; // Price at this point
+  text?: string; // User annotation text (for text type)
+  time: string; // Formatted time string
+  // For percentage measurements
+  startTimestamp?: number;
+  startPrice?: number;
+  startTime?: string;
+  endTimestamp?: number;
+  endPrice?: number;
+  endTime?: string;
+  percentage?: number;
+}
+
 interface ComparisonChartProps {
   timeframe: string;
   startDate?: Date;
   endDate?: Date;
+  annotations?: Annotation[];
+  onAnnotationsChange?: (annotations: Annotation[]) => void;
 }
 
-export function ComparisonChart({ timeframe, startDate, endDate }: ComparisonChartProps) {
+export function ComparisonChart({ 
+  timeframe, 
+  startDate, 
+  endDate,
+  annotations: controlledAnnotations,
+  onAnnotationsChange 
+}: ComparisonChartProps) {
   const [tickers, setTickers] = useState<TickerData[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
@@ -59,9 +86,43 @@ export function ComparisonChart({ timeframe, startDate, endDate }: ComparisonCha
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
   const [recentSearches, setRecentSearches] = useState<SearchResult[]>([]);
   const { toast } = useToast();
+
+  // Annotation state - controlled if parent provides annotations
+  const [internalAnnotations, setInternalAnnotations] = useState<Annotation[]>([]);
+  const [showAnnotationInput, setShowAnnotationInput] = useState(false);
+  const [annotationInput, setAnnotationInput] = useState('');
+  const [pendingAnnotation, setPendingAnnotation] = useState<Omit<Annotation, 'id' | 'text'> | null>(null);
+  const [editingAnnotation, setEditingAnnotation] = useState<Annotation | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  
+  // Percentage measurement state
+  const [annotationMode, setAnnotationMode] = useState<'text' | 'percentage'>('text');
+  const [pendingPercentageStart, setPendingPercentageStart] = useState<{
+    timestamp: number;
+    price: number;
+    time: string;
+  } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const chartRef = useRef<HTMLDivElement>(null);
+
+  // Use controlled annotations if provided, otherwise use internal state
+  const annotations = controlledAnnotations || internalAnnotations;
+  
+  // Helper function to update annotations in both controlled and uncontrolled modes
+  const updateAnnotations = (newAnnotations: Annotation[] | ((prev: Annotation[]) => Annotation[])) => {
+    if (onAnnotationsChange) {
+      // Controlled mode - resolve function to actual array
+      const resolvedAnnotations = typeof newAnnotations === 'function' 
+        ? newAnnotations(annotations)
+        : newAnnotations;
+      onAnnotationsChange(resolvedAnnotations);
+    } else {
+      // Uncontrolled mode - use internal state setter
+      setInternalAnnotations(newAnnotations);
+    }
+  };
 
   // Click outside handler - works with portal
   useEffect(() => {
