@@ -671,6 +671,15 @@ export function ComparisonChart({
           } else if (textColor.startsWith('rgb')) {
             element.setAttribute('fill', textColor);
           }
+          
+          // Preserve font information for consistency
+          const fontFamily = computedStyle.fontFamily || 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+          const fontSize = computedStyle.fontSize || '12px';
+          const fontWeight = computedStyle.fontWeight || 'normal';
+          
+          element.setAttribute('font-family', fontFamily);
+          element.setAttribute('font-size', fontSize);
+          element.setAttribute('font-weight', fontWeight);
         }
         
         // Remove style attributes that might contain CSS variables
@@ -812,6 +821,15 @@ export function ComparisonChart({
           } else if (textColor.startsWith('rgb')) {
             element.setAttribute('fill', textColor);
           }
+          
+          // Preserve font information for consistency
+          const fontFamily = computedStyle.fontFamily || 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+          const fontSize = computedStyle.fontSize || '12px';
+          const fontWeight = computedStyle.fontWeight || 'normal';
+          
+          element.setAttribute('font-family', fontFamily);
+          element.setAttribute('font-size', fontSize);
+          element.setAttribute('font-weight', fontWeight);
         }
         
         // Remove style attributes that might contain CSS variables
