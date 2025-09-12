@@ -623,94 +623,95 @@ export function ComparisonChart({
       // Wait for chart to render completely
       await new Promise(resolve => setTimeout(resolve, 200));
       
-      // Use html2canvas to capture the chart with OKLCH color fallbacks
-      const canvas = await html2canvas(chartElement, {
-        backgroundColor: '#ffffff',
-        scale: 1,
-        useCORS: false,
-        allowTaint: false,
-        logging: false,
-        width: chartElement.offsetWidth,
-        height: chartElement.offsetHeight,
-        onclone: (doc) => {
-          // Override ALL OKLCH colors with compatible RGB/HSL fallbacks
-          const style = doc.createElement('style');
-          style.textContent = `
-            :root {
-              --background: rgb(255, 255, 255) !important;
-              --foreground: rgb(68, 68, 68) !important;
-              --card: rgb(255, 255, 255) !important;
-              --card-foreground: rgb(68, 68, 68) !important;
-              --popover: rgb(255, 255, 255) !important;
-              --popover-foreground: rgb(68, 68, 68) !important;
-              --primary: rgb(98, 52, 235) !important;
-              --primary-foreground: rgb(248, 248, 248) !important;
-              --secondary: rgb(98, 52, 235) !important;
-              --secondary-foreground: rgb(248, 248, 248) !important;
-              --muted: rgb(251, 252, 253) !important;
-              --muted-foreground: rgb(156, 158, 165) !important;
-              --accent: rgb(243, 232, 255) !important;
-              --accent-foreground: rgb(98, 52, 235) !important;
-              --destructive: rgb(153, 27, 27) !important;
-              --destructive-foreground: rgb(255, 255, 255) !important;
-              --border: rgb(203, 203, 203) !important;
-              --input: rgb(103, 48, 208) !important;
-              --ring: rgb(124, 58, 237) !important;
-              --chart-1: rgb(124, 58, 237) !important;
-              --chart-2: rgb(103, 48, 208) !important;
-              --chart-3: rgb(93, 56, 192) !important;
-              --chart-4: rgb(82, 56, 166) !important;
-              --chart-5: rgb(72, 49, 149) !important;
-              --sidebar: rgb(249, 249, 253) !important;
-              --sidebar-foreground: rgb(0, 0, 0) !important;
-              --sidebar-primary: rgb(124, 58, 237) !important;
-              --sidebar-primary-foreground: rgb(255, 255, 255) !important;
-              --sidebar-accent: rgb(202, 138, 238) !important;
-              --sidebar-accent-foreground: rgb(82, 56, 166) !important;
-              --sidebar-border: rgb(0, 0, 0) !important;
-              --sidebar-ring: rgb(124, 58, 237) !important;
+      // Export directly from SVG to avoid html2canvas OKLCH issues
+      const svgElement = chartElement.querySelector('svg') as SVGElement;
+      if (!svgElement) {
+        throw new Error('SVG element not found in chart');
+      }
+      
+      // Clone the SVG and normalize colors to RGB
+      const svgClone = svgElement.cloneNode(true) as SVGElement;
+      
+      // Color mapping for OKLCH fallbacks
+      const colorMap: Record<string, string> = {
+        'oklch(0.4853 0.2967 278.3947)': 'rgb(124, 58, 237)',
+        'oklch(0.4032 0.1861 327.5134)': 'rgb(103, 48, 208)',
+        'oklch(0.3665 0.2460 267.3473)': 'rgb(93, 56, 192)',
+        'oklch(0.3218 0.2190 265.8914)': 'rgb(82, 56, 166)',
+        'oklch(0.2839 0.1937 265.6581)': 'rgb(72, 49, 149)',
+        'oklch(1.0000 0 0)': 'rgb(255, 255, 255)',
+        'oklch(0.2686 0 0)': 'rgb(68, 68, 68)',
+        'oklch(0.1822 0 0)': 'rgb(46, 46, 46)',
+        'oklch(0.9219 0 0)': 'rgb(235, 235, 235)',
+      };
+      
+      // Normalize colors in all SVG elements
+      const normalizeElement = (element: Element) => {
+        const computedStyle = window.getComputedStyle(element as HTMLElement);
+        const attributes = ['stroke', 'fill', 'stop-color'];
+        
+        attributes.forEach(attr => {
+          const computedValue = computedStyle.getPropertyValue(attr);
+          if (computedValue && computedValue !== 'none') {
+            if (computedValue.includes('oklch')) {
+              // Use color mapping for OKLCH values
+              const rgbValue = colorMap[computedValue] || 'rgb(68, 68, 68)';
+              element.setAttribute(attr, rgbValue);
+            } else if (computedValue.startsWith('rgb')) {
+              element.setAttribute(attr, computedValue);
             }
-            .dark {
-              --background: rgb(46, 46, 46) !important;
-              --foreground: rgb(235, 235, 235) !important;
-              --card: rgb(57, 57, 57) !important;
-              --card-foreground: rgb(235, 235, 235) !important;
-              --popover: rgb(68, 68, 68) !important;
-              --popover-foreground: rgb(235, 235, 235) !important;
-              --primary: rgb(90, 245, 250) !important;
-              --primary-foreground: rgb(46, 46, 46) !important;
-              --secondary: rgb(178, 178, 178) !important;
-              --secondary-foreground: rgb(46, 46, 46) !important;
-              --muted: rgb(68, 68, 68) !important;
-              --muted-foreground: rgb(182, 182, 182) !important;
-              --accent: rgb(90, 245, 250) !important;
-              --accent-foreground: rgb(46, 46, 46) !important;
-              --destructive: rgb(90, 245, 250) !important;
-              --destructive-foreground: rgb(248, 248, 248) !important;
-              --border: rgb(118, 118, 118) !important;
-              --input: rgb(94, 94, 94) !important;
-              --ring: rgb(90, 245, 250) !important;
-              --chart-1: rgb(90, 245, 250) !important;
-              --chart-2: rgb(255, 165, 255) !important;
-              --chart-3: rgb(188, 116, 237) !important;
-              --chart-4: rgb(246, 187, 119) !important;
-              --chart-5: rgb(220, 147, 222) !important;
-              --sidebar: rgb(46, 46, 46) !important;
-              --sidebar-foreground: rgb(248, 248, 248) !important;
-              --sidebar-primary: rgb(90, 245, 250) !important;
-              --sidebar-primary-foreground: rgb(248, 248, 248) !important;
-              --sidebar-accent: rgb(129, 81, 169) !important;
-              --sidebar-accent-foreground: rgb(248, 248, 248) !important;
-              --sidebar-border: rgb(94, 94, 94) !important;
-              --sidebar-ring: rgb(90, 245, 250) !important;
-            }
-          `;
-          doc.head.appendChild(style);
-        },
-        ignoreElements: (element) => {
-          const tagName = element.tagName?.toLowerCase();
-          return tagName === 'script' || tagName === 'style';
+          }
+        });
+        
+        // Handle text elements
+        if (element.tagName === 'text') {
+          const textColor = computedStyle.color;
+          if (textColor.includes('oklch')) {
+            element.setAttribute('fill', colorMap[textColor] || 'rgb(68, 68, 68)');
+          } else if (textColor.startsWith('rgb')) {
+            element.setAttribute('fill', textColor);
+          }
         }
+        
+        // Remove style attributes that might contain CSS variables
+        if (element.hasAttribute('style')) {
+          const style = element.getAttribute('style') || '';
+          if (style.includes('var(') || style.includes('oklch')) {
+            element.removeAttribute('style');
+          }
+        }
+      };
+      
+      // Process the cloned SVG and all its children
+      normalizeElement(svgClone);
+      const allElements = svgClone.querySelectorAll('*');
+      allElements.forEach(normalizeElement);
+      
+      // Serialize SVG to data URL
+      const svgData = new XMLSerializer().serializeToString(svgClone);
+      const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+      const svgUrl = URL.createObjectURL(svgBlob);
+      
+      // Create canvas and draw SVG
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d')!;
+      const img = document.createElement('img');
+      
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => {
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0);
+          URL.revokeObjectURL(svgUrl);
+          resolve();
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(svgUrl);
+          reject(new Error('Failed to load SVG image'));
+        };
+        img.src = svgUrl;
       });
 
       console.log('Canvas created successfully, converting to blob...');
@@ -763,94 +764,95 @@ export function ComparisonChart({
       // Wait for chart to render completely
       await new Promise(resolve => setTimeout(resolve, 200));
       
-      // Use html2canvas to capture the chart with OKLCH color fallbacks
-      const canvas = await html2canvas(chartElement, {
-        backgroundColor: '#ffffff',
-        scale: 1,
-        useCORS: false,
-        allowTaint: false,
-        logging: false,
-        width: chartElement.offsetWidth,
-        height: chartElement.offsetHeight,
-        onclone: (doc) => {
-          // Override ALL OKLCH colors with compatible RGB/HSL fallbacks
-          const style = doc.createElement('style');
-          style.textContent = `
-            :root {
-              --background: rgb(255, 255, 255) !important;
-              --foreground: rgb(68, 68, 68) !important;
-              --card: rgb(255, 255, 255) !important;
-              --card-foreground: rgb(68, 68, 68) !important;
-              --popover: rgb(255, 255, 255) !important;
-              --popover-foreground: rgb(68, 68, 68) !important;
-              --primary: rgb(98, 52, 235) !important;
-              --primary-foreground: rgb(248, 248, 248) !important;
-              --secondary: rgb(98, 52, 235) !important;
-              --secondary-foreground: rgb(248, 248, 248) !important;
-              --muted: rgb(251, 252, 253) !important;
-              --muted-foreground: rgb(156, 158, 165) !important;
-              --accent: rgb(243, 232, 255) !important;
-              --accent-foreground: rgb(98, 52, 235) !important;
-              --destructive: rgb(153, 27, 27) !important;
-              --destructive-foreground: rgb(255, 255, 255) !important;
-              --border: rgb(203, 203, 203) !important;
-              --input: rgb(103, 48, 208) !important;
-              --ring: rgb(124, 58, 237) !important;
-              --chart-1: rgb(124, 58, 237) !important;
-              --chart-2: rgb(103, 48, 208) !important;
-              --chart-3: rgb(93, 56, 192) !important;
-              --chart-4: rgb(82, 56, 166) !important;
-              --chart-5: rgb(72, 49, 149) !important;
-              --sidebar: rgb(249, 249, 253) !important;
-              --sidebar-foreground: rgb(0, 0, 0) !important;
-              --sidebar-primary: rgb(124, 58, 237) !important;
-              --sidebar-primary-foreground: rgb(255, 255, 255) !important;
-              --sidebar-accent: rgb(202, 138, 238) !important;
-              --sidebar-accent-foreground: rgb(82, 56, 166) !important;
-              --sidebar-border: rgb(0, 0, 0) !important;
-              --sidebar-ring: rgb(124, 58, 237) !important;
+      // Export directly from SVG to avoid html2canvas OKLCH issues
+      const svgElement = chartElement.querySelector('svg') as SVGElement;
+      if (!svgElement) {
+        throw new Error('SVG element not found in chart');
+      }
+      
+      // Clone the SVG and normalize colors to RGB
+      const svgClone = svgElement.cloneNode(true) as SVGElement;
+      
+      // Color mapping for OKLCH fallbacks
+      const colorMap: Record<string, string> = {
+        'oklch(0.4853 0.2967 278.3947)': 'rgb(124, 58, 237)',
+        'oklch(0.4032 0.1861 327.5134)': 'rgb(103, 48, 208)',
+        'oklch(0.3665 0.2460 267.3473)': 'rgb(93, 56, 192)',
+        'oklch(0.3218 0.2190 265.8914)': 'rgb(82, 56, 166)',
+        'oklch(0.2839 0.1937 265.6581)': 'rgb(72, 49, 149)',
+        'oklch(1.0000 0 0)': 'rgb(255, 255, 255)',
+        'oklch(0.2686 0 0)': 'rgb(68, 68, 68)',
+        'oklch(0.1822 0 0)': 'rgb(46, 46, 46)',
+        'oklch(0.9219 0 0)': 'rgb(235, 235, 235)',
+      };
+      
+      // Normalize colors in all SVG elements
+      const normalizeElement = (element: Element) => {
+        const computedStyle = window.getComputedStyle(element as HTMLElement);
+        const attributes = ['stroke', 'fill', 'stop-color'];
+        
+        attributes.forEach(attr => {
+          const computedValue = computedStyle.getPropertyValue(attr);
+          if (computedValue && computedValue !== 'none') {
+            if (computedValue.includes('oklch')) {
+              // Use color mapping for OKLCH values
+              const rgbValue = colorMap[computedValue] || 'rgb(68, 68, 68)';
+              element.setAttribute(attr, rgbValue);
+            } else if (computedValue.startsWith('rgb')) {
+              element.setAttribute(attr, computedValue);
             }
-            .dark {
-              --background: rgb(46, 46, 46) !important;
-              --foreground: rgb(235, 235, 235) !important;
-              --card: rgb(57, 57, 57) !important;
-              --card-foreground: rgb(235, 235, 235) !important;
-              --popover: rgb(68, 68, 68) !important;
-              --popover-foreground: rgb(235, 235, 235) !important;
-              --primary: rgb(90, 245, 250) !important;
-              --primary-foreground: rgb(46, 46, 46) !important;
-              --secondary: rgb(178, 178, 178) !important;
-              --secondary-foreground: rgb(46, 46, 46) !important;
-              --muted: rgb(68, 68, 68) !important;
-              --muted-foreground: rgb(182, 182, 182) !important;
-              --accent: rgb(90, 245, 250) !important;
-              --accent-foreground: rgb(46, 46, 46) !important;
-              --destructive: rgb(90, 245, 250) !important;
-              --destructive-foreground: rgb(248, 248, 248) !important;
-              --border: rgb(118, 118, 118) !important;
-              --input: rgb(94, 94, 94) !important;
-              --ring: rgb(90, 245, 250) !important;
-              --chart-1: rgb(90, 245, 250) !important;
-              --chart-2: rgb(255, 165, 255) !important;
-              --chart-3: rgb(188, 116, 237) !important;
-              --chart-4: rgb(246, 187, 119) !important;
-              --chart-5: rgb(220, 147, 222) !important;
-              --sidebar: rgb(46, 46, 46) !important;
-              --sidebar-foreground: rgb(248, 248, 248) !important;
-              --sidebar-primary: rgb(90, 245, 250) !important;
-              --sidebar-primary-foreground: rgb(248, 248, 248) !important;
-              --sidebar-accent: rgb(129, 81, 169) !important;
-              --sidebar-accent-foreground: rgb(248, 248, 248) !important;
-              --sidebar-border: rgb(94, 94, 94) !important;
-              --sidebar-ring: rgb(90, 245, 250) !important;
-            }
-          `;
-          doc.head.appendChild(style);
-        },
-        ignoreElements: (element) => {
-          const tagName = element.tagName?.toLowerCase();
-          return tagName === 'script' || tagName === 'style';
+          }
+        });
+        
+        // Handle text elements
+        if (element.tagName === 'text') {
+          const textColor = computedStyle.color;
+          if (textColor.includes('oklch')) {
+            element.setAttribute('fill', colorMap[textColor] || 'rgb(68, 68, 68)');
+          } else if (textColor.startsWith('rgb')) {
+            element.setAttribute('fill', textColor);
+          }
         }
+        
+        // Remove style attributes that might contain CSS variables
+        if (element.hasAttribute('style')) {
+          const style = element.getAttribute('style') || '';
+          if (style.includes('var(') || style.includes('oklch')) {
+            element.removeAttribute('style');
+          }
+        }
+      };
+      
+      // Process the cloned SVG and all its children
+      normalizeElement(svgClone);
+      const allElements = svgClone.querySelectorAll('*');
+      allElements.forEach(normalizeElement);
+      
+      // Serialize SVG to data URL
+      const svgData = new XMLSerializer().serializeToString(svgClone);
+      const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+      const svgUrl = URL.createObjectURL(svgBlob);
+      
+      // Create canvas and draw SVG
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d')!;
+      const img = document.createElement('img');
+      
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => {
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0);
+          URL.revokeObjectURL(svgUrl);
+          resolve();
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(svgUrl);
+          reject(new Error('Failed to load SVG image'));
+        };
+        img.src = svgUrl;
       });
 
       // Calculate dimensions for PDF
