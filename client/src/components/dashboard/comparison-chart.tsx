@@ -739,103 +739,187 @@ export function ComparisonChart({
     }
   };
 
-  // Helper function to capture full chart with legend as canvas
+  // Helper function to capture chart as SVG and convert to canvas (bypasses OKLCH issues)
   const captureFullChartAsCanvas = async (): Promise<HTMLCanvasElement> => {
     const fullContainer = document.querySelector('[data-testid="comparison-chart-full-container"]') as HTMLElement;
     if (!fullContainer) {
       throw new Error('Full chart container element not found');
     }
 
+    console.log('Using SVG-based export to bypass OKLCH issues...');
+
     // Wait for chart to render completely
     await new Promise(resolve => setTimeout(resolve, 200));
 
-    // Color mapping for OKLCH fallbacks
-    const colorMap: Record<string, string> = {
-      'oklch(0.4853 0.2967 278.3947)': 'rgb(124, 58, 237)',
-      'oklch(0.4032 0.1861 327.5134)': 'rgb(103, 48, 208)',
-      'oklch(0.3665 0.2460 267.3473)': 'rgb(93, 56, 192)',
-      'oklch(0.3218 0.2190 265.8914)': 'rgb(82, 56, 166)',
-      'oklch(0.2839 0.1937 265.6581)': 'rgb(72, 49, 149)',
-      'oklch(1.0000 0 0)': 'rgb(255, 255, 255)',
-      'oklch(0.2686 0 0)': 'rgb(68, 68, 68)',
-      'oklch(0.1822 0 0)': 'rgb(46, 46, 46)',
-      'oklch(0.9219 0 0)': 'rgb(235, 235, 235)',
-      'oklch(0.1329 0 0)': 'rgb(34, 34, 34)',
-    };
+    // Find the SVG chart element
+    const svgChart = fullContainer.querySelector('svg');
+    if (!svgChart) {
+      throw new Error('SVG chart element not found');
+    }
 
-    // Create a temporary container with all OKLCH colors replaced
-    console.log('Creating temporary container with RGB colors...');
-    const tempContainer = document.createElement('div');
-    tempContainer.innerHTML = fullContainer.innerHTML;
-    tempContainer.className = fullContainer.className;
-    tempContainer.style.cssText = fullContainer.style.cssText;
-    tempContainer.style.position = 'absolute';
-    tempContainer.style.left = '-9999px';
-    tempContainer.style.top = '0';
-    tempContainer.style.zIndex = '-1';
+    // Clone and clean the SVG
+    const svgClone = svgChart.cloneNode(true) as SVGElement;
     
-    // Function to replace OKLCH with RGB in all styles
-    const replaceOklchInElement = (element: Element) => {
-      if (element instanceof HTMLElement) {
-        // Replace in inline styles
-        const inlineStyle = element.getAttribute('style');
-        if (inlineStyle && inlineStyle.includes('oklch')) {
-          let newStyle = inlineStyle;
-          Object.entries(colorMap).forEach(([oklchColor, rgbColor]) => {
-            const regex = new RegExp(oklchColor.replace(/[()]/g, '\\$&'), 'g');
-            newStyle = newStyle.replace(regex, rgbColor);
-          });
-          // Also handle any other OKLCH patterns
-          newStyle = newStyle.replace(/oklch\([^)]+\)/g, 'rgb(68, 68, 68)');
-          element.setAttribute('style', newStyle);
+    // Remove all classes and normalize colors directly in the SVG
+    const normalizeSVGColors = (element: Element) => {
+      if (element instanceof SVGElement || element instanceof HTMLElement) {
+        // Remove all classes to avoid CSS conflicts
+        element.removeAttribute('class');
+        element.removeAttribute('style');
+        
+        // Set explicit colors for different SVG elements
+        if (element.tagName === 'text') {
+          element.setAttribute('fill', '#ffffff');
+          element.setAttribute('font-family', 'system-ui, sans-serif');
+          element.setAttribute('font-size', '12');
+        } else if (element.tagName === 'path') {
+          const existingStroke = element.getAttribute('stroke');
+          if (existingStroke && existingStroke !== 'none') {
+            // Use different colors for different paths (lines)
+            const pathIndex = Array.from(element.parentNode?.children || []).indexOf(element);
+            const colors = ['#7c3aed', '#6730d0', '#5d38c0', '#5238a6', '#493195'];
+            element.setAttribute('stroke', colors[pathIndex % colors.length] || '#7c3aed');
+          }
+        } else if (element.tagName === 'line') {
+          const stroke = element.getAttribute('stroke');
+          if (stroke && stroke !== 'none') {
+            element.setAttribute('stroke', '#888888'); // Grid lines
+          }
         }
         
-        // Replace in SVG attributes
-        if (element.tagName && element.tagName.toLowerCase() === 'svg' || element.closest('svg')) {
-          const svgAttrs = ['stroke', 'fill', 'stop-color', 'flood-color'];
-          svgAttrs.forEach(attr => {
-            const value = element.getAttribute(attr);
-            if (value && value.includes('oklch')) {
-              const rgbValue = colorMap[value] || 'rgb(68, 68, 68)';
-              element.setAttribute(attr, rgbValue);
-            }
-          });
-        }
+        // Remove any attributes that might contain OKLCH
+        const attributes = ['data-color', 'data-fill', 'data-stroke'];
+        attributes.forEach(attr => element.removeAttribute(attr));
       }
       
-      // Process all children recursively
-      Array.from(element.children).forEach(replaceOklchInElement);
+      // Process children
+      Array.from(element.children).forEach(normalizeSVGColors);
     };
     
-    replaceOklchInElement(tempContainer);
-    
-    // Add to DOM temporarily for html2canvas
-    document.body.appendChild(tempContainer);
-    
-    try {
-      console.log('Capturing with html2canvas...');
-      const canvas = await html2canvas(tempContainer, {
-        scale: 2,
-        backgroundColor: null, // Transparent background
-        useCORS: true,
-        allowTaint: true,
-        ignoreElements: (element) => {
-          return element.classList.contains('recharts-tooltip-wrapper');
-        }
-      });
+    normalizeSVGColors(svgClone);
+
+    // Create a new container for the chart + legend
+    const exportContainer = document.createElement('div');
+    exportContainer.style.cssText = `
+      padding: 20px;
+      background: transparent;
+      width: ${svgChart.clientWidth + 40}px;
+      font-family: system-ui, sans-serif;
+      color: white;
+    `;
+
+    // Add the cleaned SVG
+    exportContainer.appendChild(svgClone);
+
+    // Create legend
+    const legendDiv = document.createElement('div');
+    legendDiv.style.cssText = `
+      margin-top: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      font-size: 14px;
+      color: white;
+    `;
+
+    // Add legend items for visible tickers
+    const visibleTickers = tickers.filter(ticker => ticker.visible);
+    const colors = ['#7c3aed', '#6730d0', '#5d38c0', '#5238a6', '#493195'];
+
+    visibleTickers.forEach((ticker, index) => {
+      const legendItem = document.createElement('div');
+      legendItem.style.cssText = 'display: flex; align-items: center; gap: 8px;';
       
-      // Clean up temp container
-      document.body.removeChild(tempContainer);
-      console.log('Canvas capture successful');
-      return canvas;
+      const colorDot = document.createElement('div');
+      colorDot.style.cssText = `
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: ${colors[index % colors.length]};
+      `;
       
-    } catch (error) {
-      // Clean up temp container on error
-      if (document.body.contains(tempContainer)) {
-        document.body.removeChild(tempContainer);
-      }
-      throw error;
-    }
+      const latestData = chartData[chartData.length - 1];
+      const percentage = latestData ? Number(latestData[`${ticker.symbol}_percentage`] || 0) : 0;
+      const percentageStr = percentage > 0 ? `+${percentage.toFixed(2)}%` : `${percentage.toFixed(2)}%`;
+      
+      const label = document.createElement('span');
+      label.textContent = `${ticker.symbol} ${percentageStr}`;
+      label.style.color = 'white';
+      
+      legendItem.appendChild(colorDot);
+      legendItem.appendChild(label);
+      legendDiv.appendChild(legendItem);
+    });
+
+    exportContainer.appendChild(legendDiv);
+
+    // Create canvas and draw the export container
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d')!;
+    
+    // Set canvas size (high resolution for quality)
+    const scale = 2;
+    canvas.width = exportContainer.offsetWidth * scale;
+    canvas.height = (svgChart.clientHeight + 80) * scale; // Extra height for legend
+    
+    ctx.scale(scale, scale);
+    
+    // Draw background (transparent)
+    ctx.clearRect(0, 0, canvas.width / scale, canvas.height / scale);
+    
+    // Convert SVG to data URL
+    const svgData = new XMLSerializer().serializeToString(svgClone);
+    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+    const svgUrl = URL.createObjectURL(svgBlob);
+    
+    return new Promise<HTMLCanvasElement>((resolve, reject) => {
+      const img = document.createElement('img') as HTMLImageElement;
+      img.onload = () => {
+        // Draw the SVG
+        ctx.drawImage(img, 20, 10);
+        
+        // Draw legend manually
+        ctx.fillStyle = 'white';
+        ctx.font = '14px system-ui, sans-serif';
+        
+        let legendY = svgChart.clientHeight + 40;
+        let legendX = 20;
+        
+        visibleTickers.forEach((ticker, index) => {
+          // Draw color dot
+          ctx.fillStyle = colors[index % colors.length];
+          ctx.beginPath();
+          ctx.arc(legendX + 5, legendY, 5, 0, 2 * Math.PI);
+          ctx.fill();
+          
+          // Draw text
+          ctx.fillStyle = 'white';
+          const latestData = chartData[chartData.length - 1];
+          const percentage = latestData ? Number(latestData[`${ticker.symbol}_percentage`] || 0) : 0;
+          const percentageStr = percentage > 0 ? `+${percentage.toFixed(2)}%` : `${percentage.toFixed(2)}%`;
+          const text = `${ticker.symbol} ${percentageStr}`;
+          
+          ctx.fillText(text, legendX + 20, legendY + 5);
+          
+          // Move to next position
+          legendX += ctx.measureText(text).width + 50;
+          if (legendX > canvas.width / scale - 100) {
+            legendX = 20;
+            legendY += 25;
+          }
+        });
+        
+        URL.revokeObjectURL(svgUrl);
+        resolve(canvas);
+      };
+      
+      img.onerror = () => {
+        URL.revokeObjectURL(svgUrl);
+        reject(new Error('Failed to load SVG'));
+      };
+      
+      img.src = svgUrl;
+    });
   };
 
   // PNG export function
