@@ -20,7 +20,7 @@ interface GlobalSearchResult {
 
 interface Annotation {
   id: string;
-  type: 'text' | 'percentage';
+  type: 'text' | 'percentage' | 'horizontal';
   x: number;
   y: number;
   timestamp: number;
@@ -368,18 +368,6 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
                     Clear {selectedStock.displaySymbol}
                   </Button>
                 )}
-                {Object.keys(annotationsBySymbol).length > 0 && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={clearAllAnnotations}
-                    className="text-xs text-destructive hover:text-black hover:bg-[#5AF5FA]"
-                    data-testid="button-clear-all"
-                  >
-                    <RotateCcw className="w-3 h-3 mr-1" />
-                    Clear All
-                  </Button>
-                )}
               </div>
             </div>
           </Card>
@@ -398,6 +386,7 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
             annotations={currentAnnotations}
             onAnnotationsChange={handleAnnotationsChange}
             rememberPerTicker={rememberPerTicker}
+            onClearAll={Object.keys(annotationsBySymbol).length > 0 ? clearAllAnnotations : undefined}
           />
         </div>
       )}

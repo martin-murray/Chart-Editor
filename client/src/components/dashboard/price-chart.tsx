@@ -9,7 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tooltip as HoverTooltip, TooltipContent as HoverTooltipContent, TooltipProvider, TooltipTrigger as HoverTooltipTrigger } from '@/components/ui/tooltip';
-import { Loader2, TrendingUp, TrendingDown, Plus, Calendar as CalendarIcon, X, Download, ChevronDown, MessageSquare, Ruler, Minus } from 'lucide-react';
+import { Loader2, TrendingUp, TrendingDown, Plus, Calendar as CalendarIcon, X, Download, ChevronDown, MessageSquare, Ruler, Minus, RotateCcw } from 'lucide-react';
 import { format, subDays, subMonths, subYears } from 'date-fns';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -87,6 +87,7 @@ interface PriceChartProps {
   annotations?: Annotation[];
   onAnnotationsChange?: (annotations: Annotation[]) => void;
   rememberPerTicker?: boolean;
+  onClearAll?: () => void;
 }
 
 const timeframes = [
@@ -109,7 +110,8 @@ export function PriceChart({
   marketCap,
   annotations: controlledAnnotations,
   onAnnotationsChange,
-  rememberPerTicker = true
+  rememberPerTicker = true,
+  onClearAll
 }: PriceChartProps) {
   const [selectedTimeframe, setSelectedTimeframe] = useState('1D');
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
@@ -1760,48 +1762,63 @@ export function PriceChart({
               </TabsList>
               
               {/* Annotation Mode Controls */}
-              <div className="flex border border-border rounded-md overflow-hidden bg-background">
-                <Button
-                  size="sm"
-                  variant={annotationMode === 'text' ? 'default' : 'ghost'}
-                  onClick={() => {
-                    setAnnotationMode('text');
-                    setPendingPercentageStart(null);
-                  }}
-                  className="h-8 px-3 text-xs rounded-none border-0"
-                  data-testid="button-annotation-text"
-                >
-                  <div className="w-3 h-3 mr-1 flex items-center justify-center">
-                    <div className="w-0.5 h-3 bg-current" />
-                  </div>
-                  Vertical
-                </Button>
-                <Button
-                  size="sm"
-                  variant={annotationMode === 'percentage' ? 'default' : 'ghost'}
-                  onClick={() => {
-                    setAnnotationMode('percentage');
-                    setPendingPercentageStart(null);
-                  }}
-                  className="h-8 px-3 text-xs rounded-none border-0"
-                  data-testid="button-annotation-percentage"
-                >
-                  <Ruler className="w-3 h-3 mr-1" />
-                  Measure
-                </Button>
-                <Button
-                  size="sm"
-                  variant={annotationMode === 'horizontal' ? 'default' : 'ghost'}
-                  onClick={() => {
-                    setAnnotationMode('horizontal');
-                    setPendingPercentageStart(null);
-                  }}
-                  className="h-8 px-3 text-xs rounded-none border-0"
-                  data-testid="button-annotation-horizontal"
-                >
-                  <Minus className="w-3 h-3 mr-1" />
-                  Horizontal
-                </Button>
+              <div className="flex items-center gap-2">
+                <div className="flex border border-border rounded-md overflow-hidden bg-background">
+                  <Button
+                    size="sm"
+                    variant={annotationMode === 'text' ? 'default' : 'ghost'}
+                    onClick={() => {
+                      setAnnotationMode('text');
+                      setPendingPercentageStart(null);
+                    }}
+                    className="h-8 px-3 text-xs rounded-none border-0"
+                    data-testid="button-annotation-text"
+                  >
+                    <div className="w-3 h-3 mr-1 flex items-center justify-center">
+                      <div className="w-0.5 h-3 bg-current" />
+                    </div>
+                    Vertical
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={annotationMode === 'percentage' ? 'default' : 'ghost'}
+                    onClick={() => {
+                      setAnnotationMode('percentage');
+                      setPendingPercentageStart(null);
+                    }}
+                    className="h-8 px-3 text-xs rounded-none border-0"
+                    data-testid="button-annotation-percentage"
+                  >
+                    <Ruler className="w-3 h-3 mr-1" />
+                    Measure
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={annotationMode === 'horizontal' ? 'default' : 'ghost'}
+                    onClick={() => {
+                      setAnnotationMode('horizontal');
+                      setPendingPercentageStart(null);
+                    }}
+                    className="h-8 px-3 text-xs rounded-none border-0"
+                    data-testid="button-annotation-horizontal"
+                  >
+                    <Minus className="w-3 h-3 mr-1" />
+                    Horizontal
+                  </Button>
+                </div>
+                
+                {onClearAll && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={onClearAll}
+                    className="h-8 px-3 text-xs text-destructive hover:text-black hover:bg-[#5AF5FA]"
+                    data-testid="button-clear-all"
+                  >
+                    <RotateCcw className="w-3 h-3 mr-1" />
+                    Clear All
+                  </Button>
+                )}
               </div>
             </div>
             
