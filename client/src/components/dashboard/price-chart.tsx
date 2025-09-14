@@ -1754,7 +1754,10 @@ export function PriceChart({
           </div>
         ) : error ? (
           <div className="h-80 flex items-center justify-center text-red-500">
-            Failed to load chart data
+            <div className="text-center">
+              <div>Failed to load chart data</div>
+              <div className="text-sm text-muted-foreground mt-1">No signal day data during the weekend</div>
+            </div>
           </div>
         ) : !chartData?.data || chartData.data.length === 0 ? (
           <div className="h-80 flex items-center justify-center text-muted-foreground">
