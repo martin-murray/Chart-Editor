@@ -2212,6 +2212,13 @@ export function PriceChart({
                             const arrowX2 = x2 - arrowSize * Math.cos(angle + Math.PI / 6);
                             const arrowY2 = y2 - arrowSize * Math.sin(angle + Math.PI / 6);
                             
+                            // Calculate text box position
+                            const textBoxWidth = 240;
+                            const textBoxHeight = 80;
+                            const textBoxX = Math.min(x2 + 10, xAxis.x + xAxis.width - textBoxWidth);
+                            const midY = (y1 + y2) / 2;
+                            const textBoxY = Math.max(yAxis.y, Math.min(midY - textBoxHeight / 2, yAxis.y + yAxis.height - textBoxHeight));
+
                             return (
                               <g key={annotation.id} style={{ cursor: 'pointer' }}>
                                 {/* Main line */}
@@ -2270,6 +2277,68 @@ export function PriceChart({
                                     handleAnnotationDoubleClick(annotation);
                                   }}
                                 />
+                                
+                                {/* Percentage text box */}
+                                <g onDoubleClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleAnnotationDoubleClick(annotation);
+                                }}>
+                                  {/* Text box background */}
+                                  <rect
+                                    x={textBoxX}
+                                    y={textBoxY}
+                                    width={textBoxWidth}
+                                    height={textBoxHeight}
+                                    fill="#121212"
+                                    stroke="#374151"
+                                    strokeWidth={1}
+                                    rx={4}
+                                    style={{ cursor: 'pointer' }}
+                                  />
+                                  
+                                  {/* Percentage text */}
+                                  <text
+                                    x={textBoxX + 8}
+                                    y={textBoxY + 20}
+                                    fill="#FAFF50"
+                                    fontSize="16"
+                                    fontWeight="bold"
+                                    fontFamily="system-ui, -apple-system, sans-serif"
+                                    style={{ pointerEvents: 'none' }}
+                                  >
+                                    {annotation.percentage !== undefined ? 
+                                      (annotation.percentage > 0 ? '+' : '') + annotation.percentage.toFixed(2) + '%' 
+                                      : 'N/A'}
+                                  </text>
+                                  
+                                  {/* Price range text */}
+                                  <text
+                                    x={textBoxX + 8}
+                                    y={textBoxY + 40}
+                                    fill="#9CA3AF"
+                                    fontSize="14"
+                                    fontFamily="system-ui, -apple-system, sans-serif"
+                                    style={{ pointerEvents: 'none' }}
+                                  >
+                                    {formatPrice(annotation.startPrice!)} → {formatPrice(annotation.endPrice!)}
+                                  </text>
+                                  
+                                  {/* Price difference text */}
+                                  <text
+                                    x={textBoxX + 8}
+                                    y={textBoxY + 60}
+                                    fill="#F7F7F7"
+                                    fontSize="14"
+                                    fontFamily="system-ui, -apple-system, sans-serif"
+                                    style={{ pointerEvents: 'none' }}
+                                  >
+                                    {(() => {
+                                      const priceDiff = annotation.endPrice! - annotation.startPrice!;
+                                      return `${priceDiff > 0 ? '+' : ''}${formatPrice(Math.abs(priceDiff))}`;
+                                    })()}
+                                  </text>
+                                </g>
                               </g>
                             );
                           })}
