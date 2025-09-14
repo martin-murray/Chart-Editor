@@ -208,6 +208,49 @@ const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
               </text>
             </g>
           );
+        } else if (annotation.type === 'horizontal') {
+          const y = yAxis.scale(annotation.price) + offset.top;
+          
+          // Calculate boundaries from chart geometry
+          const points = formattedGraphicalItems?.[0]?.props?.points;
+          if (!points || points.length === 0) return null; // Skip if no points available
+          
+          const xLeft = points[0]?.x || offset.left;
+          const xRight = points.at(-1)?.x || (offset.left + 800); // Dynamic right boundary
+          
+          return (
+            <g key={annotation.id}>
+              <line 
+                x1={xLeft} 
+                y1={y} 
+                x2={xRight} 
+                y2={y} 
+                stroke="#AA99FF" 
+                strokeWidth={2}
+                style={{ cursor: 'pointer' }}
+                onDoubleClick={() => onAnnotationDoubleClick(annotation)} 
+              />
+              <circle
+                cx={x}
+                cy={y}
+                r={4}
+                fill="#AA99FF"
+                style={{ cursor: 'pointer' }}
+                onDoubleClick={() => onAnnotationDoubleClick(annotation)}
+              />
+              <text 
+                x={x + 8} 
+                y={y - 8} 
+                fill="#AA99FF" 
+                fontSize={12} 
+                fontWeight="bold" 
+                style={{ cursor: 'pointer' }}
+                onDoubleClick={() => onAnnotationDoubleClick(annotation)}
+              >
+                {annotation.text || 'Horizontal Line'}
+              </text>
+            </g>
+          );
         }
         return null;
       })}
