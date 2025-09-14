@@ -1756,7 +1756,7 @@ export function PriceChart({
           <div className="h-80 flex items-center justify-center text-red-500">
             <div className="text-center">
               <div>Failed to load chart data</div>
-              <div className="text-sm text-muted-foreground mt-1">No signal day data during the weekend</div>
+              <div className="text-sm text-muted-foreground mt-1">No single day data during the weekend</div>
             </div>
           </div>
         ) : !chartData?.data || chartData.data.length === 0 ? (
