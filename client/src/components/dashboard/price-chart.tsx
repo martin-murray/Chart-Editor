@@ -364,15 +364,22 @@ export function PriceChart({
     }
   };
 
-  // Handle annotation double-click for editing
+  // Handle annotation double-click for editing or deletion
   const handleAnnotationDoubleClick = (annotation: Annotation) => {
     if (annotation.type === 'text' || annotation.type === 'horizontal') {
       setEditingAnnotation(annotation);
       setIsEditMode(true);
       setAnnotationInput(annotation.text || '');
       setShowAnnotationInput(true);
+    } else if (annotation.type === 'percentage') {
+      // Percentage annotations can be deleted on double-click
+      handlePercentageAnnotationDelete(annotation);
     }
-    // Percentage annotations are not editable
+  };
+
+  // Delete percentage annotation
+  const handlePercentageAnnotationDelete = (annotation: Annotation) => {
+    updateAnnotations(prev => prev.filter(a => a.id !== annotation.id));
   };
 
   // Save annotation with user text
@@ -2206,7 +2213,7 @@ export function PriceChart({
                             const arrowY2 = y2 - arrowSize * Math.sin(angle + Math.PI / 6);
                             
                             return (
-                              <g key={annotation.id}>
+                              <g key={annotation.id} style={{ cursor: 'pointer' }}>
                                 {/* Main line */}
                                 <line
                                   x1={x1}
@@ -2216,6 +2223,11 @@ export function PriceChart({
                                   stroke={lineColor}
                                   strokeWidth={2}
                                   vectorEffect="non-scaling-stroke"
+                                  onDoubleClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleAnnotationDoubleClick(annotation);
+                                  }}
                                 />
                                 {/* Arrow head - outlined instead of filled */}
                                 <polygon
@@ -2224,6 +2236,11 @@ export function PriceChart({
                                   stroke={lineColor}
                                   strokeWidth={2}
                                   strokeLinejoin="round"
+                                  onDoubleClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleAnnotationDoubleClick(annotation);
+                                  }}
                                 />
                                 {/* Start point dot */}
                                 <circle
@@ -2233,6 +2250,11 @@ export function PriceChart({
                                   fill={lineColor}
                                   stroke="#121212"
                                   strokeWidth={1}
+                                  onDoubleClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleAnnotationDoubleClick(annotation);
+                                  }}
                                 />
                                 {/* End point dot */}
                                 <circle
@@ -2242,6 +2264,11 @@ export function PriceChart({
                                   fill={lineColor}
                                   stroke="#121212"
                                   strokeWidth={1}
+                                  onDoubleClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleAnnotationDoubleClick(annotation);
+                                  }}
                                 />
                               </g>
                             );
