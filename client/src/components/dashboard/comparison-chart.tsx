@@ -132,16 +132,15 @@ const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
                 y1={yTop} 
                 x2={x} 
                 y2={yBottom} 
-                stroke="#5AF5FA" 
-                strokeWidth={2} 
-                strokeDasharray="5 5" 
+                stroke="#FAFF50" 
+                strokeWidth={1} 
                 style={{ cursor: 'pointer' }}
                 onDoubleClick={() => onAnnotationDoubleClick(annotation)} 
               />
               <text 
                 x={x + 5} 
                 y={y - 10} 
-                fill="#5AF5FA" 
+                fill="#FAFF50" 
                 fontSize={12} 
                 fontWeight="bold" 
                 style={{ cursor: 'pointer' }}
@@ -301,7 +300,7 @@ const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
                 x2={xRight} 
                 y2={y} 
                 stroke="#AA99FF" 
-                strokeWidth={2}
+                strokeWidth={1.5}
                 style={{ cursor: 'pointer' }}
                 onDoubleClick={() => onAnnotationDoubleClick(annotation)} 
               />
