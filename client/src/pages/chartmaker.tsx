@@ -396,7 +396,7 @@ function ChartMaker() {
                 <h2 className="text-xl font-semibold">Global Stock & ETF Search</h2>
               </div>
               <p className="text-muted-foreground">
-                Search and visualize price charts for stocks, ETFs, and other securities from global exchanges including NYSE, NASDAQ, LSE, TSE, and 60+ others worldwide.
+                Search and visualise price charts for stocks, ETFs, and securities globally
               </p>
             </div>
             
