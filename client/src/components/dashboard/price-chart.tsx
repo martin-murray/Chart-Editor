@@ -9,7 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tooltip as HoverTooltip, TooltipContent as HoverTooltipContent, TooltipProvider, TooltipTrigger as HoverTooltipTrigger } from '@/components/ui/tooltip';
-import { Loader2, TrendingUp, TrendingDown, Plus, Calendar as CalendarIcon, X, Download, ChevronDown, MessageSquare, Ruler } from 'lucide-react';
+import { Loader2, TrendingUp, TrendingDown, Plus, Calendar as CalendarIcon, X, Download, ChevronDown, MessageSquare, Ruler, Minus } from 'lucide-react';
 import { format, subDays, subMonths, subYears } from 'date-fns';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -61,12 +61,12 @@ interface StockDetails {
 
 interface Annotation {
   id: string;
-  type: 'text' | 'percentage';
+  type: 'text' | 'percentage' | 'horizontal';
   x: number; // X coordinate on chart
   y: number; // Y coordinate on chart
   timestamp: number; // Data point timestamp
   price: number; // Price at this point
-  text?: string; // User annotation text (for text type)
+  text?: string; // User annotation text (for text and horizontal types)
   time: string; // Formatted time string
   // For percentage measurements
   startTimestamp?: number;
@@ -128,7 +128,7 @@ export function PriceChart({
   const [isEditMode, setIsEditMode] = useState(false);
   
   // Percentage measurement state
-  const [annotationMode, setAnnotationMode] = useState<'text' | 'percentage'>('text');
+  const [annotationMode, setAnnotationMode] = useState<'text' | 'percentage' | 'horizontal'>('text');
   const [pendingPercentageStart, setPendingPercentageStart] = useState<{
     timestamp: number;
     price: number;
@@ -309,6 +309,22 @@ export function PriceChart({
         setAnnotationInput('');
         setEditingAnnotation(null);
         setIsEditMode(false);
+      } else if (annotationMode === 'horizontal') {
+        // Horizontal annotation mode - single click
+        const newAnnotation: Omit<Annotation, 'id' | 'text'> = {
+          type: 'horizontal',
+          x: 0, // Will be set by chart rendering
+          y: 0, // Will be set by chart rendering  
+          timestamp,
+          price,
+          time
+        };
+        
+        setPendingAnnotation(newAnnotation);
+        setShowAnnotationInput(true);
+        setAnnotationInput('');
+        setEditingAnnotation(null);
+        setIsEditMode(false);
       } else if (annotationMode === 'percentage') {
         // Percentage measurement mode - two clicks
         if (!pendingPercentageStart) {
@@ -350,7 +366,7 @@ export function PriceChart({
 
   // Handle annotation double-click for editing
   const handleAnnotationDoubleClick = (annotation: Annotation) => {
-    if (annotation.type === 'text') {
+    if (annotation.type === 'text' || annotation.type === 'horizontal') {
       setEditingAnnotation(annotation);
       setIsEditMode(true);
       setAnnotationInput(annotation.text || '');
@@ -760,6 +776,42 @@ export function PriceChart({
             const priceDiff = annotation.endPrice! - annotation.startPrice!;
             const priceDiffText = `${priceDiff > 0 ? '+' : ''}${formatPrice(Math.abs(priceDiff))}`;
             ctx.fillText(priceDiffText, textBoxX + 8, textBoxY + 60);
+            } else if (annotation.type === 'horizontal') {
+              // Horizontal annotations - purple horizontal lines
+              const dataIndex = chartData.data.findIndex(d => d.timestamp === annotation.timestamp);
+              if (dataIndex !== -1) {
+                const minPrice = Math.min(...chartData.data.map(d => d.low));
+                const maxPrice = Math.max(...chartData.data.map(d => d.high));
+                const priceRange = maxPrice - minPrice;
+                const y = Math.max(priceArea.y, Math.min(priceArea.y + priceArea.height, 
+                  priceArea.y + priceArea.height - ((annotation.price - minPrice) / priceRange) * priceArea.height));
+                
+                // Draw horizontal line
+                ctx.strokeStyle = '#AA99FF';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(priceArea.x, y);
+                ctx.lineTo(priceArea.x + priceArea.width, y);
+                ctx.stroke();
+                
+                // Draw text label if present
+                if (annotation.text) {
+                  ctx.fillStyle = '#AA99FF';
+                  ctx.font = 'bold 14px system-ui, -apple-system, sans-serif';
+                  const label = annotation.text;
+                  const w = ctx.measureText(label).width + 12;
+                  const h = 22;
+                  const tx = Math.min(priceArea.x + priceArea.width - w - 6, priceArea.x + 8);
+                  const ty = Math.max(priceArea.y + 6, Math.min(y - h / 2, priceArea.y + priceArea.height - h - 6));
+                  
+                  ctx.fillStyle = '#121212';
+                  ctx.strokeStyle = '#AA99FF';
+                  ctx.fillRect(tx, ty, w, h);
+                  ctx.strokeRect(tx, ty, w, h);
+                  ctx.fillStyle = '#AA99FF';
+                  ctx.fillText(label, tx + 6, ty + h - 6);
+                }
+              }
             }
           });
         }
@@ -1148,6 +1200,42 @@ export function PriceChart({
             const priceDiff = annotation.endPrice! - annotation.startPrice!;
             const priceDiffText = `${priceDiff > 0 ? '+' : ''}${formatPrice(Math.abs(priceDiff))}`;
             ctx.fillText(priceDiffText, textBoxX + 8, textBoxY + 60);
+            } else if (annotation.type === 'horizontal') {
+              // Horizontal annotations - purple horizontal lines
+              const dataIndex = chartData.data.findIndex(d => d.timestamp === annotation.timestamp);
+              if (dataIndex !== -1) {
+                const minPrice = Math.min(...chartData.data.map(d => d.low));
+                const maxPrice = Math.max(...chartData.data.map(d => d.high));
+                const priceRange = maxPrice - minPrice;
+                const y = Math.max(priceArea.y, Math.min(priceArea.y + priceArea.height, 
+                  priceArea.y + priceArea.height - ((annotation.price - minPrice) / priceRange) * priceArea.height));
+                
+                // Draw horizontal line
+                ctx.strokeStyle = '#AA99FF';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(priceArea.x, y);
+                ctx.lineTo(priceArea.x + priceArea.width, y);
+                ctx.stroke();
+                
+                // Draw text label if present
+                if (annotation.text) {
+                  ctx.fillStyle = '#AA99FF';
+                  ctx.font = 'bold 14px system-ui, -apple-system, sans-serif';
+                  const label = annotation.text;
+                  const w = ctx.measureText(label).width + 12;
+                  const h = 22;
+                  const tx = Math.min(priceArea.x + priceArea.width - w - 6, priceArea.x + 8);
+                  const ty = Math.max(priceArea.y + 6, Math.min(y - h / 2, priceArea.y + priceArea.height - h - 6));
+                  
+                  ctx.fillStyle = '#121212';
+                  ctx.strokeStyle = '#AA99FF';
+                  ctx.fillRect(tx, ty, w, h);
+                  ctx.strokeRect(tx, ty, w, h);
+                  ctx.fillStyle = '#AA99FF';
+                  ctx.fillText(label, tx + 6, ty + h - 6);
+                }
+              }
             }
           });
         }
@@ -1573,6 +1661,19 @@ export function PriceChart({
               <Ruler className="w-3 h-3 mr-1" />
               Measure
             </Button>
+            <Button
+              size="sm"
+              variant={annotationMode === 'horizontal' ? 'default' : 'ghost'}
+              onClick={() => {
+                setAnnotationMode('horizontal');
+                setPendingPercentageStart(null);
+              }}
+              className="h-8 px-3 text-xs rounded-none border-0"
+              data-testid="button-annotation-horizontal"
+            >
+              <Minus className="w-3 h-3 mr-1" />
+              Horizontal
+            </Button>
           </div>
           
           {/* Pending Percentage Indicator */}
@@ -1794,6 +1895,31 @@ export function PriceChart({
                         </div>
                       </div>
                     );
+                  } else if (annotation.type === 'horizontal') {
+                    // Horizontal annotations - display at single point
+                    const dataIndex = chartData?.data?.findIndex(d => d.timestamp === annotation.timestamp) ?? -1;
+                    if (dataIndex === -1) return null;
+                    
+                    const totalDataPoints = (chartData?.data?.length ?? 1) - 1;
+                    const xPercent = totalDataPoints > 0 ? (dataIndex / totalDataPoints) * 100 : 0;
+                    
+                    return (
+                      <div
+                        key={annotation.id}
+                        className="absolute"
+                        style={{ left: `${xPercent}%`, top: '20px', transform: 'translateX(-50%)' }}
+                      >
+                        <div 
+                          className="bg-background border border-border rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-pointer hover:bg-muted shadow-lg"
+                          onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
+                          title="Double-click to edit"
+                        >
+                          <div className="font-medium" style={{ color: '#AA99FF' }}>{formatTime(annotation.time, selectedTimeframe)}</div>
+                          <div className="text-muted-foreground">{formatPrice(annotation.price)}</div>
+                          <div className="text-foreground mt-1">{annotation.text || ''}</div>
+                        </div>
+                      </div>
+                    );
                   } else if (annotation.type === 'percentage' && annotation.startTimestamp && annotation.endTimestamp) {
                     // Percentage measurements - display at midpoint
                     const startIndex = chartData?.data?.findIndex(d => d.timestamp === annotation.startTimestamp) ?? -1;
@@ -1934,6 +2060,19 @@ export function PriceChart({
                       x={annotation.time}
                       yAxisId="price"
                       stroke="#FAFF50"
+                      strokeWidth={1}
+                      vectorEffect="non-scaling-stroke"
+                      shapeRendering="crispEdges"
+                    />
+                  ))}
+
+                  {/* Horizontal Annotation Reference Lines - purple horizontal lines */}
+                  {annotations.filter(annotation => annotation.type === 'horizontal').map((annotation) => (
+                    <ReferenceLine 
+                      key={annotation.id}
+                      y={annotation.price}
+                      yAxisId="price"
+                      stroke="#AA99FF"
                       strokeWidth={1}
                       vectorEffect="non-scaling-stroke"
                       shapeRendering="crispEdges"

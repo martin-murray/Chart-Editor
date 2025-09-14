@@ -46,12 +46,12 @@ interface SearchResult {
 
 interface Annotation {
   id: string;
-  type: 'text' | 'percentage';
+  type: 'text' | 'percentage' | 'horizontal';
   x: number; // X coordinate on chart
   y: number; // Y coordinate on chart
   timestamp: number; // Data point timestamp
   price: number; // Price at this point
-  text?: string; // User annotation text (for text type)
+  text?: string; // User annotation text (for text and horizontal types)
   time: string; // Formatted time string
   // For percentage measurements
   startTimestamp?: number;
@@ -69,7 +69,7 @@ interface ComparisonChartProps {
   endDate?: Date;
   annotations?: Annotation[];
   onAnnotationsChange?: (annotations: Annotation[]) => void;
-  annotationMode?: 'text' | 'percentage';
+  annotationMode?: 'text' | 'percentage' | 'horizontal';
   pendingPercentageStart?: { timestamp: number; price: number; time: string } | null;
   setPendingPercentageStart?: (start: { timestamp: number; price: number; time: string } | null) => void;
   updateAnnotations?: (newAnnotations: Annotation[] | ((prev: Annotation[]) => Annotation[])) => void;
