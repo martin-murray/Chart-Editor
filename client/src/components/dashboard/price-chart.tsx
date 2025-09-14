@@ -711,28 +711,33 @@ export function PriceChart({
               const y1 = priceArea.y + priceArea.height - ((annotation.startPrice! - minPrice) / priceRange) * priceArea.height;
               const y2 = priceArea.y + priceArea.height - ((annotation.endPrice! - minPrice) / priceRange) * priceArea.height;
               
+              // Determine line color based on percentage
+              const isPositive = (annotation.percentage || 0) >= 0;
+              const lineColor = isPositive ? '#22C55E' : '#EF4444'; // Green for positive, red for negative
+              
               // Draw main line
-              ctx.strokeStyle = 'white';
+              ctx.strokeStyle = lineColor;
               ctx.lineWidth = 2;
               ctx.beginPath();
               ctx.moveTo(x1, y1);
               ctx.lineTo(x2, y2);
               ctx.stroke();
               
-              // Draw arrow head
-              const arrowSize = 8;
+              // Draw outlined arrow head (larger)
+              const arrowSize = 12;
               const angle = Math.atan2(y2 - y1, x2 - x1);
               
-              ctx.fillStyle = 'white';
+              ctx.strokeStyle = lineColor;
+              ctx.lineWidth = 2;
+              ctx.lineJoin = 'round';
               ctx.beginPath();
               ctx.moveTo(x2, y2);
               ctx.lineTo(x2 - arrowSize * Math.cos(angle - Math.PI / 6), y2 - arrowSize * Math.sin(angle - Math.PI / 6));
               ctx.lineTo(x2 - arrowSize * Math.cos(angle + Math.PI / 6), y2 - arrowSize * Math.sin(angle + Math.PI / 6));
-              ctx.closePath();
-              ctx.fill();
+              ctx.stroke();
               
               // Draw start and end points
-              ctx.fillStyle = 'white';
+              ctx.fillStyle = lineColor;
               ctx.strokeStyle = '#121212';
               ctx.lineWidth = 1;
               
@@ -1135,28 +1140,33 @@ export function PriceChart({
               const y1 = priceArea.y + priceArea.height - ((annotation.startPrice! - minPrice) / priceRange) * priceArea.height;
               const y2 = priceArea.y + priceArea.height - ((annotation.endPrice! - minPrice) / priceRange) * priceArea.height;
               
+              // Determine line color based on percentage
+              const isPositive = (annotation.percentage || 0) >= 0;
+              const lineColor = isPositive ? '#22C55E' : '#EF4444'; // Green for positive, red for negative
+              
               // Draw main line
-              ctx.strokeStyle = 'white';
+              ctx.strokeStyle = lineColor;
               ctx.lineWidth = 2;
               ctx.beginPath();
               ctx.moveTo(x1, y1);
               ctx.lineTo(x2, y2);
               ctx.stroke();
               
-              // Draw arrow head
-              const arrowSize = 8;
+              // Draw outlined arrow head (larger)
+              const arrowSize = 12;
               const angle = Math.atan2(y2 - y1, x2 - x1);
               
-              ctx.fillStyle = 'white';
+              ctx.strokeStyle = lineColor;
+              ctx.lineWidth = 2;
+              ctx.lineJoin = 'round';
               ctx.beginPath();
               ctx.moveTo(x2, y2);
               ctx.lineTo(x2 - arrowSize * Math.cos(angle - Math.PI / 6), y2 - arrowSize * Math.sin(angle - Math.PI / 6));
               ctx.lineTo(x2 - arrowSize * Math.cos(angle + Math.PI / 6), y2 - arrowSize * Math.sin(angle + Math.PI / 6));
-              ctx.closePath();
-              ctx.fill();
+              ctx.stroke();
               
               // Draw start and end points
-              ctx.fillStyle = 'white';
+              ctx.fillStyle = lineColor;
               ctx.strokeStyle = '#121212';
               ctx.lineWidth = 1;
               
