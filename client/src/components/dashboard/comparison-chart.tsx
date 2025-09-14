@@ -161,51 +161,126 @@ const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
                      (xAxis.scale((chartData as any)[i1].date) + offset.left);
           const x2 = (formattedGraphicalItems && formattedGraphicalItems[0]?.props?.points?.[i2 as number]?.x as number) ?? 
                      (xAxis.scale((chartData as any)[i2].date) + offset.left);
-          const y = yAxis.scale(annotation.price || 0) + offset.top;
+          
+          // Calculate y positions for start and end prices (percentage values)
+          const y1 = yAxis.scale(annotation.startPrice || 0) + offset.top;
+          const y2 = yAxis.scale(annotation.endPrice || 0) + offset.top;
+          
+          // Determine line color based on percentage (like Price chart)
+          const isPositive = (annotation.percentage || 0) >= 0;
+          const lineColor = isPositive ? '#22C55E' : '#EF4444'; // Green for positive, red for negative
+          
+          // Calculate arrowhead points
+          const arrowLength = 12;
+          const arrowWidth = 6;
+          const angle = Math.atan2(y2 - y1, x2 - x1);
+          const arrowTipX = x2;
+          const arrowTipY = y2;
+          const arrowBase1X = arrowTipX - arrowLength * Math.cos(angle) - arrowWidth * Math.sin(angle);
+          const arrowBase1Y = arrowTipY - arrowLength * Math.sin(angle) + arrowWidth * Math.cos(angle);
+          const arrowBase2X = arrowTipX - arrowLength * Math.cos(angle) + arrowWidth * Math.sin(angle);
+          const arrowBase2Y = arrowTipY - arrowLength * Math.sin(angle) - arrowWidth * Math.cos(angle);
           
           return (
             <g key={annotation.id}>
+              {/* Main diagonal line */}
               <line 
                 x1={x1} 
-                y1={yTop} 
-                x2={x1} 
-                y2={yBottom} 
-                stroke="#5AF5FA" 
-                strokeWidth={2} 
-                strokeDasharray="5 5" 
-                style={{ cursor: 'pointer' }}
-                onDoubleClick={() => onAnnotationDoubleClick(annotation)} 
-              />
-              <line 
-                x1={x2} 
-                y1={yTop} 
+                y1={y1} 
                 x2={x2} 
-                y2={yBottom} 
-                stroke="#5AF5FA" 
+                y2={y2} 
+                stroke={lineColor} 
                 strokeWidth={2} 
-                strokeDasharray="5 5" 
                 style={{ cursor: 'pointer' }}
-                onDoubleClick={() => onAnnotationDoubleClick(annotation)} 
+                onDoubleClick={(e) => { e.stopPropagation(); onAnnotationDoubleClick(annotation); }} 
               />
-              <line 
-                x1={x1} 
-                y1={y} 
-                x2={x2} 
-                y2={y} 
-                stroke="#5AF5FA" 
-                strokeWidth={1} 
-              />
-              <text 
-                x={(x1 + x2) / 2 + 6} 
-                y={y - 8} 
-                fill="#5AF5FA" 
-                fontSize={12} 
-                fontWeight="bold"
+              
+              {/* Start point circle */}
+              <circle
+                cx={x1}
+                cy={y1}
+                r={4}
+                fill={lineColor}
                 style={{ cursor: 'pointer' }}
-                onDoubleClick={() => onAnnotationDoubleClick(annotation)}
-              >
-                {`${((annotation.percentage ?? ((annotation.endPrice || 0) - (annotation.startPrice || 0)))).toFixed(2)}%`}
-              </text>
+                onDoubleClick={(e) => { e.stopPropagation(); onAnnotationDoubleClick(annotation); }}
+              />
+              
+              {/* End point circle */}
+              <circle
+                cx={x2}
+                cy={y2}
+                r={4}
+                fill={lineColor}
+                style={{ cursor: 'pointer' }}
+                onDoubleClick={(e) => { e.stopPropagation(); onAnnotationDoubleClick(annotation); }}
+              />
+              
+              {/* Outlined arrowhead */}
+              <polygon
+                points={`${arrowTipX},${arrowTipY} ${arrowBase1X},${arrowBase1Y} ${arrowBase2X},${arrowBase2Y}`}
+                fill="none"
+                stroke={lineColor}
+                strokeWidth={2}
+                strokeLinejoin="round"
+                style={{ cursor: 'pointer' }}
+                onDoubleClick={(e) => { e.stopPropagation(); onAnnotationDoubleClick(annotation); }}
+              />
+              
+              {/* Enhanced text box with detailed information */}
+              <g>
+                <rect
+                  x={(x1 + x2) / 2 - 45}
+                  y={Math.min(y1, y2) - 45}
+                  width={90}
+                  height={35}
+                  fill="rgba(0,0,0,0.8)"
+                  stroke="rgba(255,255,255,0.2)"
+                  strokeWidth={1}
+                  rx={4}
+                  style={{ cursor: 'pointer' }}
+                  onDoubleClick={(e) => { e.stopPropagation(); onAnnotationDoubleClick(annotation); }}
+                />
+                
+                {/* Percentage text */}
+                <text 
+                  x={(x1 + x2) / 2} 
+                  y={Math.min(y1, y2) - 30} 
+                  fill="#FAFF50" 
+                  fontSize={11} 
+                  fontWeight="bold"
+                  textAnchor="middle"
+                  style={{ cursor: 'pointer' }}
+                  onDoubleClick={(e) => { e.stopPropagation(); onAnnotationDoubleClick(annotation); }}
+                >
+                  {`${((annotation.percentage || 0) >= 0 ? '+' : '')}${(annotation.percentage || 0).toFixed(2)}%`}
+                </text>
+                
+                {/* Price range text */}
+                <text 
+                  x={(x1 + x2) / 2} 
+                  y={Math.min(y1, y2) - 19} 
+                  fill="#999" 
+                  fontSize={9} 
+                  textAnchor="middle"
+                  style={{ cursor: 'pointer' }}
+                  onDoubleClick={(e) => { e.stopPropagation(); onAnnotationDoubleClick(annotation); }}
+                >
+                  {`${(annotation.startPrice || 0).toFixed(2)}% → ${(annotation.endPrice || 0).toFixed(2)}%`}
+                </text>
+                
+                {/* Price difference text */}
+                <text 
+                  x={(x1 + x2) / 2} 
+                  y={Math.min(y1, y2) - 8} 
+                  fill="white" 
+                  fontSize={9} 
+                  textAnchor="middle"
+                  style={{ cursor: 'pointer' }}
+                  onDoubleClick={(e) => { e.stopPropagation(); onAnnotationDoubleClick(annotation); }}
+                >
+                  {`${((annotation.percentage || 0) >= 0 ? '+' : '')}${(annotation.percentage || 0).toFixed(2)}pp`}
+                </text>
+              </g>
             </g>
           );
         } else if (annotation.type === 'horizontal') {
@@ -654,10 +729,8 @@ export function ComparisonChart({
       setAnnotationInput(annotation.text || '');
       setShowAnnotationInput(true);
     } else if (annotation.type === 'percentage') {
-      // For percentage annotations, show a delete confirmation
-      if (confirm('Delete this percentage measurement?')) {
-        updateAnnotations?.(prev => prev.filter(a => a.id !== annotation.id));
-      }
+      // For percentage annotations, delete directly like Price chart (no confirmation)
+      updateAnnotations?.(prev => prev.filter(a => a.id !== annotation.id));
     }
   };
 
