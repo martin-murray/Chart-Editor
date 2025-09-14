@@ -348,18 +348,7 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
           <Card className="p-4">
             <div className="flex items-center justify-between gap-4 flex-wrap">
               <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <Switch 
-                    id="remember-annotations"
-                    checked={rememberPerTicker}
-                    onCheckedChange={handleRememberToggle}
-                    data-testid="switch-remember-annotations"
-                  />
-                  <label htmlFor="remember-annotations" className="text-sm font-medium cursor-pointer">
-                    Remember annotations per ticker
-                  </label>
-                </div>
-                {rememberPerTicker && currentAnnotations.length > 0 && (
+                {currentAnnotations.length > 0 && (
                   <span className="text-xs text-muted-foreground px-2 py-1 bg-muted rounded">
                     {currentAnnotations.length} annotation{currentAnnotations.length !== 1 ? 's' : ''}
                   </span>

@@ -1650,48 +1650,6 @@ export function PriceChart({
             )}
           </div>
           
-          {/* Annotation Mode Toggle */}
-          <div className="flex border border-border rounded-md overflow-hidden bg-background">
-            <Button
-              size="sm"
-              variant={annotationMode === 'text' ? 'default' : 'ghost'}
-              onClick={() => {
-                setAnnotationMode('text');
-                setPendingPercentageStart(null);
-              }}
-              className="h-8 px-3 text-xs rounded-none border-0"
-              data-testid="button-annotation-text"
-            >
-              <MessageSquare className="w-3 h-3 mr-1" />
-              Text
-            </Button>
-            <Button
-              size="sm"
-              variant={annotationMode === 'percentage' ? 'default' : 'ghost'}
-              onClick={() => {
-                setAnnotationMode('percentage');
-                setPendingPercentageStart(null);
-              }}
-              className="h-8 px-3 text-xs rounded-none border-0"
-              data-testid="button-annotation-percentage"
-            >
-              <Ruler className="w-3 h-3 mr-1" />
-              Measure
-            </Button>
-            <Button
-              size="sm"
-              variant={annotationMode === 'horizontal' ? 'default' : 'ghost'}
-              onClick={() => {
-                setAnnotationMode('horizontal');
-                setPendingPercentageStart(null);
-              }}
-              className="h-8 px-3 text-xs rounded-none border-0"
-              data-testid="button-annotation-horizontal"
-            >
-              <Minus className="w-3 h-3 mr-1" />
-              Horizontal
-            </Button>
-          </div>
           
           {/* Pending Percentage Indicator */}
           {annotationMode === 'percentage' && pendingPercentageStart && (
@@ -1792,22 +1750,69 @@ export function PriceChart({
       <div className="flex items-center justify-between mb-4">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="flex items-center justify-between">
-            <TabsList className="grid grid-cols-2">
-              <TabsTrigger 
-                value="price-volume" 
-                className="data-[state=active]:bg-[#5AF5FA] data-[state=active]:text-black"
-                data-testid="trigger-price-volume"
-              >
-                Price & Volume
-              </TabsTrigger>
-              <TabsTrigger 
-                value="comparison" 
-                className="data-[state=active]:bg-[#5AF5FA] data-[state=active]:text-black"
-                data-testid="trigger-comparison"
-              >
-                Comparison Chart
-              </TabsTrigger>
-            </TabsList>
+            <div className="flex items-center gap-4">
+              <TabsList className="grid grid-cols-2">
+                <TabsTrigger 
+                  value="price-volume" 
+                  className="data-[state=active]:bg-[#5AF5FA] data-[state=active]:text-black"
+                  data-testid="trigger-price-volume"
+                >
+                  Price
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="comparison" 
+                  className="data-[state=active]:bg-[#5AF5FA] data-[state=active]:text-black"
+                  data-testid="trigger-comparison"
+                >
+                  Compare
+                </TabsTrigger>
+              </TabsList>
+              
+              {/* Annotation Mode Controls */}
+              <div className="flex border border-border rounded-md overflow-hidden bg-background">
+                <Button
+                  size="sm"
+                  variant={annotationMode === 'text' ? 'default' : 'ghost'}
+                  onClick={() => {
+                    setAnnotationMode('text');
+                    setPendingPercentageStart(null);
+                  }}
+                  className="h-8 px-3 text-xs rounded-none border-0"
+                  data-testid="button-annotation-text"
+                >
+                  <div className="w-3 h-3 mr-1 flex items-center justify-center">
+                    <div className="w-0.5 h-3 bg-current" />
+                  </div>
+                  Vertical
+                </Button>
+                <Button
+                  size="sm"
+                  variant={annotationMode === 'percentage' ? 'default' : 'ghost'}
+                  onClick={() => {
+                    setAnnotationMode('percentage');
+                    setPendingPercentageStart(null);
+                  }}
+                  className="h-8 px-3 text-xs rounded-none border-0"
+                  data-testid="button-annotation-percentage"
+                >
+                  <Ruler className="w-3 h-3 mr-1" />
+                  Measure
+                </Button>
+                <Button
+                  size="sm"
+                  variant={annotationMode === 'horizontal' ? 'default' : 'ghost'}
+                  onClick={() => {
+                    setAnnotationMode('horizontal');
+                    setPendingPercentageStart(null);
+                  }}
+                  className="h-8 px-3 text-xs rounded-none border-0"
+                  data-testid="button-annotation-horizontal"
+                >
+                  <Minus className="w-3 h-3 mr-1" />
+                  Horizontal
+                </Button>
+              </div>
+            </div>
             
             {/* Shared Export Dropdown */}
             <DropdownMenu>
