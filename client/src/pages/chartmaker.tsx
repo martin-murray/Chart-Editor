@@ -342,27 +342,6 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
         />
       )}
 
-      {/* Annotation Controls */}
-      {selectedStock && (
-        <div className="mt-6 mb-4">
-          <Card className="p-4">
-            <div className="flex items-center justify-end gap-2">
-                {selectedStock && currentAnnotations.length > 0 && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={clearCurrentTickerAnnotations}
-                    className="text-xs hover:text-black hover:bg-[#5AF5FA]"
-                    data-testid="button-clear-current"
-                  >
-                    <Trash2 className="w-3 h-3 mr-1" />
-                    Clear {selectedStock.displaySymbol}
-                  </Button>
-                )}
-            </div>
-          </Card>
-        </div>
-      )}
 
       {/* Price Chart */}
       {selectedStock && (
