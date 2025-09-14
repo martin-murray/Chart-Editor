@@ -12,6 +12,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={ChartMaker} />
+      <Route path="/chartmaker" component={ChartMaker} />
       <Route path="/dashboard" component={Dashboard} />
       <Route component={NotFound} />
     </Switch>
