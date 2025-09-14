@@ -1620,34 +1620,25 @@ export function PriceChart({
       <div className="space-y-4">
         <div className="flex items-start justify-between">
           <div>
-            <div className="text-xl font-medium flex items-center gap-2">
-              <span className="text-[#5AF5FA]">{symbol}</span>
-              <span className="text-muted-foreground">-</span>
-              <span className="text-sm font-normal text-muted-foreground">{name}</span>
-            </div>
-            <div className="mt-2 flex items-center gap-3">
-              <span className="text-2xl font-bold">{actualCurrentPrice !== '--' ? formatPrice(parseFloat(actualCurrentPrice)) : '--'}</span>
-              <Badge 
-                variant={isPositive ? "default" : "destructive"}
-                className={`flex items-center gap-1 ${isPositive ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'}`}
-              >
-                {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                {Math.abs(parseChange).toFixed(2)}%
-              </Badge>
-              <span className="text-sm text-muted-foreground">{actualMarketCap}</span>
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="flex items-center gap-2">
+                <span className="text-[#5AF5FA] text-xl font-medium">{symbol}</span>
+                <span className="text-muted-foreground">-</span>
+                <span className="text-sm font-normal text-muted-foreground">{name}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-2xl font-bold">{actualCurrentPrice !== '--' ? formatPrice(parseFloat(actualCurrentPrice)) : '--'}</span>
+                <Badge 
+                  variant={isPositive ? "default" : "destructive"}
+                  className={`flex items-center gap-1 ${isPositive ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'}`}
+                >
+                  {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                  {Math.abs(parseChange).toFixed(2)}%
+                </Badge>
+                <span className="text-sm text-muted-foreground">{actualMarketCap}</span>
+              </div>
             </div>
             
-            {/* Pre/After Market Display */}
-            {stockDetails?.quote && (
-              <div className="mt-3 flex items-center gap-4 text-sm">
-                <span className="text-muted-foreground">
-                  Pre-Market: <span className="text-foreground">N/A</span>
-                </span>
-                <span className="text-muted-foreground">
-                  After Hours: <span className="text-foreground">N/A</span>
-                </span>
-              </div>
-            )}
           </div>
           
           
