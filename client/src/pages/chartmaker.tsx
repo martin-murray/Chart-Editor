@@ -346,16 +346,7 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
       {selectedStock && (
         <div className="mt-6 mb-4">
           <Card className="p-4">
-            <div className="flex items-center justify-between gap-4 flex-wrap">
-              <div className="flex items-center gap-4">
-                {currentAnnotations.length > 0 && (
-                  <span className="text-xs text-muted-foreground px-2 py-1 bg-muted rounded">
-                    {currentAnnotations.length} annotation{currentAnnotations.length !== 1 ? 's' : ''}
-                  </span>
-                )}
-              </div>
-              
-              <div className="flex items-center gap-2">
+            <div className="flex items-center justify-end gap-2">
                 {selectedStock && currentAnnotations.length > 0 && (
                   <Button
                     variant="outline"
@@ -368,7 +359,6 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
                     Clear {selectedStock.displaySymbol}
                   </Button>
                 )}
-              </div>
             </div>
           </Card>
         </div>
