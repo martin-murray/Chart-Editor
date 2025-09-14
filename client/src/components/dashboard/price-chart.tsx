@@ -2183,9 +2183,10 @@ export function PriceChart({
                             const y2 = Math.max(yAxis.y, Math.min(rawY2, yAxis.y + yAxis.height));
                             
                             const isPositive = (annotation.percentage || 0) >= 0;
+                            const lineColor = isPositive ? '#22C55E' : '#EF4444'; // Green for positive, red for negative
                             
                             // Calculate arrow direction
-                            const arrowSize = 8;
+                            const arrowSize = 12;
                             const angle = Math.atan2(y2 - y1, x2 - x1);
                             
                             // Arrow head points
@@ -2202,23 +2203,24 @@ export function PriceChart({
                                   y1={y1}
                                   x2={x2}
                                   y2={y2}
-                                  stroke="white"
+                                  stroke={lineColor}
                                   strokeWidth={2}
                                   vectorEffect="non-scaling-stroke"
                                 />
-                                {/* Arrow head */}
+                                {/* Arrow head - outlined instead of filled */}
                                 <polygon
                                   points={`${x2},${y2} ${arrowX1},${arrowY1} ${arrowX2},${arrowY2}`}
-                                  fill="white"
-                                  stroke="#3B3B3B"
-                                  strokeWidth={1}
+                                  fill="none"
+                                  stroke={lineColor}
+                                  strokeWidth={2}
+                                  strokeLinejoin="round"
                                 />
                                 {/* Start point dot */}
                                 <circle
                                   cx={x1}
                                   cy={y1}
                                   r={3}
-                                  fill="white"
+                                  fill={lineColor}
                                   stroke="#121212"
                                   strokeWidth={1}
                                 />
@@ -2227,7 +2229,7 @@ export function PriceChart({
                                   cx={x2}
                                   cy={y2}
                                   r={3}
-                                  fill="white"
+                                  fill={lineColor}
                                   stroke="#121212"
                                   strokeWidth={1}
                                 />
