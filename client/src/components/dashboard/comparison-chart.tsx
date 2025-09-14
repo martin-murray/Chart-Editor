@@ -683,6 +683,22 @@ export function ComparisonChart({
       setAnnotationInput('');
       setEditingAnnotation(null);
       setIsEditMode(false);
+    } else if (annotationMode === 'horizontal') {
+      // Horizontal annotation mode - single click
+      const newAnnotation: Omit<Annotation, 'id' | 'text'> = {
+        type: 'horizontal',
+        x: 0, // Will be calculated during rendering
+        y: 0, // Will be calculated during rendering  
+        timestamp,
+        price: percentageValue,
+        time
+      };
+      
+      setPendingAnnotation(newAnnotation);
+      setShowAnnotationInput(true);
+      setAnnotationInput('');
+      setEditingAnnotation(null);
+      setIsEditMode(false);
     } else if (annotationMode === 'percentage') {
       // Percentage measurement mode - two clicks
       if (!pendingPercentageStart) {
@@ -723,7 +739,7 @@ export function ComparisonChart({
 
   // Handle annotation double-click for editing
   const handleAnnotationDoubleClick = (annotation: Annotation) => {
-    if (annotation.type === 'text') {
+    if (annotation.type === 'text' || annotation.type === 'horizontal') {
       setEditingAnnotation(annotation);
       setIsEditMode(true);
       setAnnotationInput(annotation.text || '');
