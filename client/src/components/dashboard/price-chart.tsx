@@ -2230,6 +2230,10 @@ export function PriceChart({
                                   stroke={lineColor}
                                   strokeWidth={2}
                                   vectorEffect="non-scaling-stroke"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                  }}
                                   onDoubleClick={(e) => {
                                     e.preventDefault();
                                     e.stopPropagation();
@@ -2243,6 +2247,10 @@ export function PriceChart({
                                   stroke={lineColor}
                                   strokeWidth={2}
                                   strokeLinejoin="round"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                  }}
                                   onDoubleClick={(e) => {
                                     e.preventDefault();
                                     e.stopPropagation();
@@ -2257,6 +2265,10 @@ export function PriceChart({
                                   fill={lineColor}
                                   stroke="#121212"
                                   strokeWidth={1}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                  }}
                                   onDoubleClick={(e) => {
                                     e.preventDefault();
                                     e.stopPropagation();
@@ -2271,6 +2283,10 @@ export function PriceChart({
                                   fill={lineColor}
                                   stroke="#121212"
                                   strokeWidth={1}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                  }}
                                   onDoubleClick={(e) => {
                                     e.preventDefault();
                                     e.stopPropagation();
@@ -2279,11 +2295,17 @@ export function PriceChart({
                                 />
                                 
                                 {/* Percentage text box */}
-                                <g onDoubleClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  handleAnnotationDoubleClick(annotation);
-                                }}>
+                                <g 
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                  }}
+                                  onDoubleClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleAnnotationDoubleClick(annotation);
+                                  }}
+                                >
                                   {/* Text box background */}
                                   <rect
                                     x={textBoxX}
