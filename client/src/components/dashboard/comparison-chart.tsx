@@ -196,8 +196,8 @@ export function ComparisonChart({
         const { yScale } = layoutRef.current;
         if (typeof yScale.invert !== 'function') return;
         
-        // Use Recharts' real Y-scale to convert mouse position to price (with 90px offset correction)
-        const newPrice = yScale.invert(event.clientY - layoutRef.current.offset.top - 90);
+        // Use Recharts' real Y-scale to convert mouse position to price (with 85px offset correction)
+        const newPrice = yScale.invert(event.clientY - layoutRef.current.offset.top - 85);
         
         // Update the annotation with the precise value
         updateAnnotations?.(prev => prev.map(ann => 
@@ -1519,8 +1519,8 @@ export function ComparisonChart({
         {chartData?.length > 0 && layoutRef.current && annotations.filter(annotation => annotation.type === 'horizontal').map((annotation) => {
           const { offset, yScale } = layoutRef.current!;
           
-          // Use Recharts' exact positioning + 90px offset correction
-          const yPixels = yScale(annotation.price) + 90; // Add 90px to align with visual line
+          // Use Recharts' exact positioning + 85px offset correction
+          const yPixels = yScale(annotation.price) + 85; // Add 85px to align with visual line (moved up 5px)
           const tolerancePx = 12; // Pixel-based tolerance
           
           // Safety check for valid position
