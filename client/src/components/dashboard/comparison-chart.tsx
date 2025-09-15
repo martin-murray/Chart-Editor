@@ -1519,7 +1519,7 @@ export function ComparisonChart({
 
         {/* Interactive overlay elements for horizontal lines - SAME AS PRICE CHART */}
         {chartData?.length > 0 && annotations.filter(annotation => annotation.type === 'horizontal').map((annotation) => {
-          // Calculate Y position based on comparison chart data range
+          // Calculate Y position based on comparison chart data range - REAL-TIME UPDATE
           const allValues = chartData.flatMap(d => 
             Object.keys(d).filter(key => key !== 'date' && key !== 'timestamp').map(key => d[key])
           ).filter(val => typeof val === 'number' && !isNaN(val));
@@ -1530,26 +1530,30 @@ export function ComparisonChart({
           const maxValue = Math.max(...allValues);
           const valueRange = maxValue - minValue;
           
-          // Chart dimensions - fine-tuned alignment (moved up 5 more pixels)
+          // Chart dimensions - fine-tuned alignment 
           const chartHeight = 350; // Actual comparison chart area height
           const chartTop = -25; // Fine-tuned for perfect alignment with visual horizontal lines
+          
+          // REAL-TIME position calculation using current annotation.price
           const yPercent = (maxValue - annotation.price) / valueRange; // Position from top
           const yPixels = chartTop + (yPercent * chartHeight); // Direct mapping
           
           return (
             <div
-              key={`interactive-${annotation.id}`}
+              key={`interactive-${annotation.id}-${annotation.price}`} // Key includes price for re-render
               className="absolute pointer-events-auto cursor-grab active:cursor-grabbing hover:opacity-80"
               style={{ 
                 left: '50px', // Chart left margin
                 right: '50px', // Chart right margin
-                top: `${yPixels - 8}px`, 
+                top: `${yPixels - 8}px`, // UPDATES with annotation.price changes
                 height: '16px', // Large hit area
                 zIndex: 20,
-                backgroundColor: 'rgba(170, 153, 255, 0.1)' // Slight background for debugging
+                backgroundColor: 'rgba(170, 153, 255, 0.1)', // Slight background for debugging
+                // Force re-render when position changes
+                transform: `translateY(0px)` 
               }}
               onMouseDown={(e) => {
-                console.log('✅ COMPARISON: Mouse down on horizontal line:', annotation.id);
+                console.log('✅ COMPARISON: Mouse down on horizontal line:', annotation.id, 'at price:', annotation.price);
                 setIsDragging(true);
                 setDragAnnotationId(annotation.id);
                 setDragStartY(e.clientY);
@@ -1558,7 +1562,7 @@ export function ComparisonChart({
                 e.stopPropagation();
               }}
               onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
-              title="Click and drag to move horizontal line"
+              title={`Click and drag to move horizontal line (${annotation.price.toFixed(2)}%)`}
               data-testid={`horizontal-line-drag-${annotation.id}`}
             />
           );
