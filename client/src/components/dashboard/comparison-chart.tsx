@@ -1518,33 +1518,41 @@ export function ComparisonChart({
         )}
 
         {/* Interactive overlay elements for horizontal lines */}
-        {annotations.filter(annotation => annotation.type === 'horizontal').map((annotation) => {
-          // Calculate Y position more accurately for percentage-based chart
-          const chartHeight = 360; // More accurate chart height for comparison chart
-          const chartTop = 100; // Account for header and controls
+        {chartData?.length > 0 && annotations.filter(annotation => annotation.type === 'horizontal').map((annotation) => {
+          // Calculate Y position based on chart container positioning
+          const chartHeight = 400; // Full chart container height
+          const chartTop = 40; // Reduced top margin to match actual chart positioning
           
-          // Y-axis domain for percentage chart is typically -5% to +5%
-          const yAxisMin = -5;
-          const yAxisMax = 5;
+          // Y-axis domain for percentage chart - use dynamic range from actual data
+          const allValues = chartData.flatMap(d => 
+            Object.keys(d).filter(key => key !== 'date' && key !== 'timestamp').map(key => d[key])
+          ).filter(val => typeof val === 'number' && !isNaN(val));
+          
+          const dataMin = Math.min(...allValues);
+          const dataMax = Math.max(...allValues);
+          const yAxisMin = Math.floor(dataMin - 5);
+          const yAxisMax = Math.ceil(dataMax + 5);
           const yRange = yAxisMax - yAxisMin;
           
-          // Convert annotation price to chart position
+          // Convert annotation price to chart position (same logic as recharts Y-axis)
           const yPercent = (yAxisMax - annotation.price) / yRange; // Position from top (0 to 1)
-          const yPixels = chartTop + (yPercent * chartHeight);
+          const yPixels = chartTop + (yPercent * (chartHeight - 50)); // Account for margins
           
           return (
             <div
               key={`interactive-${annotation.id}`}
               className="absolute pointer-events-auto cursor-grab active:cursor-grabbing hover:opacity-80"
               style={{ 
-                left: '60px', // Chart left margin
-                right: '40px', // Chart right margin
-                top: `${yPixels - 10}px`, 
-                height: '20px', // Larger hit area for better UX
-                zIndex: 25,
-                backgroundColor: 'transparent'
+                left: '50px', // Chart left margin
+                right: '50px', // Chart right margin  
+                top: `${Math.max(20, Math.min(yPixels - 12, chartHeight - 40))}px`, // Clamp to visible area
+                height: '24px', // Large hit area for easy clicking
+                zIndex: 30, // Higher z-index to ensure it's on top
+                backgroundColor: 'rgba(170, 153, 255, 0.1)', // Slight background for debugging
+                border: isDragging && dragAnnotationId === annotation.id ? '1px solid #AA99FF' : 'none'
               }}
               onMouseDown={(e) => {
+                console.log('Mouse down on horizontal line:', annotation.id);
                 setIsDragging(true);
                 setDragAnnotationId(annotation.id);
                 setDragStartY(e.clientY);
