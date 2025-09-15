@@ -243,8 +243,25 @@ export function PriceChart({
     if (isDragging) {
       const handleGlobalMouseUp = () => handleMouseUp();
       const handleGlobalMouseMove = (event: MouseEvent) => {
-        if (!chartRef.current) return;
-        handleMouseMove(event as any);
+        if (!isDragging || !dragAnnotationId || !chartData?.data) return;
+        
+        const deltaY = event.clientY - dragStartY;
+        // Calculate price range from chart data
+        const prices = chartData.data.flatMap(d => [d.high, d.low, d.open, d.close]);
+        const minPrice = Math.min(...prices);
+        const maxPrice = Math.max(...prices);
+        const priceRange = maxPrice - minPrice;
+        
+        const chartHeight = 320; // Price chart height
+        const priceDelta = (deltaY / chartHeight) * priceRange; // Convert pixels to price
+        const newPrice = dragStartPrice - priceDelta; // Subtract because Y increases downward
+        
+        // Update the annotation
+        updateAnnotations(prev => prev.map(ann => 
+          ann.id === dragAnnotationId 
+            ? { ...ann, price: newPrice }
+            : ann
+        ));
       };
       
       document.addEventListener('mouseup', handleGlobalMouseUp);
@@ -255,7 +272,7 @@ export function PriceChart({
         document.removeEventListener('mousemove', handleGlobalMouseMove);
       };
     }
-  }, [isDragging, dragAnnotationId, dragStartY, dragStartPrice]);
+  }, [isDragging, dragAnnotationId, dragStartY, dragStartPrice, updateAnnotations]);
   
   // Earnings modal state
   const [earningsModal, setEarningsModal] = useState<{
@@ -2158,6 +2175,49 @@ export function PriceChart({
                 })}
               </div>
             )}
+
+            {/* Interactive overlay elements for horizontal lines */}
+            {annotations.filter(annotation => annotation.type === 'horizontal').map((annotation) => {
+              if (!chartData?.data) return null;
+              
+              // Calculate Y position based on actual price within chart area
+              const prices = chartData.data.flatMap(d => [d.high, d.low, d.open, d.close]);
+              const minPrice = Math.min(...prices);
+              const maxPrice = Math.max(...prices);
+              const priceRange = maxPrice - minPrice;
+              
+              // Chart dimensions (approximate)
+              const chartHeight = 320; // Price chart height
+              const chartTop = 80; // Account for header margin
+              const yPercent = (maxPrice - annotation.price) / priceRange; // Position from top
+              const yPixels = chartTop + (yPercent * chartHeight);
+              
+              return (
+                <div
+                  key={`interactive-${annotation.id}`}
+                  className="absolute pointer-events-auto cursor-grab active:cursor-grabbing hover:opacity-80"
+                  style={{ 
+                    left: '60px', // Chart left margin
+                    right: '30px', // Chart right margin
+                    top: `${yPixels - 8}px`, 
+                    height: '16px', // Large hit area
+                    zIndex: 20,
+                    backgroundColor: 'transparent'
+                  }}
+                  onMouseDown={(e) => {
+                    setIsDragging(true);
+                    setDragAnnotationId(annotation.id);
+                    setDragStartY(e.clientY);
+                    setDragStartPrice(annotation.price);
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                  onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
+                  title="Click and drag to move horizontal line"
+                  data-testid={`horizontal-line-drag-${annotation.id}`}
+                />
+              );
+            })}
 
             {/* Price Chart - No X-axis */}
             <div className="h-80 w-full relative">

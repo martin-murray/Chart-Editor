@@ -188,8 +188,19 @@ export function ComparisonChart({
     if (isDragging) {
       const handleGlobalMouseUp = () => handleMouseUp();
       const handleGlobalMouseMove = (event: MouseEvent) => {
-        if (!chartContainerRef.current) return;
-        handleMouseMove(event as any);
+        if (!isDragging || !dragAnnotationId) return;
+        
+        const deltaY = event.clientY - dragStartY;
+        const chartHeight = 400 - 80; // Chart height minus margins
+        const percentageDelta = -(deltaY / chartHeight) * 10; // Convert pixels to percentage
+        const newPrice = dragStartPrice + percentageDelta;
+        
+        // Update the annotation
+        updateAnnotations?.(prev => prev.map(ann => 
+          ann.id === dragAnnotationId 
+            ? { ...ann, price: newPrice }
+            : ann
+        ));
       };
       
       document.addEventListener('mouseup', handleGlobalMouseUp);
@@ -200,7 +211,7 @@ export function ComparisonChart({
         document.removeEventListener('mousemove', handleGlobalMouseMove);
       };
     }
-  }, [isDragging, dragAnnotationId, dragStartY, dragStartPrice]);
+  }, [isDragging, dragAnnotationId, dragStartY, dragStartPrice, updateAnnotations]);
 
   // Click outside handler - works with portal
   useEffect(() => {
@@ -1499,6 +1510,41 @@ export function ComparisonChart({
             })}
           </div>
         )}
+
+        {/* Interactive overlay elements for horizontal lines */}
+        {annotations.filter(annotation => annotation.type === 'horizontal').map((annotation) => {
+          // Calculate Y position based on price percentage within chart area
+          const chartHeight = 400; // Approximate chart height
+          const chartTop = 80; // Account for header and margin
+          const yPercent = ((5 - annotation.price) / 10) * 100; // Convert price to Y percentage (inverted)
+          const yPixels = chartTop + (yPercent / 100) * (chartHeight - 80); // Position within chart
+          
+          return (
+            <div
+              key={`interactive-${annotation.id}`}
+              className="absolute pointer-events-auto cursor-grab active:cursor-grabbing hover:opacity-80"
+              style={{ 
+                left: '50px', // Chart left margin
+                right: '50px', // Chart right margin
+                top: `${yPixels - 8}px`, 
+                height: '16px', // Large hit area
+                zIndex: 20,
+                backgroundColor: 'transparent'
+              }}
+              onMouseDown={(e) => {
+                setIsDragging(true);
+                setDragAnnotationId(annotation.id);
+                setDragStartY(e.clientY);
+                setDragStartPrice(annotation.price);
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
+              title="Click and drag to move horizontal line"
+              data-testid={`horizontal-line-drag-${annotation.id}`}
+            />
+          );
+        })}
         
         {tickers.length === 0 ? (
           <div className="h-full flex items-center justify-center">
