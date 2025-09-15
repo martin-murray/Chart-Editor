@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, ReferenceDot, ResponsiveContainer } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1472,16 +1472,20 @@ export function ComparisonChart({
                 <ReferenceLine y={0} stroke="white" strokeWidth={1} />
                 
                 {/* Text Annotation Reference Lines - yellow vertical lines */}
-                {annotations.filter(annotation => annotation.type === 'text').map((annotation) => (
-                  <ReferenceLine 
-                    key={annotation.id}
-                    x={annotation.time}
-                    stroke="#FAFF50"
-                    strokeWidth={1}
-                    vectorEffect="non-scaling-stroke"
-                    shapeRendering="crispEdges"
-                  />
-                ))}
+                {annotations.filter(annotation => annotation.type === 'text').map((annotation) => {
+                  // Find the actual date value from chart data that matches this annotation
+                  const dataPoint = chartData?.find((d: any) => d.timestamp === annotation.timestamp);
+                  return dataPoint ? (
+                    <ReferenceLine 
+                      key={annotation.id}
+                      x={dataPoint.date}
+                      stroke="#FAFF50"
+                      strokeWidth={1}
+                      vectorEffect="non-scaling-stroke"
+                      shapeRendering="crispEdges"
+                    />
+                  ) : null;
+                })}
 
                 {/* Horizontal Annotation Reference Lines - purple styling */}
                 {annotations.filter(annotation => annotation.type === 'horizontal').map((annotation) => (
@@ -1494,6 +1498,52 @@ export function ComparisonChart({
                     shapeRendering="crispEdges"
                   />
                 ))}
+
+                {/* Percentage Measurement Lines - diagonal arrows */}
+                {annotations.filter(annotation => annotation.type === 'percentage' && annotation.startTimestamp && annotation.endTimestamp).map((annotation) => {
+                  const startDataPoint = chartData?.find((d: any) => d.timestamp === annotation.startTimestamp);
+                  const endDataPoint = chartData?.find((d: any) => d.timestamp === annotation.endTimestamp);
+                  
+                  if (!startDataPoint || !endDataPoint) return null;
+                  
+                  const isPositive = (annotation.percentage || 0) >= 0;
+                  const lineColor = isPositive ? '#22C55E' : '#EF4444'; // Green for positive, red for negative
+                  
+                  return (
+                    <g key={annotation.id}>
+                      {/* Main diagonal line */}
+                      <ReferenceLine 
+                        segment={[
+                          { x: startDataPoint.date, y: annotation.startPrice },
+                          { x: endDataPoint.date, y: annotation.endPrice }
+                        ]}
+                        stroke={lineColor}
+                        strokeWidth={2}
+                        vectorEffect="non-scaling-stroke"
+                      />
+                      
+                      {/* Start point circle */}
+                      <ReferenceDot 
+                        x={startDataPoint.date}
+                        y={annotation.startPrice}
+                        r={4}
+                        fill={lineColor}
+                        stroke={lineColor}
+                        strokeWidth={1}
+                      />
+                      
+                      {/* End point circle */}
+                      <ReferenceDot 
+                        x={endDataPoint.date}
+                        y={annotation.endPrice}
+                        r={4}
+                        fill={lineColor}
+                        stroke={lineColor}
+                        strokeWidth={1}
+                      />
+                    </g>
+                  );
+                })}
                 
                 {/* Render line for each visible ticker */}
                 {tickers
