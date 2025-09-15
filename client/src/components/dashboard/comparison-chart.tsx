@@ -110,6 +110,12 @@ export function ComparisonChart({
   const [dragStartY, setDragStartY] = useState(0);
   const [dragStartPrice, setDragStartPrice] = useState(0);
   
+  // Text annotation horizontal drag state
+  const [isDraggingText, setIsDraggingText] = useState(false);
+  const [dragTextAnnotationId, setDragTextAnnotationId] = useState<string | null>(null);
+  const [dragStartX, setDragStartX] = useState(0);
+  const [dragStartOffset, setDragStartOffset] = useState(0);
+  
   // Recharts geometry capture for precise positioning
   const layoutRef = useRef<{offset: any, yScale: any} | null>(null);
   
@@ -187,25 +193,62 @@ export function ComparisonChart({
     }
   };
 
+  // Text annotation drag handlers
+  const handleTextMouseDown = (e: React.MouseEvent, annotation: Annotation) => {
+    setIsDraggingText(true);
+    setDragTextAnnotationId(annotation.id);
+    setDragStartX(e.clientX);
+    setDragStartOffset(annotation.horizontalOffset || 0);
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleTextMouseUp = () => {
+    if (isDraggingText) {
+      setIsDraggingText(false);
+      setDragTextAnnotationId(null);
+      setDragStartX(0);
+      setDragStartOffset(0);
+    }
+  };
+
   // Add global mouse up listener to handle drag end outside chart
   useEffect(() => {
-    if (isDragging) {
-      const handleGlobalMouseUp = () => handleMouseUp();
+    if (isDragging || isDraggingText) {
+      const handleGlobalMouseUp = () => {
+        handleMouseUp();
+        handleTextMouseUp();
+      };
+      
       const handleGlobalMouseMove = (event: MouseEvent) => {
-        if (!isDragging || !dragAnnotationId || !layoutRef.current) return;
+        // Handle horizontal line dragging
+        if (isDragging && dragAnnotationId && layoutRef.current) {
+          const { yScale } = layoutRef.current;
+          if (typeof yScale.invert !== 'function') return;
+          
+          // Use Recharts' real Y-scale to convert mouse position to price (with 85px offset correction)
+          const newPrice = yScale.invert(event.clientY - layoutRef.current.offset.top - 85);
+          
+          // Update the annotation with the precise value
+          updateAnnotations?.(prev => prev.map(ann => 
+            ann.id === dragAnnotationId 
+              ? { ...ann, price: newPrice }
+              : ann
+          ));
+        }
         
-        const { yScale } = layoutRef.current;
-        if (typeof yScale.invert !== 'function') return;
-        
-        // Use Recharts' real Y-scale to convert mouse position to price (with 85px offset correction)
-        const newPrice = yScale.invert(event.clientY - layoutRef.current.offset.top - 85);
-        
-        // Update the annotation with the precise value
-        updateAnnotations?.(prev => prev.map(ann => 
-          ann.id === dragAnnotationId 
-            ? { ...ann, price: newPrice }
-            : ann
-        ));
+        // Handle text annotation horizontal dragging
+        if (isDraggingText && dragTextAnnotationId) {
+          const deltaX = event.clientX - dragStartX;
+          const newOffset = dragStartOffset + deltaX;
+          
+          // Update the annotation's horizontal offset
+          updateAnnotations?.(prev => prev.map(ann => 
+            ann.id === dragTextAnnotationId 
+              ? { ...ann, horizontalOffset: newOffset }
+              : ann
+          ));
+        }
       };
       
       document.addEventListener('mouseup', handleGlobalMouseUp);
@@ -216,7 +259,7 @@ export function ComparisonChart({
         document.removeEventListener('mousemove', handleGlobalMouseMove);
       };
     }
-  }, [isDragging, dragAnnotationId, dragStartY, dragStartPrice, updateAnnotations]);
+  }, [isDragging, dragAnnotationId, dragStartY, dragStartPrice, isDraggingText, dragTextAnnotationId, dragStartX, dragStartOffset, updateAnnotations]);
 
   // Click outside handler - works with portal
   useEffect(() => {
@@ -1434,12 +1477,17 @@ export function ComparisonChart({
                   <div
                     key={annotation.id}
                     className="absolute"
-                    style={{ left: `${xPercent}%`, top: '20px', transform: 'translateX(-50%)' }}
+                    style={{ 
+                      left: `${xPercent}%`, 
+                      top: '20px', 
+                      transform: `translateX(calc(-50% + ${annotation.horizontalOffset || 0}px))`
+                    }}
                   >
                     <div 
-                      className="bg-background border border-border rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-pointer hover:bg-muted shadow-lg"
+                      className="bg-background border border-border rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-grab hover:bg-muted shadow-lg select-none"
+                      onMouseDown={(e) => handleTextMouseDown(e, annotation)}
                       onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
-                      title="Double-click to delete"
+                      title="Click and drag to move horizontally, double-click to delete"
                     >
                       <div className="font-medium" style={{ color: '#FAFF50' }}>{formatTime(annotation.time, timeframe)}</div>
                       <div className="text-muted-foreground">{annotation.price?.toFixed(2)}%</div>
@@ -1459,12 +1507,17 @@ export function ComparisonChart({
                   <div
                     key={annotation.id}
                     className="absolute"
-                    style={{ left: `${xPercent}%`, top: '20px', transform: 'translateX(-50%)' }}
+                    style={{ 
+                      left: `${xPercent}%`, 
+                      top: '20px', 
+                      transform: `translateX(calc(-50% + ${annotation.horizontalOffset || 0}px))`
+                    }}
                   >
                     <div 
-                      className="bg-background border border-border rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-pointer hover:bg-muted shadow-lg"
+                      className="bg-background border border-border rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-grab hover:bg-muted shadow-lg select-none"
+                      onMouseDown={(e) => handleTextMouseDown(e, annotation)}
                       onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
-                      title="Double-click to delete"
+                      title="Click and drag to move horizontally, double-click to delete"
                     >
                       <div className="font-medium" style={{ color: '#AA99FF' }}>{formatTime(annotation.time, timeframe)}</div>
                       <div className="text-muted-foreground">{annotation.price?.toFixed(2)}%</div>
