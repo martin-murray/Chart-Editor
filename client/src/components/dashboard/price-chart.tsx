@@ -311,22 +311,23 @@ export function PriceChart({
           const yAxisMin = minPrice - padding;
           const yAxisMax = maxPrice + padding;
           
-          // Get chart container to calculate actual dimensions
-          const chartContainer = document.querySelector('[data-testid="price-chart-container"] .recharts-wrapper');
-          if (chartContainer) {
-            const rect = chartContainer.getBoundingClientRect();
-            const chartHeight = rect.height;
-            const plotTop = 10; // Approximate top margin
-            const plotBottom = 40; // Approximate bottom margin  
-            const plotHeight = chartHeight - plotTop - plotBottom;
-            
-            // Calculate relative Y position (0 = top, 1 = bottom)
-            // event.chartY is relative to the chart container
-            const relativeY = Math.max(0, Math.min(1, (event.chartY - plotTop) / plotHeight));
-            
-            // Convert click position to price value (Y is inverted)
-            horizontalPrice = yAxisMax - (relativeY * (yAxisMax - yAxisMin));
-          }
+          // Use a more reliable chart coordinate calculation
+          // event.chartY is relative to the chart plotting area, not the full container
+          // We can use this directly with a reasonable height assumption
+          
+          // For Recharts, event.chartY typically ranges from 0 (top) to chart height (bottom)
+          // We'll assume a standard chart height and calculate accordingly
+          const assumedChartHeight = 400; // Reasonable assumption for most chart configurations
+          
+          // Calculate relative position (0 = top, 1 = bottom)
+          const relativeY = Math.max(0, Math.min(1, event.chartY / assumedChartHeight));
+          
+          // Convert to price (Y axis is inverted - top is max price, bottom is min price)
+          horizontalPrice = yAxisMax - (relativeY * (yAxisMax - yAxisMin));
+          
+          // Ensure price is within reasonable bounds
+          horizontalPrice = Math.max(yAxisMin, Math.min(yAxisMax, horizontalPrice));
+          
         }
         
         // Create horizontal annotation
@@ -2155,14 +2156,14 @@ export function PriceChart({
                     />
                   ))}
 
-                  {/* Horizontal Annotation Reference Lines - purple horizontal lines */}
+                  {/* Horizontal Annotation Reference Lines - unified styling */}
                   {annotations.filter(annotation => annotation.type === 'horizontal').map((annotation) => (
                     <ReferenceLine 
                       key={annotation.id}
                       y={annotation.price}
                       yAxisId="price"
-                      stroke="#AA99FF"
-                      strokeWidth={1}
+                      stroke="#374151"
+                      strokeWidth={2}
                       vectorEffect="non-scaling-stroke"
                       shapeRendering="crispEdges"
                     />
