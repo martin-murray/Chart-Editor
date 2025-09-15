@@ -162,7 +162,7 @@ export function PriceChart({
 
   // Drag functionality for horizontal lines
   const handleMouseDown = (event: React.MouseEvent) => {
-    if (!chartRef.current || annotationMode !== null) return;
+    if (!chartRef.current) return;
     
     const rect = chartRef.current.getBoundingClientRect();
     const mouseY = event.clientY - rect.top;
@@ -182,7 +182,7 @@ export function PriceChart({
     const priceAtMouse = maxPrice - (relativeY / chartHeight) * priceRange;
     
     // Find the closest horizontal annotation
-    const horizontalAnnotations = annotations.filter(ann => ann.type === 'horizontal') as Annotation[];
+    const horizontalAnnotations = annotations.filter((ann): ann is Annotation => ann.type === 'horizontal');
     let closestAnnotation: Annotation | null = null;
     let closestDistance = Infinity;
     
@@ -956,9 +956,10 @@ export function PriceChart({
                 const y = Math.max(priceArea.y, Math.min(priceArea.y + priceArea.height, 
                   priceArea.y + priceArea.height - ((annotation.price - minPrice) / priceRange) * priceArea.height));
                 
-                // Draw horizontal line
-                ctx.strokeStyle = '#AA99FF';
-                ctx.lineWidth = 1.5;
+                // Draw horizontal line with drag feedback
+                const isBeingDragged = isDragging && dragAnnotationId === annotation.id;
+                ctx.strokeStyle = isBeingDragged ? '#7755CC' : '#AA99FF'; // Darker purple when dragging
+                ctx.lineWidth = isBeingDragged ? 2.5 : 1.5;
                 ctx.beginPath();
                 ctx.moveTo(priceArea.x, y);
                 ctx.lineTo(priceArea.x + priceArea.width, y);
@@ -1385,9 +1386,10 @@ export function PriceChart({
                 const y = Math.max(priceArea.y, Math.min(priceArea.y + priceArea.height, 
                   priceArea.y + priceArea.height - ((annotation.price - minPrice) / priceRange) * priceArea.height));
                 
-                // Draw horizontal line
-                ctx.strokeStyle = '#AA99FF';
-                ctx.lineWidth = 1.5;
+                // Draw horizontal line with drag feedback
+                const isBeingDragged = isDragging && dragAnnotationId === annotation.id;
+                ctx.strokeStyle = isBeingDragged ? '#7755CC' : '#AA99FF'; // Darker purple when dragging
+                ctx.lineWidth = isBeingDragged ? 2.5 : 1.5;
                 ctx.beginPath();
                 ctx.moveTo(priceArea.x, y);
                 ctx.lineTo(priceArea.x + priceArea.width, y);
@@ -2269,17 +2271,21 @@ export function PriceChart({
                   ))}
 
                   {/* Horizontal Annotation Reference Lines - purple styling */}
-                  {annotations.filter(annotation => annotation.type === 'horizontal').map((annotation) => (
-                    <ReferenceLine 
-                      key={annotation.id}
-                      y={annotation.price}
-                      yAxisId="price"
-                      stroke="#AA99FF"
-                      strokeWidth={2}
-                      vectorEffect="non-scaling-stroke"
-                      shapeRendering="crispEdges"
-                    />
-                  ))}
+                  {annotations.filter(annotation => annotation.type === 'horizontal').map((annotation) => {
+                    const isBeingDragged = isDragging && dragAnnotationId === annotation.id;
+                    const lineColor = isBeingDragged ? "#7755CC" : "#AA99FF"; // Darker purple when dragging
+                    return (
+                      <ReferenceLine 
+                        key={annotation.id}
+                        y={annotation.price}
+                        yAxisId="price"
+                        stroke={lineColor}
+                        strokeWidth={isBeingDragged ? 3 : 2}
+                        vectorEffect="non-scaling-stroke"
+                        shapeRendering="crispEdges"
+                      />
+                    );
+                  })}
 
                   {/* Click Capture Overlay for Annotations - only active in annotation mode */}
                   {annotationMode === 'percentage' && (

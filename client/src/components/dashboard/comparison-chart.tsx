@@ -120,7 +120,7 @@ export function ComparisonChart({
 
   // Drag functionality for horizontal lines
   const handleMouseDown = (event: React.MouseEvent) => {
-    if (!chartContainerRef.current || annotationMode !== null) return;
+    if (!chartContainerRef.current) return;
     
     const rect = chartContainerRef.current.getBoundingClientRect();
     const mouseY = event.clientY - rect.top;
@@ -132,7 +132,7 @@ export function ComparisonChart({
     const percentageAtMouse = ((chartHeight - relativeY) / chartHeight) * 10 - 5; // Rough conversion to percentage scale
     
     // Find the closest horizontal annotation
-    const horizontalAnnotations = annotations.filter(ann => ann.type === 'horizontal') as Annotation[];
+    const horizontalAnnotations = annotations.filter((ann): ann is Annotation => ann.type === 'horizontal');
     let closestAnnotation: Annotation | null = null;
     let closestDistance = Infinity;
     
@@ -1591,16 +1591,20 @@ export function ComparisonChart({
                 })}
 
                 {/* Horizontal Annotation Reference Lines - purple styling */}
-                {annotations.filter(annotation => annotation.type === 'horizontal').map((annotation) => (
-                  <ReferenceLine 
-                    key={annotation.id}
-                    y={annotation.price}
-                    stroke="#AA99FF"
-                    strokeWidth={2}
-                    vectorEffect="non-scaling-stroke"
-                    shapeRendering="crispEdges"
-                  />
-                ))}
+                {annotations.filter(annotation => annotation.type === 'horizontal').map((annotation) => {
+                  const isBeingDragged = isDragging && dragAnnotationId === annotation.id;
+                  const lineColor = isBeingDragged ? "#7755CC" : "#AA99FF"; // Darker purple when dragging
+                  return (
+                    <ReferenceLine 
+                      key={annotation.id}
+                      y={annotation.price}
+                      stroke={lineColor}
+                      strokeWidth={isBeingDragged ? 3 : 2}
+                      vectorEffect="non-scaling-stroke"
+                      shapeRendering="crispEdges"
+                    />
+                  );
+                })}
 
                 {/* Percentage Measurement Lines - diagonal arrows */}
                 {annotations.filter(annotation => annotation.type === 'percentage' && annotation.startTimestamp && annotation.endTimestamp).map((annotation) => {
