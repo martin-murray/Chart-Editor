@@ -1569,7 +1569,11 @@ export function ComparisonChart({
                   domain={[(dataMin: any) => Math.floor(Number(dataMin) - 5), (dataMax: any) => Math.ceil(Number(dataMax) + 5)]}
                   tickFormatter={(value) => `${value > 0 ? '+' : ''}${Number(value).toFixed(1)}%`}
                 />
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip 
+                  content={<CustomTooltip />} 
+                  active={!isDragging}
+                  allowEscapeViewBox={{ x: false, y: false }}
+                />
                 
                 {/* Zero reference line */}
                 <ReferenceLine y={0} stroke="white" strokeWidth={1} />

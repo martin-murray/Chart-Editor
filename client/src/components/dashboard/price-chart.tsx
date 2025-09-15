@@ -2218,6 +2218,8 @@ export function PriceChart({
                   />
                   
                   <Tooltip 
+                    active={!isDragging}
+                    allowEscapeViewBox={{ x: false, y: false }}
                     labelFormatter={(value) => {
                       const date = new Date(value);
                       const dateStr = formatTime(value, selectedTimeframe);
@@ -2618,6 +2620,8 @@ export function PriceChart({
                   />
                   
                   <Tooltip 
+                    active={!isDragging}
+                    allowEscapeViewBox={{ x: false, y: false }}
                     labelFormatter={(value) => {
                       const date = new Date(value);
                       const dateStr = formatTime(value, selectedTimeframe);
