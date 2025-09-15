@@ -98,6 +98,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             from = now - (365 * 24 * 60 * 60); // 1 year
             resolution = 'D'; // Daily intervals
             break;
+          case '3Y':
+            from = now - (3 * 365 * 24 * 60 * 60); // 3 years
+            resolution = 'D'; // Daily intervals
+            break;
+          case '5Y':
+            from = now - (5 * 365 * 24 * 60 * 60); // 5 years
+            resolution = 'D'; // Daily intervals
+            break;
           default:
             from = now - (24 * 60 * 60);
             resolution = '5';
