@@ -102,13 +102,105 @@ export function ComparisonChart({
   const [pendingAnnotation, setPendingAnnotation] = useState<Omit<Annotation, 'id' | 'text'> | null>(null);
   const [editingAnnotation, setEditingAnnotation] = useState<Annotation | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  
+  // Drag state for horizontal lines
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragAnnotationId, setDragAnnotationId] = useState<string | null>(null);
+  const [dragStartY, setDragStartY] = useState(0);
+  const [dragStartPrice, setDragStartPrice] = useState(0);
+  
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<HTMLDivElement>(null);
 
   // Use controlled annotations from parent
   const annotations = controlledAnnotations || [];
+
+  // Drag functionality for horizontal lines
+  const handleMouseDown = (event: React.MouseEvent) => {
+    if (!chartContainerRef.current || annotationMode !== null) return;
+    
+    const rect = chartContainerRef.current.getBoundingClientRect();
+    const mouseY = event.clientY - rect.top;
+    
+    // Convert mouse Y to percentage value (approximate)
+    const chartHeight = rect.height - 80; // Account for margins
+    const chartTop = 40; // Account for top margin
+    const relativeY = mouseY - chartTop;
+    const percentageAtMouse = ((chartHeight - relativeY) / chartHeight) * 10 - 5; // Rough conversion to percentage scale
+    
+    // Find the closest horizontal annotation
+    const horizontalAnnotations = annotations.filter(ann => ann.type === 'horizontal') as Annotation[];
+    let closestAnnotation: Annotation | null = null;
+    let closestDistance = Infinity;
+    
+    horizontalAnnotations.forEach(annotation => {
+      const distance = Math.abs(annotation.price - percentageAtMouse);
+      if (distance < closestDistance && distance < 2) { // Within 2% tolerance
+        closestDistance = distance;
+        closestAnnotation = annotation;
+      }
+    });
+    
+    if (closestAnnotation) {
+      setIsDragging(true);
+      setDragAnnotationId(closestAnnotation.id);
+      setDragStartY(mouseY);
+      setDragStartPrice(closestAnnotation.price);
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  };
+
+  const handleMouseMove = (event: React.MouseEvent) => {
+    if (!isDragging || !dragAnnotationId || !chartContainerRef.current) return;
+    
+    const rect = chartContainerRef.current.getBoundingClientRect();
+    const mouseY = event.clientY - rect.top;
+    const deltaY = mouseY - dragStartY;
+    
+    // Convert pixel delta to percentage delta (approximate)
+    const chartHeight = rect.height - 80;
+    const percentageDelta = -(deltaY / chartHeight) * 10; // Negative because Y increases downward
+    const newPrice = dragStartPrice + percentageDelta;
+    
+    // Update the annotation
+    updateAnnotations?.(prev => prev.map(ann => 
+      ann.id === dragAnnotationId 
+        ? { ...ann, price: newPrice }
+        : ann
+    ));
+  };
+
+  const handleMouseUp = () => {
+    if (isDragging) {
+      setIsDragging(false);
+      setDragAnnotationId(null);
+      setDragStartY(0);
+      setDragStartPrice(0);
+    }
+  };
+
+  // Add global mouse up listener to handle drag end outside chart
+  useEffect(() => {
+    if (isDragging) {
+      const handleGlobalMouseUp = () => handleMouseUp();
+      const handleGlobalMouseMove = (event: MouseEvent) => {
+        if (!chartContainerRef.current) return;
+        handleMouseMove(event as any);
+      };
+      
+      document.addEventListener('mouseup', handleGlobalMouseUp);
+      document.addEventListener('mousemove', handleGlobalMouseMove);
+      
+      return () => {
+        document.removeEventListener('mouseup', handleGlobalMouseUp);
+        document.removeEventListener('mousemove', handleGlobalMouseMove);
+      };
+    }
+  }, [isDragging, dragAnnotationId, dragStartY, dragStartPrice]);
 
   // Click outside handler - works with portal
   useEffect(() => {
@@ -1444,12 +1536,23 @@ export function ComparisonChart({
             </div>
           </div>
         ) : (
-          <ChartContainer config={chartConfig} className="h-full w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart 
-                data={chartData} 
-                margin={{ left: 22, right: 22, top: 10, bottom: 0 }}
-                onClick={handleChartClick}
+          <ChartContainer 
+            config={chartConfig} 
+            className="h-full w-full"
+          >
+            <div 
+              ref={chartContainerRef}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              style={{ cursor: isDragging ? 'grabbing' : 'default' }}
+              className="h-full w-full"
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart 
+                  data={chartData} 
+                  margin={{ left: 22, right: 22, top: 10, bottom: 0 }}
+                  onClick={handleChartClick}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#3B3B3B" strokeOpacity={0.5} />
                 <XAxis 
@@ -1561,6 +1664,7 @@ export function ComparisonChart({
                   ))}
               </LineChart>
             </ResponsiveContainer>
+            </div>
           </ChartContainer>
         )}
       </div>

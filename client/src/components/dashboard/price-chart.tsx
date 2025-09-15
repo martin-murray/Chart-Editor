@@ -137,6 +137,12 @@ export function PriceChart({
     time: string;
   } | null>(null);
   
+  // Drag state for horizontal lines
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragAnnotationId, setDragAnnotationId] = useState<string | null>(null);
+  const [dragStartY, setDragStartY] = useState(0);
+  const [dragStartPrice, setDragStartPrice] = useState(0);
+  
   // Use controlled annotations if provided, otherwise use internal state
   const annotations = controlledAnnotations || internalAnnotations;
   
@@ -153,6 +159,103 @@ export function PriceChart({
       setInternalAnnotations(newAnnotations);
     }
   };
+
+  // Drag functionality for horizontal lines
+  const handleMouseDown = (event: React.MouseEvent) => {
+    if (!chartRef.current || annotationMode !== null) return;
+    
+    const rect = chartRef.current.getBoundingClientRect();
+    const mouseY = event.clientY - rect.top;
+    
+    if (!chartData?.data) return;
+    
+    // Convert mouse Y to price value
+    const chartHeight = rect.height - 120; // Account for margins and axis labels
+    const chartTop = 60; // Account for top margin
+    const relativeY = mouseY - chartTop;
+    
+    // Calculate price range from chart data
+    const prices = chartData.data.flatMap(d => [d.high, d.low, d.open, d.close]);
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+    const priceRange = maxPrice - minPrice;
+    const priceAtMouse = maxPrice - (relativeY / chartHeight) * priceRange;
+    
+    // Find the closest horizontal annotation
+    const horizontalAnnotations = annotations.filter(ann => ann.type === 'horizontal') as Annotation[];
+    let closestAnnotation: Annotation | null = null;
+    let closestDistance = Infinity;
+    
+    horizontalAnnotations.forEach(annotation => {
+      const distance = Math.abs(annotation.price - priceAtMouse);
+      const toleranceInPrice = priceRange * 0.02; // 2% of price range tolerance
+      if (distance < closestDistance && distance < toleranceInPrice) {
+        closestDistance = distance;
+        closestAnnotation = annotation;
+      }
+    });
+    
+    if (closestAnnotation) {
+      setIsDragging(true);
+      setDragAnnotationId(closestAnnotation.id);
+      setDragStartY(mouseY);
+      setDragStartPrice(closestAnnotation.price);
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  };
+
+  const handleMouseMove = (event: React.MouseEvent) => {
+    if (!isDragging || !dragAnnotationId || !chartRef.current || !chartData?.data) return;
+    
+    const rect = chartRef.current.getBoundingClientRect();
+    const mouseY = event.clientY - rect.top;
+    const deltaY = mouseY - dragStartY;
+    
+    // Convert pixel delta to price delta
+    const chartHeight = rect.height - 120;
+    const prices = chartData.data.flatMap(d => [d.high, d.low, d.open, d.close]);
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+    const priceRange = maxPrice - minPrice;
+    const priceDelta = -(deltaY / chartHeight) * priceRange; // Negative because Y increases downward
+    const newPrice = dragStartPrice + priceDelta;
+    
+    // Update the annotation
+    updateAnnotations(prev => prev.map(ann => 
+      ann.id === dragAnnotationId 
+        ? { ...ann, price: newPrice }
+        : ann
+    ));
+  };
+
+  const handleMouseUp = () => {
+    if (isDragging) {
+      setIsDragging(false);
+      setDragAnnotationId(null);
+      setDragStartY(0);
+      setDragStartPrice(0);
+    }
+  };
+
+  // Add global mouse up listener to handle drag end outside chart
+  React.useEffect(() => {
+    if (isDragging) {
+      const handleGlobalMouseUp = () => handleMouseUp();
+      const handleGlobalMouseMove = (event: MouseEvent) => {
+        if (!chartRef.current) return;
+        handleMouseMove(event as any);
+      };
+      
+      document.addEventListener('mouseup', handleGlobalMouseUp);
+      document.addEventListener('mousemove', handleGlobalMouseMove);
+      
+      return () => {
+        document.removeEventListener('mouseup', handleGlobalMouseUp);
+        document.removeEventListener('mousemove', handleGlobalMouseMove);
+      };
+    }
+  }, [isDragging, dragAnnotationId, dragStartY, dragStartPrice]);
   
   // Earnings modal state
   const [earningsModal, setEarningsModal] = useState<{
@@ -1948,7 +2051,14 @@ export function PriceChart({
             No chart data available for {symbol}
           </div>
         ) : (
-          <div ref={chartRef} className="w-full rounded-lg relative pt-20" style={{ backgroundColor: '#121212' }}>
+          <div 
+            ref={chartRef} 
+            className="w-full rounded-lg relative pt-20" 
+            style={{ backgroundColor: '#121212', cursor: isDragging ? 'grabbing' : 'default' }}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+          >
             {/* Annotation Labels - positioned in reserved padding space above charts */}
             {annotations.length > 0 && (
               <div className="absolute top-0 left-0 w-full h-20 pointer-events-none">
