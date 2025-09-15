@@ -1392,7 +1392,7 @@ export function ComparisonChart({
                     );
                   })}
                 </div>
-              ) : searchTerm.trim().length >= 2 ? (
+              ) : debouncedQuery.trim().length >= 2 ? (
                 <div className="py-2">
                   {isSearchLoading ? (
                     <div className="px-4 py-3 text-center text-muted-foreground">
@@ -1442,11 +1442,11 @@ export function ComparisonChart({
                         </div>
                       );
                     })
-                  ) : (
+                  ) : debouncedQuery && !isSearchLoading ? (
                     <div className="px-4 py-3 text-center text-muted-foreground">
-                      No results found for "{searchTerm}"
+                      No results found for "{debouncedQuery}"
                     </div>
-                  )}
+                  ) : null}
                 </div>
               ) : searchTerm.trim().length > 0 && searchTerm.trim().length < 2 ? (
                 <div className="px-4 py-3 text-center text-muted-foreground">
