@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Search, TrendingUp, TrendingDown, BarChart3, ArrowLeft, Trash2, RotateCcw } from "lucide-react";
+import { Search, TrendingUp, TrendingDown, BarChart3, Trash2, RotateCcw } from "lucide-react";
 import { Link } from "wouter";
 import { cn } from "@/lib/utils";
 import { PriceChart } from "@/components/dashboard/price-chart";
@@ -370,13 +370,7 @@ function ChartMaker() {
       <header className="bg-card border-b shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-6">
-              <Link 
-                href="/" 
-                className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <span className="font-medium">← Back</span>
-              </Link>
+            <div className="flex items-center">
               <h1 className="text-2xl font-semibold">ChartMaker - Global Stock Charts</h1>
             </div>
             <div className="flex items-center gap-4">
