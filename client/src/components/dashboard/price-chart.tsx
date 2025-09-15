@@ -2022,13 +2022,22 @@ export function PriceChart({
                         className="absolute"
                         style={{ left: `${midPercent}%`, top: '10px', transform: 'translateX(-50%)' }}
                       >
-                        <div className="bg-background border border-white/30 rounded px-2 py-1 text-xs pointer-events-auto shadow-lg">
+                        <div 
+                          className="bg-background border border-white/30 rounded px-2 py-1 text-xs pointer-events-auto shadow-lg cursor-pointer hover:bg-muted"
+                          onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
+                          title="Double-click to edit"
+                        >
                           <div className={`font-bold text-center ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
                             {isPositive ? '↗' : '↘'} {(annotation.percentage || 0).toFixed(2)}%
                           </div>
                           <div className="text-xs text-muted-foreground text-center">
                             {formatPrice(annotation.startPrice || 0)} → {formatPrice(annotation.endPrice || 0)}
                           </div>
+                          {annotation.startTime && annotation.endTime && (
+                            <div className="text-[10px] text-muted-foreground text-center mt-1">
+                              {formatTime(annotation.startTime, selectedTimeframe)} → {formatTime(annotation.endTime, selectedTimeframe)}
+                            </div>
+                          )}
                         </div>
                       </div>
                     );

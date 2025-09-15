@@ -87,6 +87,8 @@ interface AnnotationLayerProps {
   annotations: any[];
   chartData: any[];
   onAnnotationDoubleClick: (annotation: any) => void;
+  formatTime: (timeValue: any, timeframe: string) => string;
+  timeframe: string;
 }
 
 const AnnotationLayer: React.FC<AnnotationLayerProps> = ({ 
@@ -97,7 +99,9 @@ const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
   formattedGraphicalItems, 
   annotations, 
   chartData, 
-  onAnnotationDoubleClick 
+  onAnnotationDoubleClick,
+  formatTime,
+  timeframe
 }) => {
   if (!xAxisMap || !yAxisMap || !offset || !chartData) return null;
   
@@ -291,9 +295,9 @@ const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
               <g>
                 <rect
                   x={(x1 + x2) / 2 - 45}
-                  y={Math.min(y1, y2) - 45}
+                  y={Math.min(y1, y2) - 55}
                   width={90}
-                  height={35}
+                  height={47}
                   fill="rgba(0,0,0,0.8)"
                   stroke="rgba(255,255,255,0.2)"
                   strokeWidth={1}
@@ -305,7 +309,7 @@ const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
                 {/* Percentage text */}
                 <text 
                   x={(x1 + x2) / 2} 
-                  y={Math.min(y1, y2) - 30} 
+                  y={Math.min(y1, y2) - 40} 
                   fill="#FAFF50" 
                   fontSize={11} 
                   fontWeight="bold"
@@ -319,7 +323,7 @@ const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
                 {/* Price range text */}
                 <text 
                   x={(x1 + x2) / 2} 
-                  y={Math.min(y1, y2) - 19} 
+                  y={Math.min(y1, y2) - 29} 
                   fill="#999" 
                   fontSize={9} 
                   textAnchor="middle"
@@ -329,10 +333,25 @@ const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
                   {`${(annotation.startPrice || 0).toFixed(2)}% → ${(annotation.endPrice || 0).toFixed(2)}%`}
                 </text>
                 
+                {/* Date range text - only show if both start and end times exist */}
+                {annotation.startTime && annotation.endTime && (
+                  <text 
+                    x={(x1 + x2) / 2} 
+                    y={Math.min(y1, y2) - 18} 
+                    fill="#999" 
+                    fontSize={8} 
+                    textAnchor="middle"
+                    style={{ cursor: 'pointer' }}
+                    onDoubleClick={(e) => { e.stopPropagation(); onAnnotationDoubleClick(annotation); }}
+                  >
+                    {`${formatTime(annotation.startTime, timeframe)} → ${formatTime(annotation.endTime, timeframe)}`}
+                  </text>
+                )}
+                
                 {/* Price difference text */}
                 <text 
                   x={(x1 + x2) / 2} 
-                  y={Math.min(y1, y2) - 8} 
+                  y={Math.min(y1, y2) - 7} 
                   fill="white" 
                   fontSize={9} 
                   textAnchor="middle"
@@ -843,12 +862,6 @@ export function ComparisonChart({
       // This case is now handled earlier in the function for freehand placement
       // This code path should not be reached for horizontal annotations
       return;
-      
-      setPendingAnnotation(newAnnotation);
-      setShowAnnotationInput(true);
-      setAnnotationInput('');
-      setEditingAnnotation(null);
-      setIsEditMode(false);
     } else if (annotationMode === 'percentage') {
       // Percentage measurement mode - two clicks
       if (!pendingPercentageStart) {
@@ -1721,7 +1734,9 @@ export function ComparisonChart({
                     <AnnotationLayer 
                       annotations={annotations} 
                       chartData={chartData} 
-                      onAnnotationDoubleClick={handleAnnotationDoubleClick} 
+                      onAnnotationDoubleClick={handleAnnotationDoubleClick}
+                      formatTime={formatTime}
+                      timeframe={timeframe} 
                     />
                   } 
                 />
