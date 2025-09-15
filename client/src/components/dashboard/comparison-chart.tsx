@@ -1517,6 +1517,52 @@ export function ComparisonChart({
           </div>
         )}
 
+        {/* Interactive overlay elements for horizontal lines - SAME AS PRICE CHART */}
+        {chartData?.length > 0 && annotations.filter(annotation => annotation.type === 'horizontal').map((annotation) => {
+          // Calculate Y position based on comparison chart data range
+          const allValues = chartData.flatMap(d => 
+            Object.keys(d).filter(key => key !== 'date' && key !== 'timestamp').map(key => d[key])
+          ).filter(val => typeof val === 'number' && !isNaN(val));
+          
+          if (allValues.length === 0) return null;
+          
+          const minValue = Math.min(...allValues);
+          const maxValue = Math.max(...allValues);
+          const valueRange = maxValue - minValue;
+          
+          // Chart dimensions (same approach as price chart)
+          const chartHeight = 400; // Comparison chart height
+          const chartTop = 40; // Account for header margin
+          const yPercent = (maxValue - annotation.price) / valueRange; // Position from top
+          const yPixels = chartTop + (yPercent * (chartHeight - 80)); // Account for margins
+          
+          return (
+            <div
+              key={`interactive-${annotation.id}`}
+              className="absolute pointer-events-auto cursor-grab active:cursor-grabbing hover:opacity-80"
+              style={{ 
+                left: '50px', // Chart left margin
+                right: '50px', // Chart right margin
+                top: `${yPixels - 8}px`, 
+                height: '16px', // Large hit area
+                zIndex: 20,
+                backgroundColor: 'rgba(170, 153, 255, 0.1)' // Slight background for debugging
+              }}
+              onMouseDown={(e) => {
+                console.log('✅ COMPARISON: Mouse down on horizontal line:', annotation.id);
+                setIsDragging(true);
+                setDragAnnotationId(annotation.id);
+                setDragStartY(e.clientY);
+                setDragStartPrice(annotation.price);
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
+              title="Click and drag to move horizontal line"
+              data-testid={`horizontal-line-drag-${annotation.id}`}
+            />
+          );
+        })}
         
         {tickers.length === 0 ? (
           <div className="h-full flex items-center justify-center">
@@ -1629,68 +1675,6 @@ export function ComparisonChart({
                   );
                 })}
 
-                {/* Interactive drag overlays rendered inside chart */}
-                <Customized component={(props: any) => {
-                  const { xAxisMap, yAxisMap, chartWidth, chartHeight, offset } = props;
-                  
-                  // Safety checks for dimensions
-                  if (!chartWidth || !chartHeight || !offset) return null;
-                  
-                  const safeChartWidth = Number(chartWidth) || 500;
-                  const safeOffset = {
-                    left: Number(offset.left) || 50,
-                    right: Number(offset.right) || 50,
-                    top: Number(offset.top) || 10,
-                    bottom: Number(offset.bottom) || 10
-                  };
-                  
-                  return (
-                    <g>
-                      {annotations.filter(annotation => annotation.type === 'horizontal').map((annotation) => {
-                        // Use recharts' actual Y axis to calculate position
-                        const yAxis = yAxisMap?.yAxisId || yAxisMap?.['0'] || Object.values(yAxisMap || {})[0];
-                        if (!yAxis || !yAxis.scale) return null;
-                        
-                        const yPos = yAxis.scale(annotation.price);
-                        if (isNaN(yPos)) return null;
-                        
-                        const overlayWidth = Math.max(100, safeChartWidth - safeOffset.left - safeOffset.right);
-                        
-                        return (
-                          <foreignObject
-                            key={`drag-${annotation.id}`}
-                            x={safeOffset.left}
-                            y={Math.max(0, yPos - 12)}
-                            width={overlayWidth}
-                            height={24}
-                            style={{ pointerEvents: 'auto' }}
-                          >
-                            <div
-                              className="w-full h-full cursor-grab hover:bg-purple-500/20 active:cursor-grabbing"
-                              style={{ 
-                                backgroundColor: isDragging && dragAnnotationId === annotation.id ? 'rgba(170, 153, 255, 0.3)' : 'rgba(170, 153, 255, 0.15)',
-                                border: isDragging && dragAnnotationId === annotation.id ? '2px solid #AA99FF' : '1px solid rgba(170, 153, 255, 0.3)',
-                                borderRadius: '2px'
-                              }}
-                              onMouseDown={(e) => {
-                                console.log('✅ Mouse down on horizontal line:', annotation.id);
-                                setIsDragging(true);
-                                setDragAnnotationId(annotation.id);
-                                setDragStartY(e.clientY);
-                                setDragStartPrice(annotation.price);
-                                e.preventDefault();
-                                e.stopPropagation();
-                              }}
-                              onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
-                              title="Click and drag to move horizontal line"
-                              data-testid={`horizontal-line-drag-${annotation.id}`}
-                            />
-                          </foreignObject>
-                        );
-                      })}
-                    </g>
-                  );
-                }} />
 
                 {/* Percentage Measurement Lines - diagonal arrows */}
                 {annotations.filter(annotation => annotation.type === 'percentage' && annotation.startTimestamp && annotation.endTimestamp).map((annotation) => {
