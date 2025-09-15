@@ -123,7 +123,32 @@ const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
                   (xAxis.scale((chartData as any)[idx].date) + offset.left);
         
         if (annotation.type === 'text') {
-          const y = yAxis.scale(annotation.price) + offset.top;
+          // Helper function to wrap text
+          const wrapText = (text: string, maxCharsPerLine: number = 16) => {
+            const words = text.split(' ');
+            const lines: string[] = [];
+            let currentLine = '';
+            
+            for (const word of words) {
+              const testLine = currentLine ? `${currentLine} ${word}` : word;
+              if (testLine.length <= maxCharsPerLine) {
+                currentLine = testLine;
+              } else {
+                if (currentLine) {
+                  lines.push(currentLine);
+                  currentLine = word;
+                } else {
+                  // Word is longer than maxCharsPerLine, break it
+                  lines.push(word.slice(0, maxCharsPerLine));
+                  currentLine = word.slice(maxCharsPerLine);
+                }
+              }
+            }
+            if (currentLine) lines.push(currentLine);
+            return lines;
+          };
+          
+          const textLines = wrapText(annotation.text || 'Annotation');
           
           return (
             <g key={annotation.id}>
@@ -139,14 +164,22 @@ const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
               />
               <text 
                 x={x + 5} 
-                y={y - 10} 
+                y={yTop + 20} 
                 fill="#FAFF50" 
-                fontSize={12} 
-                fontWeight="bold" 
+                fontSize={14} 
+                fontWeight="regular" 
                 style={{ cursor: 'pointer' }}
                 onDoubleClick={() => onAnnotationDoubleClick(annotation)}
               >
-                {annotation.text || 'Annotation'}
+                {textLines.map((line, index) => (
+                  <tspan 
+                    key={index}
+                    x={x + 5} 
+                    dy={index === 0 ? 0 : 16}
+                  >
+                    {line}
+                  </tspan>
+                ))}
               </text>
             </g>
           );
