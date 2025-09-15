@@ -1530,9 +1530,9 @@ export function ComparisonChart({
           const maxValue = Math.max(...allValues);
           const valueRange = maxValue - minValue;
           
-          // Chart dimensions - fine-tuned for alignment with visual lines
+          // Chart dimensions - moving clickable area up by 80px
           const chartHeight = 350; // Actual comparison chart area height
-          const chartTop = 60; // Fine-tuned to align with visual horizontal lines
+          const chartTop = -20; // Moved up significantly to align with visual horizontal lines
           const yPercent = (maxValue - annotation.price) / valueRange; // Position from top
           const yPixels = chartTop + (yPercent * chartHeight); // Direct mapping
           
