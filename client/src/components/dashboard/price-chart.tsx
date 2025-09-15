@@ -68,6 +68,7 @@ interface Annotation {
   price: number; // Price at this point
   text?: string; // User annotation text (for text and horizontal types)
   time: string; // Formatted time string
+  horizontalOffset?: number; // Custom horizontal position offset in pixels for dragging
   // For percentage measurements
   startTimestamp?: number;
   startPrice?: number;
@@ -142,6 +143,12 @@ export function PriceChart({
   const [dragAnnotationId, setDragAnnotationId] = useState<string | null>(null);
   const [dragStartY, setDragStartY] = useState(0);
   const [dragStartPrice, setDragStartPrice] = useState(0);
+  
+  // Text annotation horizontal drag state
+  const [isDraggingText, setIsDraggingText] = useState(false);
+  const [dragTextAnnotationId, setDragTextAnnotationId] = useState<string | null>(null);
+  const [dragStartX, setDragStartX] = useState(0);
+  const [dragStartOffset, setDragStartOffset] = useState(0);
   
   // Use controlled annotations if provided, otherwise use internal state
   const annotations = controlledAnnotations || internalAnnotations;
@@ -238,30 +245,67 @@ export function PriceChart({
     }
   };
 
-  // Add global mouse up listener to handle drag end outside chart
+  // Text annotation drag handlers
+  const handleTextMouseDown = (e: React.MouseEvent, annotation: Annotation) => {
+    setIsDraggingText(true);
+    setDragTextAnnotationId(annotation.id);
+    setDragStartX(e.clientX);
+    setDragStartOffset(annotation.horizontalOffset || 0);
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleTextMouseUp = () => {
+    if (isDraggingText) {
+      setIsDraggingText(false);
+      setDragTextAnnotationId(null);
+      setDragStartX(0);
+      setDragStartOffset(0);
+    }
+  };
+
+  // Add global mouse listeners for both horizontal and text annotation dragging
   React.useEffect(() => {
-    if (isDragging) {
-      const handleGlobalMouseUp = () => handleMouseUp();
+    if (isDragging || isDraggingText) {
+      const handleGlobalMouseUp = () => {
+        handleMouseUp();
+        handleTextMouseUp();
+      };
+      
       const handleGlobalMouseMove = (event: MouseEvent) => {
-        if (!isDragging || !dragAnnotationId || !chartData?.data) return;
+        // Handle horizontal line dragging
+        if (isDragging && dragAnnotationId && chartData?.data) {
+          const deltaY = event.clientY - dragStartY;
+          // Calculate price range from chart data
+          const prices = chartData.data.flatMap(d => [d.high, d.low, d.open, d.close]);
+          const minPrice = Math.min(...prices);
+          const maxPrice = Math.max(...prices);
+          const priceRange = maxPrice - minPrice;
+          
+          const chartHeight = 320; // Price chart height
+          const priceDelta = (deltaY / chartHeight) * priceRange; // Convert pixels to price
+          const newPrice = dragStartPrice - priceDelta; // Subtract because Y increases downward
+          
+          // Update the annotation
+          updateAnnotations(prev => prev.map(ann => 
+            ann.id === dragAnnotationId 
+              ? { ...ann, price: newPrice }
+              : ann
+          ));
+        }
         
-        const deltaY = event.clientY - dragStartY;
-        // Calculate price range from chart data
-        const prices = chartData.data.flatMap(d => [d.high, d.low, d.open, d.close]);
-        const minPrice = Math.min(...prices);
-        const maxPrice = Math.max(...prices);
-        const priceRange = maxPrice - minPrice;
-        
-        const chartHeight = 320; // Price chart height
-        const priceDelta = (deltaY / chartHeight) * priceRange; // Convert pixels to price
-        const newPrice = dragStartPrice - priceDelta; // Subtract because Y increases downward
-        
-        // Update the annotation
-        updateAnnotations(prev => prev.map(ann => 
-          ann.id === dragAnnotationId 
-            ? { ...ann, price: newPrice }
-            : ann
-        ));
+        // Handle text annotation horizontal dragging
+        if (isDraggingText && dragTextAnnotationId) {
+          const deltaX = event.clientX - dragStartX;
+          const newOffset = dragStartOffset + deltaX;
+          
+          // Update the annotation's horizontal offset
+          updateAnnotations(prev => prev.map(ann => 
+            ann.id === dragTextAnnotationId 
+              ? { ...ann, horizontalOffset: newOffset }
+              : ann
+          ));
+        }
       };
       
       document.addEventListener('mouseup', handleGlobalMouseUp);
@@ -272,7 +316,7 @@ export function PriceChart({
         document.removeEventListener('mousemove', handleGlobalMouseMove);
       };
     }
-  }, [isDragging, dragAnnotationId, dragStartY, dragStartPrice, updateAnnotations]);
+  }, [isDragging, dragAnnotationId, dragStartY, dragStartPrice, isDraggingText, dragTextAnnotationId, dragStartX, dragStartOffset, updateAnnotations, chartData]);
   
   // Earnings modal state
   const [earningsModal, setEarningsModal] = useState<{
@@ -2094,12 +2138,17 @@ export function PriceChart({
                       <div
                         key={annotation.id}
                         className="absolute"
-                        style={{ left: `${xPercent}%`, top: '20px', transform: 'translateX(-50%)' }}
+                        style={{ 
+                          left: `${xPercent}%`, 
+                          top: '20px', 
+                          transform: `translateX(calc(-50% + ${annotation.horizontalOffset || 0}px))`
+                        }}
                       >
                         <div 
-                          className="bg-background border border-border rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-pointer hover:bg-muted shadow-lg"
+                          className="bg-background border border-border rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-grab hover:bg-muted shadow-lg select-none"
+                          onMouseDown={(e) => handleTextMouseDown(e, annotation)}
                           onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
-                          title="Double-click to delete"
+                          title="Click and drag to move horizontally, double-click to delete"
                         >
                           <div className="font-medium" style={{ color: '#FAFF50' }}>{formatTime(annotation.time, selectedTimeframe)}</div>
                           <div className="text-muted-foreground">{formatPrice(annotation.price)}</div>

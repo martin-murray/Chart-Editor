@@ -53,6 +53,7 @@ interface Annotation {
   price: number; // Price at this point
   text?: string; // User annotation text (for text and horizontal types)
   time: string; // Formatted time string
+  horizontalOffset?: number; // Custom horizontal position offset in pixels for dragging
   // For percentage measurements
   startTimestamp?: number;
   startPrice?: number;
