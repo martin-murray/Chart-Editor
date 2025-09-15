@@ -150,6 +150,18 @@ const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
           
           const textLines = wrapText(annotation.text || 'Annotation');
           
+          // Text box positioning - above the chart like Price chart
+          const textBoxWidth = Math.max(120, (annotation.text || 'Annotation').length * 8);
+          const textBoxHeight = textLines.length * 16 + 16;
+          
+          // Get actual chart width from chart points instead of hard-coded value
+          const points = formattedGraphicalItems?.[0]?.props?.points;
+          const chartRightX = points && points.length > 0 ? points[points.length - 1]?.x : (offset.left + 600);
+          const plotWidth = chartRightX - offset.left;
+          
+          const textBoxX = Math.max(offset.left, Math.min(x - textBoxWidth/2, offset.left + plotWidth - textBoxWidth - 10));
+          const textBoxY = Math.max(offset.top + 10, offset.top + 15);
+          
           return (
             <g key={annotation.id}>
               <line 
@@ -162,25 +174,42 @@ const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
                 style={{ cursor: 'pointer' }}
                 onDoubleClick={() => onAnnotationDoubleClick(annotation)} 
               />
-              <text 
-                x={x + 5} 
-                y={yTop + 20} 
-                fill="#FAFF50" 
-                fontSize={14} 
-                fontWeight="regular" 
-                style={{ cursor: 'pointer' }}
-                onDoubleClick={() => onAnnotationDoubleClick(annotation)}
-              >
-                {textLines.map((line, index) => (
-                  <tspan 
-                    key={index}
-                    x={x + 5} 
-                    dy={index === 0 ? 0 : 16}
-                  >
-                    {line}
-                  </tspan>
-                ))}
-              </text>
+              
+              {/* Text box positioned above chart like Price chart */}
+              <g>
+                <rect
+                  x={textBoxX}
+                  y={textBoxY}
+                  width={textBoxWidth}
+                  height={textBoxHeight}
+                  fill="#121212"
+                  stroke="#374151"
+                  strokeWidth={1}
+                  rx={4}
+                  style={{ cursor: 'pointer' }}
+                  onDoubleClick={() => onAnnotationDoubleClick(annotation)}
+                />
+                <text 
+                  x={textBoxX + 8} 
+                  y={textBoxY + 18} 
+                  fill="#FAFF50" 
+                  fontSize={14} 
+                  fontWeight="bold" 
+                  fontFamily="system-ui, -apple-system, sans-serif"
+                  style={{ cursor: 'pointer' }}
+                  onDoubleClick={() => onAnnotationDoubleClick(annotation)}
+                >
+                  {textLines.map((line, index) => (
+                    <tspan 
+                      key={index}
+                      x={textBoxX + 8} 
+                      dy={index === 0 ? 0 : 16}
+                    >
+                      {line}
+                    </tspan>
+                  ))}
+                </text>
+              </g>
             </g>
           );
         } else if (annotation.type === 'percentage' && annotation.startTimestamp && annotation.endTimestamp) {
@@ -318,12 +347,21 @@ const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
         } else if (annotation.type === 'horizontal') {
           const y = yAxis.scale(annotation.price) + offset.top;
           
-          // Calculate boundaries from chart geometry
+          // Calculate boundaries from chart geometry - full width span
           const points = formattedGraphicalItems?.[0]?.props?.points;
           if (!points || points.length === 0) return null; // Skip if no points available
           
           const xLeft = points[0]?.x || offset.left;
           const xRight = points.at(-1)?.x || (offset.left + 800); // Dynamic right boundary
+          
+          // Text positioning - above the chart like Price chart
+          const textBoxWidth = Math.max(120, (annotation.text || 'Horizontal Line').length * 8);
+          const textBoxHeight = 30;
+          
+          // Use same responsive width calculation as text annotations
+          const plotWidth = xRight - offset.left;
+          const textBoxX = Math.max(offset.left, Math.min(xLeft + 50, offset.left + plotWidth - textBoxWidth - 10));
+          const textBoxY = Math.max(offset.top + 10, offset.top + 15);
           
           return (
             <g key={annotation.id}>
@@ -337,25 +375,34 @@ const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
                 style={{ cursor: 'pointer' }}
                 onDoubleClick={() => onAnnotationDoubleClick(annotation)} 
               />
-              <circle
-                cx={x}
-                cy={y}
-                r={4}
-                fill="#AA99FF"
-                style={{ cursor: 'pointer' }}
-                onDoubleClick={() => onAnnotationDoubleClick(annotation)}
-              />
-              <text 
-                x={x + 8} 
-                y={y - 8} 
-                fill="#AA99FF" 
-                fontSize={12} 
-                fontWeight="bold" 
-                style={{ cursor: 'pointer' }}
-                onDoubleClick={() => onAnnotationDoubleClick(annotation)}
-              >
-                {annotation.text || 'Horizontal Line'}
-              </text>
+              
+              {/* Text box positioned above chart like Price chart */}
+              <g>
+                <rect
+                  x={textBoxX}
+                  y={textBoxY}
+                  width={textBoxWidth}
+                  height={textBoxHeight}
+                  fill="#121212"
+                  stroke="#374151"
+                  strokeWidth={1}
+                  rx={4}
+                  style={{ cursor: 'pointer' }}
+                  onDoubleClick={() => onAnnotationDoubleClick(annotation)}
+                />
+                <text 
+                  x={textBoxX + 8} 
+                  y={textBoxY + 20} 
+                  fill="#AA99FF" 
+                  fontSize={14} 
+                  fontWeight="bold" 
+                  fontFamily="system-ui, -apple-system, sans-serif"
+                  style={{ cursor: 'pointer' }}
+                  onDoubleClick={() => onAnnotationDoubleClick(annotation)}
+                >
+                  {annotation.text || 'Horizontal Line'}
+                </text>
+              </g>
             </g>
           );
         }

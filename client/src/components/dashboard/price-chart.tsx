@@ -2307,73 +2307,7 @@ export function PriceChart({
                                   }}
                                 />
                                 
-                                {/* Percentage text box */}
-                                <g 
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                  }}
-                                  onDoubleClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    handleAnnotationDoubleClick(annotation);
-                                  }}
-                                >
-                                  {/* Text box background */}
-                                  <rect
-                                    x={textBoxX}
-                                    y={textBoxY}
-                                    width={textBoxWidth}
-                                    height={textBoxHeight}
-                                    fill="#121212"
-                                    stroke="#374151"
-                                    strokeWidth={1}
-                                    rx={4}
-                                    style={{ cursor: 'pointer' }}
-                                  />
-                                  
-                                  {/* Percentage text */}
-                                  <text
-                                    x={textBoxX + 8}
-                                    y={textBoxY + 20}
-                                    fill="#FAFF50"
-                                    fontSize="16"
-                                    fontWeight="bold"
-                                    fontFamily="system-ui, -apple-system, sans-serif"
-                                    style={{ pointerEvents: 'none' }}
-                                  >
-                                    {annotation.percentage !== undefined ? 
-                                      (annotation.percentage > 0 ? '+' : '') + annotation.percentage.toFixed(2) + '%' 
-                                      : 'N/A'}
-                                  </text>
-                                  
-                                  {/* Price range text */}
-                                  <text
-                                    x={textBoxX + 8}
-                                    y={textBoxY + 40}
-                                    fill="#9CA3AF"
-                                    fontSize="14"
-                                    fontFamily="system-ui, -apple-system, sans-serif"
-                                    style={{ pointerEvents: 'none' }}
-                                  >
-                                    {formatPrice(annotation.startPrice!)} → {formatPrice(annotation.endPrice!)}
-                                  </text>
-                                  
-                                  {/* Price difference text */}
-                                  <text
-                                    x={textBoxX + 8}
-                                    y={textBoxY + 60}
-                                    fill="#F7F7F7"
-                                    fontSize="14"
-                                    fontFamily="system-ui, -apple-system, sans-serif"
-                                    style={{ pointerEvents: 'none' }}
-                                  >
-                                    {(() => {
-                                      const priceDiff = annotation.endPrice! - annotation.startPrice!;
-                                      return `${priceDiff > 0 ? '+' : ''}${formatPrice(Math.abs(priceDiff))}`;
-                                    })()}
-                                  </text>
-                                </g>
+                                {/* Percentage text box - COMPLETELY REMOVED per user request to eliminate duplicate */}
                               </g>
                             );
                           })}
