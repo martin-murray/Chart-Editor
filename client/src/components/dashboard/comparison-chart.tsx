@@ -109,6 +109,9 @@ export function ComparisonChart({
   const [dragStartY, setDragStartY] = useState(0);
   const [dragStartPrice, setDragStartPrice] = useState(0);
   
+  // Recharts geometry capture for precise positioning
+  const layoutRef = useRef<{offset: any, yScale: any} | null>(null);
+  
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -188,23 +191,18 @@ export function ComparisonChart({
     if (isDragging) {
       const handleGlobalMouseUp = () => handleMouseUp();
       const handleGlobalMouseMove = (event: MouseEvent) => {
-        if (!isDragging || !dragAnnotationId) return;
+        if (!isDragging || !dragAnnotationId || !layoutRef.current) return;
         
-        const deltaY = event.clientY - dragStartY;
-        const chartHeight = 360; // Match the interactive overlay chart height
+        const { yScale } = layoutRef.current;
+        if (typeof yScale.invert !== 'function') return;
         
-        // Y-axis domain for percentage chart (-5% to +5%)
-        const yAxisRange = 10; // Total range is 10 percentage points
-        const percentageDelta = (deltaY / chartHeight) * yAxisRange; // Convert pixels to percentage
-        const newPrice = dragStartPrice + percentageDelta; // Positive delta moves down
+        // Use Recharts' real Y-scale to convert mouse position to price
+        const newPrice = yScale.invert(event.clientY - layoutRef.current.offset.top);
         
-        // Clamp to reasonable bounds (-10% to +10%)
-        const clampedPrice = Math.max(-10, Math.min(10, newPrice));
-        
-        // Update the annotation
+        // Update the annotation with the precise value
         updateAnnotations?.(prev => prev.map(ann => 
           ann.id === dragAnnotationId 
-            ? { ...ann, price: clampedPrice }
+            ? { ...ann, price: newPrice }
             : ann
         ));
       };
@@ -1517,43 +1515,32 @@ export function ComparisonChart({
           </div>
         )}
 
-        {/* Interactive overlay elements for horizontal lines - SAME AS PRICE CHART */}
-        {chartData?.length > 0 && annotations.filter(annotation => annotation.type === 'horizontal').map((annotation) => {
-          // Calculate Y position based on comparison chart data range - REAL-TIME UPDATE
-          const allValues = chartData.flatMap(d => 
-            Object.keys(d).filter(key => key !== 'date' && key !== 'timestamp').map(key => d[key])
-          ).filter(val => typeof val === 'number' && !isNaN(val));
+        {/* Interactive overlay elements for horizontal lines - USING REAL RECHARTS GEOMETRY */}
+        {chartData?.length > 0 && layoutRef.current && annotations.filter(annotation => annotation.type === 'horizontal').map((annotation) => {
+          const { offset, yScale } = layoutRef.current!;
           
-          if (allValues.length === 0) return null;
+          // Use Recharts' exact positioning - no more guessing!
+          const yPixels = yScale(annotation.price);
+          const tolerancePx = 12; // Pixel-based tolerance
           
-          const minValue = Math.min(...allValues);
-          const maxValue = Math.max(...allValues);
-          const valueRange = maxValue - minValue;
-          
-          // Chart dimensions - fine-tuned alignment 
-          const chartHeight = 350; // Actual comparison chart area height
-          const chartTop = -25; // Fine-tuned for perfect alignment with visual horizontal lines
-          
-          // REAL-TIME position calculation using current annotation.price
-          const yPercent = (maxValue - annotation.price) / valueRange; // Position from top
-          const yPixels = chartTop + (yPercent * chartHeight); // Direct mapping
+          // Safety check for valid position
+          if (isNaN(yPixels) || !offset) return null;
           
           return (
             <div
-              key={`interactive-${annotation.id}-${annotation.price}`} // Key includes price for re-render
+              key={`interactive-${annotation.id}-${annotation.price}`}
               className="absolute pointer-events-auto cursor-grab active:cursor-grabbing hover:opacity-80"
               style={{ 
-                left: '50px', // Chart left margin
-                right: '50px', // Chart right margin
-                top: `${yPixels - 8}px`, // UPDATES with annotation.price changes
-                height: '16px', // Large hit area
+                left: `${offset.left}px`, // Real chart left
+                width: `${offset.width}px`, // Real chart width
+                top: `${yPixels - tolerancePx/2}px`, // Centered on actual line position
+                height: `${tolerancePx}px`, // Pixel-based hit area
                 zIndex: 20,
-                backgroundColor: 'rgba(170, 153, 255, 0.1)', // Slight background for debugging
-                // Force re-render when position changes
-                transform: `translateY(0px)` 
+                backgroundColor: 'rgba(170, 153, 255, 0.2)', // More visible for debugging
+                border: '1px solid rgba(170, 153, 255, 0.5)'
               }}
               onMouseDown={(e) => {
-                console.log('✅ COMPARISON: Mouse down on horizontal line:', annotation.id, 'at price:', annotation.price);
+                console.log('✅ COMPARISON: Mouse down on horizontal line:', annotation.id, 'at price:', annotation.price, 'yPixels:', yPixels);
                 setIsDragging(true);
                 setDragAnnotationId(annotation.id);
                 setDragStartY(e.clientY);
@@ -1646,6 +1633,19 @@ export function ComparisonChart({
                 
                 {/* Zero reference line */}
                 <ReferenceLine y={0} stroke="white" strokeWidth={1} />
+
+                {/* Geometry probe to capture Recharts internals */}
+                <Customized component={(props: any) => {
+                  const { offset, yAxisMap } = props;
+                  if (offset && yAxisMap) {
+                    const yAxis = yAxisMap?.yAxisId || yAxisMap?.['0'] || Object.values(yAxisMap || {})[0];
+                    if (yAxis?.scale && typeof yAxis.scale === 'function') {
+                      // Update layout ref with real chart geometry
+                      layoutRef.current = { offset, yScale: yAxis.scale };
+                    }
+                  }
+                  return null; // Don't render anything
+                }} />
                 
                 {/* Text Annotation Reference Lines - yellow vertical lines */}
                 {annotations.filter(annotation => annotation.type === 'text').map((annotation) => {
