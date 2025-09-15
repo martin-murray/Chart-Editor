@@ -380,13 +380,6 @@ export function PriceChart({
         // This case is now handled earlier in the function for freehand placement
         // This code path should not be reached for horizontal annotations
         return;
-        
-        // Ensure clean state before setting new annotation
-        setEditingAnnotation(null);
-        setIsEditMode(false);
-        setAnnotationInput('');
-        setPendingAnnotation(newAnnotation);
-        setShowAnnotationInput(true);
       } else if (annotationMode === 'percentage') {
         // Percentage measurement mode - two clicks
         if (!pendingPercentageStart) {
@@ -2156,13 +2149,13 @@ export function PriceChart({
                     />
                   ))}
 
-                  {/* Horizontal Annotation Reference Lines - unified styling */}
+                  {/* Horizontal Annotation Reference Lines - purple styling */}
                   {annotations.filter(annotation => annotation.type === 'horizontal').map((annotation) => (
                     <ReferenceLine 
                       key={annotation.id}
                       y={annotation.price}
                       yAxisId="price"
-                      stroke="#374151"
+                      stroke="#AA99FF"
                       strokeWidth={2}
                       vectorEffect="non-scaling-stroke"
                       shapeRendering="crispEdges"
