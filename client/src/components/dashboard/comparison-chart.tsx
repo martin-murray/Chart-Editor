@@ -1536,8 +1536,8 @@ export function ComparisonChart({
                 top: `${yPixels - tolerancePx/2}px`, // Centered on actual line position
                 height: `${tolerancePx}px`, // Pixel-based hit area
                 zIndex: 20,
-                backgroundColor: 'rgba(170, 153, 255, 0.2)', // More visible for debugging
-                border: '1px solid rgba(170, 153, 255, 0.5)'
+                backgroundColor: 'transparent', // Invisible tolerance area
+                border: 'none'
               }}
               onMouseDown={(e) => {
                 console.log('✅ COMPARISON: Mouse down on horizontal line:', annotation.id, 'at price:', annotation.price, 'yPixels:', yPixels);
