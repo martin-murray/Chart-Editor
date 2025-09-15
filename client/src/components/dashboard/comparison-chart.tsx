@@ -191,14 +191,20 @@ export function ComparisonChart({
         if (!isDragging || !dragAnnotationId) return;
         
         const deltaY = event.clientY - dragStartY;
-        const chartHeight = 400 - 80; // Chart height minus margins
-        const percentageDelta = -(deltaY / chartHeight) * 10; // Convert pixels to percentage
-        const newPrice = dragStartPrice + percentageDelta;
+        const chartHeight = 360; // Match the interactive overlay chart height
+        
+        // Y-axis domain for percentage chart (-5% to +5%)
+        const yAxisRange = 10; // Total range is 10 percentage points
+        const percentageDelta = (deltaY / chartHeight) * yAxisRange; // Convert pixels to percentage
+        const newPrice = dragStartPrice + percentageDelta; // Positive delta moves down
+        
+        // Clamp to reasonable bounds (-10% to +10%)
+        const clampedPrice = Math.max(-10, Math.min(10, newPrice));
         
         // Update the annotation
         updateAnnotations?.(prev => prev.map(ann => 
           ann.id === dragAnnotationId 
-            ? { ...ann, price: newPrice }
+            ? { ...ann, price: clampedPrice }
             : ann
         ));
       };
@@ -1513,22 +1519,29 @@ export function ComparisonChart({
 
         {/* Interactive overlay elements for horizontal lines */}
         {annotations.filter(annotation => annotation.type === 'horizontal').map((annotation) => {
-          // Calculate Y position based on price percentage within chart area
-          const chartHeight = 400; // Approximate chart height
-          const chartTop = 80; // Account for header and margin
-          const yPercent = ((5 - annotation.price) / 10) * 100; // Convert price to Y percentage (inverted)
-          const yPixels = chartTop + (yPercent / 100) * (chartHeight - 80); // Position within chart
+          // Calculate Y position more accurately for percentage-based chart
+          const chartHeight = 360; // More accurate chart height for comparison chart
+          const chartTop = 100; // Account for header and controls
+          
+          // Y-axis domain for percentage chart is typically -5% to +5%
+          const yAxisMin = -5;
+          const yAxisMax = 5;
+          const yRange = yAxisMax - yAxisMin;
+          
+          // Convert annotation price to chart position
+          const yPercent = (yAxisMax - annotation.price) / yRange; // Position from top (0 to 1)
+          const yPixels = chartTop + (yPercent * chartHeight);
           
           return (
             <div
               key={`interactive-${annotation.id}`}
               className="absolute pointer-events-auto cursor-grab active:cursor-grabbing hover:opacity-80"
               style={{ 
-                left: '50px', // Chart left margin
-                right: '50px', // Chart right margin
-                top: `${yPixels - 8}px`, 
-                height: '16px', // Large hit area
-                zIndex: 20,
+                left: '60px', // Chart left margin
+                right: '40px', // Chart right margin
+                top: `${yPixels - 10}px`, 
+                height: '20px', // Larger hit area for better UX
+                zIndex: 25,
                 backgroundColor: 'transparent'
               }}
               onMouseDown={(e) => {
