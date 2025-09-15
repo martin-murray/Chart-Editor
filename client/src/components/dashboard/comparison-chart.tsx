@@ -138,7 +138,7 @@ export function ComparisonChart({
     
     horizontalAnnotations.forEach(annotation => {
       const distance = Math.abs(annotation.price - percentageAtMouse);
-      if (distance < closestDistance && distance < 2) { // Within 2% tolerance
+      if (distance < closestDistance && distance < 0.5) { // Within 0.5% tolerance - much more precise
         closestDistance = distance;
         closestAnnotation = annotation;
       }

@@ -188,7 +188,7 @@ export function PriceChart({
     
     horizontalAnnotations.forEach(annotation => {
       const distance = Math.abs(annotation.price - priceAtMouse);
-      const toleranceInPrice = priceRange * 0.02; // 2% of price range tolerance
+      const toleranceInPrice = priceRange * 0.005; // 0.5% of price range tolerance - much more precise
       if (distance < closestDistance && distance < toleranceInPrice) {
         closestDistance = distance;
         closestAnnotation = annotation;
