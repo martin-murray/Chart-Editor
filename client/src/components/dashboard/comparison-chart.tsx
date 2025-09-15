@@ -732,9 +732,86 @@ export function ComparisonChart({
 
   // Annotation handling methods
   const handleChartClick = (event: any) => {
-    if (!event || !chartData || !event.activePayload || event.activePayload.length === 0) return;
+    if (!event || !chartData) return;
     
-    // Get the active payload from the click event
+    // For horizontal annotations, we handle ANY click on the chart (even without activePayload)
+    if (annotationMode === 'horizontal') {
+      // Freehand horizontal line placement
+      if (event.chartY !== undefined && event.chartX !== undefined) {
+        // For timestamp, use middle of chart data
+        const middleIndex = Math.floor(chartData.length / 2);
+        const timestamp = chartData[middleIndex]?.timestamp || Date.now();
+        const time = chartData[middleIndex]?.date || new Date().toISOString();
+        
+        // Calculate percentage from Y coordinate
+        let horizontalPrice = 0;
+        
+        // Get Y-axis domain (percentage range) from visible data
+        const visibleData = chartData.filter(d => 
+          tickers.some(t => t.visible && d[`${t.symbol}_percentage`] !== undefined)
+        );
+        
+        if (visibleData.length > 0) {
+          // Calculate min/max percentages from visible data
+          let minPercent = Infinity;
+          let maxPercent = -Infinity;
+          
+          visibleData.forEach(d => {
+            tickers.filter(t => t.visible).forEach(ticker => {
+              const value = d[`${ticker.symbol}_percentage`];
+              if (value !== undefined) {
+                const numValue = typeof value === 'string' ? parseFloat(value) : value;
+                minPercent = Math.min(minPercent, numValue);
+                maxPercent = Math.max(maxPercent, numValue);
+              }
+            });
+          });
+          
+          // Add 5% padding to match YAxis domain calculation  
+          const range = maxPercent - minPercent;
+          const padding = range * 0.05;
+          const yAxisMin = minPercent - padding;
+          const yAxisMax = maxPercent + padding;
+          
+          // Get chart container to calculate actual dimensions
+          const chartContainer = document.querySelector('[data-testid="comparison-chart-container"] .recharts-wrapper');
+          if (chartContainer) {
+            const rect = chartContainer.getBoundingClientRect();
+            const chartHeight = rect.height;
+            const plotTop = 10; // Approximate top margin
+            const plotBottom = 40; // Approximate bottom margin for axis
+            const plotHeight = chartHeight - plotTop - plotBottom;
+            
+            // Calculate relative Y position (0 = top, 1 = bottom)
+            const relativeY = Math.max(0, Math.min(1, (event.chartY - plotTop) / plotHeight));
+            
+            // Convert click position to percentage value (Y is inverted)
+            horizontalPrice = yAxisMax - (relativeY * (yAxisMax - yAxisMin));
+          }
+        }
+        
+        // Create horizontal annotation
+        const newAnnotation: Omit<Annotation, 'id' | 'text'> = {
+          type: 'horizontal',
+          x: 0,
+          y: 0,  
+          timestamp,
+          price: horizontalPrice,
+          time
+        };
+        
+        setPendingAnnotation(newAnnotation);
+        setShowAnnotationInput(true);
+        setAnnotationInput('');
+        setEditingAnnotation(null);
+        setIsEditMode(false);
+        return; // Exit early for horizontal annotations
+      }
+    }
+    
+    // For other annotation types, require activePayload (clicking on data points)
+    if (!event.activePayload || event.activePayload.length === 0) return;
+    
     const { activePayload, activeLabel } = event;
     const clickedData = activePayload[0].payload;
     const timestamp = clickedData.timestamp;
@@ -763,15 +840,9 @@ export function ComparisonChart({
       setEditingAnnotation(null);
       setIsEditMode(false);
     } else if (annotationMode === 'horizontal') {
-      // Horizontal annotation mode - single click
-      const newAnnotation: Omit<Annotation, 'id' | 'text'> = {
-        type: 'horizontal',
-        x: 0, // Will be calculated during rendering
-        y: 0, // Will be calculated during rendering  
-        timestamp,
-        price: percentageValue,
-        time
-      };
+      // This case is now handled earlier in the function for freehand placement
+      // This code path should not be reached for horizontal annotations
+      return;
       
       setPendingAnnotation(newAnnotation);
       setShowAnnotationInput(true);

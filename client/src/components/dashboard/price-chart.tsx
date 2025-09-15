@@ -286,7 +286,70 @@ export function PriceChart({
   const handleChartClick = (event: any) => {
     if (!event || !chartDataWithPercentage) return;
     
-    // Get the active payload from the click event
+    // For horizontal annotations, we handle ANY click on the chart (even without activePayload)
+    if (annotationMode === 'horizontal') {
+      // Freehand horizontal line placement
+      if (event.chartY !== undefined && event.chartX !== undefined) {
+        // We'll calculate the price from the click Y position
+        // For timestamp, we'll use the current time or middle of the chart data
+        const middleIndex = Math.floor(chartDataWithPercentage.length / 2);
+        const timestamp = chartDataWithPercentage[middleIndex]?.timestamp || Date.now();
+        const time = chartDataWithPercentage[middleIndex]?.time || new Date().toISOString();
+        
+        // Calculate price from Y coordinate
+        let horizontalPrice = 0;
+        
+        // Get price range from chart data
+        if (chartDataWithPercentage.length > 0) {
+          const prices = chartDataWithPercentage.map(d => d.close).filter(p => p != null);
+          const minPrice = Math.min(...prices);
+          const maxPrice = Math.max(...prices);
+          
+          // Add 5% padding to match YAxis domain calculation
+          const range = maxPrice - minPrice;
+          const padding = range * 0.05;
+          const yAxisMin = minPrice - padding;
+          const yAxisMax = maxPrice + padding;
+          
+          // Get chart container to calculate actual dimensions
+          const chartContainer = document.querySelector('[data-testid="price-chart-container"] .recharts-wrapper');
+          if (chartContainer) {
+            const rect = chartContainer.getBoundingClientRect();
+            const chartHeight = rect.height;
+            const plotTop = 10; // Approximate top margin
+            const plotBottom = 40; // Approximate bottom margin  
+            const plotHeight = chartHeight - plotTop - plotBottom;
+            
+            // Calculate relative Y position (0 = top, 1 = bottom)
+            // event.chartY is relative to the chart container
+            const relativeY = Math.max(0, Math.min(1, (event.chartY - plotTop) / plotHeight));
+            
+            // Convert click position to price value (Y is inverted)
+            horizontalPrice = yAxisMax - (relativeY * (yAxisMax - yAxisMin));
+          }
+        }
+        
+        // Create horizontal annotation
+        const newAnnotation: Omit<Annotation, 'id' | 'text'> = {
+          type: 'horizontal',
+          x: 0,
+          y: 0,  
+          timestamp,
+          price: horizontalPrice,
+          time
+        };
+        
+        // Ensure clean state before setting new annotation
+        setEditingAnnotation(null);
+        setIsEditMode(false);
+        setAnnotationInput('');
+        setPendingAnnotation(newAnnotation);
+        setShowAnnotationInput(true);
+        return; // Exit early for horizontal annotations
+      }
+    }
+    
+    // For other annotation types, require activePayload (clicking on data points)
     const { activePayload, activeLabel } = event;
     
     if (activePayload && activePayload.length > 0 && activeLabel) {
@@ -306,27 +369,23 @@ export function PriceChart({
           time
         };
         
-        setPendingAnnotation(newAnnotation);
-        setShowAnnotationInput(true);
-        setAnnotationInput('');
+        // Ensure clean state before setting new annotation
         setEditingAnnotation(null);
         setIsEditMode(false);
+        setAnnotationInput('');
+        setPendingAnnotation(newAnnotation);
+        setShowAnnotationInput(true);
       } else if (annotationMode === 'horizontal') {
-        // Horizontal annotation mode - single click
-        const newAnnotation: Omit<Annotation, 'id' | 'text'> = {
-          type: 'horizontal',
-          x: 0, // Will be set by chart rendering
-          y: 0, // Will be set by chart rendering  
-          timestamp,
-          price,
-          time
-        };
+        // This case is now handled earlier in the function for freehand placement
+        // This code path should not be reached for horizontal annotations
+        return;
         
-        setPendingAnnotation(newAnnotation);
-        setShowAnnotationInput(true);
-        setAnnotationInput('');
+        // Ensure clean state before setting new annotation
         setEditingAnnotation(null);
         setIsEditMode(false);
+        setAnnotationInput('');
+        setPendingAnnotation(newAnnotation);
+        setShowAnnotationInput(true);
       } else if (annotationMode === 'percentage') {
         // Percentage measurement mode - two clicks
         if (!pendingPercentageStart) {
