@@ -381,7 +381,7 @@ function ChartMaker() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="max-w-4xl mx-auto">
+        <div className="mx-auto" style={{ maxWidth: '1200px' }}>
           {/* Search Section */}
           <Card className="p-6 mb-8" style={{ backgroundColor: '#121212' }}>
             <div className="mb-6">
