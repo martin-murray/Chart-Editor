@@ -1612,6 +1612,7 @@ export function ComparisonChart({
                   data={chartData} 
                   margin={{ left: 22, right: 22, top: 10, bottom: 0 }}
                   onClick={handleChartClick}
+                  style={{ pointerEvents: isDragging ? 'none' : 'auto' }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#3B3B3B" strokeOpacity={0.5} />
                 <XAxis 
