@@ -1970,7 +1970,7 @@ export function PriceChart({
                         <div 
                           className="bg-background border border-border rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-pointer hover:bg-muted shadow-lg"
                           onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
-                          title="Double-click to edit"
+                          title="Double-click to delete"
                         >
                           <div className="font-medium" style={{ color: '#FAFF50' }}>{formatTime(annotation.time, selectedTimeframe)}</div>
                           <div className="text-muted-foreground">{formatPrice(annotation.price)}</div>
@@ -1995,7 +1995,7 @@ export function PriceChart({
                         <div 
                           className="bg-background border border-border rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-pointer hover:bg-muted shadow-lg"
                           onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
-                          title="Double-click to edit"
+                          title="Double-click to delete"
                         >
                           <div className="font-medium" style={{ color: '#AA99FF' }}>{formatTime(annotation.time, selectedTimeframe)}</div>
                           <div className="text-muted-foreground">{formatPrice(annotation.price)}</div>
@@ -2020,12 +2020,12 @@ export function PriceChart({
                       <div
                         key={annotation.id}
                         className="absolute"
-                        style={{ left: `${midPercent}%`, top: '10px', transform: 'translateX(-50%)' }}
+                        style={{ left: `${midPercent}%`, top: '20px', transform: 'translateX(-50%)' }}
                       >
                         <div 
                           className="bg-background border border-white/30 rounded px-2 py-1 text-xs pointer-events-auto shadow-lg cursor-pointer hover:bg-muted"
                           onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
-                          title="Double-click to edit"
+                          title="Double-click to delete"
                         >
                           <div className={`font-bold text-center ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
                             {isPositive ? '↗' : '↘'} {(annotation.percentage || 0).toFixed(2)}%
