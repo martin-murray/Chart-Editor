@@ -158,7 +158,7 @@ export function PriceChart({
   const [dragVerticalStartTimestamp, setDragVerticalStartTimestamp] = useState(0);
   
   // State for hover tool toggle
-  const [isHoverEnabled, setIsHoverEnabled] = useState(true);
+  const [isHoverEnabled, setIsHoverEnabled] = useState(false);
   
   // Use controlled annotations if provided, otherwise use internal state
   const annotations = controlledAnnotations || internalAnnotations;
