@@ -1635,7 +1635,6 @@ export function ComparisonChart({
                       title="Click and drag to move horizontally, double-click to delete"
                     >
                       <div className="font-medium" style={{ color: '#FAFF50' }}>{formatTime(annotation.time, timeframe)}</div>
-                      <div className="text-muted-foreground">{annotation.price?.toFixed(2)}%</div>
                       <div className="text-foreground mt-1">{annotation.text || ''}</div>
                     </div>
                   </div>
