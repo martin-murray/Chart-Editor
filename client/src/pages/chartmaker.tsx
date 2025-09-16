@@ -10,7 +10,7 @@ import { Link } from "wouter";
 import { cn } from "@/lib/utils";
 import { PriceChart } from "@/components/dashboard/price-chart";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import logoImage from "@assets/IPO Intelligence@2x_1758042994231.png";
+import logoImage from "@assets/IPO Intelligence@2x_1758060026530.png";
 
 interface GlobalSearchResult {
   symbol: string;
