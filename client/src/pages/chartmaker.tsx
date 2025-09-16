@@ -161,6 +161,13 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
     setIsOpen(true);
   };
 
+  const handleInputClick = () => {
+    // Auto-highlight text if there's content in the input
+    if (searchQuery.trim() && inputRef.current) {
+      inputRef.current.select();
+    }
+  };
+
   const handleSelectStock = (stock: GlobalSearchResult) => {
     setSearchQuery(`${stock.displaySymbol} - ${stock.description}`);
     setIsOpen(false);
@@ -235,6 +242,7 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
           value={searchQuery}
           onChange={(e) => handleInputChange(e.target.value)}
           onFocus={handleInputFocus}
+          onClick={handleInputClick}
           className="pl-10 pr-4 bg-background border-border focus:border-[#5AF5FA] focus:ring-[#5AF5FA]/20 text-lg py-3"
         />
       </div>

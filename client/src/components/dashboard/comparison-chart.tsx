@@ -496,6 +496,13 @@ export function ComparisonChart({
     setIsDropdownOpen(true);
   };
 
+  const handleInputClick = () => {
+    // Auto-highlight text if there's content in the input
+    if (searchTerm.trim() && inputRef.current) {
+      inputRef.current.select();
+    }
+  };
+
   const handleSelectStock = (stock: SearchResult) => {
     addTicker(stock.symbol, stock);
   };
@@ -1293,6 +1300,7 @@ export function ComparisonChart({
                 value={searchTerm}
                 onChange={(e) => handleInputChange(e.target.value)}
                 onFocus={handleInputFocus}
+                onClick={handleInputClick}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && searchTerm.trim()) {
                     // Try to find exact match in search results for recent searches
