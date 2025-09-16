@@ -1849,11 +1849,21 @@ export function ComparisonChart({
                       key={annotation.id}
                       x={dataPoint.date}
                       stroke="#FAFF50"
-                      strokeWidth={1}
+                      strokeWidth={2}
                       vectorEffect="non-scaling-stroke"
                       shapeRendering="crispEdges"
                     />
-                  ) : null;
+                  ) : (
+                    // Fallback: use annotation.time if dataPoint not found
+                    <ReferenceLine 
+                      key={annotation.id}
+                      x={annotation.time}
+                      stroke="#FAFF50"
+                      strokeWidth={2}
+                      vectorEffect="non-scaling-stroke"
+                      shapeRendering="crispEdges"
+                    />
+                  );
                 })}
                 
                 {/* Tolerance areas moved outside chart to prevent coordinate system interference */}
