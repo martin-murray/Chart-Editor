@@ -74,6 +74,7 @@ interface ComparisonChartProps {
   pendingPercentageStart?: { timestamp: number; price: number; time: string } | null;
   setPendingPercentageStart?: (start: { timestamp: number; price: number; time: string } | null) => void;
   updateAnnotations?: (newAnnotations: Annotation[] | ((prev: Annotation[]) => Annotation[])) => void;
+  isHoverEnabled?: boolean;
 }
 
 
@@ -86,7 +87,8 @@ export function ComparisonChart({
   annotationMode = 'text',
   pendingPercentageStart,
   setPendingPercentageStart,
-  updateAnnotations
+  updateAnnotations,
+  isHoverEnabled = false
 }: ComparisonChartProps) {
   const [tickers, setTickers] = useState<TickerData[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -1810,7 +1812,7 @@ export function ComparisonChart({
                 />
                 <Tooltip 
                   content={<CustomTooltip />} 
-                  active={!isDragging}
+                  active={!isDragging && isHoverEnabled}
                   allowEscapeViewBox={{ x: false, y: false }}
                 />
                 
