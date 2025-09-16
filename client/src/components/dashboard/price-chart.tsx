@@ -507,6 +507,12 @@ export function PriceChart({
           month: 'short',
           year: '2-digit'
         });
+      case '3Y':
+      case '5Y':
+        return date.toLocaleDateString('en-US', { 
+          month: 'short',
+          year: '2-digit'
+        });
       case 'Custom':
         // For custom ranges, use the compact format
         return date.toLocaleDateString('en-US', { 

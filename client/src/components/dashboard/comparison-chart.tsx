@@ -312,6 +312,12 @@ export function ComparisonChart({
           month: 'short',
           year: '2-digit'
         });
+      case '3Y':
+      case '5Y':
+        return date.toLocaleDateString('en-US', { 
+          month: 'short',
+          year: '2-digit'
+        });
       case 'Custom':
         return date.toLocaleDateString('en-US', { 
           month: 'numeric',
