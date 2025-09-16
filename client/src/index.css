@@ -201,9 +201,16 @@
     font-weight: 400;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  /* H1, H2 use Space Grotesk Light only */
+  h1, h2 {
     font-family: 'Space Grotesk', system-ui, sans-serif;
-    font-weight: 300;
+    font-weight: 300; /* Light */
+  }
+
+  /* H3, H4, H5, H6 use Mulish */
+  h3, h4, h5, h6 {
+    font-family: 'Mulish', system-ui, sans-serif;
+    font-weight: 400; /* Regular */
   }
 }
 
