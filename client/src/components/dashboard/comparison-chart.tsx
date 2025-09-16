@@ -252,8 +252,10 @@ export function ComparisonChart({
     if (isDraggingText) {
       setIsDraggingText(false);
       setDragTextAnnotationId(null);
-      setDragStartX(0);
+      setDragTextStartX(0);
+      setDragTextStartY(0);
       setDragStartOffset(0);
+      setDragStartVerticalOffset(0);
     }
   };
 
