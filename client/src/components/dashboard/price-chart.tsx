@@ -2468,6 +2468,33 @@ export function PriceChart({
                       shapeRendering="crispEdges"
                     />
                   ))}
+                  
+                  {/* Tolerance areas for vertical line dragging - pale yellow highlights */}
+                  {annotations.filter(annotation => annotation.type === 'text').map((annotation) => {
+                    const dataIndex = chartData?.data?.findIndex(d => d.timestamp === annotation.timestamp) ?? -1;
+                    if (dataIndex === -1 || !chartData?.data) return null;
+                    
+                    const totalDataPoints = chartData.data.length - 1;
+                    const xPercent = totalDataPoints > 0 ? (dataIndex / totalDataPoints) * 100 : 0;
+                    const toleranceWidth = Math.max(2, chartData.data.length * 0.02) * (100 / totalDataPoints); // 2% tolerance as percentage
+                    
+                    return (
+                      <div
+                        key={`tolerance-${annotation.id}`}
+                        className="absolute pointer-events-none"
+                        style={{
+                          left: `${Math.max(0, xPercent - toleranceWidth/2)}%`,
+                          width: `${Math.min(toleranceWidth, 100 - Math.max(0, xPercent - toleranceWidth/2))}%`,
+                          top: '80px', // Start below annotation text area
+                          height: 'calc(100% - 140px)', // Cover chart area
+                          backgroundColor: 'rgba(250, 255, 80, 0.1)', // Very pale yellow
+                          borderLeft: '1px solid rgba(250, 255, 80, 0.3)',
+                          borderRight: '1px solid rgba(250, 255, 80, 0.3)'
+                        }}
+                        title="Click and drag to move vertical line horizontally"
+                      />
+                    );
+                  })}
 
                   {/* Horizontal Annotation Reference Lines - purple styling */}
                   {annotations.filter(annotation => annotation.type === 'horizontal').map((annotation) => {
