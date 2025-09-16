@@ -12,9 +12,10 @@ import { Tooltip as HoverTooltip, TooltipContent as HoverTooltipContent, Tooltip
 import { Loader2, TrendingUp, TrendingDown, Plus, Calendar as CalendarIcon, X, Download, ChevronDown, MessageSquare, Ruler, Minus, RotateCcw } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { format, subDays, subMonths, subYears } from 'date-fns';
-import html2canvas from 'html2canvas';
+import * as htmlToImage from 'html-to-image';
 import jsPDF from 'jspdf';
 import { saveAs } from 'file-saver';
+import { useToast } from '@/hooks/use-toast';
 import { ComparisonChart } from './comparison-chart';
 
 interface ChartData {
@@ -249,7 +250,7 @@ export function PriceChart({
       setDragStartPrice(closestHorizontalAnnotation.price);
       event.preventDefault();
       event.stopPropagation();
-    } else if (closestVerticalAnnotation) {
+    } else if (closestVerticalAnnotation && closestVerticalAnnotation.id && closestVerticalAnnotation.timestamp) {
       setIsDraggingVertical(true);
       setDragVerticalAnnotationId(closestVerticalAnnotation.id);
       setDragVerticalStartX(event.clientX);
@@ -776,431 +777,57 @@ export function PriceChart({
     return value ? `${(value * 100).toFixed(2)}%` : 'N/A';
   };
 
-  // Export functions
+  // Export functions - Using html-to-image for pixel-perfect captures
   const exportAsPNG = async () => {
     try {
-      // High resolution canvas - minimum 2000px width with space for volume chart
-      const canvas = document.createElement('canvas');
-      canvas.width = 2000;
-      canvas.height = 1400; // Increased height for price + volume charts
-      const ctx = canvas.getContext('2d');
+      const { toast } = useToast();
       
-      if (!ctx) {
-        throw new Error('Could not get canvas context');
+      if (!chartRef.current) {
+        toast({
+          title: "Export Failed",
+          description: "Chart not found. Please try again.",
+          variant: "destructive"
+        });
+        return;
       }
       
-      // Enable high-quality rendering
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
+      // Create high-resolution PNG using html-to-image (captures exactly what's rendered)
+      const dataUrl = await htmlToImage.toPng(chartRef.current, {
+        quality: 1.0,
+        pixelRatio: 2, // High resolution
+        backgroundColor: 'transparent', // Transparent background for PNG
+        style: {
+          transform: 'scale(1)'
+        },
+        filter: (node) => {
+          // Exclude any UI elements that shouldn't be in export
+          return !node.classList?.contains('no-export');
+        }
+      });
       
-      // Use transparent background for PNG export
-      // No background fill - canvas starts transparent
+      // Download the image
+      const filename = `${symbol}_chart_${selectedTimeframe}${startDate && endDate ? `_${format(startDate, 'yyyy-MM-dd')}_${format(endDate, 'yyyy-MM-dd')}` : ''}.png`;
       
-      // Add title with proper font
-      ctx.fillStyle = '#5AF5FA';
-      ctx.font = 'bold 48px system-ui, -apple-system, sans-serif';
-      ctx.fillText(`${symbol} - ${name}`, 60, 80);
+      const link = document.createElement('a');
+      link.download = filename;
+      link.href = dataUrl;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
       
-      // Add price info - fix the NaN issue
-      ctx.fillStyle = '#F7F7F7';
-      ctx.font = '36px system-ui, -apple-system, sans-serif';
-      const price = actualCurrentPrice && actualCurrentPrice !== 'NaN' && actualCurrentPrice !== '--' ? formatPrice(parseFloat(actualCurrentPrice)) : 'N/A';
-      const change = actualPercentChange && actualPercentChange !== '0' && actualPercentChange !== '--' ? actualPercentChange : 'N/A';
-      const cap = actualMarketCap && actualMarketCap !== '--' ? actualMarketCap : 'N/A';
-      
-      ctx.fillText(`Price: ${price} (${change}%)`, 60, 140);
-      ctx.fillText(`Market Cap: ${cap}`, 60, 190);
-      
-      // Add timeframe info
-      const timeframeText = startDate && endDate 
-        ? `Date Range: ${format(startDate, 'MMM dd, yyyy')} - ${format(endDate, 'MMM dd, yyyy')}`
-        : `Timeframe: ${selectedTimeframe}`;
-      ctx.fillText(timeframeText, 60, 240);
-      
-      // Draw actual charts if data is available
-      if (chartData?.data && chartData.data.length > 0) {
-        // Price chart area (upper portion)
-        const priceArea = { x: 120, y: 300, width: 1680, height: 500 };
-        
-        // Price chart area - transparent background for PNG export
-        
-        // Draw grid lines for price chart
-        ctx.strokeStyle = 'rgba(59, 59, 59, 0.5)';
-        ctx.lineWidth = 2;
-        // Horizontal grid lines
-        for (let i = 0; i <= 5; i++) {
-          const y = priceArea.y + (i * priceArea.height / 5);
-          ctx.beginPath();
-          ctx.moveTo(priceArea.x, y);
-          ctx.lineTo(priceArea.x + priceArea.width, y);
-          ctx.stroke();
-        }
-        // Vertical grid lines
-        const priceVerticalLines = Math.min(7, chartData.data.length);
-        for (let i = 0; i < priceVerticalLines; i++) {
-          const x = priceArea.x + (i / (priceVerticalLines - 1)) * priceArea.width;
-          ctx.beginPath();
-          ctx.moveTo(x, priceArea.y);
-          ctx.lineTo(x, priceArea.y + priceArea.height);
-          ctx.stroke();
-        }
-        
-        // Get price data and calculate bounds
-        const prices = chartData.data.map(d => d.close);
-        const minPrice = Math.min(...prices);
-        const maxPrice = Math.max(...prices);
-        const priceRange = maxPrice - minPrice;
-        
-        // Create gradient mountain fill for price
-        const gradient = ctx.createLinearGradient(0, priceArea.y, 0, priceArea.y + priceArea.height);
-        if (isPositive) {
-          gradient.addColorStop(0, '#5AF5FA40'); // Cyan with transparency
-          gradient.addColorStop(1, '#5AF5FA00'); // Transparent
-        } else {
-          gradient.addColorStop(0, '#FFA5FF40'); // Pink with transparency  
-          gradient.addColorStop(1, '#FFA5FF00'); // Transparent
-        }
-        
-        // Draw gradient area fill first
-        ctx.beginPath();
-        ctx.moveTo(priceArea.x, priceArea.y + priceArea.height);
-        
-        chartData.data.forEach((point, index) => {
-          const x = priceArea.x + (index / (chartData.data.length - 1)) * priceArea.width;
-          const y = priceArea.y + priceArea.height - ((point.close - minPrice) / priceRange) * priceArea.height;
-          
-          if (index === 0) {
-            ctx.lineTo(x, y);
-          } else {
-            ctx.lineTo(x, y);
-          }
-        });
-        
-        ctx.lineTo(priceArea.x + priceArea.width, priceArea.y + priceArea.height);
-        ctx.closePath();
-        ctx.fillStyle = gradient;
-        ctx.fill();
-        
-        // Draw price line on top
-        const lineColor = isPositive ? '#5AF5FA' : '#FFA5FF';
-        ctx.strokeStyle = lineColor;
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        
-        chartData.data.forEach((point, index) => {
-          const x = priceArea.x + (index / (chartData.data.length - 1)) * priceArea.width;
-          const y = priceArea.y + priceArea.height - ((point.close - minPrice) / priceRange) * priceArea.height;
-          
-          if (index === 0) {
-            ctx.moveTo(x, y);
-          } else {
-            ctx.lineTo(x, y);
-          }
-        });
-        ctx.stroke();
-        
-        // Draw Y-axis labels (prices)
-        ctx.fillStyle = '#F7F7F7';
-        ctx.font = '24px system-ui, -apple-system, sans-serif';
-        for (let i = 0; i <= 5; i++) {
-          const price = minPrice + (i / 5) * priceRange;
-          const y = priceArea.y + priceArea.height - (i * priceArea.height / 5);
-          ctx.fillText(formatPrice(price), priceArea.x + priceArea.width + 20, y + 8);
-        }
-        
-        // Draw white separator line
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(priceArea.x, priceArea.y + priceArea.height + 10);
-        ctx.lineTo(priceArea.x + priceArea.width, priceArea.y + priceArea.height + 10);
-        ctx.stroke();
-        
-        // Volume chart area (lower portion)
-        const volumeArea = { x: 120, y: priceArea.y + priceArea.height + 30, width: 1680, height: 250 };
-        
-        // Volume chart area
-
-        
-        // Draw grid lines for volume chart
-        ctx.strokeStyle = 'rgba(59, 59, 59, 0.5)';
-        ctx.lineWidth = 2;
-        // Horizontal grid lines
-        for (let i = 0; i <= 3; i++) {
-          const y = volumeArea.y + (i * volumeArea.height / 3);
-          ctx.beginPath();
-          ctx.moveTo(volumeArea.x, y);
-          ctx.lineTo(volumeArea.x + volumeArea.width, y);
-          ctx.stroke();
-        }
-        // Vertical grid lines
-        const volumeVerticalLines = Math.min(7, chartData.data.length);
-        for (let i = 0; i < volumeVerticalLines; i++) {
-          const x = volumeArea.x + (i / (volumeVerticalLines - 1)) * volumeArea.width;
-          ctx.beginPath();
-          ctx.moveTo(x, volumeArea.y);
-          ctx.lineTo(x, volumeArea.y + volumeArea.height);
-          ctx.stroke();
-        }
-        
-        // Get volume data and calculate bounds
-        const volumes = chartData.data.map(d => d.volume);
-        const maxVolume = Math.max(...volumes);
-        
-        // Draw volume bars
-        chartData.data.forEach((point, index) => {
-          // Green for buying pressure (close >= open), red for selling pressure (close < open)
-          const isBullish = point.close >= point.open;
-          ctx.fillStyle = isBullish ? '#22c55e' : '#ef4444';
-          
-          const barWidth = volumeArea.width / chartData.data.length * 0.8;
-          const x = volumeArea.x + (index / chartData.data.length) * volumeArea.width + barWidth * 0.1;
-          const barHeight = (point.volume / maxVolume) * volumeArea.height;
-          const y = volumeArea.y + volumeArea.height - barHeight;
-          
-          ctx.fillRect(x, y, barWidth, barHeight);
-        });
-        
-        // Draw Y-axis labels (volume)
-        ctx.fillStyle = '#F7F7F7';
-        ctx.font = '20px system-ui, -apple-system, sans-serif';
-        for (let i = 0; i <= 3; i++) {
-          const volume = (i / 3) * maxVolume;
-          const y = volumeArea.y + volumeArea.height - (i * volumeArea.height / 3);
-          ctx.fillText(formatNumber(volume), volumeArea.x + volumeArea.width + 20, y + 8);
-        }
-        
-        // Draw X-axis labels at bottom with actual dates (more comprehensive)
-        ctx.fillStyle = '#F7F7F7';
-        ctx.font = '24px system-ui, -apple-system, sans-serif';
-        
-        // Show 6-8 date labels across the X-axis
-        const numLabels = Math.min(7, chartData.data.length);
-        for (let i = 0; i < numLabels; i++) {
-          const dataIndex = Math.floor((i / (numLabels - 1)) * (chartData.data.length - 1));
-          const date = formatTime(chartData.data[dataIndex].time, selectedTimeframe);
-          const x = volumeArea.x + (i / (numLabels - 1)) * volumeArea.width;
-          
-          // Center the text, but adjust for edge labels
-          let textX = x;
-          if (i === 0) {
-            textX = volumeArea.x; // Left align first label
-          } else if (i === numLabels - 1) {
-            textX = volumeArea.x + volumeArea.width - ctx.measureText(date).width; // Right align last label
-          } else {
-            textX = x - ctx.measureText(date).width / 2; // Center align middle labels
-          }
-          
-          ctx.fillText(date, textX, volumeArea.y + volumeArea.height + 40);
-        }
-        
-        // Draw earnings markers on export
-        if (earningsData?.earnings?.length) {
-          const toMs = (ts: number) => (String(ts).length === 10 ? ts * 1000 : ts);
-          earningsData.earnings.forEach(e => {
-            const eMs = new Date(e.date || e.datetime || e.announcementDate).getTime();
-            let nearestIdx = 0;
-            let best = Number.POSITIVE_INFINITY;
-            chartData.data.forEach((d, i) => {
-              const diff = Math.abs(toMs(d.timestamp) - eMs);
-              if (diff < best) { best = diff; nearestIdx = i; }
-            });
-            const x = priceArea.x + (chartData.data.length > 1 ? (nearestIdx / (chartData.data.length - 1)) * priceArea.width : 0);
-            const dotY = volumeArea.y + volumeArea.height - 10; // sits on timeline above labels
-            ctx.fillStyle = '#FAFF50';
-            ctx.beginPath();
-            ctx.arc(x, dotY, 10, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = '#121212';
-            ctx.font = 'bold 14px system-ui, -apple-system, sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('E', x, dotY);
-            ctx.textAlign = 'start';
-            ctx.textBaseline = 'alphabetic';
-          });
-        }
-        
-        // Draw annotations
-        if (annotations.length > 0) {
-          annotations.forEach((annotation) => {
-            if (annotation.type === 'text') {
-              // Text annotations - yellow vertical lines
-              const dataIndex = chartData.data.findIndex(d => d.timestamp === annotation.timestamp);
-              if (dataIndex === -1) return;
-              
-              const x = priceArea.x + (dataIndex / (chartData.data.length - 1)) * priceArea.width;
-              
-              // Draw vertical annotation line
-              ctx.strokeStyle = '#FAFF50'; // Brand yellow
-              ctx.lineWidth = 1;
-              ctx.beginPath();
-              ctx.moveTo(x + 0.5, priceArea.y);
-              ctx.lineTo(x + 0.5, volumeArea.y + volumeArea.height);
-              ctx.stroke();
-              
-              // Draw annotation dot
-              ctx.fillStyle = '#FAFF50';
-              ctx.beginPath();
-              ctx.arc(x + 0.5, priceArea.y, 3, 0, 2 * Math.PI);
-              ctx.fill();
-            } else if (annotation.type === 'percentage' && annotation.startTimestamp && annotation.endTimestamp) {
-              // Percentage measurements - white diagonal arrows
-              const startIndex = chartData.data.findIndex(d => d.timestamp === annotation.startTimestamp);
-              const endIndex = chartData.data.findIndex(d => d.timestamp === annotation.endTimestamp);
-              if (startIndex === -1 || endIndex === -1) return;
-              
-              const x1 = priceArea.x + (startIndex / (chartData.data.length - 1)) * priceArea.width;
-              const x2 = priceArea.x + (endIndex / (chartData.data.length - 1)) * priceArea.width;
-              
-              // Map prices to Y coordinates 
-              const minPrice = Math.min(...chartData.data.map(d => d.low));
-              const maxPrice = Math.max(...chartData.data.map(d => d.high));
-              const priceRange = maxPrice - minPrice;
-              const y1 = priceArea.y + priceArea.height - ((annotation.startPrice! - minPrice) / priceRange) * priceArea.height;
-              const y2 = priceArea.y + priceArea.height - ((annotation.endPrice! - minPrice) / priceRange) * priceArea.height;
-              
-              // Determine line color based on percentage
-              const isPositive = (annotation.percentage || 0) >= 0;
-              const lineColor = isPositive ? '#22C55E' : '#EF4444'; // Green for positive, red for negative
-              
-              // Draw main line
-              ctx.strokeStyle = lineColor;
-              ctx.lineWidth = 2;
-              ctx.beginPath();
-              ctx.moveTo(x1, y1);
-              ctx.lineTo(x2, y2);
-              ctx.stroke();
-              
-              // Draw outlined arrow head (larger)
-              const arrowSize = 12;
-              const angle = Math.atan2(y2 - y1, x2 - x1);
-              
-              ctx.strokeStyle = lineColor;
-              ctx.lineWidth = 2;
-              ctx.lineJoin = 'round';
-              ctx.beginPath();
-              ctx.moveTo(x2, y2);
-              ctx.lineTo(x2 - arrowSize * Math.cos(angle - Math.PI / 6), y2 - arrowSize * Math.sin(angle - Math.PI / 6));
-              ctx.lineTo(x2 - arrowSize * Math.cos(angle + Math.PI / 6), y2 - arrowSize * Math.sin(angle + Math.PI / 6));
-              ctx.stroke();
-              
-              // Draw start and end points
-              ctx.fillStyle = lineColor;
-              ctx.strokeStyle = '#121212';
-              ctx.lineWidth = 1;
-              
-              ctx.beginPath();
-              ctx.arc(x1, y1, 3, 0, 2 * Math.PI);
-              ctx.fill();
-              ctx.stroke();
-              
-              ctx.beginPath();
-              ctx.arc(x2, y2, 3, 0, 2 * Math.PI);
-              ctx.fill();
-              ctx.stroke();
-              
-              // Draw percentage display text box positioned next to the measurement line
-              const textBoxWidth = 240;
-              const textBoxHeight = 80;
-              const textBoxX = Math.min(x2 + 10, priceArea.x + priceArea.width - textBoxWidth);
-              // Position tooltip at the midpoint of the measurement line, offset to the side
-              const midY = (y1 + y2) / 2;
-              const textBoxY = Math.max(priceArea.y, Math.min(midY - textBoxHeight / 2, priceArea.y + priceArea.height - textBoxHeight));
-            
-            // Text box background
-            ctx.fillStyle = '#121212';
-            ctx.strokeStyle = '#374151';
-            ctx.lineWidth = 1;
-            ctx.fillRect(textBoxX, textBoxY, textBoxWidth, textBoxHeight);
-            ctx.strokeRect(textBoxX, textBoxY, textBoxWidth, textBoxHeight);
-            
-            // Text content - show percentage measurement data
-            ctx.fillStyle = '#FAFF50';
-            ctx.font = 'bold 16px system-ui, -apple-system, sans-serif';
-            const percentageText = `${annotation.percentage !== undefined ? (annotation.percentage > 0 ? '+' : '') + annotation.percentage.toFixed(2) + '%' : 'N/A'}`;
-            ctx.fillText(percentageText, textBoxX + 8, textBoxY + 20);
-            
-            ctx.fillStyle = '#9CA3AF';
-            ctx.font = '14px system-ui, -apple-system, sans-serif';
-            ctx.fillText(`${formatPrice(annotation.startPrice!)} → ${formatPrice(annotation.endPrice!)}`, textBoxX + 8, textBoxY + 40);
-            
-            ctx.fillStyle = '#F7F7F7';
-            ctx.font = '14px system-ui, -apple-system, sans-serif';
-            const priceDiff = annotation.endPrice! - annotation.startPrice!;
-            const priceDiffText = `${priceDiff > 0 ? '+' : ''}${formatPrice(Math.abs(priceDiff))}`;
-            ctx.fillText(priceDiffText, textBoxX + 8, textBoxY + 60);
-            } else if (annotation.type === 'horizontal') {
-              // Horizontal annotations - purple horizontal lines
-              const dataIndex = chartData.data.findIndex(d => d.timestamp === annotation.timestamp);
-              if (dataIndex !== -1) {
-                const minPrice = Math.min(...chartData.data.map(d => d.low));
-                const maxPrice = Math.max(...chartData.data.map(d => d.high));
-                const priceRange = maxPrice - minPrice;
-                const y = Math.max(priceArea.y, Math.min(priceArea.y + priceArea.height, 
-                  priceArea.y + priceArea.height - ((annotation.price - minPrice) / priceRange) * priceArea.height));
-                
-                // Draw horizontal line with drag feedback
-                const isBeingDragged = isDragging && dragAnnotationId === annotation.id;
-                ctx.strokeStyle = isBeingDragged ? '#7755CC' : '#AA99FF'; // Darker purple when dragging
-                ctx.lineWidth = isBeingDragged ? 2.5 : 1.5;
-                ctx.beginPath();
-                ctx.moveTo(priceArea.x, y);
-                ctx.lineTo(priceArea.x + priceArea.width, y);
-                ctx.stroke();
-                
-                // Draw text label if present
-                if (annotation.text) {
-                  ctx.fillStyle = '#AA99FF';
-                  ctx.font = 'bold 14px system-ui, -apple-system, sans-serif';
-                  const label = annotation.text;
-                  const w = ctx.measureText(label).width + 12;
-                  const h = 22;
-                  const tx = Math.min(priceArea.x + priceArea.width - w - 6, priceArea.x + 8);
-                  const ty = Math.max(priceArea.y + 6, Math.min(y - h / 2, priceArea.y + priceArea.height - h - 6));
-                  
-                  ctx.fillStyle = '#121212';
-                  ctx.strokeStyle = '#AA99FF';
-                  ctx.fillRect(tx, ty, w, h);
-                  ctx.strokeRect(tx, ty, w, h);
-                  ctx.fillStyle = '#AA99FF';
-                  ctx.fillText(label, tx + 6, ty + h - 6);
-                }
-              }
-            }
-          });
-        }
-      } else {
-        // Fallback if no chart data
-        ctx.strokeStyle = '#5AF5FA';
-        ctx.lineWidth = 4;
-        ctx.strokeRect(120, 300, 1680, 700);
-        ctx.fillStyle = '#888888';
-        ctx.font = '32px system-ui, -apple-system, sans-serif';
-        ctx.fillText('Chart data not available', 860, 650);
-      }
-      
-      const filename = `${symbol}_chart_${selectedTimeframe}${
-        startDate && endDate ? `_${format(startDate, 'yyyy-MM-dd')}_${format(endDate, 'yyyy-MM-dd')}` : ''
-      }.png`;
-      
-      // Download the canvas
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.download = filename;
-          link.href = url;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(url);
-        }
-      }, 'image/png', 1.0); // Maximum quality
+      toast({
+        title: "Export Successful",
+        description: `Chart exported as ${filename}`
+      });
       
     } catch (error) {
       console.error('PNG export failed:', error);
-      alert('PNG export failed. Please try again.');
+      const { toast } = useToast();
+      toast({
+        title: "Export Failed",
+        description: "PNG export failed. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
