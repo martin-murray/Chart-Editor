@@ -5,7 +5,7 @@ A full-stack stock market tracking application built with React, Express.js, and
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
-Testing preference: User prefers to handle testing themselves rather than internal automated testing.
+Testing preference: User prefers to handle testing themselves rather than internal automated testing. Skip QA testing for speed - user will test the app directly.
 
 ## System Architecture
 

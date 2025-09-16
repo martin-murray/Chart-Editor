@@ -192,16 +192,16 @@ export function ComparisonChart({
     // Prioritize the closest annotation (horizontal or vertical)
     if (closestHorizontalAnnotation && (!closestVerticalAnnotation || closestHorizontalDistance < closestVerticalDistance * 0.5)) {
       setIsDragging(true);
-      setDragAnnotationId(closestHorizontalAnnotation.id);
+      setDragAnnotationId((closestHorizontalAnnotation as Annotation).id);
       setDragStartY(mouseY);
-      setDragStartPrice(closestHorizontalAnnotation.price);
+      setDragStartPrice((closestHorizontalAnnotation as Annotation).price);
       event.preventDefault();
       event.stopPropagation();
     } else if (closestVerticalAnnotation) {
       setIsDraggingVertical(true);
-      setDragVerticalAnnotationId(closestVerticalAnnotation.id);
+      setDragVerticalAnnotationId((closestVerticalAnnotation as Annotation).id);
       setDragVerticalStartX(event.clientX);
-      setDragVerticalStartTimestamp(closestVerticalAnnotation.timestamp);
+      setDragVerticalStartTimestamp((closestVerticalAnnotation as Annotation).timestamp);
       event.preventDefault();
       event.stopPropagation();
     }
@@ -220,7 +220,7 @@ export function ComparisonChart({
     const newPrice = dragStartPrice + percentageDelta;
     
     // Update the annotation
-    updateAnnotations?.(prev => prev.map(ann => 
+    updateAnnotations?.((prev: Annotation[]) => prev.map(ann => 
       ann.id === dragAnnotationId 
         ? { ...ann, price: newPrice }
         : ann
@@ -428,7 +428,7 @@ export function ComparisonChart({
           const newPrice = yScale.invert(event.clientY - layoutRef.current.offset.top - 85);
           
           // Update the annotation with the precise value
-          updateAnnotations?.(prev => prev.map(ann => 
+          updateAnnotations?.((prev: Annotation[]) => prev.map(ann => 
             ann.id === dragAnnotationId 
               ? { ...ann, price: newPrice }
               : ann
@@ -443,7 +443,7 @@ export function ComparisonChart({
           const newVerticalOffset = dragStartVerticalOffset + deltaY;
           
           // Update the annotation's horizontal and vertical offsets
-          updateAnnotations?.(prev => prev.map(ann => 
+          updateAnnotations?.((prev: Annotation[]) => prev.map(ann => 
             ann.id === dragTextAnnotationId 
               ? { ...ann, horizontalOffset: newHorizontalOffset, verticalOffset: newVerticalOffset }
               : ann
@@ -1863,25 +1863,29 @@ export function ComparisonChart({
                         vectorEffect="non-scaling-stroke"
                       />
                       
-                      {/* Start point circle */}
-                      <ReferenceDot 
-                        x={startDataPoint.date}
-                        y={annotation.startPrice}
-                        r={4}
-                        fill={lineColor}
-                        stroke={lineColor}
-                        strokeWidth={1}
-                      />
+                      {/* Start point circle - only render if chart data is available */}
+                      {startDataPoint && chartData.length > 0 && (
+                        <ReferenceDot 
+                          x={startDataPoint.date}
+                          y={annotation.startPrice}
+                          r={4}
+                          fill={lineColor}
+                          stroke={lineColor}
+                          strokeWidth={1}
+                        />
+                      )}
                       
-                      {/* End point circle */}
-                      <ReferenceDot 
-                        x={endDataPoint.date}
-                        y={annotation.endPrice}
-                        r={4}
-                        fill={lineColor}
-                        stroke={lineColor}
-                        strokeWidth={1}
-                      />
+                      {/* End point circle - only render if chart data is available */}
+                      {endDataPoint && chartData.length > 0 && (
+                        <ReferenceDot 
+                          x={endDataPoint.date}
+                          y={annotation.endPrice}
+                          r={4}
+                          fill={lineColor}
+                          stroke={lineColor}
+                          strokeWidth={1}
+                        />
+                      )}
                     </g>
                   );
                 })}
