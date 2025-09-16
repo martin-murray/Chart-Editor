@@ -2283,13 +2283,12 @@ export function PriceChart({
                         style={{ left: '10px', top: '20px', transform: 'none' }}
                       >
                         <div 
-                          className="bg-background border border-border rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-pointer hover:bg-muted shadow-lg"
+                          className="bg-background rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-pointer hover:bg-muted shadow-lg"
+                          style={{ border: '1px solid #AA99FF' }}
                           onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
                           title="Double-click to delete"
                         >
-                          <div className="font-medium" style={{ color: '#AA99FF' }}>{formatTime(annotation.time, selectedTimeframe)}</div>
-                          <div className="text-muted-foreground">{formatPrice(annotation.price)}</div>
-                          <div className="text-foreground mt-1">{annotation.text || ''}</div>
+                          <div className="text-foreground">{annotation.text || ''}</div>
                         </div>
                       </div>
                     );

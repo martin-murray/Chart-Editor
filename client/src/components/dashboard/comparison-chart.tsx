@@ -1660,20 +1660,19 @@ export function ComparisonChart({
                     key={annotation.id}
                     className="absolute"
                     style={{ 
-                      left: `${xPercent}%`, 
+                      left: '10px', 
                       top: '20px', 
-                      transform: `translateX(calc(-50% + ${annotation.horizontalOffset || 0}px))`
+                      transform: 'none'
                     }}
                   >
                     <div 
-                      className="bg-background border border-border rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-grab hover:bg-muted shadow-lg select-none"
+                      className="bg-background rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-grab hover:bg-muted shadow-lg select-none"
+                      style={{ border: '1px solid #AA99FF' }}
                       onMouseDown={(e) => handleTextMouseDown(e, annotation)}
                       onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
                       title="Click and drag to move horizontally, double-click to delete"
                     >
-                      <div className="font-medium" style={{ color: '#AA99FF' }}>{formatTime(annotation.time, timeframe)}</div>
-                      <div className="text-muted-foreground">{annotation.price?.toFixed(2)}%</div>
-                      <div className="text-foreground mt-1">{annotation.text || ''}</div>
+                      <div className="text-foreground">{annotation.text || ''}</div>
                     </div>
                   </div>
                 );
