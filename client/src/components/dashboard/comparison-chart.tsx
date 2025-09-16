@@ -261,6 +261,83 @@ export function ComparisonChart({
     }
   };
 
+  // Process and align chart data for percentage calculation - must be declared before useEffect that depends on it
+  const chartData = useMemo(() => {
+    if (tickers.length === 0) return [];
+    
+    // Check if all queries have loaded successfully
+    const allLoaded = tickerQueries.every(query => query.isSuccess && query.data);
+    if (!allLoaded) return [];
+
+    // Get all the chart data
+    const allChartData = tickerQueries.map((query, index) => ({
+      ticker: tickers[index],
+      data: query.data?.data || []
+    })).filter(item => item.data.length > 0);
+
+    if (allChartData.length === 0) return [];
+
+    // Find common timestamps (intersection of all tickers)
+    const allTimestamps = allChartData.map(item => 
+      new Set(item.data.map((d: any) => d.timestamp as number))
+    );
+    
+    let commonTimestamps: number[];
+    if (allTimestamps.length === 1) {
+      commonTimestamps = Array.from(allTimestamps[0]) as number[];
+    } else {
+      // Find intersection of all timestamp sets
+      commonTimestamps = (Array.from(allTimestamps[0]) as number[]).filter(timestamp =>
+        allTimestamps.every(set => set.has(timestamp))
+      );
+    }
+
+    // Sort timestamps
+    commonTimestamps.sort((a, b) => a - b);
+
+    if (commonTimestamps.length === 0) return [];
+
+    // Calculate base prices for each ticker from the first common timestamp
+    const basePrices: Record<string, number> = {};
+    const firstTimestamp = commonTimestamps[0];
+    
+    allChartData.forEach(({ ticker, data }) => {
+      const firstPoint = data.find((d: any) => d.timestamp === firstTimestamp);
+      if (firstPoint) {
+        basePrices[ticker.symbol] = firstPoint.close;
+      }
+    });
+
+    // Build aligned chart data with percentage calculations
+    const alignedData: ChartDataPoint[] = commonTimestamps.map(timestamp => {
+      // Find the time string from the first ticker's data for this timestamp
+      const firstTickerData = allChartData[0]?.data.find((d: any) => d.timestamp === timestamp);
+      const timeString = firstTickerData?.time || new Date(timestamp * 1000).toISOString();
+      
+      const dataPoint: ChartDataPoint = {
+        timestamp,
+        date: formatTime(timeString, timeframe), // Use time string like main chart
+      };
+
+      // Add percentage data for each ticker
+      allChartData.forEach(({ ticker, data }) => {
+        const tickerPoint = data.find((d: any) => d.timestamp === timestamp);
+        const basePrice = basePrices[ticker.symbol];
+        
+        if (tickerPoint && basePrice > 0) {
+          // Calculate percentage change from base price
+          const percentageChange = ((tickerPoint.close - basePrice) / basePrice) * 100;
+          dataPoint[`${ticker.symbol}_percentage`] = parseFloat(percentageChange.toFixed(2));
+          dataPoint[`${ticker.symbol}_price`] = tickerPoint.close;
+        }
+      });
+
+      return dataPoint;
+    });
+
+    return alignedData;
+  }, [tickers, tickerQueries, timeframe]);
+
   // Add global mouse up listener to handle drag end outside chart
   useEffect(() => {
     if (isDragging || isDraggingText || isDraggingVertical) {
@@ -458,82 +535,7 @@ export function ComparisonChart({
     }
   };
 
-  // Process and align chart data for percentage calculation
-  const chartData = useMemo(() => {
-    if (tickers.length === 0) return [];
-    
-    // Check if all queries have loaded successfully
-    const allLoaded = tickerQueries.every(query => query.isSuccess && query.data);
-    if (!allLoaded) return [];
-
-    // Get all the chart data
-    const allChartData = tickerQueries.map((query, index) => ({
-      ticker: tickers[index],
-      data: query.data?.data || []
-    })).filter(item => item.data.length > 0);
-
-    if (allChartData.length === 0) return [];
-
-    // Find common timestamps (intersection of all tickers)
-    const allTimestamps = allChartData.map(item => 
-      new Set(item.data.map((d: any) => d.timestamp as number))
-    );
-    
-    let commonTimestamps: number[];
-    if (allTimestamps.length === 1) {
-      commonTimestamps = Array.from(allTimestamps[0]) as number[];
-    } else {
-      // Find intersection of all timestamp sets
-      commonTimestamps = (Array.from(allTimestamps[0]) as number[]).filter(timestamp =>
-        allTimestamps.every(set => set.has(timestamp))
-      );
-    }
-
-    // Sort timestamps
-    commonTimestamps.sort((a, b) => a - b);
-
-    if (commonTimestamps.length === 0) return [];
-
-    // Calculate base prices for each ticker from the first common timestamp
-    const basePrices: Record<string, number> = {};
-    const firstTimestamp = commonTimestamps[0];
-    
-    allChartData.forEach(({ ticker, data }) => {
-      const firstPoint = data.find((d: any) => d.timestamp === firstTimestamp);
-      if (firstPoint) {
-        basePrices[ticker.symbol] = firstPoint.close;
-      }
-    });
-
-    // Build aligned chart data with percentage calculations
-    const alignedData: ChartDataPoint[] = commonTimestamps.map(timestamp => {
-      // Find the time string from the first ticker's data for this timestamp
-      const firstTickerData = allChartData[0]?.data.find((d: any) => d.timestamp === timestamp);
-      const timeString = firstTickerData?.time || new Date(timestamp * 1000).toISOString();
-      
-      const dataPoint: ChartDataPoint = {
-        timestamp,
-        date: formatTime(timeString, timeframe), // Use time string like main chart
-      };
-
-      // Add percentage data for each ticker
-      allChartData.forEach(({ ticker, data }) => {
-        const tickerPoint = data.find((d: any) => d.timestamp === timestamp);
-        const basePrice = basePrices[ticker.symbol];
-        
-        if (tickerPoint && basePrice > 0) {
-          // Calculate percentage change from base price
-          const percentageChange = ((tickerPoint.close - basePrice) / basePrice) * 100;
-          dataPoint[`${ticker.symbol}_percentage`] = parseFloat(percentageChange.toFixed(2));
-          dataPoint[`${ticker.symbol}_price`] = tickerPoint.close;
-        }
-      });
-
-      return dataPoint;
-    });
-
-    return alignedData;
-  }, [tickers, tickerQueries, timeframe]);
+  // Chart data moved above to fix initialization order
 
   // Chart configuration for shadcn
   const chartConfig = useMemo(() => {

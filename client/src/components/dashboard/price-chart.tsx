@@ -237,16 +237,16 @@ export function PriceChart({
     // Prioritize the closest annotation (horizontal or vertical)
     if (closestHorizontalAnnotation && (!closestVerticalAnnotation || closestHorizontalDistance < closestVerticalDistance * 0.5)) {
       setIsDragging(true);
-      setDragAnnotationId(closestHorizontalAnnotation.id);
+      setDragAnnotationId(closestHorizontalAnnotation.id!);
       setDragStartY(mouseY);
-      setDragStartPrice(closestHorizontalAnnotation.price);
+      setDragStartPrice(closestHorizontalAnnotation.price!);
       event.preventDefault();
       event.stopPropagation();
     } else if (closestVerticalAnnotation) {
       setIsDraggingVertical(true);
-      setDragVerticalAnnotationId(closestVerticalAnnotation.id);
+      setDragVerticalAnnotationId(closestVerticalAnnotation.id!);
       setDragVerticalStartX(event.clientX);
-      setDragVerticalStartTimestamp(closestVerticalAnnotation.timestamp);
+      setDragVerticalStartTimestamp(closestVerticalAnnotation.timestamp!);
       event.preventDefault();
       event.stopPropagation();
     }
