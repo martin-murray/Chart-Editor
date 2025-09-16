@@ -261,6 +261,30 @@ export function ComparisonChart({
     }
   };
 
+  // Fetch chart data for all tickers using useQueries for dynamic queries - must be declared before chartData
+  const tickerQueries = useQueries({
+    queries: tickers.map(ticker => ({
+      queryKey: ['/api/stocks', ticker.symbol, 'chart', timeframe, startDate?.getTime(), endDate?.getTime()],
+      queryFn: async () => {
+        let url = `/api/stocks/${ticker.symbol}/chart?timeframe=${timeframe}`;
+        
+        // Add custom date range parameters for Custom timeframe
+        if (timeframe === 'Custom' && startDate && endDate) {
+          const fromTimestamp = Math.floor(startDate.getTime() / 1000);
+          const toTimestamp = Math.floor(endDate.getTime() / 1000);
+          url = `/api/stocks/${ticker.symbol}/chart?from=${fromTimestamp}&to=${toTimestamp}&timeframe=Custom`;
+        }
+        
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Failed to fetch chart data');
+        return response.json();
+      },
+      enabled: !!ticker.symbol,
+      staleTime: 0, // Always refetch when timeframe changes
+      cacheTime: 2 * 60 * 1000, // Keep in cache for 2 minutes
+    }))
+  });
+
   // Process and align chart data for percentage calculation - must be declared before useEffect that depends on it
   const chartData = useMemo(() => {
     if (tickers.length === 0) return [];
@@ -471,29 +495,7 @@ export function ComparisonChart({
     enabled: debouncedQuery.trim().length >= 2,
   });
 
-  // Fetch chart data for all tickers using useQueries for dynamic queries
-  const tickerQueries = useQueries({
-    queries: tickers.map(ticker => ({
-      queryKey: ['/api/stocks', ticker.symbol, 'chart', timeframe, startDate?.getTime(), endDate?.getTime()],
-      queryFn: async () => {
-        let url = `/api/stocks/${ticker.symbol}/chart?timeframe=${timeframe}`;
-        
-        // Add custom date range parameters for Custom timeframe
-        if (timeframe === 'Custom' && startDate && endDate) {
-          const fromTimestamp = Math.floor(startDate.getTime() / 1000);
-          const toTimestamp = Math.floor(endDate.getTime() / 1000);
-          url = `/api/stocks/${ticker.symbol}/chart?from=${fromTimestamp}&to=${toTimestamp}&timeframe=Custom`;
-        }
-        
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Failed to fetch chart data');
-        return response.json();
-      },
-      enabled: !!ticker.symbol,
-      staleTime: 0, // Always refetch when timeframe changes
-      cacheTime: 2 * 60 * 1000, // Keep in cache for 2 minutes
-    }))
-  });
+  // Ticker queries moved above to fix initialization order
 
   // Helper function to format dates properly based on timeframe (like main price chart)
   const formatTime = (timeValue: any, timeframe: string) => {
