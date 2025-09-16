@@ -1911,8 +1911,33 @@ export function ComparisonChart({
 
                 {/* Percentage Measurement Lines - diagonal arrows */}
                 {chartData && chartData.length > 0 && annotations.filter(annotation => annotation.type === 'percentage' && annotation.startTimestamp && annotation.endTimestamp).map((annotation) => {
-                  const startDataPoint = chartData?.find((d: any) => d.timestamp === annotation.startTimestamp);
-                  const endDataPoint = chartData?.find((d: any) => d.timestamp === annotation.endTimestamp);
+                  // Find start data point with fallback to closest timestamp
+                  let startDataPoint = chartData?.find((d: any) => d.timestamp === annotation.startTimestamp);
+                  if (!startDataPoint) {
+                    const distances = chartData.map((d: any, index) => ({
+                      index,
+                      distance: Math.abs(d.timestamp - annotation.startTimestamp!),
+                      dataPoint: d
+                    }));
+                    const closest = distances.reduce((min, current) => 
+                      current.distance < min.distance ? current : min
+                    );
+                    startDataPoint = closest.dataPoint;
+                  }
+                  
+                  // Find end data point with fallback to closest timestamp
+                  let endDataPoint = chartData?.find((d: any) => d.timestamp === annotation.endTimestamp);
+                  if (!endDataPoint) {
+                    const distances = chartData.map((d: any, index) => ({
+                      index,
+                      distance: Math.abs(d.timestamp - annotation.endTimestamp!),
+                      dataPoint: d
+                    }));
+                    const closest = distances.reduce((min, current) => 
+                      current.distance < min.distance ? current : min
+                    );
+                    endDataPoint = closest.dataPoint;
+                  }
                   
                   // Enhanced validation to prevent coordinate system errors
                   if (!startDataPoint || !endDataPoint || 
