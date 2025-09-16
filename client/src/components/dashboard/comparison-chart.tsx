@@ -1587,7 +1587,7 @@ export function ComparisonChart({
       <div className="h-[600px] w-full rounded-lg relative pt-20 bg-background" data-testid="comparison-chart-container"> {/* Increased from h-80 (320px) to h-[600px] for much larger chart */}
         {/* Annotation Labels - positioned in reserved padding space above charts */}
         {annotations.length > 0 && (
-          <div className="absolute top-0 left-0 w-full h-20 pointer-events-none">
+          <div className="absolute top-0 left-0 w-full h-20 pointer-events-none" style={{ zIndex: 1000 }}>
             {annotations.map((annotation) => {
               if (annotation.type === 'text') {
                 // Text annotations - display at single point
