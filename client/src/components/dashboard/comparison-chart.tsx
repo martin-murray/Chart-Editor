@@ -1866,11 +1866,17 @@ export function ComparisonChart({
 
 
                 {/* Percentage Measurement Lines - diagonal arrows */}
-                {annotations.filter(annotation => annotation.type === 'percentage' && annotation.startTimestamp && annotation.endTimestamp).map((annotation) => {
+                {chartData && chartData.length > 0 && annotations.filter(annotation => annotation.type === 'percentage' && annotation.startTimestamp && annotation.endTimestamp).map((annotation) => {
                   const startDataPoint = chartData?.find((d: any) => d.timestamp === annotation.startTimestamp);
                   const endDataPoint = chartData?.find((d: any) => d.timestamp === annotation.endTimestamp);
                   
-                  if (!startDataPoint || !endDataPoint) return null;
+                  // Enhanced validation to prevent coordinate system errors
+                  if (!startDataPoint || !endDataPoint || 
+                      !startDataPoint.date || !endDataPoint.date ||
+                      typeof annotation.startPrice !== 'number' || 
+                      typeof annotation.endPrice !== 'number') {
+                    return null;
+                  }
                   
                   const isPositive = (annotation.percentage || 0) >= 0;
                   const lineColor = isPositive ? '#22C55E' : '#EF4444'; // Green for positive, red for negative
@@ -1888,7 +1894,7 @@ export function ComparisonChart({
                         vectorEffect="non-scaling-stroke"
                       />
                       
-                      {/* Start point circle */}
+                      {/* Start point circle - only render when data is valid */}
                       <ReferenceDot 
                         x={startDataPoint.date}
                         y={annotation.startPrice}
@@ -1898,7 +1904,7 @@ export function ComparisonChart({
                         strokeWidth={1}
                       />
                       
-                      {/* End point circle */}
+                      {/* End point circle - only render when data is valid */}
                       <ReferenceDot 
                         x={endDataPoint.date}
                         y={annotation.endPrice}
