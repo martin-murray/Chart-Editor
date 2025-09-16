@@ -117,6 +117,7 @@ export function PriceChart({
   rememberPerTicker = true,
   onClearAll
 }: PriceChartProps) {
+  const { toast } = useToast();
   const [selectedTimeframe, setSelectedTimeframe] = useState('1D');
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
@@ -780,8 +781,6 @@ export function PriceChart({
   // Export functions - Using html-to-image for pixel-perfect captures
   const exportAsPNG = async () => {
     try {
-      const { toast } = useToast();
-      
       if (!chartRef.current) {
         toast({
           title: "Export Failed",
@@ -796,12 +795,19 @@ export function PriceChart({
         quality: 1.0,
         pixelRatio: 2, // High resolution
         backgroundColor: 'transparent', // Transparent background for PNG
+        useCORS: true, // Handle cross-origin resources
+        allowTaint: false, // Don't allow tainted canvas
+        skipFonts: true, // Skip external font loading to avoid CORS issues
         style: {
           transform: 'scale(1)'
         },
         filter: (node) => {
           // Exclude any UI elements that shouldn't be in export
           return !node.classList?.contains('no-export');
+        },
+        ignoreElements: (element) => {
+          // Ignore elements that might cause CORS issues
+          return element.tagName === 'SCRIPT' || element.tagName === 'NOSCRIPT';
         }
       });
       
@@ -822,7 +828,6 @@ export function PriceChart({
       
     } catch (error) {
       console.error('PNG export failed:', error);
-      const { toast } = useToast();
       toast({
         title: "Export Failed",
         description: "PNG export failed. Please try again.",
