@@ -2251,9 +2251,9 @@ export function PriceChart({
                         key={annotation.id}
                         className="absolute"
                         style={{ 
-                          left: `${xPercent}%`, 
+                          left: '10px', 
                           top: '20px', 
-                          transform: `translateX(calc(-50% + ${annotation.horizontalOffset || 0}px))`
+                          transform: 'none'
                         }}
                       >
                         <div 
@@ -2280,7 +2280,7 @@ export function PriceChart({
                       <div
                         key={annotation.id}
                         className="absolute"
-                        style={{ left: `${xPercent}%`, top: '20px', transform: 'translateX(-50%)' }}
+                        style={{ left: '10px', top: '20px', transform: 'none' }}
                       >
                         <div 
                           className="bg-background border border-border rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-pointer hover:bg-muted shadow-lg"

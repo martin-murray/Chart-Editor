@@ -1631,9 +1631,9 @@ export function ComparisonChart({
                     key={annotation.id}
                     className="absolute"
                     style={{ 
-                      left: `${xPercent}%`, 
+                      left: '10px', 
                       top: '20px', 
-                      transform: `translateX(calc(-50% + ${annotation.horizontalOffset || 0}px))`
+                      transform: 'none'
                     }}
                   >
                     <div 
