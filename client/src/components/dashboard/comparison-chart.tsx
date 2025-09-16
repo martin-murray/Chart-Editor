@@ -1879,7 +1879,7 @@ export function ComparisonChart({
                 })}
 
 
-                {/* NEW: Percentage Range Measurements - ticker-independent overlays */}
+                {/* Simple Percentage Range Measurements - ticker-independent Y-axis overlay tool */}
                 {chartData && chartData.length > 0 && annotations.filter(annotation => annotation.type === 'percent-range' && annotation.endTimestamp).map((annotation) => {
                   // Find start and end data points for timestamps
                   let startDataPoint = chartData?.find((d: any) => d.timestamp === annotation.startTimestamp);
@@ -1890,18 +1890,21 @@ export function ComparisonChart({
                     return null;
                   }
                   
-                  // Get all visible tickers and their percentage deltas
-                  const tickerDeltas = tickers.filter(ticker => ticker.visible).map(ticker => {
-                    const startPercent = startDataPoint[`${ticker.symbol}_percentage`] || 0;
-                    const endPercent = endDataPoint[`${ticker.symbol}_percentage`] || 0;
-                    const delta = endPercent - startPercent;
-                    return {
-                      symbol: ticker.symbol,
-                      color: ticker.color,
-                      delta,
-                      endPercent
-                    };
-                  });
+                  // Calculate average Y-axis percentage at start and end points (ticker-independent)
+                  const visibleTickers = tickers.filter(ticker => ticker.visible);
+                  if (visibleTickers.length === 0) return null;
+                  
+                  // Get average percentage at each timestamp point
+                  const startPercentages = visibleTickers.map(ticker => startDataPoint[`${ticker.symbol}_percentage`] || 0);
+                  const endPercentages = visibleTickers.map(ticker => endDataPoint[`${ticker.symbol}_percentage`] || 0);
+                  
+                  const startAvgPercent = startPercentages.reduce((sum, p) => sum + p, 0) / startPercentages.length;
+                  const endAvgPercent = endPercentages.reduce((sum, p) => sum + p, 0) / endPercentages.length;
+                  
+                  // Calculate percentage change between the two points  
+                  const percentageChange = endAvgPercent - startAvgPercent;
+                  const isPositive = percentageChange >= 0;
+                  const lineColor = isPositive ? '#22C55E' : '#EF4444';
                   
                   return (
                     <g key={`percent-range-${annotation.id}`}>
@@ -1923,40 +1926,36 @@ export function ComparisonChart({
                         className="opacity-60"
                       />
                       
-                      {/* Per-ticker delta lines and labels */}
-                      {tickerDeltas.map((ticker, index) => {
-                        const isPositive = ticker.delta >= 0;
-                        const deltaColor = isPositive ? '#22C55E' : '#EF4444';
-                        
-                        return (
-                          <g key={`measure-${annotation.id}-${ticker.symbol}`}>
-                            {/* Delta line for this ticker */}
-                            <ReferenceLine 
-                              segment={[
-                                { x: startDataPoint.date, y: startDataPoint[`${ticker.symbol}_percentage`] || 0 },
-                                { x: endDataPoint.date, y: endDataPoint[`${ticker.symbol}_percentage`] || 0 }
-                              ]}
-                              stroke={ticker.color}
-                              strokeWidth={2}
-                              className="opacity-70"
-                            />
-                            
-                            {/* End point with colored border based on delta direction */}
-                            {scalesReady && (
-                              <ReferenceDot 
-                                x={endDataPoint.date}
-                                y={ticker.endPercent}
-                                r={4}
-                                fill={ticker.color}
-                                stroke={deltaColor}
-                                strokeWidth={2}
-                                xAxisId={0}
-                                yAxisId={0}
-                              />
-                            )}
-                          </g>
-                        );
-                      })}
+                      {/* Simple measurement line between average Y-axis points */}
+                      <ReferenceLine 
+                        segment={[
+                          { x: startDataPoint.date, y: startAvgPercent },
+                          { x: endDataPoint.date, y: endAvgPercent }
+                        ]}
+                        stroke={lineColor}
+                        strokeWidth={3}
+                        className="opacity-80"
+                      />
+                      
+                      {/* Start point marker */}
+                      <ReferenceDot 
+                        x={startDataPoint.date}
+                        y={startAvgPercent}
+                        r={4}
+                        fill="#888"
+                        stroke="#fff"
+                        strokeWidth={2}
+                      />
+                      
+                      {/* End point marker with color based on direction */}
+                      <ReferenceDot 
+                        x={endDataPoint.date}
+                        y={endAvgPercent}
+                        r={4}
+                        fill={lineColor}
+                        stroke="#fff"
+                        strokeWidth={2}
+                      />
                     </g>
                   );
                 })}

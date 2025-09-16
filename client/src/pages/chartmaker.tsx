@@ -9,7 +9,9 @@ import { Search, TrendingUp, TrendingDown, BarChart3, Trash2, RotateCcw } from "
 import { Link } from "wouter";
 import { cn } from "@/lib/utils";
 import { PriceChart } from "@/components/dashboard/price-chart";
+import { ComparisonChart } from "@/components/dashboard/comparison-chart";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface GlobalSearchResult {
   symbol: string;
@@ -312,20 +314,48 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
       )}
 
 
-      {/* Price Chart */}
-      {selectedStock && (
-        <div className="mt-6">
-          <PriceChart
-            key={`${selectedStock.displaySymbol}-price-chart-${chartResetKey}`}
-            symbol={selectedStock.displaySymbol}
-            name={selectedStock.description}
-            currentPrice="--"
-            percentChange="0"
-            marketCap="--"
-            onClearAll={clearAllAnnotations}
-          />
-        </div>
-      )}
+      {/* Charts Section */}
+      <div className="mt-6">
+        <Tabs defaultValue="individual" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="individual" data-testid="trigger-individual">
+              Individual Chart
+            </TabsTrigger>
+            <TabsTrigger value="comparison" data-testid="trigger-comparison">
+              Compare Stocks
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="individual" data-testid="tabpanel-individual">
+            {selectedStock ? (
+              <PriceChart
+                key={`${selectedStock.displaySymbol}-price-chart-${chartResetKey}`}
+                symbol={selectedStock.displaySymbol}
+                name={selectedStock.description}
+                currentPrice="--"
+                percentChange="0"
+                marketCap="--"
+                onClearAll={clearAllAnnotations}
+              />
+            ) : (
+              <Card className="p-8">
+                <div className="text-center">
+                  <div className="text-lg font-medium text-foreground mb-2">
+                    Select a Stock to View Chart
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    Use the search above to find and select a stock for detailed price analysis
+                  </div>
+                </div>
+              </Card>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="comparison" data-testid="tabpanel-comparison">
+            <ComparisonChart />
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }
