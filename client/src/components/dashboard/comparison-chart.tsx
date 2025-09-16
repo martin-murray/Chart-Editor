@@ -127,6 +127,14 @@ export function ComparisonChart({
   // Recharts geometry capture for precise positioning
   const layoutRef = useRef<{offset: any, yScale: any} | null>(null);
   
+  // Scale readiness detection to prevent ReferenceDot errors
+  const [scalesReady, setScalesReady] = useState(false);
+  
+  // Reset scales readiness when timeframe changes or data is loading
+  useEffect(() => {
+    setScalesReady(false);
+  }, [timeframe, tickers]);
+  
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -1834,12 +1842,15 @@ export function ComparisonChart({
 
                 {/* Geometry probe to capture Recharts internals */}
                 <Customized component={(props: any) => {
-                  const { offset, yAxisMap } = props;
-                  if (offset && yAxisMap) {
+                  const { offset, yAxisMap, xAxisMap } = props;
+                  if (offset && yAxisMap && xAxisMap) {
                     const yAxis = yAxisMap?.yAxisId || yAxisMap?.['0'] || Object.values(yAxisMap || {})[0];
-                    if (yAxis?.scale && typeof yAxis.scale === 'function') {
+                    const xAxis = xAxisMap?.xAxisId || xAxisMap?.['0'] || Object.values(xAxisMap || {})[0];
+                    if (yAxis?.scale && typeof yAxis.scale === 'function' && xAxis?.scale && typeof xAxis.scale === 'function') {
                       // Update layout ref with real chart geometry
                       layoutRef.current = { offset, yScale: yAxis.scale };
+                      // Set scales ready when both axes are available
+                      setScalesReady(true);
                     }
                   }
                   return null; // Don't render anything
@@ -1927,25 +1938,33 @@ export function ComparisonChart({
                         vectorEffect="non-scaling-stroke"
                       />
                       
-                      {/* Start point circle - only render when data is valid */}
-                      <ReferenceDot 
-                        x={startDataPoint.date}
-                        y={annotation.startPrice}
-                        r={4}
-                        fill={lineColor}
-                        stroke={lineColor}
-                        strokeWidth={1}
-                      />
+                      {/* Start point circle - only render when scales are ready */}
+                      {scalesReady && (
+                        <ReferenceDot 
+                          x={startDataPoint.date}
+                          y={annotation.startPrice}
+                          r={4}
+                          fill={lineColor}
+                          stroke={lineColor}
+                          strokeWidth={1}
+                          xAxisId={0}
+                          yAxisId={0}
+                        />
+                      )}
                       
-                      {/* End point circle - only render when data is valid */}
-                      <ReferenceDot 
-                        x={endDataPoint.date}
-                        y={annotation.endPrice}
-                        r={4}
-                        fill={lineColor}
-                        stroke={lineColor}
-                        strokeWidth={1}
-                      />
+                      {/* End point circle - only render when scales are ready */}
+                      {scalesReady && (
+                        <ReferenceDot 
+                          x={endDataPoint.date}
+                          y={annotation.endPrice}
+                          r={4}
+                          fill={lineColor}
+                          stroke={lineColor}
+                          strokeWidth={1}
+                          xAxisId={0}
+                          yAxisId={0}
+                        />
+                      )}
                     </g>
                   );
                 })}
