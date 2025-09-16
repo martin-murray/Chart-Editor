@@ -78,12 +78,7 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
   const [recentSearches, setRecentSearches] = useState<GlobalSearchResult[]>([]);
   
-  // Annotation state management
-  const [annotationsBySymbol, setAnnotationsBySymbol] = useState<Record<string, Annotation[]>>({});
-  const [rememberPerTicker, setRememberPerTicker] = useState(() => getRememberSetting());
-  
-  // Current annotations for selected stock - always empty to prevent crashes
-  const currentAnnotations: Annotation[] = [];
+  // Remove annotation state management - charts handle their own state now
 
   // Load recent searches from localStorage on mount
   useEffect(() => {
@@ -176,23 +171,7 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
     localStorage.setItem('recentTickerSearches', JSON.stringify(newRecent));
   };
   
-  // Annotation management functions
-  const handleAnnotationsChange = (newAnnotations: Annotation[]) => {
-    // No longer save annotations to prevent memory issues and runtime crashes
-  };
-  
-  const handleRememberToggle = (remember: boolean) => {
-    setRememberPerTicker(remember);
-    saveRememberSetting(remember);
-  };
-  
-  const clearCurrentTickerAnnotations = () => {
-    // No longer clear stored annotations since they don't persist
-  };
-  
-  const clearAllAnnotations = () => {
-    // No longer clear stored annotations since they don't persist
-  };
+  // Remove annotation management functions - no longer needed
 
   const getTypeColor = (type: string) => {
     switch (type.toLowerCase()) {
@@ -333,15 +312,12 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
       {selectedStock && (
         <div className="mt-6">
           <PriceChart
+            key={`${selectedStock.displaySymbol}-price-chart`}
             symbol={selectedStock.displaySymbol}
             name={selectedStock.description}
             currentPrice="--"
             percentChange="0"
             marketCap="--"
-            annotations={currentAnnotations}
-            onAnnotationsChange={handleAnnotationsChange}
-            rememberPerTicker={rememberPerTicker}
-            onClearAll={Object.keys(annotationsBySymbol).length > 0 ? clearAllAnnotations : undefined}
           />
         </div>
       )}
