@@ -69,6 +69,7 @@ interface Annotation {
   text?: string; // User annotation text (for text and horizontal types)
   time: string; // Formatted time string
   horizontalOffset?: number; // Custom horizontal position offset in pixels for dragging
+  verticalOffset?: number; // Custom vertical position offset in pixels for dragging
   // For percentage measurements
   startTimestamp?: number;
   startPrice?: number;
@@ -144,11 +145,13 @@ export function PriceChart({
   const [dragStartY, setDragStartY] = useState(0);
   const [dragStartPrice, setDragStartPrice] = useState(0);
   
-  // Text annotation horizontal drag state
+  // Text annotation 2D drag state
   const [isDraggingText, setIsDraggingText] = useState(false);
   const [dragTextAnnotationId, setDragTextAnnotationId] = useState<string | null>(null);
-  const [dragStartX, setDragStartX] = useState(0);
+  const [dragTextStartX, setDragTextStartX] = useState(0);
+  const [dragTextStartY, setDragTextStartY] = useState(0);
   const [dragStartOffset, setDragStartOffset] = useState(0);
+  const [dragStartVerticalOffset, setDragStartVerticalOffset] = useState(0);
   
   // Vertical line horizontal drag state
   const [isDraggingVertical, setIsDraggingVertical] = useState(false);
@@ -298,8 +301,10 @@ export function PriceChart({
   const handleTextMouseDown = (e: React.MouseEvent, annotation: Annotation) => {
     setIsDraggingText(true);
     setDragTextAnnotationId(annotation.id);
-    setDragStartX(e.clientX);
+    setDragTextStartX(e.clientX);
+    setDragTextStartY(e.clientY);
     setDragStartOffset(annotation.horizontalOffset || 0);
+    setDragStartVerticalOffset(annotation.verticalOffset || 0);
     e.preventDefault();
     e.stopPropagation();
   };
@@ -308,8 +313,10 @@ export function PriceChart({
     if (isDraggingText) {
       setIsDraggingText(false);
       setDragTextAnnotationId(null);
-      setDragStartX(0);
+      setDragTextStartX(0);
+      setDragTextStartY(0);
       setDragStartOffset(0);
+      setDragStartVerticalOffset(0);
     }
   };
 
@@ -361,15 +368,17 @@ export function PriceChart({
           ));
         }
         
-        // Handle text annotation horizontal dragging
+        // Handle text annotation 2D dragging
         if (isDraggingText && dragTextAnnotationId) {
-          const deltaX = event.clientX - dragStartX;
-          const newOffset = dragStartOffset + deltaX;
+          const deltaX = event.clientX - dragTextStartX;
+          const deltaY = event.clientY - dragTextStartY;
+          const newHorizontalOffset = dragStartOffset + deltaX;
+          const newVerticalOffset = dragStartVerticalOffset + deltaY;
           
-          // Update the annotation's horizontal offset
+          // Update the annotation's horizontal and vertical offsets
           updateAnnotations(prev => prev.map(ann => 
             ann.id === dragTextAnnotationId 
-              ? { ...ann, horizontalOffset: newOffset }
+              ? { ...ann, horizontalOffset: newHorizontalOffset, verticalOffset: newVerticalOffset }
               : ann
           ));
         }
@@ -418,7 +427,7 @@ export function PriceChart({
         document.removeEventListener('mousemove', handleGlobalMouseMove);
       };
     }
-  }, [isDragging, dragAnnotationId, dragStartY, dragStartPrice, isDraggingText, dragTextAnnotationId, dragStartX, dragStartOffset, isDraggingVertical, dragVerticalAnnotationId, dragVerticalStartX, dragVerticalStartTimestamp, updateAnnotations, chartData]);
+  }, [isDragging, dragAnnotationId, dragStartY, dragStartPrice, isDraggingText, dragTextAnnotationId, dragTextStartX, dragTextStartY, dragStartOffset, dragStartVerticalOffset, isDraggingVertical, dragVerticalAnnotationId, dragVerticalStartX, dragVerticalStartTimestamp, updateAnnotations, chartData]);
   
   // Earnings modal state
   const [earningsModal, setEarningsModal] = useState<{
@@ -2250,7 +2259,7 @@ export function PriceChart({
                         className="absolute"
                         style={{ 
                           left: `${xPercent}%`, 
-                          top: '20px', 
+                          top: `${20 + (annotation.verticalOffset || 0)}px`, 
                           transform: `translateX(calc(-50% + ${annotation.horizontalOffset || 0}px))`
                         }}
                       >
