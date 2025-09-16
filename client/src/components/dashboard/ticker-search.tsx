@@ -85,21 +85,19 @@ export function TickerSearch({ onSelectStock }: TickerSearchProps) {
     }
   };
 
-  const handleInputFocus = () => {
-    updateDropdownPosition();
-    setIsOpen(true);
-  };
-
-  const handleInputClick = () => {
-    // Auto-highlight text if there's content in the input
-    if (searchQuery.trim() && inputRef.current) {
-      // Use setTimeout to ensure this happens after the focus event
+  const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    // Auto-select text if there's content when focusing
+    const currentValue = inputRef.current?.value || searchQuery;
+    if (currentValue.trim() && inputRef.current) {
       setTimeout(() => {
         if (inputRef.current) {
           inputRef.current.select();
         }
-      }, 0);
+      }, 10);
     }
+    
+    updateDropdownPosition();
+    setIsOpen(true);
   };
 
   const handleSelectStock = (stock: SearchResult) => {
@@ -151,7 +149,6 @@ export function TickerSearch({ onSelectStock }: TickerSearchProps) {
           value={searchQuery}
           onChange={(e) => handleInputChange(e.target.value)}
           onFocus={handleInputFocus}
-          onMouseDown={handleInputClick}
           className="pl-10 pr-4 bg-background border-border focus:border-[#5AF5FA] focus:ring-[#5AF5FA]/20"
         />
       </div>

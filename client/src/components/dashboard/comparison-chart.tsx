@@ -491,21 +491,19 @@ export function ComparisonChart({
     }
   };
 
-  const handleInputFocus = () => {
-    updateDropdownPosition();
-    setIsDropdownOpen(true);
-  };
-
-  const handleInputClick = () => {
-    // Auto-highlight text if there's content in the input
-    if (searchTerm.trim() && inputRef.current) {
-      // Use setTimeout to ensure this happens after the focus event
+  const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    // Auto-select text if there's content when focusing
+    const currentValue = inputRef.current?.value || searchTerm;
+    if (currentValue.trim() && inputRef.current) {
       setTimeout(() => {
         if (inputRef.current) {
           inputRef.current.select();
         }
-      }, 0);
+      }, 10);
     }
+    
+    updateDropdownPosition();
+    setIsDropdownOpen(true);
   };
 
   const handleSelectStock = (stock: SearchResult) => {
@@ -1305,7 +1303,6 @@ export function ComparisonChart({
                 value={searchTerm}
                 onChange={(e) => handleInputChange(e.target.value)}
                 onFocus={handleInputFocus}
-                onMouseDown={handleInputClick}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && searchTerm.trim()) {
                     // Try to find exact match in search results for recent searches

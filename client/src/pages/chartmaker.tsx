@@ -147,7 +147,7 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
     setIsOpen(true);
   };
 
-  const handleInputFocus = () => {
+  const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
     // Check actual input value to handle cases where state might be out of sync
     const actualValue = inputRef.current?.value || '';
     const isActuallyEmpty = actualValue.trim() === '';
@@ -157,20 +157,17 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
       setSearchQuery('');
     }
     
-    updateDropdownPosition();
-    setIsOpen(true);
-  };
-
-  const handleInputClick = () => {
-    // Auto-highlight text if there's content in the input
-    if (searchQuery.trim() && inputRef.current) {
-      // Use setTimeout to ensure this happens after the focus event
+    // Auto-select text if there's content when focusing
+    if (actualValue.trim() && inputRef.current) {
       setTimeout(() => {
         if (inputRef.current) {
           inputRef.current.select();
         }
-      }, 0);
+      }, 10);
     }
+    
+    updateDropdownPosition();
+    setIsOpen(true);
   };
 
   const handleSelectStock = (stock: GlobalSearchResult) => {
@@ -247,7 +244,6 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
           value={searchQuery}
           onChange={(e) => handleInputChange(e.target.value)}
           onFocus={handleInputFocus}
-          onMouseDown={handleInputClick}
           className="pl-10 pr-4 bg-background border-border focus:border-[#5AF5FA] focus:ring-[#5AF5FA]/20 text-lg py-3"
         />
       </div>
