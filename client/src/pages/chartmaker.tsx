@@ -77,6 +77,7 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
   const [recentSearches, setRecentSearches] = useState<GlobalSearchResult[]>([]);
+  const [chartResetKey, setChartResetKey] = useState(0);
   
   // Remove annotation state management - charts handle their own state now
 
@@ -171,7 +172,10 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
     localStorage.setItem('recentTickerSearches', JSON.stringify(newRecent));
   };
   
-  // Remove annotation management functions - no longer needed
+  // Clear all annotations function
+  const clearAllAnnotations = () => {
+    setChartResetKey(prev => prev + 1);
+  };
 
   const getTypeColor = (type: string) => {
     switch (type.toLowerCase()) {
@@ -312,12 +316,13 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
       {selectedStock && (
         <div className="mt-6">
           <PriceChart
-            key={`${selectedStock.displaySymbol}-price-chart`}
+            key={`${selectedStock.displaySymbol}-price-chart-${chartResetKey}`}
             symbol={selectedStock.displaySymbol}
             name={selectedStock.description}
             currentPrice="--"
             percentChange="0"
             marketCap="--"
+            onClearAll={clearAllAnnotations}
           />
         </div>
       )}
