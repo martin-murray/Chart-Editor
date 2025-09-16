@@ -164,7 +164,12 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
   const handleInputClick = () => {
     // Auto-highlight text if there's content in the input
     if (searchQuery.trim() && inputRef.current) {
-      inputRef.current.select();
+      // Use setTimeout to ensure this happens after the focus event
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.select();
+        }
+      }, 0);
     }
   };
 
@@ -242,7 +247,7 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
           value={searchQuery}
           onChange={(e) => handleInputChange(e.target.value)}
           onFocus={handleInputFocus}
-          onClick={handleInputClick}
+          onMouseDown={handleInputClick}
           className="pl-10 pr-4 bg-background border-border focus:border-[#5AF5FA] focus:ring-[#5AF5FA]/20 text-lg py-3"
         />
       </div>

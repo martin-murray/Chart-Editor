@@ -499,7 +499,12 @@ export function ComparisonChart({
   const handleInputClick = () => {
     // Auto-highlight text if there's content in the input
     if (searchTerm.trim() && inputRef.current) {
-      inputRef.current.select();
+      // Use setTimeout to ensure this happens after the focus event
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.select();
+        }
+      }, 0);
     }
   };
 
@@ -1300,7 +1305,7 @@ export function ComparisonChart({
                 value={searchTerm}
                 onChange={(e) => handleInputChange(e.target.value)}
                 onFocus={handleInputFocus}
-                onClick={handleInputClick}
+                onMouseDown={handleInputClick}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && searchTerm.trim()) {
                     // Try to find exact match in search results for recent searches
