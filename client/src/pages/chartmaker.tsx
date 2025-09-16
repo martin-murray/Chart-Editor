@@ -384,7 +384,7 @@ function ChartMaker() {
               <img 
                 src={logoImage} 
                 alt="Intropic Chart Studio" 
-                className="w-[150px] h-auto"
+                className="w-[240px] h-auto"
                 data-testid="header-logo"
               />
             </div>
