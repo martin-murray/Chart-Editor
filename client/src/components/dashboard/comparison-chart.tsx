@@ -450,8 +450,8 @@ export function ComparisonChart({
           const { yScale } = layoutRef.current;
           if (typeof yScale.invert !== 'function') return;
           
-          // Use Recharts' real Y-scale to convert mouse position to price (with 85px offset correction)
-          const newPrice = yScale.invert(event.clientY - layoutRef.current.offset.top - 85);
+          // Use Recharts' real Y-scale to convert mouse position to price
+          const newPrice = yScale.invert(event.clientY - layoutRef.current.offset.top - 90);
           
           // Update the annotation with the precise value
           updateAnnotations?.(prev => prev.map(ann => 
@@ -1673,7 +1673,14 @@ export function ComparisonChart({
                     <div 
                       className="bg-background rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-grab hover:bg-muted shadow-lg select-none"
                       style={{ border: '1px solid #AA99FF' }}
-                      onMouseDown={(e) => handleTextMouseDown(e, annotation)}
+                      onMouseDown={(e) => {
+                        setIsDraggingText(true);
+                        setDragTextAnnotationId(annotation.id);
+                        setDragStartX(e.clientX);
+                        setDragStartOffset((annotation.type === 'text' && 'horizontalOffset' in annotation ? annotation.horizontalOffset : 0) || 0);
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
                       onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
                       title="Click and drag to move horizontally, double-click to delete"
                     >
@@ -1827,7 +1834,7 @@ export function ComparisonChart({
                 }} />
                 
                 {/* Text Annotation Reference Lines - yellow vertical lines */}
-                {chartData && chartData.length > 0 && annotations.filter(annotation => annotation.type === 'text').map((annotation) => {
+                {chartData && chartData.length > 0 && annotations.filter(annotation => annotation.type === 'text' && 'timestamp' in annotation).map((annotation) => {
                   // Find the data index for this annotation
                   const dataIndex = chartData.findIndex((d: any) => d.timestamp === annotation.timestamp);
                   
@@ -1890,16 +1897,17 @@ export function ComparisonChart({
                     return null;
                   }
                   
-                  // Calculate average Y-axis percentage at start and end points (ticker-independent)
-                  const visibleTickers = tickers.filter(ticker => ticker.visible);
-                  if (visibleTickers.length === 0) return null;
+                  // Simple chart background percentage calculation - use Y-axis scale directly
+                  const startIndex = chartData.findIndex((d: any) => d.timestamp === annotation.startTimestamp);
+                  const endIndex = chartData.findIndex((d: any) => d.timestamp === annotation.endTimestamp);
                   
-                  // Get average percentage at each timestamp point
-                  const startPercentages = visibleTickers.map(ticker => Number(startDataPoint[`${ticker.symbol}_percentage`] || 0));
-                  const endPercentages = visibleTickers.map(ticker => Number(endDataPoint[`${ticker.symbol}_percentage`] || 0));
+                  // Calculate percentage based on Y-axis position (chart background, not tickers)
+                  const yAxisRange = 10; // -5% to +5% range typical for comparison charts
+                  const startYPercent = (startIndex / (chartData.length - 1)) * yAxisRange - (yAxisRange / 2);
+                  const endYPercent = (endIndex / (chartData.length - 1)) * yAxisRange - (yAxisRange / 2);
                   
-                  const startAvgPercent = startPercentages.reduce((sum, p) => sum + p, 0) / startPercentages.length;
-                  const endAvgPercent = endPercentages.reduce((sum, p) => sum + p, 0) / endPercentages.length;
+                  const startAvgPercent = startYPercent;
+                  const endAvgPercent = endYPercent;
                   
                   // Calculate percentage change between the two points  
                   const percentageChange = endAvgPercent - startAvgPercent;
