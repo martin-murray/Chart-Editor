@@ -2282,10 +2282,11 @@ export function PriceChart({
                         }}
                       >
                         <div 
-                          className="bg-background border border-border rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-grab hover:bg-muted shadow-lg select-none"
+                          className="rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-grab hover:opacity-80 shadow-lg select-none"
+                          style={{ backgroundColor: '#121212', border: '1px solid #FAFF50' }}
                           onMouseDown={(e) => handleTextMouseDown(e, annotation)}
                           onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
-                          title="Click and drag to move horizontally, double-click to delete"
+                          title="Click and drag to move in any direction, double-click to delete"
                         >
                           <div className="font-medium" style={{ color: '#FAFF50' }}>{formatTime(annotation.time, selectedTimeframe)}</div>
                           <div className="text-muted-foreground">{formatPrice(annotation.price)}</div>
@@ -2308,9 +2309,11 @@ export function PriceChart({
                         style={{ left: `${xPercent}%`, top: `${20 + (annotation.verticalOffset || 0)}px`, transform: `translateX(calc(-50% + ${annotation.horizontalOffset || 0}px))` }}
                       >
                         <div 
-                          className="bg-background border border-border rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-pointer hover:bg-muted shadow-lg"
+                          className="rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-grab hover:opacity-80 shadow-lg select-none"
+                          style={{ backgroundColor: '#121212', border: '1px solid #AA99FF' }}
+                          onMouseDown={(e) => handleTextMouseDown(e, annotation)}
                           onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
-                          title="Double-click to delete"
+                          title="Click and drag to move in any direction, double-click to delete"
                         >
                           <div className="font-medium" style={{ color: '#AA99FF' }}>{formatTime(annotation.time, selectedTimeframe)}</div>
                           <div className="text-muted-foreground">{formatPrice(annotation.price)}</div>
@@ -2338,18 +2341,20 @@ export function PriceChart({
                         style={{ left: `${midPercent}%`, top: `${20 + (annotation.verticalOffset || 0)}px`, transform: `translateX(calc(-50% + ${annotation.horizontalOffset || 0}px))` }}
                       >
                         <div 
-                          className="bg-background border border-white/30 rounded px-2 py-1 text-xs pointer-events-auto shadow-lg cursor-pointer hover:bg-muted"
+                          className="rounded px-2 py-1 text-xs pointer-events-auto shadow-lg cursor-grab hover:opacity-80"
+                          style={{ backgroundColor: '#121212', border: `1px solid ${isPositive ? '#22c55e' : '#ef4444'}` }}
+                          onMouseDown={(e) => handleTextMouseDown(e, annotation)}
                           onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
-                          title="Double-click to delete"
+                          title="Click and drag to move in any direction, double-click to delete"
                         >
-                          <div className={`font-bold text-center ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
+                          <div className={`font-bold text-left ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
                             {isPositive ? '↗' : '↘'} {(annotation.percentage || 0).toFixed(2)}%
                           </div>
-                          <div className="text-xs text-muted-foreground text-center">
+                          <div className="text-xs text-muted-foreground text-left">
                             {formatPrice(annotation.startPrice || 0)} → {formatPrice(annotation.endPrice || 0)}
                           </div>
                           {annotation.startTime && annotation.endTime && (
-                            <div className="text-[10px] text-muted-foreground text-center mt-1">
+                            <div className="text-[10px] text-muted-foreground text-left mt-1">
                               {formatTime(annotation.startTime, selectedTimeframe)} → {formatTime(annotation.endTime, selectedTimeframe)}
                             </div>
                           )}
