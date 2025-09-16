@@ -523,12 +523,12 @@ export function ComparisonChart({
 
   // Fetch search results
   const { data: searchResults = [], isLoading: isSearchLoading } = useQuery({
-    queryKey: ["/api/stocks/search", debouncedQuery],
+    queryKey: ["/api/stocks/global-search", debouncedQuery],
     queryFn: async (): Promise<SearchResult[]> => {
       if (!debouncedQuery || debouncedQuery.trim().length < 2) {
         return [];
       }
-      const response = await fetch(`/api/stocks/search?q=${encodeURIComponent(debouncedQuery.trim())}`);
+      const response = await fetch(`/api/stocks/global-search?q=${encodeURIComponent(debouncedQuery.trim())}`);
       if (!response.ok) throw new Error("Search failed");
       return await response.json();
     },
