@@ -44,49 +44,25 @@ interface SearchResult {
   marketCap: string;
 }
 
-// Base annotation interface for text and horizontal types (ticker-independent)
-interface BaseAnnotation {
+interface Annotation {
   id: string;
+  type: 'text' | 'percentage' | 'horizontal';
   x: number; // X coordinate on chart
   y: number; // Y coordinate on chart
   timestamp: number; // Data point timestamp
+  price: number; // Price at this point
+  text?: string; // User annotation text (for text and horizontal types)
   time: string; // Formatted time string
   horizontalOffset?: number; // Custom horizontal position offset in pixels for dragging
-}
-
-// Text annotation (ticker-independent)
-interface TextAnnotation extends BaseAnnotation {
-  type: 'text';
-  text: string;
-  price: number; // Percentage value at this point
-}
-
-// Horizontal line annotation (ticker-independent) 
-interface HorizontalAnnotation extends BaseAnnotation {
-  type: 'horizontal';
-  text?: string;
-  price: number; // Percentage value at this point
-}
-
-// Vertical line annotation (ticker-independent)
-interface VerticalAnnotation extends BaseAnnotation {
-  type: 'vertical';
-  text?: string;
-  price: number; // Percentage value at this point
-}
-
-// NEW: Percentage-based measurement (ticker-independent)
-interface PercentRangeAnnotation {
-  id: string;
-  type: 'percent-range';
-  startTimestamp: number;
-  endTimestamp: number | null;
-  startTime: string;
+  // For percentage measurements
+  startTimestamp?: number;
+  startPrice?: number;
+  startTime?: string;
+  endTimestamp?: number;
+  endPrice?: number;
   endTime?: string;
+  percentage?: number;
 }
-
-// Union type for all annotation types
-type Annotation = TextAnnotation | HorizontalAnnotation | VerticalAnnotation | PercentRangeAnnotation;
 
 interface ComparisonChartProps {
   timeframe: string;
@@ -94,11 +70,10 @@ interface ComparisonChartProps {
   endDate?: Date;
   annotations?: Annotation[];
   onAnnotationsChange?: (annotations: Annotation[]) => void;
-  annotationMode?: 'text' | 'percent-range' | 'horizontal' | 'vertical';
-  pendingPercentageStart?: { timestamp: number; percent: number; time: string } | null;
-  setPendingPercentageStart?: (start: { timestamp: number; percent: number; time: string } | null) => void;
+  annotationMode?: 'text' | 'percentage' | 'horizontal';
+  pendingPercentageStart?: { timestamp: number; price: number; time: string } | null;
+  setPendingPercentageStart?: (start: { timestamp: number; price: number; time: string } | null) => void;
   updateAnnotations?: (newAnnotations: Annotation[] | ((prev: Annotation[]) => Annotation[])) => void;
-  isHoverEnabled?: boolean;
 }
 
 
@@ -111,8 +86,7 @@ export function ComparisonChart({
   annotationMode = 'text',
   pendingPercentageStart,
   setPendingPercentageStart,
-  updateAnnotations,
-  isHoverEnabled = false
+  updateAnnotations
 }: ComparisonChartProps) {
   const [tickers, setTickers] = useState<TickerData[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -151,14 +125,6 @@ export function ComparisonChart({
   // Recharts geometry capture for precise positioning
   const layoutRef = useRef<{offset: any, yScale: any} | null>(null);
   
-  // Scale readiness detection to prevent ReferenceDot errors
-  const [scalesReady, setScalesReady] = useState(false);
-  
-  // Reset scales readiness when timeframe changes or data is loading
-  useEffect(() => {
-    setScalesReady(false);
-  }, [timeframe, tickers]);
-  
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -194,8 +160,8 @@ export function ComparisonChart({
       }
     });
     
-    // Find the closest vertical annotation
-    const verticalAnnotations = annotations.filter((ann): ann is Annotation => ann.type === 'vertical');
+    // Find the closest vertical annotation (text annotation)
+    const verticalAnnotations = annotations.filter((ann): ann is Annotation => ann.type === 'text');
     let closestVerticalAnnotation: Annotation | null = null;
     let closestVerticalDistance = Infinity;
     
@@ -223,16 +189,16 @@ export function ComparisonChart({
     // Prioritize the closest annotation (horizontal or vertical)
     if (closestHorizontalAnnotation && (!closestVerticalAnnotation || closestHorizontalDistance < closestVerticalDistance * 0.5)) {
       setIsDragging(true);
-      setDragAnnotationId(closestHorizontalAnnotation.id!);
+      setDragAnnotationId(closestHorizontalAnnotation.id);
       setDragStartY(mouseY);
-      setDragStartPrice(closestHorizontalAnnotation.price!);
+      setDragStartPrice(closestHorizontalAnnotation.price);
       event.preventDefault();
       event.stopPropagation();
     } else if (closestVerticalAnnotation) {
       setIsDraggingVertical(true);
-      setDragVerticalAnnotationId(closestVerticalAnnotation.id!);
+      setDragVerticalAnnotationId(closestVerticalAnnotation.id);
       setDragVerticalStartX(event.clientX);
-      setDragVerticalStartTimestamp(closestVerticalAnnotation.timestamp!);
+      setDragVerticalStartTimestamp(closestVerticalAnnotation.timestamp);
       event.preventDefault();
       event.stopPropagation();
     }
@@ -295,7 +261,140 @@ export function ComparisonChart({
     }
   };
 
-  // Fetch chart data for all tickers using useQueries for dynamic queries - must be declared before chartData
+  // Add global mouse up listener to handle drag end outside chart
+  useEffect(() => {
+    if (isDragging || isDraggingText || isDraggingVertical) {
+      const handleGlobalMouseUp = () => {
+        handleMouseUp();
+        handleTextMouseUp();
+        handleVerticalMouseUp();
+      };
+      
+      const handleGlobalMouseMove = (event: MouseEvent) => {
+        // Handle horizontal line dragging
+        if (isDragging && dragAnnotationId && layoutRef.current) {
+          const { yScale } = layoutRef.current;
+          if (typeof yScale.invert !== 'function') return;
+          
+          // Use Recharts' real Y-scale to convert mouse position to price (with 85px offset correction)
+          const newPrice = yScale.invert(event.clientY - layoutRef.current.offset.top - 85);
+          
+          // Update the annotation with the precise value
+          updateAnnotations?.(prev => prev.map(ann => 
+            ann.id === dragAnnotationId 
+              ? { ...ann, price: newPrice }
+              : ann
+          ));
+        }
+        
+        // Handle text annotation horizontal dragging
+        if (isDraggingText && dragTextAnnotationId) {
+          const deltaX = event.clientX - dragStartX;
+          const newOffset = dragStartOffset + deltaX;
+          
+          // Update the annotation's horizontal offset
+          updateAnnotations?.(prev => prev.map(ann => 
+            ann.id === dragTextAnnotationId 
+              ? { ...ann, horizontalOffset: newOffset }
+              : ann
+          ));
+        }
+        
+        // Handle vertical line horizontal dragging
+        if (isDraggingVertical && dragVerticalAnnotationId && chartData) {
+          const deltaX = event.clientX - dragVerticalStartX;
+          
+          // Calculate new timestamp based on horizontal movement
+          const chartWidth = 800; // Approximate chart width
+          const dataLength = chartData.length;
+          const pixelsPerDataPoint = chartWidth / (dataLength - 1);
+          const dataPointDelta = Math.round(deltaX / pixelsPerDataPoint);
+          
+          // Find current annotation's data index
+          const currentIndex = chartData.findIndex((d: any) => d.timestamp === dragVerticalStartTimestamp);
+          if (currentIndex !== -1) {
+            const newIndex = Math.max(0, Math.min(dataLength - 1, currentIndex + dataPointDelta));
+            const newDataPoint = chartData[newIndex];
+            
+            if (newDataPoint) {
+              // Update the annotation with new timestamp and time
+              updateAnnotations?.(prev => prev.map(ann => 
+                ann.id === dragVerticalAnnotationId 
+                  ? { 
+                      ...ann, 
+                      timestamp: (newDataPoint as any).timestamp,
+                      time: new Date((newDataPoint as any).timestamp).toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                      })
+                    }
+                  : ann
+              ));
+            }
+          }
+        }
+      };
+      
+      document.addEventListener('mouseup', handleGlobalMouseUp);
+      document.addEventListener('mousemove', handleGlobalMouseMove);
+      
+      return () => {
+        document.removeEventListener('mouseup', handleGlobalMouseUp);
+        document.removeEventListener('mousemove', handleGlobalMouseMove);
+      };
+    }
+  }, [isDragging, dragAnnotationId, dragStartY, dragStartPrice, isDraggingText, dragTextAnnotationId, dragStartX, dragStartOffset, isDraggingVertical, dragVerticalAnnotationId, dragVerticalStartX, dragVerticalStartTimestamp, updateAnnotations, chartData]);
+
+  // Click outside handler - works with portal
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (containerRef.current && !containerRef.current.contains(target) &&
+          dropdownRef.current && !dropdownRef.current.contains(target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+  
+  // Load recent searches from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('recentComparisonSearches');
+    if (saved) {
+      try {
+        setRecentSearches(JSON.parse(saved));
+      } catch (error) {
+        console.error('Error parsing recent searches:', error);
+      }
+    }
+  }, []);
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(searchTerm);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Fetch search results
+  const { data: searchResults = [], isLoading: isSearchLoading } = useQuery({
+    queryKey: ["/api/stocks/search", debouncedQuery],
+    queryFn: async (): Promise<SearchResult[]> => {
+      if (!debouncedQuery || debouncedQuery.trim().length < 2) {
+        return [];
+      }
+      const response = await fetch(`/api/stocks/search?q=${encodeURIComponent(debouncedQuery.trim())}`);
+      if (!response.ok) throw new Error("Search failed");
+      return await response.json();
+    },
+    enabled: debouncedQuery.trim().length >= 2,
+  });
+
+  // Fetch chart data for all tickers using useQueries for dynamic queries
   const tickerQueries = useQueries({
     queries: tickers.map(ticker => ({
       queryKey: ['/api/stocks', ticker.symbol, 'chart', timeframe, startDate?.getTime(), endDate?.getTime()],
@@ -319,7 +418,7 @@ export function ComparisonChart({
     }))
   });
 
-  // Helper function to format dates properly based on timeframe - must be declared before chartData
+  // Helper function to format dates properly based on timeframe (like main price chart)
   const formatTime = (timeValue: any, timeframe: string) => {
     // Handle both timestamp numbers and time strings like the main chart
     const date = typeof timeValue === 'string' ? new Date(timeValue) : new Date(timeValue * 1000);
@@ -344,12 +443,6 @@ export function ComparisonChart({
           month: 'short',
           year: '2-digit'
         });
-      case '3Y':
-      case '5Y':
-        return date.toLocaleDateString('en-US', { 
-          month: 'short',
-          year: '2-digit'
-        });
       case 'Custom':
         return date.toLocaleDateString('en-US', { 
           month: 'numeric',
@@ -365,7 +458,7 @@ export function ComparisonChart({
     }
   };
 
-  // Process and align chart data for percentage calculation - must be declared before useEffect that depends on it
+  // Process and align chart data for percentage calculation
   const chartData = useMemo(() => {
     if (tickers.length === 0) return [];
     
@@ -441,145 +534,6 @@ export function ComparisonChart({
 
     return alignedData;
   }, [tickers, tickerQueries, timeframe]);
-
-  // Add global mouse up listener to handle drag end outside chart
-  useEffect(() => {
-    if (isDragging || isDraggingText || isDraggingVertical) {
-      const handleGlobalMouseUp = () => {
-        handleMouseUp();
-        handleTextMouseUp();
-        handleVerticalMouseUp();
-      };
-      
-      const handleGlobalMouseMove = (event: MouseEvent) => {
-        // Handle horizontal line dragging
-        if (isDragging && dragAnnotationId && layoutRef.current) {
-          const { yScale } = layoutRef.current;
-          if (typeof yScale.invert !== 'function') return;
-          
-          // Use Recharts' real Y-scale to convert mouse position to price
-          const newPrice = yScale.invert(event.clientY - layoutRef.current.offset.top - 90);
-          
-          // Update the annotation with the precise value - only for horizontal annotations
-          updateAnnotations?.(prev => prev.map(ann => 
-            ann.id === dragAnnotationId && ann.type === 'horizontal'
-              ? { ...ann, price: newPrice }
-              : ann
-          ));
-        }
-        
-        // Handle text annotation horizontal dragging
-        if (isDraggingText && dragTextAnnotationId) {
-          const deltaX = event.clientX - dragStartX;
-          const newOffset = dragStartOffset + deltaX;
-          
-          // Update the annotation's horizontal offset - only for text annotations
-          updateAnnotations?.(prev => prev.map(ann => 
-            ann.id === dragTextAnnotationId && ann.type === 'text'
-              ? { ...ann, horizontalOffset: newOffset }
-              : ann
-          ));
-        }
-        
-        // Handle vertical line horizontal dragging
-        if (isDraggingVertical && dragVerticalAnnotationId && chartData) {
-          const deltaX = event.clientX - dragVerticalStartX;
-          
-          // Calculate new timestamp based on horizontal movement
-          const chartWidth = 800; // Approximate chart width
-          const dataLength = chartData.length;
-          const pixelsPerDataPoint = chartWidth / (dataLength - 1);
-          const dataPointDelta = Math.round(deltaX / pixelsPerDataPoint);
-          
-          // Find current annotation's data index
-          const currentIndex = chartData.findIndex((d: any) => d.timestamp === dragVerticalStartTimestamp);
-          if (currentIndex !== -1) {
-            const newIndex = Math.max(0, Math.min(dataLength - 1, currentIndex + dataPointDelta));
-            const newDataPoint = chartData[newIndex];
-            
-            if (newDataPoint) {
-              // Update the annotation with new timestamp and time - only for vertical annotations
-              updateAnnotations?.(prev => prev.map(ann => 
-                ann.id === dragVerticalAnnotationId && ann.type === 'vertical'
-                  ? { 
-                      ...ann, 
-                      timestamp: (newDataPoint as any).timestamp,
-                      time: new Date((newDataPoint as any).timestamp).toLocaleTimeString('en-US', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: false
-                      })
-                    }
-                  : ann
-              ));
-            }
-          }
-        }
-      };
-      
-      document.addEventListener('mouseup', handleGlobalMouseUp);
-      document.addEventListener('mousemove', handleGlobalMouseMove);
-      
-      return () => {
-        document.removeEventListener('mouseup', handleGlobalMouseUp);
-        document.removeEventListener('mousemove', handleGlobalMouseMove);
-      };
-    }
-  }, [isDragging, dragAnnotationId, dragStartY, dragStartPrice, isDraggingText, dragTextAnnotationId, dragStartX, dragStartOffset, isDraggingVertical, dragVerticalAnnotationId, dragVerticalStartX, dragVerticalStartTimestamp, updateAnnotations, chartData]);
-
-  // Click outside handler - works with portal
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Node;
-      if (containerRef.current && !containerRef.current.contains(target) &&
-          dropdownRef.current && !dropdownRef.current.contains(target)) {
-        setIsDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-  
-  // Load recent searches from localStorage on mount
-  useEffect(() => {
-    const saved = localStorage.getItem('recentComparisonSearches');
-    if (saved) {
-      try {
-        setRecentSearches(JSON.parse(saved));
-      } catch (error) {
-        console.error('Error parsing recent searches:', error);
-      }
-    }
-  }, []);
-
-  // Debounce search query
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedQuery(searchTerm);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
-
-  // Fetch search results
-  const { data: searchResults = [], isLoading: isSearchLoading } = useQuery({
-    queryKey: ["/api/stocks/global-search", debouncedQuery],
-    queryFn: async (): Promise<SearchResult[]> => {
-      if (!debouncedQuery || debouncedQuery.trim().length < 2) {
-        return [];
-      }
-      const response = await fetch(`/api/stocks/global-search?q=${encodeURIComponent(debouncedQuery.trim())}`);
-      if (!response.ok) throw new Error("Search failed");
-      return await response.json();
-    },
-    enabled: debouncedQuery.trim().length >= 2,
-  });
-
-  // Ticker queries moved above to fix initialization order
-
-  // Helper function moved above to fix initialization order
-
-  // Chart data moved above to fix initialization order
 
   // Chart configuration for shadcn
   const chartConfig = useMemo(() => {
@@ -795,43 +749,40 @@ export function ComparisonChart({
       setAnnotationInput('');
       setEditingAnnotation(null);
       setIsEditMode(false);
-    } else if (annotationMode === 'vertical') {
-      // Vertical line annotation mode - single click
-      const newAnnotation: VerticalAnnotation = {
-        id: `vertical-${Date.now()}`,
-        type: 'vertical',
-        text: 'Vertical Line',
-        x: 0, // Will be calculated during rendering
-        y: 0, // Will be calculated during rendering  
-        timestamp,
-        price: percentageValue,
-        time
-      };
-      
-      // Add directly to annotations without text input
-      updateAnnotations?.([...annotations, newAnnotation]);
     } else if (annotationMode === 'horizontal') {
       // This case is now handled earlier in the function for freehand placement
       // This code path should not be reached for horizontal annotations
       return;
-    } else if (annotationMode === 'percent-range') {
+    } else if (annotationMode === 'percentage') {
       // Percentage measurement mode - two clicks
       if (!pendingPercentageStart) {
         // First click - set start point
         setPendingPercentageStart?.({
           timestamp,
-          percent: percentageValue,
+          price: percentageValue,
           time
         });
       } else {
         // Second click - create percentage measurement
-        const newAnnotation: PercentRangeAnnotation = {
-          id: `percent-range-${Date.now()}`,
-          type: 'percent-range',
+        const startPercentage = pendingPercentageStart.price;
+        const endPercentage = percentageValue;
+        const percentageDifference = endPercentage - startPercentage; // Direct percentage point difference
+        
+        const newAnnotation: Annotation = {
+          id: `percentage-${Date.now()}`,
+          type: 'percentage',
+          x: 0,
+          y: 0,
+          timestamp: pendingPercentageStart.timestamp,
+          price: startPercentage,
+          time: pendingPercentageStart.time,
           startTimestamp: pendingPercentageStart.timestamp,
+          startPrice: startPercentage,
           startTime: pendingPercentageStart.time,
           endTimestamp: timestamp,
-          endTime: time
+          endPrice: endPercentage,
+          endTime: time,
+          percentage: percentageDifference
         };
         
         updateAnnotations?.(prev => [...prev, newAnnotation]);
@@ -847,8 +798,8 @@ export function ComparisonChart({
       setIsEditMode(true);
       setAnnotationInput(annotation.text || '');
       setShowAnnotationInput(true);
-    } else if (annotation.type === 'percent-range') {
-      // For percent-range annotations, delete directly like Price chart (no confirmation)
+    } else if (annotation.type === 'percentage') {
+      // For percentage annotations, delete directly like Price chart (no confirmation)
       updateAnnotations?.(prev => prev.filter(a => a.id !== annotation.id));
     }
   };
@@ -1414,7 +1365,7 @@ export function ComparisonChart({
         
         <div className="flex items-center gap-2">
           {/* Pending Percentage Indicator */}
-          {annotationMode === 'percent-range' && pendingPercentageStart && (
+          {annotationMode === 'percentage' && pendingPercentageStart && (
             <div className="text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded border">
               Click second point to measure
             </div>
@@ -1605,42 +1556,6 @@ export function ComparisonChart({
 
       {/* Chart */}
       <div className="h-[600px] w-full rounded-lg relative pt-20 bg-background" data-testid="comparison-chart-container"> {/* Increased from h-80 (320px) to h-[600px] for much larger chart */}
-        
-        {/* Tolerance areas for vertical line dragging - positioned as overlays outside chart */}
-        {annotations.filter(annotation => annotation.type === 'vertical').map((annotation) => {
-          const dataIndex = chartData?.findIndex((d: any) => d.timestamp === annotation.timestamp) ?? -1;
-          if (dataIndex === -1 || !chartData) return null;
-          
-          const totalDataPoints = chartData.length - 1;
-          const xPercent = totalDataPoints > 0 ? (dataIndex / totalDataPoints) * 100 : 0;
-          const toleranceWidth = Math.max(2, chartData.length * 0.02) * (100 / totalDataPoints); // 2% tolerance as percentage
-          
-          return (
-            <div
-              key={`tolerance-${annotation.id}`}
-              className="absolute pointer-events-auto cursor-grab active:cursor-grabbing z-10"
-              style={{
-                left: `${Math.max(0, xPercent - toleranceWidth/2)}%`,
-                width: `${Math.min(toleranceWidth, 100 - Math.max(0, xPercent - toleranceWidth/2))}%`,
-                top: '80px', // Start below annotation text area
-                height: 'calc(100% - 140px)', // Cover chart area
-                backgroundColor: 'transparent', // Invisible but functional
-                borderLeft: 'none',
-                borderRight: 'none'
-              }}
-              title="Click and drag to move vertical line horizontally"
-              onMouseDown={(e) => {
-                setIsDraggingVertical(true);
-                setDragVerticalAnnotationId(annotation.id);
-                setDragVerticalStartX(e.clientX);
-                setDragVerticalStartTimestamp(annotation.timestamp);
-                e.preventDefault();
-                e.stopPropagation();
-              }}
-            />
-          );
-        })}
-        
         {/* Annotation Labels - positioned in reserved padding space above charts */}
         {annotations.length > 0 && (
           <div className="absolute top-0 left-0 w-full h-20 pointer-events-none">
@@ -1658,19 +1573,20 @@ export function ComparisonChart({
                     key={annotation.id}
                     className="absolute"
                     style={{ 
-                      left: '10px', 
+                      left: `${xPercent}%`, 
                       top: '20px', 
-                      transform: 'none'
+                      transform: `translateX(calc(-50% + ${annotation.horizontalOffset || 0}px))`
                     }}
                   >
                     <div 
-                      className="bg-background rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-grab hover:bg-muted shadow-lg select-none"
-                      style={{ border: '1px solid #FAFF50' }}
+                      className="bg-background border border-border rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-grab hover:bg-muted shadow-lg select-none"
                       onMouseDown={(e) => handleTextMouseDown(e, annotation)}
                       onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
                       title="Click and drag to move horizontally, double-click to delete"
                     >
-                      <div className="text-foreground">{annotation.text || ''}</div>
+                      <div className="font-medium" style={{ color: '#FAFF50' }}>{formatTime(annotation.time, timeframe)}</div>
+                      <div className="text-muted-foreground">{annotation.price?.toFixed(2)}%</div>
+                      <div className="text-foreground mt-1">{annotation.text || ''}</div>
                     </div>
                   </div>
                 );
@@ -1687,33 +1603,61 @@ export function ComparisonChart({
                     key={annotation.id}
                     className="absolute"
                     style={{ 
-                      left: '10px', 
+                      left: `${xPercent}%`, 
                       top: '20px', 
-                      transform: 'none'
+                      transform: `translateX(calc(-50% + ${annotation.horizontalOffset || 0}px))`
                     }}
                   >
                     <div 
-                      className="bg-background rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-grab hover:bg-muted shadow-lg select-none"
-                      style={{ border: '1px solid #AA99FF' }}
-                      onMouseDown={(e) => {
-                        setIsDraggingText(true);
-                        setDragTextAnnotationId(annotation.id);
-                        setDragStartX(e.clientX);
-                        setDragStartOffset((annotation.type === 'text' && 'horizontalOffset' in annotation ? annotation.horizontalOffset : 0) || 0);
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }}
+                      className="bg-background border border-border rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-grab hover:bg-muted shadow-lg select-none"
+                      onMouseDown={(e) => handleTextMouseDown(e, annotation)}
                       onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
                       title="Click and drag to move horizontally, double-click to delete"
                     >
-                      <div className="text-foreground">{annotation.text || ''}</div>
+                      <div className="font-medium" style={{ color: '#AA99FF' }}>{formatTime(annotation.time, timeframe)}</div>
+                      <div className="text-muted-foreground">{annotation.price?.toFixed(2)}%</div>
+                      <div className="text-foreground mt-1">{annotation.text || ''}</div>
                     </div>
                   </div>
                 );
-              } else if (annotation.type === 'percent-range') {
-                // Percent-range measurements are now rendered directly on the chart
-                // No overlay rendering needed since they show per-ticker deltas
-                return null;
+              } else if (annotation.type === 'percentage' && annotation.startTimestamp && annotation.endTimestamp) {
+                // Percentage measurements - display at midpoint
+                const startIndex = chartData?.findIndex((d: any) => d.timestamp === annotation.startTimestamp) ?? -1;
+                const endIndex = chartData?.findIndex((d: any) => d.timestamp === annotation.endTimestamp) ?? -1;
+                if (startIndex === -1 || endIndex === -1) return null;
+                
+                const totalDataPoints = (chartData?.length ?? 1) - 1;
+                const startPercent = totalDataPoints > 0 ? (startIndex / totalDataPoints) * 100 : 0;
+                const endPercent = totalDataPoints > 0 ? (endIndex / totalDataPoints) * 100 : 0;
+                const midPercent = (startPercent + endPercent) / 2;
+                
+                const isPositive = (annotation.percentage || 0) >= 0;
+                
+                return (
+                  <div
+                    key={annotation.id}
+                    className="absolute"
+                    style={{ left: `${midPercent}%`, top: '20px', transform: 'translateX(-50%)' }}
+                  >
+                    <div 
+                      className="bg-background border border-white/30 rounded px-2 py-1 text-xs pointer-events-auto shadow-lg cursor-pointer hover:bg-muted"
+                      onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
+                      title="Double-click to delete"
+                    >
+                      <div className={`font-bold text-center ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
+                        {isPositive ? '↗' : '↘'} {(annotation.percentage || 0).toFixed(2)}%
+                      </div>
+                      <div className="text-xs text-muted-foreground text-center">
+                        {(annotation.startPrice || 0).toFixed(2)}% → {(annotation.endPrice || 0).toFixed(2)}%
+                      </div>
+                      {annotation.startTime && annotation.endTime && (
+                        <div className="text-[10px] text-muted-foreground text-center mt-1">
+                          {formatTime(annotation.startTime, timeframe)} → {formatTime(annotation.endTime, timeframe)}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
               }
               return null;
             })}
@@ -1832,7 +1776,7 @@ export function ComparisonChart({
                 />
                 <Tooltip 
                   content={<CustomTooltip />} 
-                  active={!isDragging && isHoverEnabled}
+                  active={!isDragging}
                   allowEscapeViewBox={{ x: false, y: false }}
                 />
                 
@@ -1841,55 +1785,32 @@ export function ComparisonChart({
 
                 {/* Geometry probe to capture Recharts internals */}
                 <Customized component={(props: any) => {
-                  const { offset, yAxisMap, xAxisMap } = props;
-                  if (offset && yAxisMap && xAxisMap) {
+                  const { offset, yAxisMap } = props;
+                  if (offset && yAxisMap) {
                     const yAxis = yAxisMap?.yAxisId || yAxisMap?.['0'] || Object.values(yAxisMap || {})[0];
-                    const xAxis = xAxisMap?.xAxisId || xAxisMap?.['0'] || Object.values(xAxisMap || {})[0];
-                    if (yAxis?.scale && typeof yAxis.scale === 'function' && xAxis?.scale && typeof xAxis.scale === 'function') {
+                    if (yAxis?.scale && typeof yAxis.scale === 'function') {
                       // Update layout ref with real chart geometry
                       layoutRef.current = { offset, yScale: yAxis.scale };
-                      // Set scales ready when both axes are available
-                      setScalesReady(true);
                     }
                   }
                   return null; // Don't render anything
                 }} />
                 
-                {/* Vertical Annotation Reference Lines - yellow vertical lines */}
-                {chartData && chartData.length > 0 && annotations.filter(annotation => annotation.type === 'vertical' && 'timestamp' in annotation).map((annotation) => {
-                  // Find the data index for this annotation
-                  const dataIndex = chartData.findIndex((d: any) => d.timestamp === annotation.timestamp);
-                  
-                  // If annotation timestamp is not in current data, try to find the closest one
-                  let targetDataPoint;
-                  if (dataIndex !== -1) {
-                    targetDataPoint = chartData[dataIndex];
-                  } else {
-                    // Find closest timestamp if exact match not found
-                    const distances = chartData.map((d: any, index) => ({
-                      index,
-                      distance: Math.abs(d.timestamp - annotation.timestamp),
-                      dataPoint: d
-                    }));
-                    const closest = distances.reduce((min, current) => 
-                      current.distance < min.distance ? current : min
-                    );
-                    targetDataPoint = closest.dataPoint;
-                  }
-                  
-                  return targetDataPoint ? (
+                {/* Text Annotation Reference Lines - yellow vertical lines */}
+                {annotations.filter(annotation => annotation.type === 'text').map((annotation) => {
+                  // Find the actual date value from chart data that matches this annotation
+                  const dataPoint = chartData?.find((d: any) => d.timestamp === annotation.timestamp);
+                  return dataPoint ? (
                     <ReferenceLine 
                       key={annotation.id}
-                      x={targetDataPoint.date}
+                      x={dataPoint.date}
                       stroke="#FAFF50"
-                      strokeWidth={3}
+                      strokeWidth={1}
                       vectorEffect="non-scaling-stroke"
                       shapeRendering="crispEdges"
                     />
                   ) : null;
                 })}
-                
-                {/* Tolerance areas moved outside chart to prevent coordinate system interference */}
 
                 {/* Horizontal Annotation Reference Lines - purple styling */}
                 {annotations.filter(annotation => annotation.type === 'horizontal').map((annotation) => {
@@ -1908,76 +1829,47 @@ export function ComparisonChart({
                 })}
 
 
-                {/* Simple Percentage Range Measurements - ticker-independent Y-axis overlay tool */}
-                {chartData && chartData.length > 0 && annotations.filter(annotation => annotation.type === 'percent-range' && annotation.endTimestamp).map((annotation) => {
-                  // Find start and end data points for timestamps
-                  let startDataPoint = chartData?.find((d: any) => d.timestamp === annotation.startTimestamp);
-                  let endDataPoint = chartData?.find((d: any) => d.timestamp === annotation.endTimestamp);
+                {/* Percentage Measurement Lines - diagonal arrows */}
+                {annotations.filter(annotation => annotation.type === 'percentage' && annotation.startTimestamp && annotation.endTimestamp).map((annotation) => {
+                  const startDataPoint = chartData?.find((d: any) => d.timestamp === annotation.startTimestamp);
+                  const endDataPoint = chartData?.find((d: any) => d.timestamp === annotation.endTimestamp);
                   
-                  // Skip if we can't find valid data points
-                  if (!startDataPoint || !endDataPoint || !startDataPoint.date || !endDataPoint.date) {
-                    return null;
-                  }
+                  if (!startDataPoint || !endDataPoint) return null;
                   
-                  // Use actual mouse click Y positions for chart background percentage
-                  // For now, use middle of Y-axis range as placeholder positions
-                  const startAvgPercent = 0; // Will be set by actual mouse click Y position
-                  const endAvgPercent = 2.5; // Will be set by actual mouse click Y position
-                  
-                  // Calculate percentage change between the two points  
-                  const percentageChange = endAvgPercent - startAvgPercent;
-                  const isPositive = percentageChange >= 0;
-                  const lineColor = isPositive ? '#22C55E' : '#EF4444';
+                  const isPositive = (annotation.percentage || 0) >= 0;
+                  const lineColor = isPositive ? '#22C55E' : '#EF4444'; // Green for positive, red for negative
                   
                   return (
-                    <g key={`percent-range-${annotation.id}`}>
-                      {/* Vertical start line */}
-                      <ReferenceLine 
-                        x={startDataPoint.date}
-                        stroke="#888"
-                        strokeWidth={2}
-                        strokeDasharray="5,5"
-                        className="opacity-60"
-                      />
-                      
-                      {/* Vertical end line */}
-                      <ReferenceLine 
-                        x={endDataPoint.date}
-                        stroke="#888"
-                        strokeWidth={2}
-                        strokeDasharray="5,5"
-                        className="opacity-60"
-                      />
-                      
-                      {/* Simple measurement line between average Y-axis points */}
+                    <g key={annotation.id}>
+                      {/* Main diagonal line */}
                       <ReferenceLine 
                         segment={[
-                          { x: startDataPoint.date, y: startAvgPercent },
-                          { x: endDataPoint.date, y: endAvgPercent }
+                          { x: startDataPoint.date, y: annotation.startPrice },
+                          { x: endDataPoint.date, y: annotation.endPrice }
                         ]}
                         stroke={lineColor}
-                        strokeWidth={3}
-                        className="opacity-80"
+                        strokeWidth={2}
+                        vectorEffect="non-scaling-stroke"
                       />
                       
-                      {/* Start point marker */}
+                      {/* Start point circle */}
                       <ReferenceDot 
                         x={startDataPoint.date}
-                        y={startAvgPercent}
-                        r={4}
-                        fill="#888"
-                        stroke="#fff"
-                        strokeWidth={2}
-                      />
-                      
-                      {/* End point marker with color based on direction */}
-                      <ReferenceDot 
-                        x={endDataPoint.date}
-                        y={endAvgPercent}
+                        y={annotation.startPrice}
                         r={4}
                         fill={lineColor}
-                        stroke="#fff"
-                        strokeWidth={2}
+                        stroke={lineColor}
+                        strokeWidth={1}
+                      />
+                      
+                      {/* End point circle */}
+                      <ReferenceDot 
+                        x={endDataPoint.date}
+                        y={annotation.endPrice}
+                        r={4}
+                        fill={lineColor}
+                        stroke={lineColor}
+                        strokeWidth={1}
                       />
                     </g>
                   );

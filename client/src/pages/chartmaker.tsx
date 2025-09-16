@@ -43,12 +43,20 @@ interface GlobalTickerSearchProps {
 
 // Annotation persistence helpers
 const getStoredAnnotations = (): Record<string, Annotation[]> => {
-  // No longer persist annotations to prevent memory issues and runtime crashes
-  return {};
+  try {
+    const stored = localStorage.getItem('chartmaker-annotations');
+    return stored ? JSON.parse(stored) : {};
+  } catch {
+    return {};
+  }
 };
 
 const saveAnnotations = (annotationsBySymbol: Record<string, Annotation[]>) => {
-  // No longer save annotations to localStorage to prevent crashes
+  try {
+    localStorage.setItem('chartmaker-annotations', JSON.stringify(annotationsBySymbol));
+  } catch {
+    // Ignore localStorage errors
+  }
 };
 
 const getRememberSetting = (): boolean => {
@@ -77,9 +85,15 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
   const [recentSearches, setRecentSearches] = useState<GlobalSearchResult[]>([]);
-  const [chartResetKey, setChartResetKey] = useState(0);
   
-  // Remove annotation state management - charts handle their own state now
+  // Annotation state management
+  const [annotationsBySymbol, setAnnotationsBySymbol] = useState<Record<string, Annotation[]>>(() => getStoredAnnotations());
+  const [rememberPerTicker, setRememberPerTicker] = useState(() => getRememberSetting());
+  
+  // Current annotations for selected stock
+  const currentAnnotations = selectedStock && rememberPerTicker 
+    ? annotationsBySymbol[selectedStock.displaySymbol] || []
+    : [];
 
   // Load recent searches from localStorage on mount
   useEffect(() => {
@@ -172,9 +186,35 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
     localStorage.setItem('recentTickerSearches', JSON.stringify(newRecent));
   };
   
-  // Clear all annotations function
+  // Annotation management functions
+  const handleAnnotationsChange = (newAnnotations: Annotation[]) => {
+    if (selectedStock && rememberPerTicker) {
+      const updated = {
+        ...annotationsBySymbol,
+        [selectedStock.displaySymbol]: newAnnotations
+      };
+      setAnnotationsBySymbol(updated);
+      saveAnnotations(updated);
+    }
+  };
+  
+  const handleRememberToggle = (remember: boolean) => {
+    setRememberPerTicker(remember);
+    saveRememberSetting(remember);
+  };
+  
+  const clearCurrentTickerAnnotations = () => {
+    if (selectedStock) {
+      const updated = { ...annotationsBySymbol };
+      delete updated[selectedStock.displaySymbol];
+      setAnnotationsBySymbol(updated);
+      saveAnnotations(updated);
+    }
+  };
+  
   const clearAllAnnotations = () => {
-    setChartResetKey(prev => prev + 1);
+    setAnnotationsBySymbol({});
+    saveAnnotations({});
   };
 
   const getTypeColor = (type: string) => {
@@ -316,13 +356,15 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
       {selectedStock && (
         <div className="mt-6">
           <PriceChart
-            key={`${selectedStock.displaySymbol}-price-chart-${chartResetKey}`}
             symbol={selectedStock.displaySymbol}
             name={selectedStock.description}
             currentPrice="--"
             percentChange="0"
             marketCap="--"
-            onClearAll={clearAllAnnotations}
+            annotations={currentAnnotations}
+            onAnnotationsChange={handleAnnotationsChange}
+            rememberPerTicker={rememberPerTicker}
+            onClearAll={Object.keys(annotationsBySymbol).length > 0 ? clearAllAnnotations : undefined}
           />
         </div>
       )}

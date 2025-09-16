@@ -9,7 +9,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tooltip as HoverTooltip, TooltipContent as HoverTooltipContent, TooltipProvider, TooltipTrigger as HoverTooltipTrigger } from '@/components/ui/tooltip';
-import { Switch } from '@/components/ui/switch';
 import { Loader2, TrendingUp, TrendingDown, Plus, Calendar as CalendarIcon, X, Download, ChevronDown, MessageSquare, Ruler, Minus, RotateCcw } from 'lucide-react';
 import { format, subDays, subMonths, subYears } from 'date-fns';
 import html2canvas from 'html2canvas';
@@ -157,9 +156,6 @@ export function PriceChart({
   const [dragVerticalStartX, setDragVerticalStartX] = useState(0);
   const [dragVerticalStartTimestamp, setDragVerticalStartTimestamp] = useState(0);
   
-  // State for hover tool toggle
-  const [isHoverEnabled, setIsHoverEnabled] = useState(false);
-  
   // Use controlled annotations if provided, otherwise use internal state
   const annotations = controlledAnnotations || internalAnnotations;
   
@@ -241,16 +237,16 @@ export function PriceChart({
     // Prioritize the closest annotation (horizontal or vertical)
     if (closestHorizontalAnnotation && (!closestVerticalAnnotation || closestHorizontalDistance < closestVerticalDistance * 0.5)) {
       setIsDragging(true);
-      setDragAnnotationId(closestHorizontalAnnotation.id!);
+      setDragAnnotationId(closestHorizontalAnnotation.id);
       setDragStartY(mouseY);
-      setDragStartPrice(closestHorizontalAnnotation.price!);
+      setDragStartPrice(closestHorizontalAnnotation.price);
       event.preventDefault();
       event.stopPropagation();
     } else if (closestVerticalAnnotation) {
       setIsDraggingVertical(true);
-      setDragVerticalAnnotationId(closestVerticalAnnotation.id!);
+      setDragVerticalAnnotationId(closestVerticalAnnotation.id);
       setDragVerticalStartX(event.clientX);
-      setDragVerticalStartTimestamp(closestVerticalAnnotation.timestamp!);
+      setDragVerticalStartTimestamp(closestVerticalAnnotation.timestamp);
       event.preventDefault();
       event.stopPropagation();
     }
@@ -503,12 +499,6 @@ export function PriceChart({
           year: '2-digit'
         });
       case '1Y':
-        return date.toLocaleDateString('en-US', { 
-          month: 'short',
-          year: '2-digit'
-        });
-      case '3Y':
-      case '5Y':
         return date.toLocaleDateString('en-US', { 
           month: 'short',
           year: '2-digit'
@@ -2124,20 +2114,6 @@ export function PriceChart({
                   </Button>
                 </div>
                 
-                {/* Hover Tool Toggle */}
-                <div className="flex items-center gap-2 px-3 py-1 bg-muted/30 rounded-md border border-border">
-                  <label htmlFor="hover-toggle" className="text-xs text-muted-foreground cursor-pointer">
-                    Hover Tool
-                  </label>
-                  <Switch
-                    id="hover-toggle"
-                    checked={isHoverEnabled}
-                    onCheckedChange={setIsHoverEnabled}
-                    className="data-[state=checked]:bg-[#5AF5FA] data-[state=unchecked]:bg-muted"
-                    data-testid="switch-hover-tool"
-                  />
-                </div>
-                
                 {onClearAll && (
                   <Button
                     variant="outline"
@@ -2251,19 +2227,20 @@ export function PriceChart({
                         key={annotation.id}
                         className="absolute"
                         style={{ 
-                          left: '10px', 
+                          left: `${xPercent}%`, 
                           top: '20px', 
-                          transform: `translateX(${annotation.horizontalOffset || 0}px)`
+                          transform: `translateX(calc(-50% + ${annotation.horizontalOffset || 0}px))`
                         }}
                       >
                         <div 
-                          className="bg-background rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-grab hover:bg-muted shadow-lg select-none"
-                          style={{ border: '1px solid #FAFF50' }}
+                          className="bg-background border border-border rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-grab hover:bg-muted shadow-lg select-none"
                           onMouseDown={(e) => handleTextMouseDown(e, annotation)}
                           onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
                           title="Click and drag to move horizontally, double-click to delete"
                         >
-                          <div className="text-foreground">{annotation.text || ''}</div>
+                          <div className="font-medium" style={{ color: '#FAFF50' }}>{formatTime(annotation.time, selectedTimeframe)}</div>
+                          <div className="text-muted-foreground">{formatPrice(annotation.price)}</div>
+                          <div className="text-foreground mt-1">{annotation.text || ''}</div>
                         </div>
                       </div>
                     );
@@ -2279,15 +2256,16 @@ export function PriceChart({
                       <div
                         key={annotation.id}
                         className="absolute"
-                        style={{ left: '10px', top: '20px', transform: 'none' }}
+                        style={{ left: `${xPercent}%`, top: '20px', transform: 'translateX(-50%)' }}
                       >
                         <div 
-                          className="bg-background rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-pointer hover:bg-muted shadow-lg"
-                          style={{ border: '1px solid #AA99FF' }}
+                          className="bg-background border border-border rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-pointer hover:bg-muted shadow-lg"
                           onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
                           title="Double-click to delete"
                         >
-                          <div className="text-foreground">{annotation.text || ''}</div>
+                          <div className="font-medium" style={{ color: '#AA99FF' }}>{formatTime(annotation.time, selectedTimeframe)}</div>
+                          <div className="text-muted-foreground">{formatPrice(annotation.price)}</div>
+                          <div className="text-foreground mt-1">{annotation.text || ''}</div>
                         </div>
                       </div>
                     );
@@ -2308,27 +2286,21 @@ export function PriceChart({
                       <div
                         key={annotation.id}
                         className="absolute"
-                        style={{ 
-                          left: '10px', 
-                          top: '20px', 
-                          transform: `translateX(${annotation.horizontalOffset || 0}px)`
-                        }}
+                        style={{ left: `${midPercent}%`, top: '20px', transform: 'translateX(-50%)' }}
                       >
                         <div 
-                          className="bg-background rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-grab hover:bg-muted shadow-lg select-none"
-                          style={{ border: `1px solid ${isPositive ? '#22C55E' : '#EF4444'}` }}
-                          onMouseDown={(e) => handleTextMouseDown(e, annotation)}
+                          className="bg-background border border-white/30 rounded px-2 py-1 text-xs pointer-events-auto shadow-lg cursor-pointer hover:bg-muted"
                           onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
-                          title="Click and drag to move horizontally, double-click to delete"
+                          title="Double-click to delete"
                         >
-                          <div className="text-foreground">
+                          <div className={`font-bold text-center ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
                             {isPositive ? '↗' : '↘'} {(annotation.percentage || 0).toFixed(2)}%
                           </div>
-                          <div className="text-xs text-muted-foreground">
+                          <div className="text-xs text-muted-foreground text-center">
                             {formatPrice(annotation.startPrice || 0)} → {formatPrice(annotation.endPrice || 0)}
                           </div>
                           {annotation.startTime && annotation.endTime && (
-                            <div className="text-[10px] text-muted-foreground mt-1">
+                            <div className="text-[10px] text-muted-foreground text-center mt-1">
                               {formatTime(annotation.startTime, selectedTimeframe)} → {formatTime(annotation.endTime, selectedTimeframe)}
                             </div>
                           )}
@@ -2443,7 +2415,7 @@ export function PriceChart({
                   />
                   
                   <Tooltip 
-                    active={!isDragging && isHoverEnabled}
+                    active={!isDragging}
                     allowEscapeViewBox={{ x: false, y: false }}
                     labelFormatter={(value) => {
                       const date = new Date(value);
@@ -2496,41 +2468,6 @@ export function PriceChart({
                       shapeRendering="crispEdges"
                     />
                   ))}
-                  
-                  {/* Tolerance areas for vertical line dragging - pale yellow highlights */}
-                  {annotations.filter(annotation => annotation.type === 'text').map((annotation) => {
-                    const dataIndex = chartData?.data?.findIndex(d => d.timestamp === annotation.timestamp) ?? -1;
-                    if (dataIndex === -1 || !chartData?.data) return null;
-                    
-                    const totalDataPoints = chartData.data.length - 1;
-                    const xPercent = totalDataPoints > 0 ? (dataIndex / totalDataPoints) * 100 : 0;
-                    const toleranceWidth = Math.max(2, chartData.data.length * 0.02) * (100 / totalDataPoints); // 2% tolerance as percentage
-                    
-                    return (
-                      <div
-                        key={`tolerance-${annotation.id}`}
-                        className="absolute pointer-events-auto cursor-grab active:cursor-grabbing"
-                        style={{
-                          left: `${Math.max(0, xPercent - toleranceWidth/2)}%`,
-                          width: `${Math.min(toleranceWidth, 100 - Math.max(0, xPercent - toleranceWidth/2))}%`,
-                          top: '80px', // Start below annotation text area
-                          height: 'calc(100% - 140px)', // Cover chart area
-                          backgroundColor: 'rgba(250, 255, 80, 0.1)', // Very pale yellow
-                          borderLeft: '1px solid rgba(250, 255, 80, 0.3)',
-                          borderRight: '1px solid rgba(250, 255, 80, 0.3)'
-                        }}
-                        title="Click and drag to move vertical line horizontally"
-                        onMouseDown={(e) => {
-                          setIsDraggingVertical(true);
-                          setDragVerticalAnnotationId(annotation.id);
-                          setDragVerticalStartX(e.clientX);
-                          setDragVerticalStartTimestamp(annotation.timestamp);
-                          e.preventDefault();
-                          e.stopPropagation();
-                        }}
-                      />
-                    );
-                  })}
 
                   {/* Horizontal Annotation Reference Lines - purple styling */}
                   {annotations.filter(annotation => annotation.type === 'horizontal').map((annotation) => {
@@ -2880,7 +2817,7 @@ export function PriceChart({
                   />
                   
                   <Tooltip 
-                    active={!isDragging && isHoverEnabled}
+                    active={!isDragging}
                     allowEscapeViewBox={{ x: false, y: false }}
                     labelFormatter={(value) => {
                       const date = new Date(value);
@@ -3106,7 +3043,6 @@ export function PriceChart({
             pendingPercentageStart={pendingPercentageStart}
             setPendingPercentageStart={setPendingPercentageStart}
             updateAnnotations={updateAnnotations}
-            isHoverEnabled={isHoverEnabled}
           />
         </TabsContent>
         </Tabs>
