@@ -795,6 +795,21 @@ export function ComparisonChart({
       setAnnotationInput('');
       setEditingAnnotation(null);
       setIsEditMode(false);
+    } else if (annotationMode === 'vertical') {
+      // Vertical line annotation mode - single click
+      const newAnnotation: VerticalAnnotation = {
+        id: `vertical-${Date.now()}`,
+        type: 'vertical',
+        text: 'Vertical Line',
+        x: 0, // Will be calculated during rendering
+        y: 0, // Will be calculated during rendering  
+        timestamp,
+        price: percentageValue,
+        time
+      };
+      
+      // Add directly to annotations without text input
+      updateAnnotations?.([...annotations, newAnnotation]);
     } else if (annotationMode === 'horizontal') {
       // This case is now handled earlier in the function for freehand placement
       // This code path should not be reached for horizontal annotations
@@ -1840,8 +1855,8 @@ export function ComparisonChart({
                   return null; // Don't render anything
                 }} />
                 
-                {/* Text Annotation Reference Lines - yellow vertical lines */}
-                {chartData && chartData.length > 0 && annotations.filter(annotation => annotation.type === 'text' && 'timestamp' in annotation).map((annotation) => {
+                {/* Vertical Annotation Reference Lines - yellow vertical lines */}
+                {chartData && chartData.length > 0 && annotations.filter(annotation => annotation.type === 'vertical' && 'timestamp' in annotation).map((annotation) => {
                   // Find the data index for this annotation
                   const dataIndex = chartData.findIndex((d: any) => d.timestamp === annotation.timestamp);
                   
