@@ -202,7 +202,7 @@ export function PriceChart({
     const priceAtMouse = maxPrice - (relativeY / chartHeight) * priceRange;
     
     // Find the closest horizontal annotation
-    const horizontalAnnotations = annotations.filter((ann): ann is Annotation => ann.type === 'horizontal');
+    const horizontalAnnotations = annotations.filter(ann => ann.type === 'horizontal');
     let closestHorizontalAnnotation: Annotation | null = null;
     let closestHorizontalDistance = Infinity;
     
@@ -216,7 +216,7 @@ export function PriceChart({
     });
     
     // Find the closest vertical annotation (text annotation)
-    const verticalAnnotations = annotations.filter((ann): ann is Annotation => ann.type === 'text');
+    const verticalAnnotations = annotations.filter(ann => ann.type === 'text');
     let closestVerticalAnnotation: Annotation | null = null;
     let closestVerticalDistance = Infinity;
     
