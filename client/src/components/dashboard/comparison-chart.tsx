@@ -261,6 +261,147 @@ export function ComparisonChart({
     }
   };
 
+  // Fetch chart data for all tickers - must be declared before useEffect that depends on chartData
+  const tickerQueries = useQueries({
+    queries: tickers.map(ticker => ({
+      queryKey: ['/api/stocks', ticker.symbol, 'chart', timeframe, startDate?.getTime(), endDate?.getTime()],
+      queryFn: async () => {
+        let url = `/api/stocks/${ticker.symbol}/chart?timeframe=${timeframe}`;
+        
+        // Add custom date range parameters for Custom timeframe
+        if (timeframe === 'Custom' && startDate && endDate) {
+          const fromTimestamp = Math.floor(startDate.getTime() / 1000);
+          const toTimestamp = Math.floor(endDate.getTime() / 1000);
+          url = `/api/stocks/${ticker.symbol}/chart?from=${fromTimestamp}&to=${toTimestamp}&timeframe=Custom`;
+        }
+        
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Failed to fetch chart data');
+        return response.json();
+      },
+      enabled: !!ticker.symbol,
+      staleTime: 0, // Always refetch when timeframe changes
+      cacheTime: 2 * 60 * 1000, // Keep in cache for 2 minutes
+    }))
+  });
+
+  // Helper function to format dates properly based on timeframe (like main price chart)
+  const formatTime = (timeValue: any, timeframe: string) => {
+    // Handle both timestamp numbers and time strings like the main chart
+    const date = typeof timeValue === 'string' ? new Date(timeValue) : new Date(timeValue * 1000);
+    switch (timeframe) {
+      case '1D':
+      case '5D':
+      case '2W':
+        return date.toLocaleDateString('en-US', { 
+          month: 'numeric',
+          day: 'numeric',
+          year: '2-digit'
+        });
+      case '1M':
+      case '3M':
+        return date.toLocaleDateString('en-US', { 
+          month: 'numeric',
+          day: 'numeric',
+          year: '2-digit'
+        });
+      case '1Y':
+        return date.toLocaleDateString('en-US', { 
+          month: 'short',
+          year: '2-digit'
+        });
+      case 'Custom':
+        return date.toLocaleDateString('en-US', { 
+          month: 'numeric',
+          day: 'numeric',
+          year: '2-digit'
+        });
+      default:
+        return date.toLocaleDateString('en-US', { 
+          month: 'numeric',
+          day: 'numeric',
+          year: '2-digit'
+        });
+    }
+  };
+
+  // Process and align chart data for percentage calculation - must be declared before useEffect that depends on chartData
+  const chartData = useMemo(() => {
+    if (tickers.length === 0) return [];
+    
+    // Check if all queries have loaded successfully
+    const allLoaded = tickerQueries.every(query => query.isSuccess && query.data);
+    if (!allLoaded) return [];
+
+    // Get all the chart data
+    const allChartData = tickerQueries.map((query, index) => ({
+      ticker: tickers[index],
+      data: query.data?.data || []
+    })).filter(item => item.data.length > 0);
+
+    if (allChartData.length === 0) return [];
+
+    // Find common timestamps (intersection of all tickers)
+    const allTimestamps = allChartData.map(item => 
+      new Set(item.data.map((d: any) => d.timestamp as number))
+    );
+    
+    let commonTimestamps: number[];
+    if (allTimestamps.length === 1) {
+      commonTimestamps = Array.from(allTimestamps[0]) as number[];
+    } else {
+      // Find intersection of all timestamp sets
+      commonTimestamps = (Array.from(allTimestamps[0]) as number[]).filter(timestamp =>
+        allTimestamps.every(set => set.has(timestamp))
+      );
+    }
+
+    // Sort timestamps
+    commonTimestamps.sort((a, b) => a - b);
+
+    if (commonTimestamps.length === 0) return [];
+
+    // Calculate base prices for each ticker from the first common timestamp
+    const basePrices: Record<string, number> = {};
+    const firstTimestamp = commonTimestamps[0];
+    
+    allChartData.forEach(({ ticker, data }) => {
+      const firstPoint = data.find((d: any) => d.timestamp === firstTimestamp);
+      if (firstPoint) {
+        basePrices[ticker.symbol] = firstPoint.close;
+      }
+    });
+
+    // Build aligned chart data with percentage calculations
+    const alignedData: ChartDataPoint[] = commonTimestamps.map(timestamp => {
+      // Find the time string from the first ticker's data for this timestamp
+      const firstTickerData = allChartData[0]?.data.find((d: any) => d.timestamp === timestamp);
+      const timeString = firstTickerData?.time || new Date(timestamp * 1000).toISOString();
+      
+      const dataPoint: ChartDataPoint = {
+        timestamp,
+        date: formatTime(timeString, timeframe), // Use time string like main chart
+      };
+
+      // Add percentage data for each ticker
+      allChartData.forEach(({ ticker, data }) => {
+        const tickerPoint = data.find((d: any) => d.timestamp === timestamp);
+        const basePrice = basePrices[ticker.symbol];
+        
+        if (tickerPoint && basePrice > 0) {
+          // Calculate percentage change from base price
+          const percentageChange = ((tickerPoint.close - basePrice) / basePrice) * 100;
+          dataPoint[`${ticker.symbol}_percentage`] = parseFloat(percentageChange.toFixed(2));
+          dataPoint[`${ticker.symbol}_price`] = tickerPoint.close;
+        }
+      });
+
+      return dataPoint;
+    });
+
+    return alignedData;
+  }, [tickers, tickerQueries, timeframe]);
+
   // Add global mouse up listener to handle drag end outside chart
   useEffect(() => {
     if (isDragging || isDraggingText || isDraggingVertical) {
@@ -394,146 +535,7 @@ export function ComparisonChart({
     enabled: debouncedQuery.trim().length >= 2,
   });
 
-  // Fetch chart data for all tickers using useQueries for dynamic queries
-  const tickerQueries = useQueries({
-    queries: tickers.map(ticker => ({
-      queryKey: ['/api/stocks', ticker.symbol, 'chart', timeframe, startDate?.getTime(), endDate?.getTime()],
-      queryFn: async () => {
-        let url = `/api/stocks/${ticker.symbol}/chart?timeframe=${timeframe}`;
-        
-        // Add custom date range parameters for Custom timeframe
-        if (timeframe === 'Custom' && startDate && endDate) {
-          const fromTimestamp = Math.floor(startDate.getTime() / 1000);
-          const toTimestamp = Math.floor(endDate.getTime() / 1000);
-          url = `/api/stocks/${ticker.symbol}/chart?from=${fromTimestamp}&to=${toTimestamp}&timeframe=Custom`;
-        }
-        
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Failed to fetch chart data');
-        return response.json();
-      },
-      enabled: !!ticker.symbol,
-      staleTime: 0, // Always refetch when timeframe changes
-      cacheTime: 2 * 60 * 1000, // Keep in cache for 2 minutes
-    }))
-  });
-
-  // Helper function to format dates properly based on timeframe (like main price chart)
-  const formatTime = (timeValue: any, timeframe: string) => {
-    // Handle both timestamp numbers and time strings like the main chart
-    const date = typeof timeValue === 'string' ? new Date(timeValue) : new Date(timeValue * 1000);
-    switch (timeframe) {
-      case '1D':
-      case '5D':
-      case '2W':
-        return date.toLocaleDateString('en-US', { 
-          month: 'numeric',
-          day: 'numeric',
-          year: '2-digit'
-        });
-      case '1M':
-      case '3M':
-        return date.toLocaleDateString('en-US', { 
-          month: 'numeric',
-          day: 'numeric',
-          year: '2-digit'
-        });
-      case '1Y':
-        return date.toLocaleDateString('en-US', { 
-          month: 'short',
-          year: '2-digit'
-        });
-      case 'Custom':
-        return date.toLocaleDateString('en-US', { 
-          month: 'numeric',
-          day: 'numeric',
-          year: '2-digit'
-        });
-      default:
-        return date.toLocaleDateString('en-US', { 
-          month: 'numeric',
-          day: 'numeric',
-          year: '2-digit'
-        });
-    }
-  };
-
-  // Process and align chart data for percentage calculation
-  const chartData = useMemo(() => {
-    if (tickers.length === 0) return [];
-    
-    // Check if all queries have loaded successfully
-    const allLoaded = tickerQueries.every(query => query.isSuccess && query.data);
-    if (!allLoaded) return [];
-
-    // Get all the chart data
-    const allChartData = tickerQueries.map((query, index) => ({
-      ticker: tickers[index],
-      data: query.data?.data || []
-    })).filter(item => item.data.length > 0);
-
-    if (allChartData.length === 0) return [];
-
-    // Find common timestamps (intersection of all tickers)
-    const allTimestamps = allChartData.map(item => 
-      new Set(item.data.map((d: any) => d.timestamp as number))
-    );
-    
-    let commonTimestamps: number[];
-    if (allTimestamps.length === 1) {
-      commonTimestamps = Array.from(allTimestamps[0]) as number[];
-    } else {
-      // Find intersection of all timestamp sets
-      commonTimestamps = (Array.from(allTimestamps[0]) as number[]).filter(timestamp =>
-        allTimestamps.every(set => set.has(timestamp))
-      );
-    }
-
-    // Sort timestamps
-    commonTimestamps.sort((a, b) => a - b);
-
-    if (commonTimestamps.length === 0) return [];
-
-    // Calculate base prices for each ticker from the first common timestamp
-    const basePrices: Record<string, number> = {};
-    const firstTimestamp = commonTimestamps[0];
-    
-    allChartData.forEach(({ ticker, data }) => {
-      const firstPoint = data.find((d: any) => d.timestamp === firstTimestamp);
-      if (firstPoint) {
-        basePrices[ticker.symbol] = firstPoint.close;
-      }
-    });
-
-    // Build aligned chart data with percentage calculations
-    const alignedData: ChartDataPoint[] = commonTimestamps.map(timestamp => {
-      // Find the time string from the first ticker's data for this timestamp
-      const firstTickerData = allChartData[0]?.data.find((d: any) => d.timestamp === timestamp);
-      const timeString = firstTickerData?.time || new Date(timestamp * 1000).toISOString();
-      
-      const dataPoint: ChartDataPoint = {
-        timestamp,
-        date: formatTime(timeString, timeframe), // Use time string like main chart
-      };
-
-      // Add percentage data for each ticker
-      allChartData.forEach(({ ticker, data }) => {
-        const tickerPoint = data.find((d: any) => d.timestamp === timestamp);
-        const basePrice = basePrices[ticker.symbol];
-        
-        if (tickerPoint && basePrice > 0) {
-          // Calculate percentage change from base price
-          const percentageChange = ((tickerPoint.close - basePrice) / basePrice) * 100;
-          dataPoint[`${ticker.symbol}_percentage`] = parseFloat(percentageChange.toFixed(2));
-          dataPoint[`${ticker.symbol}_price`] = tickerPoint.close;
-        }
-      });
-
-      return dataPoint;
-    });
-
-    return alignedData;
-  }, [tickers, tickerQueries, timeframe]);
+  // Duplicate declarations removed - moved above to fix initialization order
 
   // Chart configuration for shadcn
   const chartConfig = useMemo(() => {
