@@ -10,6 +10,7 @@ import { Link } from "wouter";
 import { cn } from "@/lib/utils";
 import { PriceChart } from "@/components/dashboard/price-chart";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import logoImage from "@assets/IPO Intelligence@2x_1758042994231.png";
 
 interface GlobalSearchResult {
   symbol: string;
@@ -380,7 +381,12 @@ function ChartMaker() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <h1 className="text-2xl font-semibold">ChartMaker - Global Stock Charts</h1>
+              <img 
+                src={logoImage} 
+                alt="Intropic Chart Studio" 
+                className="w-[150px] h-auto"
+                data-testid="header-logo"
+              />
             </div>
             <div className="flex items-center gap-4">
               <ThemeToggle />
