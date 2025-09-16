@@ -9,6 +9,7 @@ import { createPortal } from "react-dom";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Search, X, Plus, Download, FileText, Image } from "lucide-react";
+import { Switch } from '@/components/ui/switch';
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { saveAs } from 'file-saver';
@@ -97,6 +98,9 @@ export function ComparisonChart({
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
   const [recentSearches, setRecentSearches] = useState<SearchResult[]>([]);
   const { toast } = useToast();
+  
+  // Hover tool toggle state
+  const [showHoverTooltip, setShowHoverTooltip] = useState(true);
 
   // Annotation UI state (non-conflicting with props)
   const [showAnnotationInput, setShowAnnotationInput] = useState(false);
@@ -1383,6 +1387,20 @@ export function ComparisonChart({
           )}
 
           {/* Annotation Management - removed clear all button per user request */}
+          
+          {/* Hover Tool Toggle */}
+          <div className="flex items-center gap-2">
+            <label htmlFor="hover-tool-toggle-comparison" className="text-xs text-muted-foreground">
+              Hover tool
+            </label>
+            <Switch
+              id="hover-tool-toggle-comparison"
+              checked={showHoverTooltip}
+              onCheckedChange={setShowHoverTooltip}
+              className="scale-75"
+              data-testid="switch-hover-tool-comparison"
+            />
+          </div>
         
         </div>
       </div>
@@ -1785,11 +1803,13 @@ export function ComparisonChart({
                   domain={[(dataMin: any) => Math.floor(Number(dataMin) - 5), (dataMax: any) => Math.ceil(Number(dataMax) + 5)]}
                   tickFormatter={(value) => `${value > 0 ? '+' : ''}${Number(value).toFixed(1)}%`}
                 />
-                <Tooltip 
-                  content={<CustomTooltip />} 
-                  active={!isDragging}
-                  allowEscapeViewBox={{ x: false, y: false }}
-                />
+                {showHoverTooltip && (
+                  <Tooltip 
+                    content={<CustomTooltip />} 
+                    active={!isDragging}
+                    allowEscapeViewBox={{ x: false, y: false }}
+                  />
+                )}
                 
                 {/* Zero reference line */}
                 <ReferenceLine y={0} stroke="white" strokeWidth={1} />

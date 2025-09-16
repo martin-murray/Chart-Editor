@@ -10,6 +10,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tooltip as HoverTooltip, TooltipContent as HoverTooltipContent, TooltipProvider, TooltipTrigger as HoverTooltipTrigger } from '@/components/ui/tooltip';
 import { Loader2, TrendingUp, TrendingDown, Plus, Calendar as CalendarIcon, X, Download, ChevronDown, MessageSquare, Ruler, Minus, RotateCcw } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { format, subDays, subMonths, subYears } from 'date-fns';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -161,6 +162,9 @@ export function PriceChart({
   
   // Use controlled annotations if provided, otherwise use internal state
   const annotations = controlledAnnotations || internalAnnotations;
+  
+  // Hover tool toggle state
+  const [showHoverTooltip, setShowHoverTooltip] = useState(true);
   
   // Helper function to update annotations in both controlled and uncontrolled modes
   const updateAnnotations = (newAnnotations: Annotation[] | ((prev: Annotation[]) => Annotation[])) => {
@@ -2145,6 +2149,20 @@ export function PriceChart({
                   </Button>
                 </div>
                 
+                {/* Hover Tool Toggle */}
+                <div className="flex items-center gap-2">
+                  <label htmlFor="hover-tool-toggle" className="text-xs text-muted-foreground">
+                    Hover tool
+                  </label>
+                  <Switch
+                    id="hover-tool-toggle"
+                    checked={showHoverTooltip}
+                    onCheckedChange={setShowHoverTooltip}
+                    className="scale-75"
+                    data-testid="switch-hover-tool"
+                  />
+                </div>
+                
                 {onClearAll && (
                   <Button
                     variant="outline"
@@ -2445,35 +2463,37 @@ export function PriceChart({
                     width={60}
                   />
                   
-                  <Tooltip 
-                    active={!isDragging}
-                    allowEscapeViewBox={{ x: false, y: false }}
-                    labelFormatter={(value) => {
-                      const date = new Date(value);
-                      const dateStr = formatTime(value, selectedTimeframe);
-                      const timeStr = date.toLocaleTimeString('en-US', { 
-                        hour: '2-digit', 
-                        minute: '2-digit',
-                        second: '2-digit',
-                        hour12: false 
-                      });
-                      return `${dateStr} ${timeStr}`;
-                    }}
-                    formatter={(value: number, name: string) => {
-                      if (name === 'close') {
-                        return [formatPrice(value), 'Price'];
-                      } else if (name === 'percentageChange') {
-                        return [`${value.toFixed(2)}%`, 'Change'];
-                      }
-                      return [value, name];
-                    }}
-                    contentStyle={{
-                      backgroundColor: '#121212',
-                      border: '1px solid #333333',
-                      borderRadius: '6px',
-                      color: '#F7F7F7'
-                    }}
-                  />
+                  {showHoverTooltip && (
+                    <Tooltip 
+                      active={!isDragging}
+                      allowEscapeViewBox={{ x: false, y: false }}
+                      labelFormatter={(value) => {
+                        const date = new Date(value);
+                        const dateStr = formatTime(value, selectedTimeframe);
+                        const timeStr = date.toLocaleTimeString('en-US', { 
+                          hour: '2-digit', 
+                          minute: '2-digit',
+                          second: '2-digit',
+                          hour12: false 
+                        });
+                        return `${dateStr} ${timeStr}`;
+                      }}
+                      formatter={(value: number, name: string) => {
+                        if (name === 'close') {
+                          return [formatPrice(value), 'Price'];
+                        } else if (name === 'percentageChange') {
+                          return [`${value.toFixed(2)}%`, 'Change'];
+                        }
+                        return [value, name];
+                      }}
+                      contentStyle={{
+                        backgroundColor: '#121212',
+                        border: '1px solid #333333',
+                        borderRadius: '6px',
+                        color: '#F7F7F7'
+                      }}
+                    />
+                  )}
                   
                   {/* Mountain area chart with gradient fill */}
                   <Area
@@ -2847,38 +2867,40 @@ export function PriceChart({
                     domain={[0, 'dataMax']}
                   />
                   
-                  <Tooltip 
-                    active={!isDragging}
-                    allowEscapeViewBox={{ x: false, y: false }}
-                    labelFormatter={(value) => {
-                      const date = new Date(value);
-                      const dateStr = formatTime(value, selectedTimeframe);
-                      const timeStr = date.toLocaleTimeString('en-US', { 
-                        hour: '2-digit', 
-                        minute: '2-digit',
-                        second: '2-digit',
-                        hour12: false 
-                      });
-                      return `${dateStr} ${timeStr}`;
-                    }}
-                    formatter={(value: number, name: string, props: any) => {
-                      // Get the data point to determine color based on close vs open
-                      const dataPoint = props.payload;
-                      const isBullish = dataPoint ? dataPoint.close >= dataPoint.open : true;
-                      const color = isBullish ? '#22c55e' : '#ef4444';
-                      return [
-                        <span style={{ color }}>{formatNumber(value)}</span>, 
-                        <span style={{ color: '#F7F7F7' }}>Volume</span>
-                      ];
-                    }}
-                    contentStyle={{
-                      backgroundColor: '#121212',
-                      border: '1px solid #333333',
-                      borderRadius: '6px',
-                      color: '#F7F7F7',
-                      fontSize: '12px'
-                    }}
-                  />
+                  {showHoverTooltip && (
+                    <Tooltip 
+                      active={!isDragging}
+                      allowEscapeViewBox={{ x: false, y: false }}
+                      labelFormatter={(value) => {
+                        const date = new Date(value);
+                        const dateStr = formatTime(value, selectedTimeframe);
+                        const timeStr = date.toLocaleTimeString('en-US', { 
+                          hour: '2-digit', 
+                          minute: '2-digit',
+                          second: '2-digit',
+                          hour12: false 
+                        });
+                        return `${dateStr} ${timeStr}`;
+                      }}
+                      formatter={(value: number, name: string, props: any) => {
+                        // Get the data point to determine color based on close vs open
+                        const dataPoint = props.payload;
+                        const isBullish = dataPoint ? dataPoint.close >= dataPoint.open : true;
+                        const color = isBullish ? '#22c55e' : '#ef4444';
+                        return [
+                          <span style={{ color }}>{formatNumber(value)}</span>, 
+                          <span style={{ color: '#F7F7F7' }}>Volume</span>
+                        ];
+                      }}
+                      contentStyle={{
+                        backgroundColor: '#121212',
+                        border: '1px solid #333333',
+                        borderRadius: '6px',
+                        color: '#F7F7F7',
+                        fontSize: '12px'
+                      }}
+                    />
+                  )}
                   
                   <Bar 
                     dataKey="volume" 
