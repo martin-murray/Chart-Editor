@@ -116,6 +116,12 @@ export function ComparisonChart({
   const [dragStartX, setDragStartX] = useState(0);
   const [dragStartOffset, setDragStartOffset] = useState(0);
   
+  // Vertical line horizontal drag state
+  const [isDraggingVertical, setIsDraggingVertical] = useState(false);
+  const [dragVerticalAnnotationId, setDragVerticalAnnotationId] = useState<string | null>(null);
+  const [dragVerticalStartX, setDragVerticalStartX] = useState(0);
+  const [dragVerticalStartTimestamp, setDragVerticalStartTimestamp] = useState(0);
+  
   // Recharts geometry capture for precise positioning
   const layoutRef = useRef<{offset: any, yScale: any} | null>(null);
   
@@ -143,22 +149,56 @@ export function ComparisonChart({
     
     // Find the closest horizontal annotation
     const horizontalAnnotations = annotations.filter((ann): ann is Annotation => ann.type === 'horizontal');
-    let closestAnnotation: Annotation | null = null;
-    let closestDistance = Infinity;
+    let closestHorizontalAnnotation: Annotation | null = null;
+    let closestHorizontalDistance = Infinity;
     
     horizontalAnnotations.forEach(annotation => {
       const distance = Math.abs(annotation.price - percentageAtMouse);
-      if (distance < closestDistance && distance < 0.5) { // Within 0.5% tolerance - much more precise
-        closestDistance = distance;
-        closestAnnotation = annotation;
+      if (distance < closestHorizontalDistance && distance < 0.5) { // Within 0.5% tolerance - much more precise
+        closestHorizontalDistance = distance;
+        closestHorizontalAnnotation = annotation;
       }
     });
     
-    if (closestAnnotation) {
+    // Find the closest vertical annotation (text annotation)
+    const verticalAnnotations = annotations.filter((ann): ann is Annotation => ann.type === 'text');
+    let closestVerticalAnnotation: Annotation | null = null;
+    let closestVerticalDistance = Infinity;
+    
+    if (chartData.length > 0) {
+      const mouseX = event.clientX - rect.left;
+      const chartWidth = rect.width - 120; // Account for margins and axis labels
+      const chartLeft = 60; // Account for left margin
+      const relativeX = mouseX - chartLeft;
+      const xPercent = relativeX / chartWidth;
+      const estimatedDataIndex = Math.round(xPercent * (chartData.length - 1));
+      
+      verticalAnnotations.forEach(annotation => {
+        const actualDataIndex = chartData.findIndex((d: any) => d.timestamp === annotation.timestamp);
+        if (actualDataIndex !== -1) {
+          const distance = Math.abs(actualDataIndex - estimatedDataIndex);
+          const toleranceInDataPoints = Math.max(2, chartData.length * 0.02); // 2% of data points tolerance
+          if (distance < closestVerticalDistance && distance < toleranceInDataPoints) {
+            closestVerticalDistance = distance;
+            closestVerticalAnnotation = annotation;
+          }
+        }
+      });
+    }
+    
+    // Prioritize the closest annotation (horizontal or vertical)
+    if (closestHorizontalAnnotation && (!closestVerticalAnnotation || closestHorizontalDistance < closestVerticalDistance * 0.5)) {
       setIsDragging(true);
-      setDragAnnotationId(closestAnnotation.id);
+      setDragAnnotationId(closestHorizontalAnnotation.id);
       setDragStartY(mouseY);
-      setDragStartPrice(closestAnnotation.price);
+      setDragStartPrice(closestHorizontalAnnotation.price);
+      event.preventDefault();
+      event.stopPropagation();
+    } else if (closestVerticalAnnotation) {
+      setIsDraggingVertical(true);
+      setDragVerticalAnnotationId(closestVerticalAnnotation.id);
+      setDragVerticalStartX(event.clientX);
+      setDragVerticalStartTimestamp(closestVerticalAnnotation.timestamp);
       event.preventDefault();
       event.stopPropagation();
     }
@@ -212,12 +252,22 @@ export function ComparisonChart({
     }
   };
 
+  const handleVerticalMouseUp = () => {
+    if (isDraggingVertical) {
+      setIsDraggingVertical(false);
+      setDragVerticalAnnotationId(null);
+      setDragVerticalStartX(0);
+      setDragVerticalStartTimestamp(0);
+    }
+  };
+
   // Add global mouse up listener to handle drag end outside chart
   useEffect(() => {
-    if (isDragging || isDraggingText) {
+    if (isDragging || isDraggingText || isDraggingVertical) {
       const handleGlobalMouseUp = () => {
         handleMouseUp();
         handleTextMouseUp();
+        handleVerticalMouseUp();
       };
       
       const handleGlobalMouseMove = (event: MouseEvent) => {
@@ -249,6 +299,41 @@ export function ComparisonChart({
               : ann
           ));
         }
+        
+        // Handle vertical line horizontal dragging
+        if (isDraggingVertical && dragVerticalAnnotationId && chartData) {
+          const deltaX = event.clientX - dragVerticalStartX;
+          
+          // Calculate new timestamp based on horizontal movement
+          const chartWidth = 800; // Approximate chart width
+          const dataLength = chartData.length;
+          const pixelsPerDataPoint = chartWidth / (dataLength - 1);
+          const dataPointDelta = Math.round(deltaX / pixelsPerDataPoint);
+          
+          // Find current annotation's data index
+          const currentIndex = chartData.findIndex((d: any) => d.timestamp === dragVerticalStartTimestamp);
+          if (currentIndex !== -1) {
+            const newIndex = Math.max(0, Math.min(dataLength - 1, currentIndex + dataPointDelta));
+            const newDataPoint = chartData[newIndex];
+            
+            if (newDataPoint) {
+              // Update the annotation with new timestamp and time
+              updateAnnotations?.(prev => prev.map(ann => 
+                ann.id === dragVerticalAnnotationId 
+                  ? { 
+                      ...ann, 
+                      timestamp: (newDataPoint as any).timestamp,
+                      time: new Date((newDataPoint as any).timestamp).toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                      })
+                    }
+                  : ann
+              ));
+            }
+          }
+        }
       };
       
       document.addEventListener('mouseup', handleGlobalMouseUp);
@@ -259,7 +344,7 @@ export function ComparisonChart({
         document.removeEventListener('mousemove', handleGlobalMouseMove);
       };
     }
-  }, [isDragging, dragAnnotationId, dragStartY, dragStartPrice, isDraggingText, dragTextAnnotationId, dragStartX, dragStartOffset, updateAnnotations]);
+  }, [isDragging, dragAnnotationId, dragStartY, dragStartPrice, isDraggingText, dragTextAnnotationId, dragStartX, dragStartOffset, isDraggingVertical, dragVerticalAnnotationId, dragVerticalStartX, dragVerticalStartTimestamp, updateAnnotations, chartData]);
 
   // Click outside handler - works with portal
   useEffect(() => {
