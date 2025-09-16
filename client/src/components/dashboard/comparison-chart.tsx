@@ -1583,9 +1583,9 @@ export function ComparisonChart({
                 width: `${Math.min(toleranceWidth, 100 - Math.max(0, xPercent - toleranceWidth/2))}%`,
                 top: '80px', // Start below annotation text area
                 height: 'calc(100% - 140px)', // Cover chart area
-                backgroundColor: 'rgba(250, 255, 80, 0.1)', // Very pale yellow
-                borderLeft: '1px solid rgba(250, 255, 80, 0.3)',
-                borderRight: '1px solid rgba(250, 255, 80, 0.3)'
+                backgroundColor: 'transparent', // Invisible but functional
+                borderLeft: 'none',
+                borderRight: 'none'
               }}
               title="Click and drag to move vertical line horizontally"
               onMouseDown={(e) => {
@@ -1841,29 +1841,37 @@ export function ComparisonChart({
                 }} />
                 
                 {/* Text Annotation Reference Lines - yellow vertical lines */}
-                {annotations.filter(annotation => annotation.type === 'text').map((annotation) => {
-                  // Find the actual date value from chart data that matches this annotation
-                  const dataPoint = chartData?.find((d: any) => d.timestamp === annotation.timestamp);
-                  return dataPoint ? (
+                {chartData && chartData.length > 0 && annotations.filter(annotation => annotation.type === 'text').map((annotation) => {
+                  // Find the data index for this annotation
+                  const dataIndex = chartData.findIndex((d: any) => d.timestamp === annotation.timestamp);
+                  
+                  // If annotation timestamp is not in current data, try to find the closest one
+                  let targetDataPoint;
+                  if (dataIndex !== -1) {
+                    targetDataPoint = chartData[dataIndex];
+                  } else {
+                    // Find closest timestamp if exact match not found
+                    const distances = chartData.map((d: any, index) => ({
+                      index,
+                      distance: Math.abs(d.timestamp - annotation.timestamp),
+                      dataPoint: d
+                    }));
+                    const closest = distances.reduce((min, current) => 
+                      current.distance < min.distance ? current : min
+                    );
+                    targetDataPoint = closest.dataPoint;
+                  }
+                  
+                  return targetDataPoint ? (
                     <ReferenceLine 
                       key={annotation.id}
-                      x={dataPoint.date}
+                      x={targetDataPoint.date}
                       stroke="#FAFF50"
-                      strokeWidth={2}
+                      strokeWidth={3}
                       vectorEffect="non-scaling-stroke"
                       shapeRendering="crispEdges"
                     />
-                  ) : (
-                    // Fallback: use annotation.time if dataPoint not found
-                    <ReferenceLine 
-                      key={annotation.id}
-                      x={annotation.time}
-                      stroke="#FAFF50"
-                      strokeWidth={2}
-                      vectorEffect="non-scaling-stroke"
-                      shapeRendering="crispEdges"
-                    />
-                  );
+                  ) : null;
                 })}
                 
                 {/* Tolerance areas moved outside chart to prevent coordinate system interference */}
