@@ -2253,7 +2253,7 @@ export function PriceChart({
                         style={{ 
                           left: '10px', 
                           top: '20px', 
-                          transform: 'none'
+                          transform: `translateX(${annotation.horizontalOffset || 0}px)`
                         }}
                       >
                         <div 
