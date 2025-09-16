@@ -2287,7 +2287,7 @@ export function PriceChart({
                       <div
                         key={annotation.id}
                         className="absolute"
-                        style={{ left: `${xPercent}%`, top: '20px', transform: 'translateX(-50%)' }}
+                        style={{ left: `${xPercent}%`, top: `${20 + (annotation.verticalOffset || 0)}px`, transform: `translateX(calc(-50% + ${annotation.horizontalOffset || 0}px))` }}
                       >
                         <div 
                           className="bg-background border border-border rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-pointer hover:bg-muted shadow-lg"
@@ -2317,7 +2317,7 @@ export function PriceChart({
                       <div
                         key={annotation.id}
                         className="absolute"
-                        style={{ left: `${midPercent}%`, top: '20px', transform: 'translateX(-50%)' }}
+                        style={{ left: `${midPercent}%`, top: `${20 + (annotation.verticalOffset || 0)}px`, transform: `translateX(calc(-50% + ${annotation.horizontalOffset || 0}px))` }}
                       >
                         <div 
                           className="bg-background border border-white/30 rounded px-2 py-1 text-xs pointer-events-auto shadow-lg cursor-pointer hover:bg-muted"
