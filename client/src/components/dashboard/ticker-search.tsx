@@ -118,8 +118,8 @@ export function TickerSearch({ onSelectStock }: TickerSearchProps) {
 
   const handleAddToWatchlist = (e: React.MouseEvent, stock: SearchResult) => {
     e.stopPropagation(); // Prevent triggering the parent button click
-    if (window.addToWatchlist) {
-      window.addToWatchlist({
+    if ((window as any).addToWatchlist) {
+      (window as any).addToWatchlist({
         symbol: stock.symbol,
         name: stock.name,
         price: stock.price,
