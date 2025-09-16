@@ -2499,7 +2499,7 @@ export function PriceChart({
                     return (
                       <div
                         key={`tolerance-${annotation.id}`}
-                        className="absolute pointer-events-none"
+                        className="absolute pointer-events-auto cursor-grab active:cursor-grabbing"
                         style={{
                           left: `${Math.max(0, xPercent - toleranceWidth/2)}%`,
                           width: `${Math.min(toleranceWidth, 100 - Math.max(0, xPercent - toleranceWidth/2))}%`,
@@ -2510,6 +2510,14 @@ export function PriceChart({
                           borderRight: '1px solid rgba(250, 255, 80, 0.3)'
                         }}
                         title="Click and drag to move vertical line horizontally"
+                        onMouseDown={(e) => {
+                          setIsDraggingVertical(true);
+                          setDragVerticalAnnotationId(annotation.id);
+                          setDragVerticalStartX(e.clientX);
+                          setDragVerticalStartTimestamp(annotation.timestamp);
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
                       />
                     );
                   })}
