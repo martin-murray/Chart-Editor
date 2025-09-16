@@ -9,6 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tooltip as HoverTooltip, TooltipContent as HoverTooltipContent, TooltipProvider, TooltipTrigger as HoverTooltipTrigger } from '@/components/ui/tooltip';
+import { Switch } from '@/components/ui/switch';
 import { Loader2, TrendingUp, TrendingDown, Plus, Calendar as CalendarIcon, X, Download, ChevronDown, MessageSquare, Ruler, Minus, RotateCcw } from 'lucide-react';
 import { format, subDays, subMonths, subYears } from 'date-fns';
 import html2canvas from 'html2canvas';
@@ -155,6 +156,9 @@ export function PriceChart({
   const [dragVerticalAnnotationId, setDragVerticalAnnotationId] = useState<string | null>(null);
   const [dragVerticalStartX, setDragVerticalStartX] = useState(0);
   const [dragVerticalStartTimestamp, setDragVerticalStartTimestamp] = useState(0);
+  
+  // State for hover tool toggle
+  const [isHoverEnabled, setIsHoverEnabled] = useState(true);
   
   // Use controlled annotations if provided, otherwise use internal state
   const annotations = controlledAnnotations || internalAnnotations;
@@ -2114,6 +2118,20 @@ export function PriceChart({
                   </Button>
                 </div>
                 
+                {/* Hover Tool Toggle */}
+                <div className="flex items-center gap-2 px-3 py-1 bg-muted/30 rounded-md border border-border">
+                  <label htmlFor="hover-toggle" className="text-xs text-muted-foreground cursor-pointer">
+                    Hover Tool
+                  </label>
+                  <Switch
+                    id="hover-toggle"
+                    checked={isHoverEnabled}
+                    onCheckedChange={setIsHoverEnabled}
+                    className="data-[state=checked]:bg-[#5AF5FA] data-[state=unchecked]:bg-muted"
+                    data-testid="switch-hover-tool"
+                  />
+                </div>
+                
                 {onClearAll && (
                   <Button
                     variant="outline"
@@ -2415,7 +2433,7 @@ export function PriceChart({
                   />
                   
                   <Tooltip 
-                    active={!isDragging}
+                    active={!isDragging && isHoverEnabled}
                     allowEscapeViewBox={{ x: false, y: false }}
                     labelFormatter={(value) => {
                       const date = new Date(value);
@@ -2844,7 +2862,7 @@ export function PriceChart({
                   />
                   
                   <Tooltip 
-                    active={!isDragging}
+                    active={!isDragging && isHoverEnabled}
                     allowEscapeViewBox={{ x: false, y: false }}
                     labelFormatter={(value) => {
                       const date = new Date(value);
