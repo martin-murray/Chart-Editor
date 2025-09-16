@@ -313,6 +313,23 @@ export function PriceChart({
     }
   };
 
+  // Chart data query - must be declared before useEffect that depends on it
+  const { data: chartData, isLoading, error } = useQuery({
+    queryKey: ['/api/stocks', symbol, 'chart', selectedTimeframe, startDate, endDate],
+    queryFn: async (): Promise<ChartResponse> => {
+      let url = `/api/stocks/${symbol}/chart?timeframe=${selectedTimeframe}`;
+      if (selectedTimeframe === 'Custom' && startDate && endDate) {
+        const fromTimestamp = Math.floor(startDate.getTime() / 1000);
+        const toTimestamp = Math.floor(endDate.getTime() / 1000);
+        url = `/api/stocks/${symbol}/chart?from=${fromTimestamp}&to=${toTimestamp}&timeframe=Custom`;
+      }
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Failed to fetch chart data');
+      return await response.json();
+    },
+    enabled: !!symbol && (selectedTimeframe !== 'Custom' || (!!startDate && !!endDate)),
+  });
+
   // Add global mouse listeners for horizontal, text, and vertical line dragging
   React.useEffect(() => {
     if (isDragging || isDraggingText || isDraggingVertical) {
@@ -420,21 +437,7 @@ export function PriceChart({
     enabled: !!symbol
   });
 
-  const { data: chartData, isLoading, error } = useQuery({
-    queryKey: ['/api/stocks', symbol, 'chart', selectedTimeframe, startDate, endDate],
-    queryFn: async (): Promise<ChartResponse> => {
-      let url = `/api/stocks/${symbol}/chart?timeframe=${selectedTimeframe}`;
-      if (selectedTimeframe === 'Custom' && startDate && endDate) {
-        const fromTimestamp = Math.floor(startDate.getTime() / 1000);
-        const toTimestamp = Math.floor(endDate.getTime() / 1000);
-        url = `/api/stocks/${symbol}/chart?from=${fromTimestamp}&to=${toTimestamp}&timeframe=Custom`;
-      }
-      const response = await fetch(url);
-      if (!response.ok) throw new Error('Failed to fetch chart data');
-      return await response.json();
-    },
-    enabled: !!symbol && (selectedTimeframe !== 'Custom' || (!!startDate && !!endDate)),
-  });
+  // Chart data query moved above to fix initialization order
 
   const { data: stockDetails } = useQuery({
     queryKey: ['/api/stocks', symbol, 'details'],
