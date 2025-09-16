@@ -1637,13 +1637,13 @@ export function ComparisonChart({
                     }}
                   >
                     <div 
-                      className="bg-background border border-border rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-grab hover:bg-muted shadow-lg select-none"
+                      className="bg-background rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-grab hover:bg-muted shadow-lg select-none"
+                      style={{ border: '1px solid #FAFF50' }}
                       onMouseDown={(e) => handleTextMouseDown(e, annotation)}
                       onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
                       title="Click and drag to move horizontally, double-click to delete"
                     >
-                      <div className="font-medium" style={{ color: '#FAFF50' }}>{formatTime(annotation.time, timeframe)}</div>
-                      <div className="text-foreground mt-1">{annotation.text || ''}</div>
+                      <div className="text-foreground">{annotation.text || ''}</div>
                     </div>
                   </div>
                 );
