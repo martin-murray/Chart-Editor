@@ -285,6 +285,46 @@ export function ComparisonChart({
     }))
   });
 
+  // Helper function to format dates properly based on timeframe - must be declared before chartData
+  const formatTime = (timeValue: any, timeframe: string) => {
+    // Handle both timestamp numbers and time strings like the main chart
+    const date = typeof timeValue === 'string' ? new Date(timeValue) : new Date(timeValue * 1000);
+    switch (timeframe) {
+      case '1D':
+      case '5D':
+      case '2W':
+        return date.toLocaleDateString('en-US', { 
+          month: 'numeric',
+          day: 'numeric',
+          year: '2-digit'
+        });
+      case '1M':
+      case '3M':
+        return date.toLocaleDateString('en-US', { 
+          month: 'numeric',
+          day: 'numeric',
+          year: '2-digit'
+        });
+      case '1Y':
+        return date.toLocaleDateString('en-US', { 
+          month: 'short',
+          year: '2-digit'
+        });
+      case 'Custom':
+        return date.toLocaleDateString('en-US', { 
+          month: 'numeric',
+          day: 'numeric',
+          year: '2-digit'
+        });
+      default:
+        return date.toLocaleDateString('en-US', { 
+          month: 'numeric',
+          day: 'numeric',
+          year: '2-digit'
+        });
+    }
+  };
+
   // Process and align chart data for percentage calculation - must be declared before useEffect that depends on it
   const chartData = useMemo(() => {
     if (tickers.length === 0) return [];
@@ -497,45 +537,7 @@ export function ComparisonChart({
 
   // Ticker queries moved above to fix initialization order
 
-  // Helper function to format dates properly based on timeframe (like main price chart)
-  const formatTime = (timeValue: any, timeframe: string) => {
-    // Handle both timestamp numbers and time strings like the main chart
-    const date = typeof timeValue === 'string' ? new Date(timeValue) : new Date(timeValue * 1000);
-    switch (timeframe) {
-      case '1D':
-      case '5D':
-      case '2W':
-        return date.toLocaleDateString('en-US', { 
-          month: 'numeric',
-          day: 'numeric',
-          year: '2-digit'
-        });
-      case '1M':
-      case '3M':
-        return date.toLocaleDateString('en-US', { 
-          month: 'numeric',
-          day: 'numeric',
-          year: '2-digit'
-        });
-      case '1Y':
-        return date.toLocaleDateString('en-US', { 
-          month: 'short',
-          year: '2-digit'
-        });
-      case 'Custom':
-        return date.toLocaleDateString('en-US', { 
-          month: 'numeric',
-          day: 'numeric',
-          year: '2-digit'
-        });
-      default:
-        return date.toLocaleDateString('en-US', { 
-          month: 'numeric',
-          day: 'numeric',
-          year: '2-digit'
-        });
-    }
-  };
+  // Helper function moved above to fix initialization order
 
   // Chart data moved above to fix initialization order
 
