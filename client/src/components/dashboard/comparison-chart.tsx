@@ -68,6 +68,13 @@ interface HorizontalAnnotation extends BaseAnnotation {
   price: number; // Percentage value at this point
 }
 
+// Vertical line annotation (ticker-independent)
+interface VerticalAnnotation extends BaseAnnotation {
+  type: 'vertical';
+  text?: string;
+  price: number; // Percentage value at this point
+}
+
 // NEW: Percentage-based measurement (ticker-independent)
 interface PercentRangeAnnotation {
   id: string;
@@ -79,7 +86,7 @@ interface PercentRangeAnnotation {
 }
 
 // Union type for all annotation types
-type Annotation = TextAnnotation | HorizontalAnnotation | PercentRangeAnnotation;
+type Annotation = TextAnnotation | HorizontalAnnotation | VerticalAnnotation | PercentRangeAnnotation;
 
 interface ComparisonChartProps {
   timeframe: string;
@@ -87,7 +94,7 @@ interface ComparisonChartProps {
   endDate?: Date;
   annotations?: Annotation[];
   onAnnotationsChange?: (annotations: Annotation[]) => void;
-  annotationMode?: 'text' | 'percent-range' | 'horizontal';
+  annotationMode?: 'text' | 'percent-range' | 'horizontal' | 'vertical';
   pendingPercentageStart?: { timestamp: number; percent: number; time: string } | null;
   setPendingPercentageStart?: (start: { timestamp: number; percent: number; time: string } | null) => void;
   updateAnnotations?: (newAnnotations: Annotation[] | ((prev: Annotation[]) => Annotation[])) => void;
