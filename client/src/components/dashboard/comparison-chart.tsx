@@ -44,25 +44,42 @@ interface SearchResult {
   marketCap: string;
 }
 
-interface Annotation {
+// Base annotation interface for text and horizontal types (ticker-independent)
+interface BaseAnnotation {
   id: string;
-  type: 'text' | 'percentage' | 'horizontal';
   x: number; // X coordinate on chart
   y: number; // Y coordinate on chart
   timestamp: number; // Data point timestamp
-  price: number; // Price at this point
-  text?: string; // User annotation text (for text and horizontal types)
   time: string; // Formatted time string
   horizontalOffset?: number; // Custom horizontal position offset in pixels for dragging
-  // For percentage measurements
-  startTimestamp?: number;
-  startPrice?: number;
-  startTime?: string;
-  endTimestamp?: number;
-  endPrice?: number;
-  endTime?: string;
-  percentage?: number;
 }
+
+// Text annotation (ticker-independent)
+interface TextAnnotation extends BaseAnnotation {
+  type: 'text';
+  text: string;
+  price: number; // Percentage value at this point
+}
+
+// Horizontal line annotation (ticker-independent) 
+interface HorizontalAnnotation extends BaseAnnotation {
+  type: 'horizontal';
+  text?: string;
+  price: number; // Percentage value at this point
+}
+
+// NEW: Percentage-based measurement (ticker-independent)
+interface PercentRangeAnnotation {
+  id: string;
+  type: 'percent-range';
+  startTimestamp: number;
+  endTimestamp: number | null;
+  startTime: string;
+  endTime?: string;
+}
+
+// Union type for all annotation types
+type Annotation = TextAnnotation | HorizontalAnnotation | PercentRangeAnnotation;
 
 interface ComparisonChartProps {
   timeframe: string;
@@ -70,9 +87,9 @@ interface ComparisonChartProps {
   endDate?: Date;
   annotations?: Annotation[];
   onAnnotationsChange?: (annotations: Annotation[]) => void;
-  annotationMode?: 'text' | 'percentage' | 'horizontal';
-  pendingPercentageStart?: { timestamp: number; price: number; time: string } | null;
-  setPendingPercentageStart?: (start: { timestamp: number; price: number; time: string } | null) => void;
+  annotationMode?: 'text' | 'percent-range' | 'horizontal';
+  pendingPercentageStart?: { timestamp: number; percent: number; time: string } | null;
+  setPendingPercentageStart?: (start: { timestamp: number; percent: number; time: string } | null) => void;
   updateAnnotations?: (newAnnotations: Annotation[] | ((prev: Annotation[]) => Annotation[])) => void;
   isHoverEnabled?: boolean;
 }
@@ -775,36 +792,24 @@ export function ComparisonChart({
       // This case is now handled earlier in the function for freehand placement
       // This code path should not be reached for horizontal annotations
       return;
-    } else if (annotationMode === 'percentage') {
+    } else if (annotationMode === 'percent-range') {
       // Percentage measurement mode - two clicks
       if (!pendingPercentageStart) {
         // First click - set start point
         setPendingPercentageStart?.({
           timestamp,
-          price: percentageValue,
+          percent: percentageValue,
           time
         });
       } else {
         // Second click - create percentage measurement
-        const startPercentage = pendingPercentageStart.price;
-        const endPercentage = percentageValue;
-        const percentageDifference = endPercentage - startPercentage; // Direct percentage point difference
-        
-        const newAnnotation: Annotation = {
-          id: `percentage-${Date.now()}`,
-          type: 'percentage',
-          x: 0,
-          y: 0,
-          timestamp: pendingPercentageStart.timestamp,
-          price: startPercentage,
-          time: pendingPercentageStart.time,
+        const newAnnotation: PercentRangeAnnotation = {
+          id: `percent-range-${Date.now()}`,
+          type: 'percent-range',
           startTimestamp: pendingPercentageStart.timestamp,
-          startPrice: startPercentage,
           startTime: pendingPercentageStart.time,
           endTimestamp: timestamp,
-          endPrice: endPercentage,
-          endTime: time,
-          percentage: percentageDifference
+          endTime: time
         };
         
         updateAnnotations?.(prev => [...prev, newAnnotation]);
@@ -820,8 +825,8 @@ export function ComparisonChart({
       setIsEditMode(true);
       setAnnotationInput(annotation.text || '');
       setShowAnnotationInput(true);
-    } else if (annotation.type === 'percentage') {
-      // For percentage annotations, delete directly like Price chart (no confirmation)
+    } else if (annotation.type === 'percent-range') {
+      // For percent-range annotations, delete directly like Price chart (no confirmation)
       updateAnnotations?.(prev => prev.filter(a => a.id !== annotation.id));
     }
   };
@@ -1387,7 +1392,7 @@ export function ComparisonChart({
         
         <div className="flex items-center gap-2">
           {/* Pending Percentage Indicator */}
-          {annotationMode === 'percentage' && pendingPercentageStart && (
+          {annotationMode === 'percent-range' && pendingPercentageStart && (
             <div className="text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded border">
               Click second point to measure
             </div>
@@ -1676,50 +1681,10 @@ export function ComparisonChart({
                     </div>
                   </div>
                 );
-              } else if (annotation.type === 'percentage' && annotation.startTimestamp && annotation.endTimestamp) {
-                // Percentage measurements - display at midpoint
-                const startIndex = chartData?.findIndex((d: any) => d.timestamp === annotation.startTimestamp) ?? -1;
-                const endIndex = chartData?.findIndex((d: any) => d.timestamp === annotation.endTimestamp) ?? -1;
-                if (startIndex === -1 || endIndex === -1) return null;
-                
-                const totalDataPoints = (chartData?.length ?? 1) - 1;
-                const startPercent = totalDataPoints > 0 ? (startIndex / totalDataPoints) * 100 : 0;
-                const endPercent = totalDataPoints > 0 ? (endIndex / totalDataPoints) * 100 : 0;
-                const midPercent = (startPercent + endPercent) / 2;
-                
-                const isPositive = (annotation.percentage || 0) >= 0;
-                
-                return (
-                  <div
-                    key={annotation.id}
-                    className="absolute"
-                    style={{ 
-                      left: '10px', 
-                      top: '20px', 
-                      transform: `translateX(${annotation.horizontalOffset || 0}px)`
-                    }}
-                  >
-                    <div 
-                      className="bg-background rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-grab hover:bg-muted shadow-lg select-none"
-                      style={{ border: `1px solid ${isPositive ? '#22C55E' : '#EF4444'}` }}
-                      onMouseDown={(e) => handleTextMouseDown(e, annotation)}
-                      onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
-                      title="Click and drag to move horizontally, double-click to delete"
-                    >
-                      <div className="text-foreground">
-                        {isPositive ? '↗' : '↘'} {(annotation.percentage || 0).toFixed(2)}%
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {(annotation.startPrice || 0).toFixed(2)}% → {(annotation.endPrice || 0).toFixed(2)}%
-                      </div>
-                      {annotation.startTime && annotation.endTime && (
-                        <div className="text-[10px] text-muted-foreground mt-1">
-                          {formatTime(annotation.startTime, timeframe)} → {formatTime(annotation.endTime, timeframe)}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
+              } else if (annotation.type === 'percent-range') {
+                // Percent-range measurements are now rendered directly on the chart
+                // No overlay rendering needed since they show per-ticker deltas
+                return null;
               }
               return null;
             })}
@@ -1914,87 +1879,84 @@ export function ComparisonChart({
                 })}
 
 
-                {/* Percentage Measurement Lines - diagonal arrows */}
-                {chartData && chartData.length > 0 && annotations.filter(annotation => annotation.type === 'percentage' && annotation.startTimestamp && annotation.endTimestamp).map((annotation) => {
-                  // Find start data point with fallback to closest timestamp
+                {/* NEW: Percentage Range Measurements - ticker-independent overlays */}
+                {chartData && chartData.length > 0 && annotations.filter(annotation => annotation.type === 'percent-range' && annotation.endTimestamp).map((annotation) => {
+                  // Find start and end data points for timestamps
                   let startDataPoint = chartData?.find((d: any) => d.timestamp === annotation.startTimestamp);
-                  if (!startDataPoint) {
-                    const distances = chartData.map((d: any, index) => ({
-                      index,
-                      distance: Math.abs(d.timestamp - annotation.startTimestamp!),
-                      dataPoint: d
-                    }));
-                    const closest = distances.reduce((min, current) => 
-                      current.distance < min.distance ? current : min
-                    );
-                    startDataPoint = closest.dataPoint;
-                  }
-                  
-                  // Find end data point with fallback to closest timestamp
                   let endDataPoint = chartData?.find((d: any) => d.timestamp === annotation.endTimestamp);
-                  if (!endDataPoint) {
-                    const distances = chartData.map((d: any, index) => ({
-                      index,
-                      distance: Math.abs(d.timestamp - annotation.endTimestamp!),
-                      dataPoint: d
-                    }));
-                    const closest = distances.reduce((min, current) => 
-                      current.distance < min.distance ? current : min
-                    );
-                    endDataPoint = closest.dataPoint;
-                  }
                   
-                  // Enhanced validation to prevent coordinate system errors
-                  if (!startDataPoint || !endDataPoint || 
-                      !startDataPoint.date || !endDataPoint.date ||
-                      typeof annotation.startPrice !== 'number' || 
-                      typeof annotation.endPrice !== 'number') {
+                  // Skip if we can't find valid data points
+                  if (!startDataPoint || !endDataPoint || !startDataPoint.date || !endDataPoint.date) {
                     return null;
                   }
                   
-                  const isPositive = (annotation.percentage || 0) >= 0;
-                  const lineColor = isPositive ? '#22C55E' : '#EF4444'; // Green for positive, red for negative
+                  // Get all visible tickers and their percentage deltas
+                  const tickerDeltas = tickers.filter(ticker => ticker.visible).map(ticker => {
+                    const startPercent = startDataPoint[`${ticker.symbol}_percentage`] || 0;
+                    const endPercent = endDataPoint[`${ticker.symbol}_percentage`] || 0;
+                    const delta = endPercent - startPercent;
+                    return {
+                      symbol: ticker.symbol,
+                      color: ticker.color,
+                      delta,
+                      endPercent
+                    };
+                  });
                   
                   return (
-                    <g key={annotation.id}>
-                      {/* Main diagonal line */}
+                    <g key={`percent-range-${annotation.id}`}>
+                      {/* Vertical start line */}
                       <ReferenceLine 
-                        segment={[
-                          { x: startDataPoint.date, y: annotation.startPrice },
-                          { x: endDataPoint.date, y: annotation.endPrice }
-                        ]}
-                        stroke={lineColor}
+                        x={startDataPoint.date}
+                        stroke="#888"
                         strokeWidth={2}
-                        vectorEffect="non-scaling-stroke"
+                        strokeDasharray="5,5"
+                        className="opacity-60"
                       />
                       
-                      {/* Start point circle - only render when scales are ready */}
-                      {scalesReady && (
-                        <ReferenceDot 
-                          x={startDataPoint.date}
-                          y={annotation.startPrice}
-                          r={4}
-                          fill={lineColor}
-                          stroke={lineColor}
-                          strokeWidth={1}
-                          xAxisId={0}
-                          yAxisId={0}
-                        />
-                      )}
+                      {/* Vertical end line */}
+                      <ReferenceLine 
+                        x={endDataPoint.date}
+                        stroke="#888"
+                        strokeWidth={2}
+                        strokeDasharray="5,5"
+                        className="opacity-60"
+                      />
                       
-                      {/* End point circle - only render when scales are ready */}
-                      {scalesReady && (
-                        <ReferenceDot 
-                          x={endDataPoint.date}
-                          y={annotation.endPrice}
-                          r={4}
-                          fill={lineColor}
-                          stroke={lineColor}
-                          strokeWidth={1}
-                          xAxisId={0}
-                          yAxisId={0}
-                        />
-                      )}
+                      {/* Per-ticker delta lines and labels */}
+                      {tickerDeltas.map((ticker, index) => {
+                        const isPositive = ticker.delta >= 0;
+                        const deltaColor = isPositive ? '#22C55E' : '#EF4444';
+                        
+                        return (
+                          <g key={`measure-${annotation.id}-${ticker.symbol}`}>
+                            {/* Delta line for this ticker */}
+                            <ReferenceLine 
+                              segment={[
+                                { x: startDataPoint.date, y: startDataPoint[`${ticker.symbol}_percentage`] || 0 },
+                                { x: endDataPoint.date, y: endDataPoint[`${ticker.symbol}_percentage`] || 0 }
+                              ]}
+                              stroke={ticker.color}
+                              strokeWidth={2}
+                              className="opacity-70"
+                            />
+                            
+                            {/* End point with colored border based on delta direction */}
+                            {scalesReady && (
+                              <ReferenceDot 
+                                x={endDataPoint.date}
+                                y={ticker.endPercent}
+                                r={4}
+                                fill={ticker.color}
+                                stroke={deltaColor}
+                                strokeWidth={2}
+                                xAxisId={0}
+                                yAxisId={0}
+                              />
+                            )}
+                          </g>
+                        );
+                      })}
                     </g>
                   );
                 })}
