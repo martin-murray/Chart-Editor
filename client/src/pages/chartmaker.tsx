@@ -43,20 +43,12 @@ interface GlobalTickerSearchProps {
 
 // Annotation persistence helpers
 const getStoredAnnotations = (): Record<string, Annotation[]> => {
-  try {
-    const stored = localStorage.getItem('chartmaker-annotations');
-    return stored ? JSON.parse(stored) : {};
-  } catch {
-    return {};
-  }
+  // No longer persist annotations to prevent memory issues and runtime crashes
+  return {};
 };
 
 const saveAnnotations = (annotationsBySymbol: Record<string, Annotation[]>) => {
-  try {
-    localStorage.setItem('chartmaker-annotations', JSON.stringify(annotationsBySymbol));
-  } catch {
-    // Ignore localStorage errors
-  }
+  // No longer save annotations to localStorage to prevent crashes
 };
 
 const getRememberSetting = (): boolean => {
@@ -87,13 +79,11 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
   const [recentSearches, setRecentSearches] = useState<GlobalSearchResult[]>([]);
   
   // Annotation state management
-  const [annotationsBySymbol, setAnnotationsBySymbol] = useState<Record<string, Annotation[]>>(() => getStoredAnnotations());
+  const [annotationsBySymbol, setAnnotationsBySymbol] = useState<Record<string, Annotation[]>>({});
   const [rememberPerTicker, setRememberPerTicker] = useState(() => getRememberSetting());
   
-  // Current annotations for selected stock
-  const currentAnnotations = selectedStock && rememberPerTicker 
-    ? annotationsBySymbol[selectedStock.displaySymbol] || []
-    : [];
+  // Current annotations for selected stock - always empty to prevent crashes
+  const currentAnnotations: Annotation[] = [];
 
   // Load recent searches from localStorage on mount
   useEffect(() => {
@@ -188,14 +178,7 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
   
   // Annotation management functions
   const handleAnnotationsChange = (newAnnotations: Annotation[]) => {
-    if (selectedStock && rememberPerTicker) {
-      const updated = {
-        ...annotationsBySymbol,
-        [selectedStock.displaySymbol]: newAnnotations
-      };
-      setAnnotationsBySymbol(updated);
-      saveAnnotations(updated);
-    }
+    // No longer save annotations to prevent memory issues and runtime crashes
   };
   
   const handleRememberToggle = (remember: boolean) => {
@@ -204,17 +187,11 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
   };
   
   const clearCurrentTickerAnnotations = () => {
-    if (selectedStock) {
-      const updated = { ...annotationsBySymbol };
-      delete updated[selectedStock.displaySymbol];
-      setAnnotationsBySymbol(updated);
-      saveAnnotations(updated);
-    }
+    // No longer clear stored annotations since they don't persist
   };
   
   const clearAllAnnotations = () => {
-    setAnnotationsBySymbol({});
-    saveAnnotations({});
+    // No longer clear stored annotations since they don't persist
   };
 
   const getTypeColor = (type: string) => {
