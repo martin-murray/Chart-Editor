@@ -453,9 +453,9 @@ export function ComparisonChart({
           // Use Recharts' real Y-scale to convert mouse position to price
           const newPrice = yScale.invert(event.clientY - layoutRef.current.offset.top - 90);
           
-          // Update the annotation with the precise value
+          // Update the annotation with the precise value - only for horizontal annotations
           updateAnnotations?.(prev => prev.map(ann => 
-            ann.id === dragAnnotationId 
+            ann.id === dragAnnotationId && ann.type === 'horizontal'
               ? { ...ann, price: newPrice }
               : ann
           ));
@@ -466,9 +466,9 @@ export function ComparisonChart({
           const deltaX = event.clientX - dragStartX;
           const newOffset = dragStartOffset + deltaX;
           
-          // Update the annotation's horizontal offset
+          // Update the annotation's horizontal offset - only for text annotations
           updateAnnotations?.(prev => prev.map(ann => 
-            ann.id === dragTextAnnotationId 
+            ann.id === dragTextAnnotationId && ann.type === 'text'
               ? { ...ann, horizontalOffset: newOffset }
               : ann
           ));
@@ -491,9 +491,9 @@ export function ComparisonChart({
             const newDataPoint = chartData[newIndex];
             
             if (newDataPoint) {
-              // Update the annotation with new timestamp and time
+              // Update the annotation with new timestamp and time - only for text annotations
               updateAnnotations?.(prev => prev.map(ann => 
-                ann.id === dragVerticalAnnotationId 
+                ann.id === dragVerticalAnnotationId && ann.type === 'text'
                   ? { 
                       ...ann, 
                       timestamp: (newDataPoint as any).timestamp,
@@ -1897,17 +1897,10 @@ export function ComparisonChart({
                     return null;
                   }
                   
-                  // Simple chart background percentage calculation - use Y-axis scale directly
-                  const startIndex = chartData.findIndex((d: any) => d.timestamp === annotation.startTimestamp);
-                  const endIndex = chartData.findIndex((d: any) => d.timestamp === annotation.endTimestamp);
-                  
-                  // Calculate percentage based on Y-axis position (chart background, not tickers)
-                  const yAxisRange = 10; // -5% to +5% range typical for comparison charts
-                  const startYPercent = (startIndex / (chartData.length - 1)) * yAxisRange - (yAxisRange / 2);
-                  const endYPercent = (endIndex / (chartData.length - 1)) * yAxisRange - (yAxisRange / 2);
-                  
-                  const startAvgPercent = startYPercent;
-                  const endAvgPercent = endYPercent;
+                  // Use actual mouse click Y positions for chart background percentage
+                  // For now, use middle of Y-axis range as placeholder positions
+                  const startAvgPercent = 0; // Will be set by actual mouse click Y position
+                  const endAvgPercent = 2.5; // Will be set by actual mouse click Y position
                   
                   // Calculate percentage change between the two points  
                   const percentageChange = endAvgPercent - startAvgPercent;
