@@ -1895,8 +1895,8 @@ export function ComparisonChart({
                   if (visibleTickers.length === 0) return null;
                   
                   // Get average percentage at each timestamp point
-                  const startPercentages = visibleTickers.map(ticker => startDataPoint[`${ticker.symbol}_percentage`] || 0);
-                  const endPercentages = visibleTickers.map(ticker => endDataPoint[`${ticker.symbol}_percentage`] || 0);
+                  const startPercentages = visibleTickers.map(ticker => Number(startDataPoint[`${ticker.symbol}_percentage`] || 0));
+                  const endPercentages = visibleTickers.map(ticker => Number(endDataPoint[`${ticker.symbol}_percentage`] || 0));
                   
                   const startAvgPercent = startPercentages.reduce((sum, p) => sum + p, 0) / startPercentages.length;
                   const endAvgPercent = endPercentages.reduce((sum, p) => sum + p, 0) / endPercentages.length;
