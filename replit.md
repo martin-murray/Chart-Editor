@@ -50,7 +50,7 @@ Testing preference: User prefers to handle testing themselves rather than intern
 - **Ticker Search with Charts**: Real-time search with integrated price visualization on stock selection
 - **Responsive Design**: Mobile-first design with adaptive layouts
 - **Dark Mode**: Complete light/dark theme toggle with Intropic MUI color scheme (#5AF5FA cyan accents)
-- **Typography**: Space Grotesk headings (weight 300) and Mulish body text (weight 400)
+- **Typography**: Space Grotesk headings (weight 300) and Mulish body text with Light (300), Regular (400), and Bold (700) weights for all text elements, tooltips, and UI components
 
 ### External Service Integration - ALPHA VANTAGE PREMIUM PRIMARY ACTIVE
 - **Primary Data Source**: Alpha Vantage Premium TOP_GAINERS_LOSERS API - **LIVE & ACTIVE** 
