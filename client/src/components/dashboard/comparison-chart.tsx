@@ -187,8 +187,8 @@ export function ComparisonChart({
       }
     });
     
-    // Find the closest vertical annotation (text annotation)
-    const verticalAnnotations = annotations.filter((ann): ann is Annotation => ann.type === 'text');
+    // Find the closest vertical annotation
+    const verticalAnnotations = annotations.filter((ann): ann is Annotation => ann.type === 'vertical');
     let closestVerticalAnnotation: Annotation | null = null;
     let closestVerticalDistance = Infinity;
     
@@ -491,9 +491,9 @@ export function ComparisonChart({
             const newDataPoint = chartData[newIndex];
             
             if (newDataPoint) {
-              // Update the annotation with new timestamp and time - only for text annotations
+              // Update the annotation with new timestamp and time - only for vertical annotations
               updateAnnotations?.(prev => prev.map(ann => 
-                ann.id === dragVerticalAnnotationId && ann.type === 'text'
+                ann.id === dragVerticalAnnotationId && ann.type === 'vertical'
                   ? { 
                       ...ann, 
                       timestamp: (newDataPoint as any).timestamp,
@@ -1585,7 +1585,7 @@ export function ComparisonChart({
       <div className="h-[600px] w-full rounded-lg relative pt-20 bg-background" data-testid="comparison-chart-container"> {/* Increased from h-80 (320px) to h-[600px] for much larger chart */}
         
         {/* Tolerance areas for vertical line dragging - positioned as overlays outside chart */}
-        {annotations.filter(annotation => annotation.type === 'text').map((annotation) => {
+        {annotations.filter(annotation => annotation.type === 'vertical').map((annotation) => {
           const dataIndex = chartData?.findIndex((d: any) => d.timestamp === annotation.timestamp) ?? -1;
           if (dataIndex === -1 || !chartData) return null;
           
