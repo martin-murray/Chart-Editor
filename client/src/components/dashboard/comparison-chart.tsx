@@ -1709,6 +1709,14 @@ export function ComparisonChart({
                       <div className="text-foreground">
                         {isPositive ? '↗' : '↘'} {(annotation.percentage || 0).toFixed(2)}%
                       </div>
+                      <div className="text-xs text-muted-foreground">
+                        {(annotation.startPrice || 0).toFixed(2)}% → {(annotation.endPrice || 0).toFixed(2)}%
+                      </div>
+                      {annotation.startTime && annotation.endTime && (
+                        <div className="text-[10px] text-muted-foreground mt-1">
+                          {formatTime(annotation.startTime, timeframe)} → {formatTime(annotation.endTime, timeframe)}
+                        </div>
+                      )}
                     </div>
                   </div>
                 );

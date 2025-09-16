@@ -2324,6 +2324,14 @@ export function PriceChart({
                           <div className="text-foreground">
                             {isPositive ? '↗' : '↘'} {(annotation.percentage || 0).toFixed(2)}%
                           </div>
+                          <div className="text-xs text-muted-foreground">
+                            {formatPrice(annotation.startPrice || 0)} → {formatPrice(annotation.endPrice || 0)}
+                          </div>
+                          {annotation.startTime && annotation.endTime && (
+                            <div className="text-[10px] text-muted-foreground mt-1">
+                              {formatTime(annotation.startTime, selectedTimeframe)} → {formatTime(annotation.endTime, selectedTimeframe)}
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
