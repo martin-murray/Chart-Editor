@@ -515,8 +515,30 @@ export function PriceChart({
     }
   };
 
-  const parseChange = parseFloat(actualPercentChange);
-  const isPositive = parseChange >= 0;
+  // Calculate timeframe-based percentage change instead of daily change
+  const calculateTimeframeChange = () => {
+    if (!chartData?.data || chartData.data.length === 0) {
+      // Fallback to daily change if no chart data
+      const parseChange = parseFloat(actualPercentChange);
+      return parseChange;
+    }
+    
+    // Get first and last prices from the timeframe period
+    const firstPrice = chartData.data[0]?.close;
+    const lastPrice = chartData.data[chartData.data.length - 1]?.close;
+    
+    if (!firstPrice || !lastPrice || firstPrice === 0) {
+      // Fallback to daily change if prices are invalid
+      const parseChange = parseFloat(actualPercentChange);
+      return parseChange;
+    }
+    
+    // Calculate percentage change over the entire timeframe period
+    return ((lastPrice - firstPrice) / firstPrice) * 100;
+  };
+
+  const timeframePercentChange = calculateTimeframeChange();
+  const isPositive = timeframePercentChange >= 0;
   const lineColor = isPositive ? '#5AF5FA' : '#FFA5FF'; // Cyan for positive, Pink for negative
   
   // Calculate percentage change for each data point relative to first price
@@ -1938,11 +1960,11 @@ export function PriceChart({
               <div className="flex items-center gap-3">
                 <span className="text-2xl font-bold">{actualCurrentPrice !== '--' ? formatPrice(parseFloat(actualCurrentPrice)) : '--'}</span>
                 <Badge 
-                  variant={isPositive ? "default" : "destructive"}
-                  className={`flex items-center gap-1 ${isPositive ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'}`}
+                  variant="secondary"
+                  className={`flex items-center gap-1 font-semibold text-[#121212] border-0 ${isPositive ? 'bg-[#5AF5FA]' : 'bg-[#FFA5FF]'}`}
                 >
                   {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                  {Math.abs(parseChange).toFixed(2)}%
+                  {isPositive ? "+" : ""}{Math.abs(timeframePercentChange).toFixed(2)}%
                 </Badge>
                 <span className="text-sm text-muted-foreground">{actualMarketCap}</span>
               </div>
