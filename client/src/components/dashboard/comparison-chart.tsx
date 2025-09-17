@@ -1163,7 +1163,8 @@ export function ComparisonChart({
         skipFonts: true,
         style: { 
           transform: 'scale(1)',
-          paddingBottom: '20px'
+          padding: '20px',
+          paddingBottom: '50px'
         },
         filter: (n) => !n.classList?.contains('no-export'),
       });
