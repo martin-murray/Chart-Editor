@@ -1218,6 +1218,84 @@ export function ComparisonChart({
     }
   };
 
+  // SVG code export function for embeddable code
+  const exportCode = async () => {
+    const chartContainer = document.querySelector('[data-testid="comparison-chart-container"]');
+    if (!chartContainer) {
+      toast({
+        title: "Export Failed",
+        description: "Chart not found. Please try again.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      // Generate SVG of the comparison chart
+      const svgDataUrl = await htmlToImage.toSvg(chartContainer as HTMLElement, {
+        cacheBust: true,
+        backgroundColor: '#ffffff',
+        filter: (n) => !n.classList?.contains('no-export'),
+      });
+      
+      // Convert data URL to SVG string
+      const svgString = decodeURIComponent(svgDataUrl.split(',')[1]);
+      const visibleTickers = tickers.filter(t => t.visible).map(t => t.symbol).join(', ');
+      
+      // Create embeddable code with the SVG
+      const embedCode = `<!-- Intropic Chart Editor - Comparison Chart (${visibleTickers}) -->
+<!-- Generated on ${new Date().toLocaleDateString()} -->
+<div class="intropic-comparison-chart-container" style="width: 100%; max-width: 1000px; margin: 0 auto;">
+  ${svgString}
+</div>
+
+<!-- Alternative: Inline SVG with custom styling -->
+<div class="stock-comparison-chart" style="
+  display: inline-block; 
+  border: 1px solid #e2e8f0; 
+  border-radius: 8px; 
+  padding: 16px;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+">
+  ${svgString}
+  <div style="margin-top: 8px; text-align: center; font-size: 12px; color: #666;">
+    ${visibleTickers} Comparison • Powered by Intropic Chart Editor
+  </div>
+</div>
+
+<!-- For WordPress/CMS: Base64 Encoded -->
+<img src="${svgDataUrl}" alt="${visibleTickers} Comparison Chart" style="max-width: 100%; height: auto;" />`;
+
+      navigator.clipboard.writeText(embedCode).then(() => {
+        toast({
+          title: "SVG Embed Code Copied!",
+          description: "Comparison chart SVG code has been copied to your clipboard.",
+        });
+      }).catch(() => {
+        // Fallback: download the code
+        const blob = new Blob([embedCode], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `comparison_chart_${tickers.filter(t => t.visible).map(t => t.symbol).join('_')}_embed.html`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast({
+          title: "SVG Embed Code Downloaded",
+          description: "Comparison chart SVG code has been downloaded as an HTML file.",
+        });
+      });
+    } catch (error) {
+      console.error('Code export failed:', error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to generate embed code. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
   // Add event listeners for shared export functionality
   useEffect(() => {
     const chartContainer = document.querySelector('[data-testid="comparison-chart-container"]');
@@ -1226,17 +1304,20 @@ export function ComparisonChart({
       const handleExportPNG = () => exportPNG();
       const handleExportPDF = () => exportPDF();
       const handleExportSVG = () => exportSVG();
+      const handleExportCode = () => exportCode();
       
       chartContainer.addEventListener('exportCSV', handleExportCSV);
       chartContainer.addEventListener('exportPNG', handleExportPNG);
       chartContainer.addEventListener('exportPDF', handleExportPDF);
       chartContainer.addEventListener('exportSVG', handleExportSVG);
+      chartContainer.addEventListener('exportCode', handleExportCode);
       
       return () => {
         chartContainer.removeEventListener('exportCSV', handleExportCSV);
         chartContainer.removeEventListener('exportPNG', handleExportPNG);
         chartContainer.removeEventListener('exportPDF', handleExportPDF);
         chartContainer.removeEventListener('exportSVG', handleExportSVG);
+        chartContainer.removeEventListener('exportCode', handleExportCode);
       };
     }
   }, [chartData, tickers]);

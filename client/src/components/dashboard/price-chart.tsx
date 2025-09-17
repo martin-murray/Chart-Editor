@@ -889,60 +889,79 @@ export function PriceChart({
     }
   };
 
-  const exportAsCode = () => {
-    const currentUrl = window.location.origin;
-    const embedCode = `<!-- Intropic Chart Editor Embed -->
-<iframe 
-  src="${currentUrl}/embed/chart/${symbol}?timeframe=${selectedTimeframe}${startDate && endDate ? `&start=${format(startDate,'yyyy-MM-dd')}&end=${format(endDate,'yyyy-MM-dd')}` : ''}" 
-  width="800" 
-  height="600" 
-  frameborder="0" 
-  style="border: 1px solid #e2e8f0; border-radius: 8px;">
-</iframe>
-
-<!-- JavaScript Widget (Alternative) -->
-<div id="intropic-chart-${symbol}"></div>
-<script>
-  (function() {
-    const widget = document.createElement('iframe');
-    widget.src = '${currentUrl}/embed/chart/${symbol}?timeframe=${selectedTimeframe}${startDate && endDate ? `&start=${format(startDate,'yyyy-MM-dd')}&end=${format(endDate,'yyyy-MM-dd')}` : ''}';
-    widget.width = '800';
-    widget.height = '600';
-    widget.style.border = '1px solid #e2e8f0';
-    widget.style.borderRadius = '8px';
-    document.getElementById('intropic-chart-${symbol}').appendChild(widget);
-  })();
-</script>
-
-<!-- React Component -->
-<IntropicChart 
-  symbol="${symbol}" 
-  timeframe="${selectedTimeframe}"${startDate && endDate ? `
-  startDate="${format(startDate,'yyyy-MM-dd')}"
-  endDate="${format(endDate,'yyyy-MM-dd')}"` : ''}
-  width={800}
-  height={600}
-/>`;
-
-    navigator.clipboard.writeText(embedCode).then(() => {
+  const exportAsCode = async () => {
+    if (!chartRef.current) {
       toast({
-        title: "Embed Code Copied!",
-        description: "Chart embed code has been copied to your clipboard.",
+        title: "Export Failed",
+        description: "Chart not found. Please try again.",
+        variant: "destructive"
       });
-    }).catch(() => {
-      // Fallback: show the code in a dialog
-      const blob = new Blob([embedCode], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${symbol}_chart_embed_code.txt`;
-      a.click();
-      URL.revokeObjectURL(url);
+      return;
+    }
+
+    try {
+      // Generate SVG of the chart
+      const svgDataUrl = await htmlToImage.toSvg(chartRef.current, {
+        cacheBust: true,
+        backgroundColor: '#ffffff',
+        filter: (n) => !n.classList?.contains('no-export'),
+      });
+      
+      // Convert data URL to SVG string
+      const svgString = decodeURIComponent(svgDataUrl.split(',')[1]);
+      
+      // Create embeddable code with the SVG
+      const embedCode = `<!-- Intropic Chart Editor - ${symbol} ${selectedTimeframe} Chart -->
+<!-- Generated on ${new Date().toLocaleDateString()} -->
+<div class="intropic-chart-container" style="width: 100%; max-width: 800px; margin: 0 auto;">
+  ${svgString}
+</div>
+
+<!-- Alternative: Inline SVG with custom styling -->
+<div class="stock-chart-${symbol.toLowerCase()}" style="
+  display: inline-block; 
+  border: 1px solid #e2e8f0; 
+  border-radius: 8px; 
+  padding: 16px;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+">
+  ${svgString}
+  <div style="margin-top: 8px; text-align: center; font-size: 12px; color: #666;">
+    Powered by Intropic Chart Editor
+  </div>
+</div>
+
+<!-- For WordPress/CMS: Base64 Encoded -->
+<img src="${svgDataUrl}" alt="${symbol} ${selectedTimeframe} Chart" style="max-width: 100%; height: auto;" />`;
+
+      navigator.clipboard.writeText(embedCode).then(() => {
+        toast({
+          title: "SVG Embed Code Copied!",
+          description: "Chart SVG code has been copied to your clipboard.",
+        });
+      }).catch(() => {
+        // Fallback: download the code
+        const blob = new Blob([embedCode], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${symbol}_${selectedTimeframe}_chart_embed.html`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast({
+          title: "SVG Embed Code Downloaded",
+          description: "Chart SVG code has been downloaded as an HTML file.",
+        });
+      });
+    } catch (error) {
+      console.error('Code export failed:', error);
       toast({
-        title: "Embed Code Downloaded",
-        description: "Chart embed code has been downloaded as a text file.",
+        title: "Export Failed",
+        description: "Failed to generate embed code. Please try again.",
+        variant: "destructive"
       });
-    });
+    }
   };
 
   // Comparison chart export functions
@@ -997,61 +1016,19 @@ export function PriceChart({
   };
 
   const exportComparisonAsCode = () => {
-    const currentUrl = window.location.origin;
-    // Get visible tickers from the comparison chart
-    const visibleTickers = "TICKER1,TICKER2"; // This would be dynamically populated
-    const embedCode = `<!-- Intropic Chart Editor - Comparison Chart Embed -->
-<iframe 
-  src="${currentUrl}/embed/comparison?tickers=${visibleTickers}&timeframe=${selectedTimeframe}${startDate && endDate ? `&start=${format(startDate,'yyyy-MM-dd')}&end=${format(endDate,'yyyy-MM-dd')}` : ''}" 
-  width="1000" 
-  height="700" 
-  frameborder="0" 
-  style="border: 1px solid #e2e8f0; border-radius: 8px;">
-</iframe>
-
-<!-- JavaScript Widget (Alternative) -->
-<div id="intropic-comparison-chart"></div>
-<script>
-  (function() {
-    const widget = document.createElement('iframe');
-    widget.src = '${currentUrl}/embed/comparison?tickers=${visibleTickers}&timeframe=${selectedTimeframe}${startDate && endDate ? `&start=${format(startDate,'yyyy-MM-dd')}&end=${format(endDate,'yyyy-MM-dd')}` : ''}';
-    widget.width = '1000';
-    widget.height = '700';
-    widget.style.border = '1px solid #e2e8f0';
-    widget.style.borderRadius = '8px';
-    document.getElementById('intropic-comparison-chart').appendChild(widget);
-  })();
-</script>
-
-<!-- React Component -->
-<IntropicComparisonChart 
-  tickers={["${visibleTickers.split(',').join('", "')}"]} 
-  timeframe="${selectedTimeframe}"${startDate && endDate ? `
-  startDate="${format(startDate,'yyyy-MM-dd')}"
-  endDate="${format(endDate,'yyyy-MM-dd')}"` : ''}
-  width={1000}
-  height={700}
-/>`;
-
-    navigator.clipboard.writeText(embedCode).then(() => {
+    // Get the comparison chart and trigger SVG code export
+    const comparisonChart = document.querySelector('[data-testid="comparison-chart-container"]');
+    if (comparisonChart) {
+      // Dispatch a custom event to trigger SVG code export in the comparison chart
+      const event = new CustomEvent('exportCode');
+      comparisonChart.dispatchEvent(event);
+    } else {
       toast({
-        title: "Embed Code Copied!",
-        description: "Comparison chart embed code has been copied to your clipboard.",
+        title: "Export Failed",
+        description: "Comparison chart not found. Please ensure the comparison chart is visible.",
+        variant: "destructive"
       });
-    }).catch(() => {
-      // Fallback: download the code
-      const blob = new Blob([embedCode], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `comparison_chart_embed_code.txt`;
-      a.click();
-      URL.revokeObjectURL(url);
-      toast({
-        title: "Embed Code Downloaded",
-        description: "Comparison chart embed code has been downloaded as a text file.",
-      });
-    });
+    }
   };
 
 
