@@ -1167,7 +1167,7 @@ export function ComparisonChart({
       
       const img = new Image();
       img.src = dataUrl;
-      await (img.decode ? img.decode() : new Promise(r => (img.onload = () => r(null))));
+      await (img.decode ? img.decode() : new Promise<void>(r => (img.onload = () => r())));
       
       const orientation = img.width >= img.height ? 'landscape' : 'portrait';
       const pdf = new jsPDF({ orientation, unit: 'px', format: [img.width, img.height] });
