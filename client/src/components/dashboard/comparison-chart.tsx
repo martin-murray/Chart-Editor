@@ -1614,9 +1614,7 @@ export function ComparisonChart({
                       onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
                       title="Click and drag to move in any direction, double-click to delete"
                     >
-                      <div className="font-medium" style={{ color: '#FAFF50' }}>{formatTime(annotation.time, timeframe)}</div>
-                      <div className="text-muted-foreground">{annotation.price?.toFixed(2)}%</div>
-                      <div className="text-foreground mt-1">{annotation.text || ''}</div>
+                      <div className="text-foreground">{annotation.text || ''}</div>
                     </div>
                   </div>
                 );
@@ -1645,9 +1643,7 @@ export function ComparisonChart({
                       onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
                       title="Click and drag to move in any direction, double-click to delete"
                     >
-                      <div className="font-medium" style={{ color: '#AA99FF' }}>{formatTime(annotation.time, timeframe)}</div>
-                      <div className="text-muted-foreground">{annotation.price?.toFixed(2)}%</div>
-                      <div className="text-foreground mt-1">{annotation.text || ''}</div>
+                      <div className="text-foreground">{annotation.text || ''}</div>
                     </div>
                   </div>
                 );

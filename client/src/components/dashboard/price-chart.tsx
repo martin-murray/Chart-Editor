@@ -1266,9 +1266,7 @@ export function PriceChart({
                           onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
                           title="Click and drag to move in any direction, double-click to delete"
                         >
-                          <div className="font-medium" style={{ color: '#FAFF50' }}>{formatTime(annotation.time, selectedTimeframe)}</div>
-                          <div className="text-muted-foreground">{formatPrice(annotation.price)}</div>
-                          <div className="text-foreground mt-1">{annotation.text || ''}</div>
+                          <div className="text-foreground">{annotation.text || ''}</div>
                         </div>
                       </div>
                     );
@@ -1293,9 +1291,7 @@ export function PriceChart({
                           onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
                           title="Click and drag to move in any direction, double-click to delete"
                         >
-                          <div className="font-medium" style={{ color: '#AA99FF' }}>{formatTime(annotation.time, selectedTimeframe)}</div>
-                          <div className="text-muted-foreground">{formatPrice(annotation.price)}</div>
-                          <div className="text-foreground mt-1">{annotation.text || ''}</div>
+                          <div className="text-foreground">{annotation.text || ''}</div>
                         </div>
                       </div>
                     );
