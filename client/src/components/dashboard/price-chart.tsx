@@ -860,13 +860,16 @@ export function PriceChart({
   const exportAsSVG = async () => {
     if (!chartRef.current) return;
     try {
-      const svgString = await htmlToImage.toSvg(chartRef.current, {
+      const svgDataUrl = await htmlToImage.toSvg(chartRef.current, {
         cacheBust: true,
         backgroundColor: '#ffffff',
         filter: (n) => !n.classList?.contains('no-export'),
       });
-      const blob = new Blob([svgString], { type: 'image/svg+xml' });
+      
+      // Convert data URL to proper blob
+      const blob = await (await fetch(svgDataUrl)).blob();
       const filename = `${symbol}_chart_${selectedTimeframe}${startDate && endDate ? `_${format(startDate,'yyyy-MM-dd')}_${format(endDate,'yyyy-MM-dd')}` : ''}.svg`;
+      
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url; 
@@ -875,6 +878,7 @@ export function PriceChart({
       a.click();
       document.body.removeChild(a); 
       URL.revokeObjectURL(url);
+      
       toast({ title: 'Export Successful', description: `Chart exported as ${filename}` });
     } catch (e) {
       console.error('SVG export failed:', e);
