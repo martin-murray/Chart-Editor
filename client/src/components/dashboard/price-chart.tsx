@@ -837,7 +837,7 @@ export function PriceChart({
       const dataUrl = await htmlToImage.toPng(chartRef.current, {
         pixelRatio: 3,
         cacheBust: true,
-        backgroundColor: '#ffffff',
+        backgroundColor: '#121212',
         skipFonts: true,
         style: { transform: 'scale(1)' },
         filter: (n) => !n.classList?.contains('no-export'),
