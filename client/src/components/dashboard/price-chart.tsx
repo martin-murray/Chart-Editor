@@ -839,7 +839,10 @@ export function PriceChart({
         cacheBust: true,
         backgroundColor: '#121212',
         skipFonts: true,
-        style: { transform: 'scale(1)' },
+        style: { 
+          transform: 'scale(1)',
+          paddingBottom: '20px'
+        },
         filter: (n) => !n.classList?.contains('no-export'),
       });
       const img = new Image();
