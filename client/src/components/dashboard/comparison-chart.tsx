@@ -13,7 +13,7 @@ import { Switch } from '@/components/ui/switch';
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { saveAs } from 'file-saver';
-import html2canvas from 'html2canvas';
+import * as htmlToImage from 'html-to-image';
 import jsPDF from 'jspdf';
 
 // Color palette for different tickers (max 5 tickers)
@@ -1117,150 +1117,101 @@ export function ComparisonChart({
 
   // PNG export function
   const exportPNG = async () => {
-    if (chartData.length === 0) {
-      toast({
-        title: "No Data",
-        description: "No chart data available to export",
-        variant: "destructive",
-      });
-      return;
-    }
+    const chartContainer = document.querySelector('[data-testid="comparison-chart-container"]');
+    if (!chartContainer) return;
 
     try {
-      console.log('Creating manual canvas export to bypass all export issues...');
-      const canvas = await captureFullChartAsCanvas();
+      const dataUrl = await htmlToImage.toPng(chartContainer as HTMLElement, {
+        pixelRatio: 3,
+        cacheBust: true,
+        backgroundColor: '#121212',
+        skipFonts: true,
+        style: { transform: 'scale(1)' },
+        filter: (n) => !n.classList?.contains('no-export'),
+      });
       
-      // Ensure minimum width for high quality
-      const minWidth = 2000;
-      let finalCanvas = canvas;
+      const fileName = `comparison-chart-${tickers.filter(t => t.visible).map(t => t.symbol).join('-')}-${new Date().toISOString().split('T')[0]}.png`;
+      const link = document.createElement('a');
+      link.download = fileName;
+      link.href = dataUrl;
+      link.click();
       
-      if (canvas.width < minWidth) {
-        const scale = minWidth / canvas.width;
-        const scaledCanvas = document.createElement('canvas');
-        const ctx = scaledCanvas.getContext('2d')!;
-        scaledCanvas.width = minWidth;
-        scaledCanvas.height = canvas.height * scale;
-        ctx.drawImage(canvas, 0, 0, scaledCanvas.width, scaledCanvas.height);
-        finalCanvas = scaledCanvas;
-      }
-      
-      // Convert to blob and download
-      finalCanvas.toBlob((blob) => {
-        if (blob) {
-          const fileName = `comparison-chart-${tickers.filter(t => t.visible).map(t => t.symbol).join('-')}-${new Date().toISOString().split('T')[0]}.png`;
-          saveAs(blob, fileName);
-          
-          toast({
-            title: "Export Successful", 
-            description: "PNG file with legend has been downloaded",
-          });
-        } else {
-          throw new Error('Failed to create blob from canvas');
-        }
-      }, 'image/png', 1.0);
-    } catch (error) {
-      console.error('Comparison PNG export error:', error);
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error('Error details:', { message: errorMessage, stack: error instanceof Error ? error.stack : undefined });
       toast({
-        title: "Export Failed",
-        description: `Unable to export PNG file: ${errorMessage}`,
-        variant: "destructive",
+        title: 'Export Successful',
+        description: `Chart exported as ${fileName}`,
+      });
+    } catch (err) {
+      console.error('PNG export failed:', err);
+      toast({
+        title: 'Export Failed',
+        description: 'PNG export failed. Please try again.',
+        variant: 'destructive',
       });
     }
   };
 
   // PDF export function for shared export functionality
   const exportPDF = async () => {
-    if (chartData.length === 0) {
-      toast({
-        title: "No Data", 
-        description: "No chart data available to export",
-        variant: "destructive",
-      });
-      return;
-    }
+    const chartContainer = document.querySelector('[data-testid="comparison-chart-container"]');
+    if (!chartContainer) return;
 
     try {
-      // Import jsPDF dynamically
-      const { jsPDF } = await import('jspdf');
-      
-      console.log('Creating manual canvas export for PDF to bypass all export issues...');
-      const canvas = await captureFullChartAsCanvas();
-
-      // Calculate dimensions for PDF (use actual canvas dimensions for best quality)
-      const imgData = canvas.toDataURL('image/png', 1.0); // Maximum quality
-      const pdf = new jsPDF({
-        orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
-        unit: 'px',
-        format: [canvas.width, canvas.height]
+      const dataUrl = await htmlToImage.toPng(chartContainer as HTMLElement, {
+        pixelRatio: 3,
+        cacheBust: true,
+        backgroundColor: '#121212',
+        skipFonts: true,
+        style: { transform: 'scale(1)' },
+        filter: (n) => !n.classList?.contains('no-export'),
       });
       
-      // Add the full-quality image to PDF
-      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+      const img = new Image();
+      img.src = dataUrl;
+      await (img.decode ? img.decode() : new Promise(r => (img.onload = () => r(null))));
       
-      // Save the PDF
+      const orientation = img.width >= img.height ? 'landscape' : 'portrait';
+      const pdf = new jsPDF({ orientation, unit: 'px', format: [img.width, img.height] });
+      pdf.addImage(dataUrl, 'PNG', 0, 0, img.width, img.height, undefined, 'FAST');
+      
       const fileName = `comparison-chart-${tickers.filter(t => t.visible).map(t => t.symbol).join('-')}-${new Date().toISOString().split('T')[0]}.pdf`;
       pdf.save(fileName);
       
-      toast({
-        title: "Export Successful", 
-        description: "PDF file with legend has been downloaded",
-      });
-    } catch (error) {
-      console.error('PDF export error:', error);
-      toast({
-        title: "Export Failed",
-        description: `Unable to export PDF file: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        variant: "destructive",
-      });
+      toast({ title: 'Export Successful', description: `Chart exported as ${fileName}` });
+    } catch (err) {
+      console.error('PDF export failed:', err);
+      toast({ title: 'Export Failed', description: 'PDF export failed. Please try again.', variant: 'destructive' });
     }
   };
 
   // SVG export function for shared export functionality
   const exportSVG = async () => {
-    if (chartData.length === 0) {
-      toast({
-        title: "No Data",
-        description: "No chart data available to export",
-        variant: "destructive",
-      });
-      return;
-    }
+    const chartContainer = document.querySelector('[data-testid="comparison-chart-container"]');
+    if (!chartContainer) return;
 
     try {
-      // Find the SVG element within the chart
-      const svgElement = document.querySelector('[data-testid="comparison-chart-container"] svg') as SVGElement;
-      if (!svgElement) {
-        throw new Error('SVG chart element not found');
-      }
-
-      // Clone the SVG to avoid modifying the original
-      const svgClone = svgElement.cloneNode(true) as SVGElement;
-      
-      // Add necessary attributes for standalone SVG
-      svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-      svgClone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
-      
-      // Get SVG content as string
-      const svgData = new XMLSerializer().serializeToString(svgClone);
-      const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-      
-      // Download the SVG
-      const fileName = `comparison-chart-${tickers.map(t => t.symbol).join('-')}-${new Date().toISOString().split('T')[0]}.svg`;
-      saveAs(svgBlob, fileName);
-      
-      toast({
-        title: "Export Successful",
-        description: "SVG file has been downloaded",
+      const svgDataUrl = await htmlToImage.toSvg(chartContainer as HTMLElement, {
+        cacheBust: true,
+        backgroundColor: '#121212',
+        filter: (n) => !n.classList?.contains('no-export'),
       });
-    } catch (error) {
-      console.error('SVG export error:', error);
-      toast({
-        title: "Export Failed",
-        description: "Unable to export SVG file",
-        variant: "destructive",
-      });
+      
+      // Convert data URL to proper blob
+      const blob = await (await fetch(svgDataUrl)).blob();
+      const fileName = `comparison-chart-${tickers.filter(t => t.visible).map(t => t.symbol).join('-')}-${new Date().toISOString().split('T')[0]}.svg`;
+      
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; 
+      a.download = fileName; 
+      document.body.appendChild(a); 
+      a.click();
+      document.body.removeChild(a); 
+      URL.revokeObjectURL(url);
+      
+      toast({ title: 'Export Successful', description: `Chart exported as ${fileName}` });
+    } catch (e) {
+      console.error('SVG export failed:', e);
+      toast({ title: 'SVG Export Failed', description: 'SVG export failed. Please try again.', variant: 'destructive' });
     }
   };
 
