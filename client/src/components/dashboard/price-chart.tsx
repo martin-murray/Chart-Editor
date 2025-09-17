@@ -9,7 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tooltip as HoverTooltip, TooltipContent as HoverTooltipContent, TooltipProvider, TooltipTrigger as HoverTooltipTrigger } from '@/components/ui/tooltip';
-import { Loader2, TrendingUp, TrendingDown, Plus, Calendar as CalendarIcon, X, Download, ChevronDown, MessageSquare, Ruler, Minus, RotateCcw } from 'lucide-react';
+import { Loader2, TrendingUp, TrendingDown, Plus, Calendar as CalendarIcon, X, Download, ChevronDown, MessageSquare, Ruler, Minus, RotateCcw, Code } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { format, subDays, subMonths, subYears } from 'date-fns';
 import * as htmlToImage from 'html-to-image';
@@ -889,6 +889,62 @@ export function PriceChart({
     }
   };
 
+  const exportAsCode = () => {
+    const currentUrl = window.location.origin;
+    const embedCode = `<!-- Intropic Chart Editor Embed -->
+<iframe 
+  src="${currentUrl}/embed/chart/${symbol}?timeframe=${selectedTimeframe}${startDate && endDate ? `&start=${format(startDate,'yyyy-MM-dd')}&end=${format(endDate,'yyyy-MM-dd')}` : ''}" 
+  width="800" 
+  height="600" 
+  frameborder="0" 
+  style="border: 1px solid #e2e8f0; border-radius: 8px;">
+</iframe>
+
+<!-- JavaScript Widget (Alternative) -->
+<div id="intropic-chart-${symbol}"></div>
+<script>
+  (function() {
+    const widget = document.createElement('iframe');
+    widget.src = '${currentUrl}/embed/chart/${symbol}?timeframe=${selectedTimeframe}${startDate && endDate ? `&start=${format(startDate,'yyyy-MM-dd')}&end=${format(endDate,'yyyy-MM-dd')}` : ''}';
+    widget.width = '800';
+    widget.height = '600';
+    widget.style.border = '1px solid #e2e8f0';
+    widget.style.borderRadius = '8px';
+    document.getElementById('intropic-chart-${symbol}').appendChild(widget);
+  })();
+</script>
+
+<!-- React Component -->
+<IntropicChart 
+  symbol="${symbol}" 
+  timeframe="${selectedTimeframe}"${startDate && endDate ? `
+  startDate="${format(startDate,'yyyy-MM-dd')}"
+  endDate="${format(endDate,'yyyy-MM-dd')}"` : ''}
+  width={800}
+  height={600}
+/>`;
+
+    navigator.clipboard.writeText(embedCode).then(() => {
+      toast({
+        title: "Embed Code Copied!",
+        description: "Chart embed code has been copied to your clipboard.",
+      });
+    }).catch(() => {
+      // Fallback: show the code in a dialog
+      const blob = new Blob([embedCode], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${symbol}_chart_embed_code.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast({
+        title: "Embed Code Downloaded",
+        description: "Chart embed code has been downloaded as a text file.",
+      });
+    });
+  };
+
   // Comparison chart export functions
 
   const exportComparisonAsCSV = () => {
@@ -938,6 +994,64 @@ export function PriceChart({
     } else {
       alert('Comparison chart not found. Please ensure the comparison chart is visible.');
     }
+  };
+
+  const exportComparisonAsCode = () => {
+    const currentUrl = window.location.origin;
+    // Get visible tickers from the comparison chart
+    const visibleTickers = "TICKER1,TICKER2"; // This would be dynamically populated
+    const embedCode = `<!-- Intropic Chart Editor - Comparison Chart Embed -->
+<iframe 
+  src="${currentUrl}/embed/comparison?tickers=${visibleTickers}&timeframe=${selectedTimeframe}${startDate && endDate ? `&start=${format(startDate,'yyyy-MM-dd')}&end=${format(endDate,'yyyy-MM-dd')}` : ''}" 
+  width="1000" 
+  height="700" 
+  frameborder="0" 
+  style="border: 1px solid #e2e8f0; border-radius: 8px;">
+</iframe>
+
+<!-- JavaScript Widget (Alternative) -->
+<div id="intropic-comparison-chart"></div>
+<script>
+  (function() {
+    const widget = document.createElement('iframe');
+    widget.src = '${currentUrl}/embed/comparison?tickers=${visibleTickers}&timeframe=${selectedTimeframe}${startDate && endDate ? `&start=${format(startDate,'yyyy-MM-dd')}&end=${format(endDate,'yyyy-MM-dd')}` : ''}';
+    widget.width = '1000';
+    widget.height = '700';
+    widget.style.border = '1px solid #e2e8f0';
+    widget.style.borderRadius = '8px';
+    document.getElementById('intropic-comparison-chart').appendChild(widget);
+  })();
+</script>
+
+<!-- React Component -->
+<IntropicComparisonChart 
+  tickers={["${visibleTickers.split(',').join('", "')}"]} 
+  timeframe="${selectedTimeframe}"${startDate && endDate ? `
+  startDate="${format(startDate,'yyyy-MM-dd')}"
+  endDate="${format(endDate,'yyyy-MM-dd')}"` : ''}
+  width={1000}
+  height={700}
+/>`;
+
+    navigator.clipboard.writeText(embedCode).then(() => {
+      toast({
+        title: "Embed Code Copied!",
+        description: "Comparison chart embed code has been copied to your clipboard.",
+      });
+    }).catch(() => {
+      // Fallback: download the code
+      const blob = new Blob([embedCode], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `comparison_chart_embed_code.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast({
+        title: "Embed Code Downloaded",
+        description: "Comparison chart embed code has been downloaded as a text file.",
+      });
+    });
   };
 
 
@@ -1191,6 +1305,10 @@ export function PriceChart({
                       <Download className="w-4 h-4 mr-2" />
                       Export as SVG
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={exportAsCode} className="cursor-pointer">
+                      <Code className="w-4 h-4 mr-2" />
+                      Get Embed Code
+                    </DropdownMenuItem>
                   </>
                 ) : (
                   <>
@@ -1209,6 +1327,10 @@ export function PriceChart({
                     <DropdownMenuItem onClick={exportComparisonAsCSV} className="cursor-pointer">
                       <Download className="w-4 h-4 mr-2" />
                       Export as CSV
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={exportComparisonAsCode} className="cursor-pointer">
+                      <Code className="w-4 h-4 mr-2" />
+                      Get Embed Code
                     </DropdownMenuItem>
                   </>
                 )}
