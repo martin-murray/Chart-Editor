@@ -858,271 +858,27 @@ export function PriceChart({
   };
 
   const exportAsSVG = async () => {
+    if (!chartRef.current) return;
     try {
-      const price = actualCurrentPrice && actualCurrentPrice !== 'NaN' && actualCurrentPrice !== '--' ? formatPrice(parseFloat(actualCurrentPrice)) : 'N/A';
-      const change = actualPercentChange && actualPercentChange !== '0' && actualPercentChange !== '--' ? actualPercentChange : 'N/A';
-      const cap = actualMarketCap && actualMarketCap !== '--' ? actualMarketCap : 'N/A';
-      
-      const timeframeText = startDate && endDate 
-        ? `Date Range: ${format(startDate, 'MMM dd, yyyy')} - ${format(endDate, 'MMM dd, yyyy')}`
-        : `Timeframe: ${selectedTimeframe}`;
-      
-      // Create high-resolution SVG with complete UI duplication
-      let svgContent = `<svg width="1920" height="1400" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <!-- Define gradient for mountain fill -->
-          <linearGradient id="mountainGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" style="stop-color:${isPositive ? '#5AF5FA' : '#FFA5FF'};stop-opacity:0.25" />
-            <stop offset="100%" style="stop-color:${isPositive ? '#5AF5FA' : '#FFA5FF'};stop-opacity:0" />
-          </linearGradient>
-          
-          <!-- Grid line style -->
-          <style>
-            .grid-line { stroke: #3B3B3B; stroke-width: 2; stroke-opacity: 0.5; }
-            .price-line { stroke: ${isPositive ? '#5AF5FA' : '#FFA5FF'}; stroke-width: 3; fill: none; stroke-linecap: round; stroke-linejoin: round; }
-            .title-text { fill: #5AF5FA; font-family: system-ui, -apple-system, sans-serif; font-size: 48px; font-weight: bold; }
-            .info-text { fill: #F7F7F7; font-family: system-ui, -apple-system, sans-serif; font-size: 36px; }
-            .label-text { fill: #F7F7F7; font-family: system-ui, -apple-system, sans-serif; font-size: 24px; }
-          </style>
-        </defs>
-        
-        <!-- Background -->
-        <rect width="1920" height="1400" fill="#121212"/>
-        
-        <!-- Title and metadata -->
-        <text x="60" y="80" class="title-text">${symbol} - ${name}</text>
-        <text x="60" y="140" class="info-text">Price: ${price} (${change}%)</text>
-        <text x="60" y="190" class="info-text">Market Cap: ${cap}</text>
-        <text x="60" y="240" class="info-text">${timeframeText}</text>`;
-      
-      // Add charts if data is available
-      if (chartData?.data && chartData.data.length > 0) {
-        // Price chart area (upper portion)
-        const priceArea = { x: 120, y: 300, width: 1680, height: 500 };
-        const prices = chartData.data.map(d => d.close);
-        const minPrice = Math.min(...prices);
-        const maxPrice = Math.max(...prices);
-        const priceRange = maxPrice - minPrice;
-        
-        // Add grid lines for price chart
-        // Horizontal grid lines
-        for (let i = 0; i <= 5; i++) {
-          const y = priceArea.y + (i * priceArea.height / 5);
-          svgContent += `
-            <line x1="${priceArea.x}" y1="${y}" x2="${priceArea.x + priceArea.width}" y2="${y}" class="grid-line"/>`;
-        }
-        // Vertical grid lines
-        const svgPriceVerticalLines = Math.min(7, chartData.data.length);
-        for (let i = 0; i < svgPriceVerticalLines; i++) {
-          const x = priceArea.x + (i / (svgPriceVerticalLines - 1)) * priceArea.width;
-          svgContent += `
-            <line x1="${x}" y1="${priceArea.y}" x2="${x}" y2="${priceArea.y + priceArea.height}" class="grid-line"/>`;
-        }
-        
-        // Create path for mountain area fill
-        let areaPath = `M${priceArea.x},${priceArea.y + priceArea.height}`;
-        chartData.data.forEach((point, index) => {
-          const x = priceArea.x + (index / (chartData.data.length - 1)) * priceArea.width;
-          const y = priceArea.y + priceArea.height - ((point.close - minPrice) / priceRange) * priceArea.height;
-          areaPath += ` L${x},${y}`;
-        });
-        areaPath += ` L${priceArea.x + priceArea.width},${priceArea.y + priceArea.height} Z`;
-        
-        // Add mountain gradient fill
-        svgContent += `
-          <path d="${areaPath}" fill="url(#mountainGradient)"/>`;
-        
-        // Create path for price line
-        let linePath = '';
-        chartData.data.forEach((point, index) => {
-          const x = priceArea.x + (index / (chartData.data.length - 1)) * priceArea.width;
-          const y = priceArea.y + priceArea.height - ((point.close - minPrice) / priceRange) * priceArea.height;
-          linePath += index === 0 ? `M${x},${y}` : ` L${x},${y}`;
-        });
-        
-        // Add price line
-        svgContent += `
-          <path d="${linePath}" class="price-line"/>`;
-        
-        // Add Y-axis price labels
-        for (let i = 0; i <= 5; i++) {
-          const price = minPrice + (i / 5) * priceRange;
-          const y = priceArea.y + priceArea.height - (i * priceArea.height / 5);
-          svgContent += `
-            <text x="${priceArea.x + priceArea.width + 20}" y="${y + 8}" class="label-text">${formatPrice(price)}</text>`;
-        }
-        
-        // Add white separator line
-        svgContent += `
-          <line x1="${priceArea.x}" y1="${priceArea.y + priceArea.height + 10}" x2="${priceArea.x + priceArea.width}" y2="${priceArea.y + priceArea.height + 10}" stroke="#FFFFFF" stroke-width="3"/>`;
-        
-        // Volume chart area (lower portion)
-        const volumeArea = { x: 120, y: priceArea.y + priceArea.height + 30, width: 1680, height: 250 };
-        const volumes = chartData.data.map(d => d.volume);
-        const maxVolume = Math.max(...volumes);
-        
-        // Add grid lines for volume chart
-        // Horizontal grid lines
-        for (let i = 0; i <= 3; i++) {
-          const y = volumeArea.y + (i * volumeArea.height / 3);
-          svgContent += `
-            <line x1="${volumeArea.x}" y1="${y}" x2="${volumeArea.x + volumeArea.width}" y2="${y}" class="grid-line"/>`;
-        }
-        // Vertical grid lines
-        const svgVolumeVerticalLines = Math.min(7, chartData.data.length);
-        for (let i = 0; i < svgVolumeVerticalLines; i++) {
-          const x = volumeArea.x + (i / (svgVolumeVerticalLines - 1)) * volumeArea.width;
-          svgContent += `
-            <line x1="${x}" y1="${volumeArea.y}" x2="${x}" y2="${volumeArea.y + volumeArea.height}" class="grid-line"/>`;
-        }
-        
-        // Add volume bars
-        chartData.data.forEach((point, index) => {
-          // Green for buying pressure (close >= open), red for selling pressure (close < open)
-          const isBullish = point.close >= point.open;
-          const fillColor = isBullish ? '#22c55e' : '#ef4444';
-          
-          const barWidth = volumeArea.width / chartData.data.length * 0.8;
-          const x = volumeArea.x + (index / chartData.data.length) * volumeArea.width + barWidth * 0.1;
-          const barHeight = (point.volume / maxVolume) * volumeArea.height;
-          const y = volumeArea.y + volumeArea.height - barHeight;
-          
-          svgContent += `
-            <rect x="${x}" y="${y}" width="${barWidth}" height="${barHeight}" fill="${fillColor}" opacity="0.7" rx="1"/>`;
-        });
-        
-        // Add Y-axis volume labels
-        for (let i = 0; i <= 3; i++) {
-          const volume = (i / 3) * maxVolume;
-          const y = volumeArea.y + volumeArea.height - (i * volumeArea.height / 3);
-          svgContent += `
-            <text x="${volumeArea.x + volumeArea.width + 20}" y="${y + 8}" class="label-text" font-size="20">${formatNumber(volume)}</text>`;
-        }
-        
-        // Add X-axis labels at bottom with actual dates (more comprehensive)
-        const numLabels = Math.min(7, chartData.data.length);
-        for (let i = 0; i < numLabels; i++) {
-          const dataIndex = Math.floor((i / (numLabels - 1)) * (chartData.data.length - 1));
-          const date = formatTime(chartData.data[dataIndex].time, selectedTimeframe);
-          const x = volumeArea.x + (i / (numLabels - 1)) * volumeArea.width;
-          
-          // Position text appropriately
-          let textX = x;
-          let textAnchor = 'middle';
-          if (i === 0) {
-            textX = volumeArea.x;
-            textAnchor = 'start';
-          } else if (i === numLabels - 1) {
-            textX = volumeArea.x + volumeArea.width;
-            textAnchor = 'end';
-          }
-          
-          svgContent += `
-            <text x="${textX}" y="${volumeArea.y + volumeArea.height + 40}" class="label-text" text-anchor="${textAnchor}">${date}</text>`;
-        }
-        
-        // Add earnings markers to SVG export
-        if (earningsData?.earnings?.length) {
-          const toMs = (ts: number) => (String(ts).length === 10 ? ts * 1000 : ts);
-          earningsData.earnings.forEach(e => {
-            const eMs = new Date(e.date || e.datetime || e.announcementDate).getTime();
-            let nearestIdx = 0;
-            let best = Number.POSITIVE_INFINITY;
-            chartData.data.forEach((d, i) => {
-              const diff = Math.abs(toMs(d.timestamp) - eMs);
-              if (diff < best) { best = diff; nearestIdx = i; }
-            });
-            const x = priceArea.x + (chartData.data.length > 1 ? (nearestIdx / (chartData.data.length - 1)) * priceArea.width : 0);
-            const dotY = volumeArea.y + volumeArea.height - 10; // sits on timeline above labels
-            
-            // Add earnings circle and text to SVG
-            svgContent += `
-              <circle cx="${x}" cy="${dotY}" r="10" fill="#FAFF50" stroke="#121212" stroke-width="1"/>
-              <text x="${x}" y="${dotY}" text-anchor="middle" dominant-baseline="central" fill="#121212" font-weight="bold" font-size="12" font-family="system-ui, -apple-system, sans-serif">E</text>`;
-          });
-        }
-        
-        // Add annotations
-        if (annotations.length > 0) {
-          annotations.forEach((annotation) => {
-            // Find the data index for this annotation
-            const dataIndex = chartData.data.findIndex(d => d.timestamp === annotation.timestamp);
-            if (dataIndex === -1) return;
-            
-            // Calculate annotation position
-            const x = priceArea.x + (dataIndex / (chartData.data.length - 1)) * priceArea.width;
-            
-            // Add vertical annotation line
-            svgContent += `
-              <line x1="${x}" y1="${priceArea.y}" x2="${x}" y2="${volumeArea.y + volumeArea.height}" stroke="#FAFF50" stroke-width="1"/>`;
-            
-            // Add annotation dot
-            svgContent += `
-              <circle cx="${x}" cy="${priceArea.y}" r="8" fill="#FAFF50"/>`;
-            
-            // Add annotation text box positioned next to the annotation line
-            const textBoxWidth = 240;
-            const textBoxHeight = 80;
-            const textBoxX = Math.min(x + 10, priceArea.x + priceArea.width - textBoxWidth);
-            // Position tooltip within the chart area, offset from the annotation line
-            const textBoxY = Math.max(priceArea.y + 10, Math.min(priceArea.y + 100, priceArea.y + priceArea.height - textBoxHeight - 10));
-            
-            // Text box background
-            svgContent += `
-              <rect x="${textBoxX}" y="${textBoxY}" width="${textBoxWidth}" height="${textBoxHeight}" fill="#121212" stroke="#374151" stroke-width="1"/>`;
-            
-            // Text content
-            svgContent += `
-              <text x="${textBoxX + 8}" y="${textBoxY + 20}" fill="#FAFF50" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="bold">${formatTime(annotation.time, selectedTimeframe)}</text>
-              <text x="${textBoxX + 8}" y="${textBoxY + 40}" fill="#9CA3AF" font-family="system-ui, -apple-system, sans-serif" font-size="14">${formatPrice(annotation.price)}</text>`;
-            
-            // Wrap annotation text
-            const maxWidth = textBoxWidth - 16;
-            const words = (annotation.text || '').split(' ');
-            let line = '';
-            let y = textBoxY + 60;
-            
-            // Simple text wrapping for SVG
-            const lines: string[] = [];
-            for (let n = 0; n < words.length; n++) {
-              const testLine = line + words[n] + ' ';
-              if (testLine.length > 30 && n > 0) { // Rough character count for wrapping
-                lines.push(line.trim());
-                line = words[n] + ' ';
-                if (lines.length >= 2) break; // Limit to 2 lines
-              } else {
-                line = testLine;
-              }
-            }
-            if (line.trim() && lines.length < 2) {
-              lines.push(line.trim());
-            }
-            
-            lines.forEach((textLine, index) => {
-              svgContent += `
-                <text x="${textBoxX + 8}" y="${y + (index * 16)}" fill="#F7F7F7" font-family="system-ui, -apple-system, sans-serif" font-size="14">${textLine}</text>`;
-            });
-          });
-        }
-        
-      } else {
-        // Fallback if no chart data
-        svgContent += `
-          <rect x="120" y="300" width="1680" height="700" fill="none" stroke="#5AF5FA" stroke-width="4"/>
-          <text x="960" y="650" class="info-text" text-anchor="middle">Chart data not available</text>`;
-      }
-      
-      svgContent += '</svg>';
-      
-      const blob = new Blob([svgContent], { type: 'image/svg+xml' });
-      const filename = `${symbol}_chart_${selectedTimeframe}${
-        startDate && endDate ? `_${format(startDate, 'yyyy-MM-dd')}_${format(endDate, 'yyyy-MM-dd')}` : ''
-      }.svg`;
-      
-      saveAs(blob, filename);
-    } catch (error) {
-      console.error('SVG export failed:', error);
-      alert('SVG export failed. Please try again.');
+      const svgString = await htmlToImage.toSvg(chartRef.current, {
+        cacheBust: true,
+        backgroundColor: '#ffffff',
+        filter: (n) => !n.classList?.contains('no-export'),
+      });
+      const blob = new Blob([svgString], { type: 'image/svg+xml' });
+      const filename = `${symbol}_chart_${selectedTimeframe}${startDate && endDate ? `_${format(startDate,'yyyy-MM-dd')}_${format(endDate,'yyyy-MM-dd')}` : ''}.svg`;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; 
+      a.download = filename; 
+      document.body.appendChild(a); 
+      a.click();
+      document.body.removeChild(a); 
+      URL.revokeObjectURL(url);
+      toast({ title: 'Export Successful', description: `Chart exported as ${filename}` });
+    } catch (e) {
+      console.error('SVG export failed:', e);
+      toast({ title: 'SVG Export Failed', description: 'SVG export failed. Please try again.', variant: 'destructive' });
     }
   };
 
@@ -1176,6 +932,9 @@ export function PriceChart({
       alert('Comparison chart not found. Please ensure the comparison chart is visible.');
     }
   };
+
+
+  // Handle chart click for annotations - implementation is in the main handleChartClick function above
 
   return (
     <div className="w-full space-y-6">
