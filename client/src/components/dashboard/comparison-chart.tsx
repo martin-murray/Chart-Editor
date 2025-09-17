@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { createPortal } from "react-dom";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Search, X, Plus, Download, FileText, Image } from "lucide-react";
+import { Search, X, Plus, Download, FileText, Image as ImageIcon } from "lucide-react";
 import { Switch } from '@/components/ui/switch';
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -1165,10 +1165,9 @@ export function ComparisonChart({
         filter: (n) => !n.classList?.contains('no-export'),
       });
       
-      const img = new Image();
+      const img = new globalThis.Image();
       img.src = dataUrl;
-      await (img.decode ? img.decode() : new Promise<void>(r => (img.onload = () => r())));
-      
+      await (img.decode ? img.decode() : new Promise(r => (img.onload = () => r(null))));
       const orientation = img.width >= img.height ? 'landscape' : 'portrait';
       const pdf = new jsPDF({ orientation, unit: 'px', format: [img.width, img.height] });
       pdf.addImage(dataUrl, 'PNG', 0, 0, img.width, img.height, undefined, 'FAST');
