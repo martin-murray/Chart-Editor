@@ -104,6 +104,72 @@ export function ComparisonChart({
   // Hover tool toggle state
   const [showHoverTooltip, setShowHoverTooltip] = useState(true);
 
+  // Y-axis zoom state
+  const [yAxisMode, setYAxisMode] = useState<'auto' | 'fixed'>('auto');
+  const [yAxisRange, setYAxisRange] = useState<number>(10); // Current zoom range in %
+  
+  // Predefined zoom levels for symmetric scaling around 0%
+  const zoomLevels = [0.5, 1, 2, 3, 5, 10, 15, 20, 30, 50, 75, 100, 150, 200, 300, 500];
+
+  // Calculate current data extremes from visible tickers
+  const dataExtremes = useMemo(() => {
+    if (!chartData || chartData.length === 0 || tickers.length === 0) {
+      return { min: -10, max: 10, baseRange: 10 };
+    }
+
+    let min = Infinity;
+    let max = -Infinity;
+
+    // Find min/max across all visible ticker percentage data
+    chartData.forEach(point => {
+      tickers.forEach(ticker => {
+        const value = point[`${ticker.symbol}_percentage`];
+        if (typeof value === 'number' && !isNaN(value)) {
+          min = Math.min(min, value);
+          max = Math.max(max, value);
+        }
+      });
+    });
+
+    // Handle empty data case
+    if (min === Infinity || max === -Infinity) {
+      return { min: -10, max: 10, baseRange: 10 };
+    }
+
+    // Calculate base range as the max absolute value, with minimum of 0.5%
+    const baseRange = Math.max(Math.abs(min), Math.abs(max), 0.5);
+    
+    return { min, max, baseRange };
+  }, [chartData, tickers]);
+
+  // Y-axis zoom control functions
+  const zoomIn = () => {
+    const currentIndex = zoomLevels.findIndex(level => level >= yAxisRange);
+    const nextIndex = Math.max(0, currentIndex - 1);
+    setYAxisRange(zoomLevels[nextIndex]);
+    setYAxisMode('fixed');
+  };
+
+  const zoomOut = () => {
+    const currentIndex = zoomLevels.findIndex(level => level >= yAxisRange);
+    const nextIndex = Math.min(zoomLevels.length - 1, currentIndex + 1);
+    setYAxisRange(zoomLevels[nextIndex]);
+    setYAxisMode('fixed');
+  };
+
+  const fitToData = () => {
+    setYAxisMode('auto');
+  };
+
+  // Get current Y-axis domain based on zoom state
+  const getYAxisDomain = () => {
+    if (yAxisMode === 'auto') {
+      return [(dataMin: any) => Math.floor(Number(dataMin) - 1), (dataMax: any) => Math.ceil(Number(dataMax) + 1)];
+    } else {
+      return [-yAxisRange, yAxisRange];
+    }
+  };
+
   // Annotation UI state (non-conflicting with props)
   const [showAnnotationInput, setShowAnnotationInput] = useState(false);
   const [annotationInput, setAnnotationInput] = useState('');
