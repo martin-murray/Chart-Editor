@@ -534,16 +534,25 @@ export function ComparisonChart({
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Fetch search results
+  // Fetch search results using the global search endpoint
   const { data: searchResults = [], isLoading: isSearchLoading } = useQuery({
-    queryKey: ["/api/stocks/search", debouncedQuery],
+    queryKey: ["/api/stocks/global-search", debouncedQuery],
     queryFn: async (): Promise<SearchResult[]> => {
       if (!debouncedQuery || debouncedQuery.trim().length < 2) {
         return [];
       }
-      const response = await fetch(`/api/stocks/search?q=${encodeURIComponent(debouncedQuery.trim())}`);
+      const response = await fetch(`/api/stocks/global-search?q=${encodeURIComponent(debouncedQuery.trim())}`);
       if (!response.ok) throw new Error("Search failed");
-      return await response.json();
+      const globalResults = await response.json();
+      
+      // Transform global search results to SearchResult format
+      return globalResults.map((result: any) => ({
+        symbol: result.symbol,
+        name: result.description,
+        price: "0.00", // Global search doesn't include price, will be fetched when added
+        percentChange: "0.00", // Global search doesn't include change, will be fetched when added
+        marketCap: "N/A" // Global search doesn't include market cap, will be fetched when added
+      }));
     },
     enabled: debouncedQuery.trim().length >= 2,
   });
