@@ -1,6 +1,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { stockDataService } from "./services/stockData";
+import multer from "multer";
+import { sendEmail } from "./sendgrid";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Global stock search endpoint using Finnhub symbol lookup
@@ -183,6 +185,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching earnings calendar:", error);
       res.status(500).json({ message: "Failed to fetch earnings calendar" });
+    }
+  });
+
+  // Configure multer for file uploads (in memory for email attachment)
+  const upload = multer({ 
+    storage: multer.memoryStorage(),
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB limit
+    },
+  });
+
+  // Feedback form submission endpoint
+  app.post("/api/feedback", upload.single('file'), async (req, res) => {
+    try {
+      const { name, email, message } = req.body;
+      
+      if (!name || !email || !message) {
+        return res.status(400).json({ 
+          message: "Name, email, and message are required" 
+        });
+      }
+
+      // Prepare email content
+      const emailSubject = `Feedback from ${name} - Intropic Chart Editor`;
+      const emailText = `
+        Name: ${name}
+        Email: ${email}
+        Message: ${message}
+      `;
+      
+      const emailHtml = `
+        <h3>New Feedback Submission</h3>
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Message:</strong></p>
+        <p>${message.replace(/\n/g, '<br>')}</p>
+      `;
+
+      // Prepare attachments if file exists
+      let attachments: any[] = [];
+      if (req.file) {
+        attachments = [{
+          content: req.file.buffer.toString('base64'),
+          filename: req.file.originalname,
+          type: req.file.mimetype,
+          disposition: 'attachment'
+        }];
+      }
+
+      // Send email to martin.murray@intropic.io
+      const emailSent = await sendEmail({
+        to: 'martin.murray@intropic.io',
+        from: 'noreply@intropic.io', // This needs to be a verified sender in SendGrid
+        subject: emailSubject,
+        text: emailText,
+        html: emailHtml,
+        attachments
+      });
+
+      if (emailSent) {
+        console.log(`✅ Feedback email sent from ${email}`);
+        res.json({ success: true, message: "Feedback sent successfully" });
+      } else {
+        throw new Error("Failed to send email");
+      }
+
+    } catch (error) {
+      console.error("Feedback submission error:", error);
+      res.status(500).json({ 
+        message: "Failed to submit feedback. Please try again." 
+      });
     }
   });
 
