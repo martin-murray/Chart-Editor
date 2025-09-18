@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AreaChart, Area, LineChart, Line, BarChart, Bar, ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine, Customized } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -142,6 +142,15 @@ export function PriceChart({
     price: number;
     time: string;
   } | null>(null);
+
+  // Price Y-axis zoom state
+  const [priceAxisMode, setPriceAxisMode] = useState<'auto' | 'fixed'>('auto');
+  const [priceAxisRange, setPriceAxisRange] = useState<number>(100); // Current zoom range in price units
+  
+  // Predefined zoom levels for price scaling (percentage of current price range)
+  const priceZoomLevels = [0.1, 0.2, 0.3, 0.5, 0.7, 1.0, 1.5, 2.0, 3.0, 5.0, 10.0];
+
+
   
   // Drag state for horizontal lines
   const [isDragging, setIsDragging] = useState(false);
@@ -631,6 +640,55 @@ export function PriceChart({
     const percentageChange = ((item.close - firstPrice) / firstPrice) * 100;
     return { ...item, percentageChange };
   }) || [];
+
+  // Calculate current price data extremes for zoom functionality
+  const priceExtremes = useMemo(() => {
+    if (!chartDataWithPercentage || chartDataWithPercentage.length === 0) {
+      return { min: 0, max: 100, baseRange: 100, center: 50 };
+    }
+
+    const prices = chartDataWithPercentage.map(d => d.close).filter(p => p != null);
+    if (prices.length === 0) {
+      return { min: 0, max: 100, baseRange: 100, center: 50 };
+    }
+
+    const min = Math.min(...prices);
+    const max = Math.max(...prices);
+    const baseRange = max - min || 1; // Prevent division by zero
+    const center = (min + max) / 2;
+    
+    return { min, max, baseRange, center };
+  }, [chartDataWithPercentage]);
+
+  // Price zoom control functions
+  const zoomInPrice = () => {
+    const currentIndex = priceZoomLevels.findIndex(level => level >= (priceAxisRange / priceExtremes.baseRange));
+    const nextIndex = Math.max(0, currentIndex - 1);
+    setPriceAxisRange(priceZoomLevels[nextIndex] * priceExtremes.baseRange);
+    setPriceAxisMode('fixed');
+  };
+
+  const zoomOutPrice = () => {
+    const currentIndex = priceZoomLevels.findIndex(level => level >= (priceAxisRange / priceExtremes.baseRange));
+    const nextIndex = Math.min(priceZoomLevels.length - 1, currentIndex + 1);
+    setPriceAxisRange(priceZoomLevels[nextIndex] * priceExtremes.baseRange);
+    setPriceAxisMode('fixed');
+  };
+
+  const fitPriceToData = () => {
+    setPriceAxisMode('auto');
+  };
+
+  // Get current price Y-axis domain based on zoom state
+  const getPriceAxisDomain = (): any => {
+    if (priceAxisMode === 'auto') {
+      return ['dataMin - 1', 'dataMax + 1'];
+    } else {
+      const halfRange = priceAxisRange / 2;
+      const center = priceExtremes.center;
+      return [center - halfRange, center + halfRange];
+    }
+  };
 
   const formatNumber = (num: number) => {
     if (num >= 1e12) return `${(num / 1e12).toFixed(2)}T`;
@@ -1843,7 +1901,8 @@ export function PriceChart({
                   <YAxis 
                     yAxisId="price"
                     orientation="right"
-                    domain={['dataMin - 1', 'dataMax + 1']}
+                    domain={getPriceAxisDomain()}
+                    allowDataOverflow={priceAxisMode === 'fixed'}
                     tickFormatter={formatPrice}
                     tick={{ fontSize: 12, fill: '#F7F7F7' }}
                     axisLine={{ stroke: '#F7F7F7' }}
@@ -2205,6 +2264,41 @@ export function PriceChart({
                   />
                 </AreaChart>
               </ResponsiveContainer>
+              
+              {/* Price Y-axis Zoom Controls Overlay */}
+              <div className="absolute top-2 right-2 flex flex-row gap-1 z-50">
+                <button
+                  onClick={zoomInPrice}
+                  disabled={priceAxisRange <= priceZoomLevels[0] * priceExtremes.baseRange}
+                  className="h-7 w-7 text-sm font-medium bg-white text-black border-0 hover:bg-[#5AF5FA] hover:text-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 flex items-center justify-center"
+                  data-testid="button-zoom-in-price"
+                  title="Zoom In Price"
+                >
+                  +
+                </button>
+                <button
+                  onClick={zoomOutPrice}
+                  disabled={priceAxisRange >= priceZoomLevels[priceZoomLevels.length - 1] * priceExtremes.baseRange}
+                  className="h-7 w-7 text-sm font-medium bg-white text-black border-0 hover:bg-[#5AF5FA] hover:text-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 flex items-center justify-center"
+                  data-testid="button-zoom-out-price"
+                  title="Zoom Out Price"
+                >
+                  −
+                </button>
+                <button
+                  onClick={fitPriceToData}
+                  className="h-7 w-10 text-xs font-medium bg-white text-black border-0 hover:bg-[#5AF5FA] hover:text-black transition-colors duration-150 flex items-center justify-center"
+                  data-testid="button-fit-price-data"
+                  title="Fit Price to Data"
+                >
+                  Fit
+                </button>
+                {priceAxisMode === 'fixed' && (
+                  <div className="h-7 px-2 text-xs text-black bg-white/90 flex items-center justify-center">
+                    ${(priceAxisRange).toFixed(0)}
+                  </div>
+                )}
+              </div>
               
             </div>
 
