@@ -148,7 +148,7 @@ export function PriceChart({
   const [priceAxisRange, setPriceAxisRange] = useState<number>(100); // Current zoom range in price units
   
   // Predefined zoom levels for price scaling (percentage of current price range)
-  const priceZoomLevels = [0.1, 0.2, 0.3, 0.5, 0.7, 1.0, 1.5, 2.0, 3.0, 5.0, 10.0];
+  const priceZoomLevels = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 0.6, 0.7, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 7.5, 10.0];
 
 
   
@@ -2266,11 +2266,11 @@ export function PriceChart({
               </ResponsiveContainer>
               
               {/* Price Y-axis Zoom Controls Overlay */}
-              <div className="absolute top-2 right-2 flex flex-row gap-1 z-50">
+              <div className="absolute top-2 right-16 flex flex-row gap-1 z-50">
                 <button
                   onClick={zoomInPrice}
                   disabled={priceAxisRange <= priceZoomLevels[0] * priceExtremes.baseRange}
-                  className="h-7 w-7 text-sm font-medium bg-white text-black border-0 hover:bg-[#5AF5FA] hover:text-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 flex items-center justify-center"
+                  className="h-7 w-7 text-sm font-medium bg-[#121212] text-white border border-white hover:bg-[#5AF5FA] hover:text-[#121212] disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 flex items-center justify-center"
                   data-testid="button-zoom-in-price"
                   title="Zoom In Price"
                 >
@@ -2279,7 +2279,7 @@ export function PriceChart({
                 <button
                   onClick={zoomOutPrice}
                   disabled={priceAxisRange >= priceZoomLevels[priceZoomLevels.length - 1] * priceExtremes.baseRange}
-                  className="h-7 w-7 text-sm font-medium bg-white text-black border-0 hover:bg-[#5AF5FA] hover:text-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 flex items-center justify-center"
+                  className="h-7 w-7 text-sm font-medium bg-[#121212] text-white border border-white hover:bg-[#5AF5FA] hover:text-[#121212] disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 flex items-center justify-center"
                   data-testid="button-zoom-out-price"
                   title="Zoom Out Price"
                 >
@@ -2287,17 +2287,12 @@ export function PriceChart({
                 </button>
                 <button
                   onClick={fitPriceToData}
-                  className="h-7 w-10 text-xs font-medium bg-white text-black border-0 hover:bg-[#5AF5FA] hover:text-black transition-colors duration-150 flex items-center justify-center"
+                  className="h-7 w-10 text-xs font-medium bg-[#121212] text-white border border-white hover:bg-[#5AF5FA] hover:text-[#121212] transition-colors duration-150 flex items-center justify-center"
                   data-testid="button-fit-price-data"
                   title="Fit Price to Data"
                 >
                   Fit
                 </button>
-                {priceAxisMode === 'fixed' && (
-                  <div className="h-7 px-2 text-xs text-black bg-white/90 flex items-center justify-center">
-                    ${(priceAxisRange).toFixed(0)}
-                  </div>
-                )}
               </div>
               
             </div>

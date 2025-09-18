@@ -109,7 +109,7 @@ export function ComparisonChart({
   const [yAxisRange, setYAxisRange] = useState<number>(10); // Current zoom range in %
   
   // Predefined zoom levels for symmetric scaling around 0%
-  const zoomLevels = [0.5, 1, 2, 3, 5, 10, 15, 20, 30, 50, 75, 100, 150, 200, 300, 500];
+  const zoomLevels = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3, 5, 7.5, 10, 15, 20, 30, 50, 75, 100, 150, 200, 300, 500];
 
   // Annotation UI state (non-conflicting with props)
   const [showAnnotationInput, setShowAnnotationInput] = useState(false);
@@ -2135,7 +2135,7 @@ export function ComparisonChart({
               <button
                 onClick={zoomIn}
                 disabled={yAxisRange <= zoomLevels[0]}
-                className="h-7 w-7 text-sm font-medium bg-white text-black border-0 hover:bg-[#5AF5FA] hover:text-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 flex items-center justify-center"
+                className="h-7 w-7 text-sm font-medium bg-[#121212] text-white border border-white hover:bg-[#5AF5FA] hover:text-[#121212] disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 flex items-center justify-center"
                 data-testid="button-zoom-in"
                 title="Zoom In Y-axis"
               >
@@ -2144,7 +2144,7 @@ export function ComparisonChart({
               <button
                 onClick={zoomOut}
                 disabled={yAxisRange >= zoomLevels[zoomLevels.length - 1]}
-                className="h-7 w-7 text-sm font-medium bg-white text-black border-0 hover:bg-[#5AF5FA] hover:text-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 flex items-center justify-center"
+                className="h-7 w-7 text-sm font-medium bg-[#121212] text-white border border-white hover:bg-[#5AF5FA] hover:text-[#121212] disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 flex items-center justify-center"
                 data-testid="button-zoom-out"
                 title="Zoom Out Y-axis"
               >
@@ -2152,17 +2152,12 @@ export function ComparisonChart({
               </button>
               <button
                 onClick={fitToData}
-                className="h-7 w-10 text-xs font-medium bg-white text-black border-0 hover:bg-[#5AF5FA] hover:text-black transition-colors duration-150 flex items-center justify-center"
+                className="h-7 w-10 text-xs font-medium bg-[#121212] text-white border border-white hover:bg-[#5AF5FA] hover:text-[#121212] transition-colors duration-150 flex items-center justify-center"
                 data-testid="button-fit-data"
                 title="Fit to Data"
               >
                 Fit
               </button>
-              {yAxisMode === 'fixed' && (
-                <div className="h-7 px-2 text-xs text-black bg-white/90 flex items-center justify-center">
-                  ±{yAxisRange}%
-                </div>
-              )}
             </div>
             
             </div>
