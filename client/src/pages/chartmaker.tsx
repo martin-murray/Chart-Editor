@@ -9,7 +9,7 @@ import { Search, TrendingUp, TrendingDown, BarChart3, Trash2, RotateCcw } from "
 import { Link } from "wouter";
 import { cn } from "@/lib/utils";
 import { PriceChart } from "@/components/dashboard/price-chart";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { FeedbackForm } from "@/components/feedback-form";
 import logoImage from "@assets/IPO Intelligence@2x_1758060026530.png";
 
 interface GlobalSearchResult {
@@ -373,6 +373,23 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
   );
 }
 
+function FeedbackButton() {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <>
+      <button
+        onClick={() => setIsOpen(true)}
+        className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+        data-testid="button-feedback"
+      >
+        Issues / Feedback
+      </button>
+      <FeedbackForm open={isOpen} onOpenChange={setIsOpen} />
+    </>
+  );
+}
+
 function ChartMaker() {
   return (
     <div className="min-h-screen bg-background">
@@ -389,7 +406,7 @@ function ChartMaker() {
               />
             </div>
             <div className="flex items-center gap-4">
-              <ThemeToggle />
+              <FeedbackButton />
             </div>
           </div>
         </div>
