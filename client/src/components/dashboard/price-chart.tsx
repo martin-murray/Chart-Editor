@@ -122,6 +122,7 @@ export function PriceChart({
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [singleTradingDay, setSingleTradingDay] = useState(false);
   const [activeTab, setActiveTab] = useState('price-volume');
   const chartRef = useRef<HTMLDivElement>(null);
   const comparisonRef = useRef<HTMLDivElement>(null);
@@ -328,12 +329,70 @@ export function PriceChart({
 
   // Chart data query - must be declared before useEffect that depends on it
   const { data: chartData, isLoading, error } = useQuery({
-    queryKey: ['/api/stocks', symbol, 'chart', selectedTimeframe, startDate, endDate],
+    queryKey: ['/api/stocks', symbol, 'chart', selectedTimeframe, startDate, endDate, singleTradingDay],
     queryFn: async (): Promise<ChartResponse> => {
       let url = `/api/stocks/${symbol}/chart?timeframe=${selectedTimeframe}`;
       if (selectedTimeframe === 'Custom' && startDate && endDate) {
-        const fromTimestamp = Math.floor(startDate.getTime() / 1000);
-        const toTimestamp = Math.floor(endDate.getTime() / 1000);
+        let fromTimestamp: number;
+        let toTimestamp: number;
+        
+        if (singleTradingDay || startDate.toDateString() === endDate.toDateString()) {
+          // Single trading day - set to US market hours (9:30 AM - 4:00 PM ET)
+          const tradingDay = startDate;
+          
+          // Format date as YYYY-MM-DD
+          const dateStr = tradingDay.toISOString().split('T')[0];
+          
+          // Robust timezone handling for US Eastern Time
+          // Get the actual UTC offset for America/New_York on this specific date
+          const getETOffsetForDate = (date: Date) => {
+            // Create a date at noon ET to avoid edge cases
+            const tempDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12, 0, 0);
+            
+            // Get the timezone offset for America/New_York on this date
+            const etDateString = tempDate.toLocaleString('en-US', { 
+              timeZone: 'America/New_York',
+              year: 'numeric',
+              month: '2-digit', 
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+              hour12: false
+            });
+            
+            const utcDateString = tempDate.toLocaleString('en-US', { 
+              timeZone: 'UTC',
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit', 
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+              hour12: false
+            });
+            
+            const etTime = new Date(etDateString.replace(/(\d+)\/(\d+)\/(\d+),\s/, '$3-$1-$2T') + 'Z');
+            const utcTime = new Date(utcDateString.replace(/(\d+)\/(\d+)\/(\d+),\s/, '$3-$1-$2T') + 'Z');
+            
+            const offsetHours = (etTime.getTime() - utcTime.getTime()) / (1000 * 60 * 60);
+            return offsetHours === 4 ? '-04:00' : '-05:00'; // EDT or EST
+          };
+          
+          const offset = getETOffsetForDate(tradingDay);
+          
+          // Market open: 9:30 AM ET, Market close: 4:00 PM ET
+          const marketOpen = new Date(`${dateStr}T09:30:00${offset}`);
+          const marketClose = new Date(`${dateStr}T16:00:00${offset}`);
+          
+          fromTimestamp = Math.floor(marketOpen.getTime() / 1000);
+          toTimestamp = Math.floor(marketClose.getTime() / 1000);
+        } else {
+          // Date range - use full days
+          fromTimestamp = Math.floor(startDate.getTime() / 1000);
+          toTimestamp = Math.floor(endDate.getTime() / 1000);
+        }
+        
         url = `/api/stocks/${symbol}/chart?from=${fromTimestamp}&to=${toTimestamp}&timeframe=Custom`;
       }
       const response = await fetch(url);
@@ -519,12 +578,21 @@ export function PriceChart({
           year: '2-digit'
         });
       case 'Custom':
-        // For custom ranges, use the compact format
-        return date.toLocaleDateString('en-US', { 
-          month: 'numeric',
-          day: 'numeric',
-          year: '2-digit'
-        });
+        // For single trading day, show hours; for date ranges, show dates
+        if (singleTradingDay || (startDate && endDate && startDate.toDateString() === endDate.toDateString())) {
+          return date.toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: false 
+          });
+        } else {
+          // For custom ranges, use the compact format
+          return date.toLocaleDateString('en-US', { 
+            month: 'numeric',
+            day: 'numeric',
+            year: '2-digit'
+          });
+        }
       default:
         return date.toLocaleDateString();
     }
@@ -1100,55 +1168,137 @@ export function PriceChart({
           
         </div>
         
-        {/* Custom Date Range Picker - Positioned Below Timeframes */}
+        {/* Redesigned Custom Date Picker - Limited to 10 Years */}
         {selectedTimeframe === 'Custom' && showDatePicker && (
           <div className="mt-4 p-4 border rounded-lg bg-card relative z-50" style={{ zIndex: 9999 }}>
             {/* Close Button */}
             <button
-              onClick={() => setShowDatePicker(false)}
+              onClick={() => {
+                setShowDatePicker(false);
+                // Reset states when closing
+                setSingleTradingDay(false);
+                setStartDate(undefined);
+                setEndDate(undefined);
+              }}
               className="absolute top-3 right-3 text-muted-foreground hover:text-foreground transition-colors"
               title="Close date picker"
             >
               <X className="w-4 h-4" />
             </button>
             
-            {/* Quick Date Presets */}
+            {/* Mode Toggle */}
             <div className="mb-4 pr-8">
-              <label className="text-sm font-medium mb-2 block">Quick Presets</label>
+              <div className="flex items-center justify-center gap-4">
+                <div className="flex bg-muted rounded-lg p-1">
+                  <button
+                    onClick={() => {
+                      setSingleTradingDay(false);
+                      setEndDate(undefined); // Clear end date when switching to range mode
+                    }}
+                    className={`px-4 py-2 rounded-md text-sm transition-colors ${
+                      !singleTradingDay 
+                        ? 'bg-background shadow-sm text-foreground' 
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    Date Range
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSingleTradingDay(true);
+                      setEndDate(undefined); // Clear end date for single day mode
+                    }}
+                    className={`px-4 py-2 rounded-md text-sm transition-colors ${
+                      singleTradingDay 
+                        ? 'bg-background shadow-sm text-foreground' 
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    Single Trading Day
+                  </button>
+                </div>
+              </div>
+              
+              {singleTradingDay && (
+                <div className="text-center mt-2 text-xs text-muted-foreground bg-blue-50 dark:bg-blue-950 p-2 rounded">
+                  ⏰ Will show hourly data from market open to close
+                </div>
+              )}
+            </div>
+            
+            {/* Smart Quick Presets */}
+            <div className="mb-4 pr-8">
+              <label className="text-sm font-medium mb-2 block">
+                {singleTradingDay ? 'Quick Single Days' : 'Quick Ranges'}
+              </label>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                {[
-                  { label: 'Last 7 Days', days: 7 },
-                  { label: 'Last 30 Days', days: 30 },
-                  { label: 'Last 90 Days', days: 90 },
-                  { label: 'Last Year', days: 365 }
-                ].map(({ label, days }) => (
+                {singleTradingDay ? [
+                  { label: 'Yesterday', getDates: () => {
+                    const yesterday = new Date();
+                    yesterday.setDate(yesterday.getDate() - 1);
+                    // Move to Friday if weekend
+                    if (yesterday.getDay() === 0) yesterday.setDate(yesterday.getDate() - 2);
+                    if (yesterday.getDay() === 6) yesterday.setDate(yesterday.getDate() - 1);
+                    return { start: yesterday, end: undefined };
+                  }},
+                  { label: 'Last Friday', getDates: () => {
+                    const date = new Date();
+                    const daysSinceFriday = (date.getDay() + 2) % 7;
+                    date.setDate(date.getDate() - (daysSinceFriday === 0 ? 7 : daysSinceFriday));
+                    return { start: date, end: undefined };
+                  }},
+                  { label: '2 Days Ago', getDates: () => {
+                    const date = new Date();
+                    date.setDate(date.getDate() - 2);
+                    // Move to Friday if weekend
+                    if (date.getDay() === 0) date.setDate(date.getDate() - 2);
+                    if (date.getDay() === 6) date.setDate(date.getDate() - 1);
+                    return { start: date, end: undefined };
+                  }},
+                  { label: '1 Week Ago', getDates: () => {
+                    const date = new Date();
+                    date.setDate(date.getDate() - 7);
+                    // Move to Friday if weekend
+                    if (date.getDay() === 0) date.setDate(date.getDate() - 2);
+                    if (date.getDay() === 6) date.setDate(date.getDate() - 1);
+                    return { start: date, end: undefined };
+                  }}
+                ] : [
+                  { label: 'This Week', getDates: () => {
+                    const today = new Date();
+                    const monday = new Date(today);
+                    monday.setDate(today.getDate() - today.getDay() + 1);
+                    return { start: monday, end: today };
+                  }},
+                  { label: 'Last Week', getDates: () => {
+                    const today = new Date();
+                    const lastSunday = new Date(today);
+                    lastSunday.setDate(today.getDate() - today.getDay());
+                    const lastMonday = new Date(lastSunday);
+                    lastMonday.setDate(lastSunday.getDate() - 6);
+                    return { start: lastMonday, end: lastSunday };
+                  }},
+                  { label: 'This Month', getDates: () => {
+                    const today = new Date();
+                    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+                    return { start: firstDay, end: today };
+                  }},
+                  { label: 'Last 3 Months', getDates: () => {
+                    const today = new Date();
+                    const threeMonthsAgo = new Date(today);
+                    threeMonthsAgo.setMonth(today.getMonth() - 3);
+                    return { start: threeMonthsAgo, end: today };
+                  }}
+                ].map(({ label, getDates }) => (
                   <Button
                     key={label}
                     variant="outline"
                     size="sm"
                     className="text-xs"
                     onClick={() => {
-                      const today = new Date();
-                      const pastDate = new Date();
-                      pastDate.setDate(today.getDate() - days);
-                      
-                      // Adjust for weekends - if it falls on weekend, move to Friday
-                      if (pastDate.getDay() === 0) { // Sunday
-                        pastDate.setDate(pastDate.getDate() - 2);
-                      } else if (pastDate.getDay() === 6) { // Saturday
-                        pastDate.setDate(pastDate.getDate() - 1);
-                      }
-                      
-                      // If today is weekend, adjust end date to Friday
-                      const endDateAdjusted = new Date(today);
-                      if (endDateAdjusted.getDay() === 0) { // Sunday
-                        endDateAdjusted.setDate(endDateAdjusted.getDate() - 2);
-                      } else if (endDateAdjusted.getDay() === 6) { // Saturday
-                        endDateAdjusted.setDate(endDateAdjusted.getDate() - 1);
-                      }
-                      
-                      setStartDate(pastDate);
-                      setEndDate(endDateAdjusted);
+                      const { start, end } = getDates();
+                      setStartDate(start);
+                      setEndDate(end);
                     }}
                   >
                     {label}
@@ -1157,70 +1307,126 @@ export function PriceChart({
               </div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pr-8">
+            {/* Calendar Section */}
+            <div className={`pr-8 ${singleTradingDay ? 'flex justify-center' : 'grid grid-cols-1 md:grid-cols-2 gap-4'}`}>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Start Date</label>
+                <label className="text-sm font-medium">
+                  {singleTradingDay ? 'Pick Trading Day' : 'Start Date'}
+                </label>
                 <Calendar
                   mode="single"
                   selected={startDate}
                   onSelect={setStartDate}
+                  fromDate={(() => {
+                    const tenYearsAgo = new Date();
+                    tenYearsAgo.setFullYear(tenYearsAgo.getFullYear() - 10);
+                    return tenYearsAgo;
+                  })()}
+                  toDate={new Date()}
                   disabled={(date) => {
-                    // Disable future dates
-                    if (date > new Date()) return true;
-                    // Disable if after end date
-                    if (!!endDate && date > endDate) return true;
-                    // Warn about weekends but don't disable them entirely
-                    return false;
+                    // Disable weekends and suggest alternatives
+                    const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+                    // For range mode, disable if after end date
+                    if (!singleTradingDay && !!endDate && date > endDate) return false; // Don't disable, just warn
+                    return isWeekend; // Only disable weekends
                   }}
                   className="rounded-md border"
                 />
+                
+                {/* Enhanced validation with smart suggestions */}
                 {startDate && (startDate.getDay() === 0 || startDate.getDay() === 6) && (
-                  <div className="text-xs text-amber-600 bg-amber-50 dark:bg-amber-950 p-2 rounded">
-                    ⚠️ Weekend selected - market data may be limited
+                  <div className="text-xs text-red-600 bg-red-50 dark:bg-red-950 p-2 rounded">
+                    <div className="font-medium">⚠️ No trading data available</div>
+                    <div className="mt-1">
+                      Try {(() => {
+                        const suggestion = new Date(startDate);
+                        if (startDate.getDay() === 0) { // Sunday
+                          suggestion.setDate(startDate.getDate() - 2); // Friday
+                        } else if (startDate.getDay() === 6) { // Saturday
+                          suggestion.setDate(startDate.getDate() - 1); // Friday
+                        }
+                        return format(suggestion, 'MMM dd, yyyy');
+                      })()} instead
+                    </div>
                   </div>
                 )}
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">End Date</label>
-                <Calendar
-                  mode="single"
-                  selected={endDate}
-                  onSelect={setEndDate}
-                  disabled={(date) => {
-                    // Disable future dates
-                    if (date > new Date()) return true;
-                    // Disable if before start date
-                    if (!!startDate && date < startDate) return true;
-                    return false;
-                  }}
-                  className="rounded-md border"
-                />
-                {endDate && (endDate.getDay() === 0 || endDate.getDay() === 6) && (
-                  <div className="text-xs text-amber-600 bg-amber-50 dark:bg-amber-950 p-2 rounded">
-                    ⚠️ Weekend selected - market data may be limited
-                  </div>
-                )}
-              </div>
+              
+              {!singleTradingDay && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">End Date</label>
+                  <Calendar
+                    mode="single"
+                    selected={endDate}
+                    onSelect={setEndDate}
+                    fromDate={(() => {
+                      const tenYearsAgo = new Date();
+                      tenYearsAgo.setFullYear(tenYearsAgo.getFullYear() - 10);
+                      return tenYearsAgo;
+                    })()}
+                    toDate={new Date()}
+                    disabled={(date) => {
+                      // Disable weekends
+                      const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+                      // Disable if before start date
+                      if (!!startDate && date < startDate) return true;
+                      return isWeekend;
+                    }}
+                    className="rounded-md border"
+                  />
+                  
+                  {endDate && (endDate.getDay() === 0 || endDate.getDay() === 6) && (
+                    <div className="text-xs text-red-600 bg-red-50 dark:bg-red-950 p-2 rounded">
+                      <div className="font-medium">⚠️ No trading data available</div>
+                      <div className="mt-1">
+                        Try {(() => {
+                          const suggestion = new Date(endDate);
+                          if (endDate.getDay() === 0) { // Sunday
+                            suggestion.setDate(endDate.getDate() - 2); // Friday
+                          } else if (endDate.getDay() === 6) { // Saturday
+                            suggestion.setDate(endDate.getDate() - 1); // Friday
+                          }
+                          return format(suggestion, 'MMM dd, yyyy');
+                        })()} instead
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             
-            {startDate && endDate && (
+            {/* Apply Button */}
+            {startDate && (singleTradingDay || endDate) && (
               <div className="mt-4 text-center space-y-3">
                 <div className="text-sm text-muted-foreground">
-                  Selected: {format(startDate, 'MMM dd, yyyy')} - {format(endDate, 'MMM dd, yyyy')}
-                  <span className="text-xs block mt-1">
-                    ({Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))} days)
-                  </span>
+                  {singleTradingDay ? (
+                    <>
+                      Selected: {format(startDate, 'MMM dd, yyyy')}
+                      <span className="text-xs block mt-1">
+                        Single day with hourly intervals
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      Selected: {format(startDate, 'MMM dd, yyyy')} - {format(endDate!, 'MMM dd, yyyy')}
+                      <span className="text-xs block mt-1">
+                        ({Math.ceil((endDate!.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))} days)
+                      </span>
+                    </>
+                  )}
                 </div>
                 <Button
                   onClick={() => {
-                    // Close the date picker while keeping Custom timeframe active
-                    // The chart will continue showing the custom data based on startDate and endDate
+                    if (singleTradingDay) {
+                      // For single trading day, set end date to same as start date
+                      setEndDate(startDate);
+                    }
                     setShowDatePicker(false);
                   }}
                   className="bg-[#5AF5FA] text-black hover:bg-[#5AF5FA]/90"
                   size="sm"
                 >
-                  Apply Date Range
+                  {singleTradingDay ? 'Show Trading Day' : 'Apply Date Range'}
                 </Button>
               </div>
             )}
