@@ -107,12 +107,14 @@ export function FeedbackForm({ open, onOpenChange }: FeedbackFormProps) {
                 Thank you! Your feedback has been sent successfully.
               </p>
               <div className="flex justify-center">
-                <dotlottie-wc 
-                  src="https://lottie.host/57cfc9c2-7b53-472e-90a4-0c576095e756/igE8arPofT.lottie" 
-                  style={{ width: '100px', height: '100px' }} 
-                  autoplay 
-                  loop
-                ></dotlottie-wc>
+                <div className="w-[100px] h-[100px] flex items-center justify-center">
+                  <dotlottie-wc 
+                    src="https://lottie.host/57cfc9c2-7b53-472e-90a4-0c576095e756/igE8arPofT.lottie" 
+                    style={{ width: '100px', height: '100px' }} 
+                    autoplay 
+                    loop
+                  ></dotlottie-wc>
+                </div>
               </div>
             </div>
           </div>

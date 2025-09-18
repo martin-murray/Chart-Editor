@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { stockDataService } from "./services/stockData";
 import multer from "multer";
-import { sendEmail } from "./sendgrid";
+import { sendFeedbackToSlack } from "./slack";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Global stock search endpoint using Finnhub symbol lookup
@@ -207,48 +207,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Prepare email content
-      const emailSubject = `Feedback from ${name} - Intropic Chart Editor`;
-      const emailText = `
-        Name: ${name}
-        Email: ${email}
-        Message: ${message}
-      `;
-      
-      const emailHtml = `
-        <h3>New Feedback Submission</h3>
-        <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Message:</strong></p>
-        <p>${message.replace(/\n/g, '<br>')}</p>
-      `;
-
-      // Prepare attachments if file exists
-      let attachments: any[] = [];
+      // Prepare file attachment if exists
+      let fileAttachment;
       if (req.file) {
-        attachments = [{
-          content: req.file.buffer.toString('base64'),
+        fileAttachment = {
+          content: req.file.buffer,
           filename: req.file.originalname,
-          type: req.file.mimetype,
-          disposition: 'attachment'
-        }];
+          mimetype: req.file.mimetype
+        };
       }
 
-      // Send email to martin.murray@intropic.io
-      const emailSent = await sendEmail({
-        to: 'martin.murray@intropic.io',
-        from: 'noreply@intropic.io', // This needs to be a verified sender in SendGrid
-        subject: emailSubject,
-        text: emailText,
-        html: emailHtml,
-        attachments
-      });
+      // Send feedback to Slack channel
+      const slackSent = await sendFeedbackToSlack({
+        name,
+        email,
+        message,
+        file: fileAttachment
+      }); // Uses SLACK_CHANNEL_ID from environment or defaults to 'general'
 
-      if (emailSent) {
-        console.log(`✅ Feedback email sent from ${email}`);
+      if (slackSent) {
+        console.log(`✅ Feedback sent to Slack from ${email}`);
         res.json({ success: true, message: "Feedback sent successfully" });
       } else {
-        throw new Error("Failed to send email");
+        throw new Error("Failed to send feedback to Slack");
       }
 
     } catch (error) {
