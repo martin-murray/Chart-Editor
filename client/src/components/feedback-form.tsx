@@ -103,7 +103,7 @@ export function FeedbackForm({ open, onOpenChange }: FeedbackFormProps) {
         {isSubmitted ? (
           <div className="text-center py-8">
             <div className="mb-4">
-              <p className="text-lg font-medium text-green-600 mb-4">
+              <p className="text-lg font-medium text-white mb-4">
                 Thank you! Your feedback has been sent successfully.
               </p>
               <div className="flex justify-center">
