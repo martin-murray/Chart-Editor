@@ -1586,7 +1586,35 @@ export function ComparisonChart({
             </div>
           )}
 
-          {/* Annotation Management - removed clear all button per user request */}
+          {/* Percentage Y-axis Zoom Controls */}
+          <div className="flex bg-[#121212] border border-white rounded-md overflow-hidden">
+            <button
+              onClick={zoomIn}
+              disabled={yAxisRange <= zoomLevels[0]}
+              className="h-8 w-8 text-sm font-medium bg-[#121212] text-white border-r border-white hover:bg-[#5AF5FA] hover:text-[#121212] disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 flex items-center justify-center"
+              data-testid="button-zoom-in-percentage"
+              title="Zoom In Percentage"
+            >
+              +
+            </button>
+            <button
+              onClick={zoomOut}
+              disabled={yAxisRange >= zoomLevels[zoomLevels.length - 1]}
+              className="h-8 w-8 text-sm font-medium bg-[#121212] text-white border-r border-white hover:bg-[#5AF5FA] hover:text-[#121212] disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 flex items-center justify-center"
+              data-testid="button-zoom-out-percentage"
+              title="Zoom Out Percentage"
+            >
+              −
+            </button>
+            <button
+              onClick={fitToData}
+              className="h-8 w-10 text-xs font-medium bg-[#121212] text-white hover:bg-[#5AF5FA] hover:text-[#121212] transition-colors duration-150 flex items-center justify-center"
+              data-testid="button-fit-percentage-data"
+              title="Fit Percentage to Data"
+            >
+              Fit
+            </button>
+          </div>
           
         
         </div>
