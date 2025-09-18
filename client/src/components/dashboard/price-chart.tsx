@@ -1112,6 +1112,51 @@ export function PriceChart({
               <X className="w-4 h-4" />
             </button>
             
+            {/* Quick Date Presets */}
+            <div className="mb-4 pr-8">
+              <label className="text-sm font-medium mb-2 block">Quick Presets</label>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                {[
+                  { label: 'Last 7 Days', days: 7 },
+                  { label: 'Last 30 Days', days: 30 },
+                  { label: 'Last 90 Days', days: 90 },
+                  { label: 'Last Year', days: 365 }
+                ].map(({ label, days }) => (
+                  <Button
+                    key={label}
+                    variant="outline"
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => {
+                      const today = new Date();
+                      const pastDate = new Date();
+                      pastDate.setDate(today.getDate() - days);
+                      
+                      // Adjust for weekends - if it falls on weekend, move to Friday
+                      if (pastDate.getDay() === 0) { // Sunday
+                        pastDate.setDate(pastDate.getDate() - 2);
+                      } else if (pastDate.getDay() === 6) { // Saturday
+                        pastDate.setDate(pastDate.getDate() - 1);
+                      }
+                      
+                      // If today is weekend, adjust end date to Friday
+                      const endDateAdjusted = new Date(today);
+                      if (endDateAdjusted.getDay() === 0) { // Sunday
+                        endDateAdjusted.setDate(endDateAdjusted.getDate() - 2);
+                      } else if (endDateAdjusted.getDay() === 6) { // Saturday
+                        endDateAdjusted.setDate(endDateAdjusted.getDate() - 1);
+                      }
+                      
+                      setStartDate(pastDate);
+                      setEndDate(endDateAdjusted);
+                    }}
+                  >
+                    {label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pr-8">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Start Date</label>
@@ -1119,9 +1164,21 @@ export function PriceChart({
                   mode="single"
                   selected={startDate}
                   onSelect={setStartDate}
-                  disabled={(date) => date > new Date() || (!!endDate && date > endDate)}
+                  disabled={(date) => {
+                    // Disable future dates
+                    if (date > new Date()) return true;
+                    // Disable if after end date
+                    if (!!endDate && date > endDate) return true;
+                    // Warn about weekends but don't disable them entirely
+                    return false;
+                  }}
                   className="rounded-md border"
                 />
+                {startDate && (startDate.getDay() === 0 || startDate.getDay() === 6) && (
+                  <div className="text-xs text-amber-600 bg-amber-50 dark:bg-amber-950 p-2 rounded">
+                    ⚠️ Weekend selected - market data may be limited
+                  </div>
+                )}
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">End Date</label>
@@ -1129,9 +1186,20 @@ export function PriceChart({
                   mode="single"
                   selected={endDate}
                   onSelect={setEndDate}
-                  disabled={(date) => date > new Date() || (!!startDate && date < startDate)}
+                  disabled={(date) => {
+                    // Disable future dates
+                    if (date > new Date()) return true;
+                    // Disable if before start date
+                    if (!!startDate && date < startDate) return true;
+                    return false;
+                  }}
                   className="rounded-md border"
                 />
+                {endDate && (endDate.getDay() === 0 || endDate.getDay() === 6) && (
+                  <div className="text-xs text-amber-600 bg-amber-50 dark:bg-amber-950 p-2 rounded">
+                    ⚠️ Weekend selected - market data may be limited
+                  </div>
+                )}
               </div>
             </div>
             
@@ -1139,6 +1207,9 @@ export function PriceChart({
               <div className="mt-4 text-center space-y-3">
                 <div className="text-sm text-muted-foreground">
                   Selected: {format(startDate, 'MMM dd, yyyy')} - {format(endDate, 'MMM dd, yyyy')}
+                  <span className="text-xs block mt-1">
+                    ({Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))} days)
+                  </span>
                 </div>
                 <Button
                   onClick={() => {
@@ -1324,10 +1395,35 @@ export function PriceChart({
             </div>
           </div>
         ) : error ? (
-          <div className="h-80 flex items-center justify-center text-red-500">
-            <div className="text-center">
-              <div>Failed to load chart data</div>
-              <div className="text-sm text-muted-foreground mt-1">No single day data during the weekend</div>
+          <div className="h-80 flex items-center justify-center">
+            <div className="text-center max-w-md">
+              <div className="text-red-500 font-medium mb-2">Error Loading Data</div>
+              <div className="text-sm text-muted-foreground mb-4">
+                {symbol}: Failed to fetch chart data
+              </div>
+              <div className="text-xs text-muted-foreground bg-muted p-3 rounded-lg">
+                <div className="font-medium mb-1">Possible reasons:</div>
+                <ul className="text-left space-y-1">
+                  <li>• Symbol not found or invalid</li>
+                  <li>• Weekend or market holiday selected</li>
+                  <li>• Date range too far in the past</li>
+                  <li>• Data not available for this timeframe</li>
+                </ul>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-3"
+                onClick={() => {
+                  if (selectedTimeframe === 'Custom') {
+                    setStartDate(undefined);
+                    setEndDate(undefined);
+                    setShowDatePicker(true);
+                  }
+                }}
+              >
+                Try Different Dates
+              </Button>
             </div>
           </div>
         ) : !chartData?.data || chartData.data.length === 0 ? (
