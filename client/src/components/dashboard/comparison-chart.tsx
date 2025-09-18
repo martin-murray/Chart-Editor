@@ -70,6 +70,7 @@ interface ComparisonChartProps {
   timeframe: string;
   startDate?: Date;
   endDate?: Date;
+  singleTradingDay?: boolean;
   annotations?: Annotation[];
   onAnnotationsChange?: (annotations: Annotation[]) => void;
   annotationMode?: 'text' | 'percentage' | 'horizontal';
@@ -83,6 +84,7 @@ export function ComparisonChart({
   timeframe, 
   startDate, 
   endDate,
+  singleTradingDay = false,
   annotations: controlledAnnotations,
   onAnnotationsChange,
   annotationMode = 'text',
@@ -275,20 +277,61 @@ export function ComparisonChart({
   // Fetch chart data for all tickers - must be declared before useEffect that depends on chartData
   const tickerQueries = useQueries({
     queries: tickers.map(ticker => ({
-      queryKey: ['/api/stocks', ticker.symbol, 'chart', timeframe, startDate?.getTime(), endDate?.getTime()],
+      queryKey: ['/api/stocks', ticker.symbol, 'chart', timeframe, startDate?.toISOString(), endDate?.toISOString(), singleTradingDay],
       queryFn: async () => {
         let url = `/api/stocks/${ticker.symbol}/chart?timeframe=${timeframe}`;
         
         // Add custom date range parameters for Custom timeframe
         if (timeframe === 'Custom' && startDate && endDate) {
-          const fromTimestamp = Math.floor(startDate.getTime() / 1000);
-          const toTimestamp = Math.floor(endDate.getTime() / 1000);
+          let fromTimestamp: number;
+          let toTimestamp: number;
+          
+          if (singleTradingDay || startDate.toDateString() === endDate.toDateString()) {
+            // Single trading day - use full day range to support global markets
+            // Don't restrict to US market hours - let Finnhub return whatever intraday data exists
+            const tradingDay = startDate;
+            
+            // Use start and end of the selected day in UTC
+            // This allows each market's natural trading hours to show through
+            const dayStart = new Date(tradingDay.getFullYear(), tradingDay.getMonth(), tradingDay.getDate(), 0, 0, 0, 0);
+            const dayEnd = new Date(tradingDay.getFullYear(), tradingDay.getMonth(), tradingDay.getDate(), 23, 59, 59, 999);
+            
+            fromTimestamp = Math.floor(dayStart.getTime() / 1000);
+            toTimestamp = Math.floor(dayEnd.getTime() / 1000);
+          } else {
+            // Date range - use full days
+            fromTimestamp = Math.floor(startDate.getTime() / 1000);
+            toTimestamp = Math.floor(endDate.getTime() / 1000);
+          }
+          
           url = `/api/stocks/${ticker.symbol}/chart?from=${fromTimestamp}&to=${toTimestamp}&timeframe=Custom`;
         }
         
         const response = await fetch(url);
-        if (!response.ok) throw new Error('Failed to fetch chart data');
-        return response.json();
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+        
+        const data = await response.json();
+        
+        // Debug logging for Single Trading Day in comparison chart
+        if (timeframe === 'Custom' && singleTradingDay) {
+          console.log('🔍 Comparison Chart Single Trading Day API response:', {
+            symbol: ticker.symbol,
+            url,
+            dataLength: data?.data?.length || 0,
+            hasData: Boolean(data?.data?.length),
+            timeframe: data?.timeframe
+          });
+        }
+        
+        // Ensure we have valid data structure
+        if (!data || !data.data) {
+          throw new Error('Invalid response format');
+        }
+        
+        return data;
       },
       enabled: !!ticker.symbol,
       staleTime: 0, // Always refetch when timeframe changes

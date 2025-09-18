@@ -2478,6 +2478,7 @@ export function PriceChart({
             timeframe={selectedTimeframe} 
             startDate={startDate} 
             endDate={endDate}
+            singleTradingDay={singleTradingDay}
             annotations={annotations}
             onAnnotationsChange={onAnnotationsChange}
             annotationMode={annotationMode}
