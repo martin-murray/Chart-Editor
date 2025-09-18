@@ -2577,6 +2577,7 @@ export function PriceChart({
             pendingPercentageStart={pendingPercentageStart}
             setPendingPercentageStart={setPendingPercentageStart}
             updateAnnotations={updateAnnotations}
+            showHoverTooltip={showHoverTooltip}
           />
         </TabsContent>
         </Tabs>

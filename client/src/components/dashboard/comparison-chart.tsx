@@ -9,7 +9,6 @@ import { createPortal } from "react-dom";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Search, X, Plus, Download, FileText, Image as ImageIcon } from "lucide-react";
-import { Switch } from '@/components/ui/switch';
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { saveAs } from 'file-saver';
@@ -77,6 +76,7 @@ interface ComparisonChartProps {
   pendingPercentageStart?: { timestamp: number; price: number; time: string } | null;
   setPendingPercentageStart?: (start: { timestamp: number; price: number; time: string } | null) => void;
   updateAnnotations?: (newAnnotations: Annotation[] | ((prev: Annotation[]) => Annotation[])) => void;
+  showHoverTooltip?: boolean;
 }
 
 
@@ -90,7 +90,8 @@ export function ComparisonChart({
   annotationMode = 'text',
   pendingPercentageStart,
   setPendingPercentageStart,
-  updateAnnotations
+  updateAnnotations,
+  showHoverTooltip = true
 }: ComparisonChartProps) {
   const [tickers, setTickers] = useState<TickerData[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -101,8 +102,7 @@ export function ComparisonChart({
   const [recentSearches, setRecentSearches] = useState<SearchResult[]>([]);
   const { toast } = useToast();
   
-  // Hover tool toggle state
-  const [showHoverTooltip, setShowHoverTooltip] = useState(true);
+  // Hover tool state is now controlled by parent component
 
   // Y-axis zoom state
   const [yAxisMode, setYAxisMode] = useState<'auto' | 'fixed'>('auto');
@@ -1588,19 +1588,6 @@ export function ComparisonChart({
 
           {/* Annotation Management - removed clear all button per user request */}
           
-          {/* Hover Tool Toggle */}
-          <div className="flex items-center gap-2">
-            <label htmlFor="hover-tool-toggle-comparison" className="text-xs text-muted-foreground">
-              Hover tool
-            </label>
-            <Switch
-              id="hover-tool-toggle-comparison"
-              checked={showHoverTooltip}
-              onCheckedChange={setShowHoverTooltip}
-              className="scale-75"
-              data-testid="switch-hover-tool-comparison"
-            />
-          </div>
         
         </div>
       </div>
