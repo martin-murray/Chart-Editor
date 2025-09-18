@@ -77,7 +77,7 @@ export function FeedbackForm({ open, onOpenChange }: FeedbackFormProps) {
         setTimeout(() => {
           setIsSubmitted(false);
           onOpenChange(false);
-        }, 3000);
+        }, 5000);
       } else {
         throw new Error('Failed to submit feedback');
       }
