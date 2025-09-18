@@ -111,65 +111,6 @@ export function ComparisonChart({
   // Predefined zoom levels for symmetric scaling around 0%
   const zoomLevels = [0.5, 1, 2, 3, 5, 10, 15, 20, 30, 50, 75, 100, 150, 200, 300, 500];
 
-  // Calculate current data extremes from visible tickers
-  const dataExtremes = useMemo(() => {
-    if (!chartData || chartData.length === 0 || tickers.length === 0) {
-      return { min: -10, max: 10, baseRange: 10 };
-    }
-
-    let min = Infinity;
-    let max = -Infinity;
-
-    // Find min/max across all visible ticker percentage data
-    chartData.forEach(point => {
-      tickers.forEach(ticker => {
-        const value = point[`${ticker.symbol}_percentage`];
-        if (typeof value === 'number' && !isNaN(value)) {
-          min = Math.min(min, value);
-          max = Math.max(max, value);
-        }
-      });
-    });
-
-    // Handle empty data case
-    if (min === Infinity || max === -Infinity) {
-      return { min: -10, max: 10, baseRange: 10 };
-    }
-
-    // Calculate base range as the max absolute value, with minimum of 0.5%
-    const baseRange = Math.max(Math.abs(min), Math.abs(max), 0.5);
-    
-    return { min, max, baseRange };
-  }, [chartData, tickers]);
-
-  // Y-axis zoom control functions
-  const zoomIn = () => {
-    const currentIndex = zoomLevels.findIndex(level => level >= yAxisRange);
-    const nextIndex = Math.max(0, currentIndex - 1);
-    setYAxisRange(zoomLevels[nextIndex]);
-    setYAxisMode('fixed');
-  };
-
-  const zoomOut = () => {
-    const currentIndex = zoomLevels.findIndex(level => level >= yAxisRange);
-    const nextIndex = Math.min(zoomLevels.length - 1, currentIndex + 1);
-    setYAxisRange(zoomLevels[nextIndex]);
-    setYAxisMode('fixed');
-  };
-
-  const fitToData = () => {
-    setYAxisMode('auto');
-  };
-
-  // Get current Y-axis domain based on zoom state
-  const getYAxisDomain = () => {
-    if (yAxisMode === 'auto') {
-      return [(dataMin: any) => Math.floor(Number(dataMin) - 1), (dataMax: any) => Math.ceil(Number(dataMax) + 1)];
-    } else {
-      return [-yAxisRange, yAxisRange];
-    }
-  };
-
   // Annotation UI state (non-conflicting with props)
   const [showAnnotationInput, setShowAnnotationInput] = useState(false);
   const [annotationInput, setAnnotationInput] = useState('');
@@ -533,6 +474,100 @@ export function ComparisonChart({
 
     return alignedData;
   }, [tickers, tickerQueries, timeframe]);
+
+  // Calculate current data extremes from visible tickers
+  const dataExtremes = useMemo(() => {
+    if (!chartData || chartData.length === 0 || tickers.length === 0) {
+      return { min: -10, max: 10, baseRange: 10 };
+    }
+
+    let min = Infinity;
+    let max = -Infinity;
+
+    // Find min/max across all visible ticker percentage data
+    chartData.forEach(point => {
+      tickers.forEach(ticker => {
+        const value = point[`${ticker.symbol}_percentage`];
+        if (typeof value === 'number' && !isNaN(value)) {
+          min = Math.min(min, value);
+          max = Math.max(max, value);
+        }
+      });
+    });
+
+    // Handle empty data case
+    if (min === Infinity || max === -Infinity) {
+      return { min: -10, max: 10, baseRange: 10 };
+    }
+
+    // Calculate base range as the max absolute value, with minimum of 0.5%
+    const baseRange = Math.max(Math.abs(min), Math.abs(max), 0.5);
+    
+    return { min, max, baseRange };
+  }, [chartData, tickers]);
+
+  // Y-axis zoom control functions
+  const zoomIn = () => {
+    const currentIndex = zoomLevels.findIndex(level => level >= yAxisRange);
+    const nextIndex = Math.max(0, currentIndex - 1);
+    setYAxisRange(zoomLevels[nextIndex]);
+    setYAxisMode('fixed');
+  };
+
+  const zoomOut = () => {
+    const currentIndex = zoomLevels.findIndex(level => level >= yAxisRange);
+    const nextIndex = Math.min(zoomLevels.length - 1, currentIndex + 1);
+    setYAxisRange(zoomLevels[nextIndex]);
+    setYAxisMode('fixed');
+  };
+
+  const fitToData = () => {
+    setYAxisMode('auto');
+  };
+
+  // Get current Y-axis domain based on zoom state
+  const getYAxisDomain = (): any => {
+    if (yAxisMode === 'auto') {
+      return [(dataMin: any) => Math.floor(Number(dataMin) - 1), (dataMax: any) => Math.ceil(Number(dataMax) + 1)];
+    } else {
+      return [-yAxisRange, yAxisRange];
+    }
+  };
+
+  // Keyboard shortcuts for zoom controls
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      // Only handle if focused within the chart container
+      if (!event.target || !(event.target as Element).closest('[data-testid="comparison-chart-container"]')) {
+        return;
+      }
+
+      switch (event.key) {
+        case '+':
+        case '=':
+          event.preventDefault();
+          zoomIn();
+          break;
+        case '-':
+        case '_':
+          event.preventDefault();
+          zoomOut();
+          break;
+        case '0':
+          event.preventDefault();
+          fitToData();
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [yAxisRange, yAxisMode]);
+
+  // Reset zoom mode to auto when timeframe or singleTradingDay changes
+  useEffect(() => {
+    setYAxisMode('auto');
+  }, [timeframe, singleTradingDay]);
 
   // Add global mouse up listener to handle drag end outside chart
   useEffect(() => {
@@ -1937,6 +1972,7 @@ export function ComparisonChart({
           <ChartContainer 
             config={chartConfig} 
             className="h-full w-full"
+            data-testid="comparison-chart-container"
           >
             <div 
               ref={chartContainerRef}
@@ -1966,7 +2002,8 @@ export function ComparisonChart({
                   tick={{ fontSize: 12, fill: '#888' }}
                   tickLine={{ stroke: '#888' }}
                   axisLine={{ stroke: '#888' }}
-                  domain={[(dataMin: any) => Math.floor(Number(dataMin) - 5), (dataMax: any) => Math.ceil(Number(dataMax) + 5)]}
+                  domain={getYAxisDomain()}
+                  allowDataOverflow={yAxisMode === 'fixed'}
                   tickFormatter={(value) => `${value > 0 ? '+' : ''}${Number(value).toFixed(1)}%`}
                 />
                 {showHoverTooltip && (
@@ -2092,6 +2129,48 @@ export function ComparisonChart({
                   ))}
               </LineChart>
             </ResponsiveContainer>
+            
+            {/* Y-axis Zoom Controls Overlay */}
+            <div className="absolute top-2 right-2 flex flex-col gap-1 z-50">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={zoomIn}
+                disabled={yAxisRange <= zoomLevels[0]}
+                className="h-8 w-8 p-0 bg-background/80 backdrop-blur-sm border-border/50 hover:bg-accent/80"
+                data-testid="button-zoom-in"
+                title="Zoom In Y-axis"
+              >
+                +
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={zoomOut}
+                disabled={yAxisRange >= zoomLevels[zoomLevels.length - 1]}
+                className="h-8 w-8 p-0 bg-background/80 backdrop-blur-sm border-border/50 hover:bg-accent/80"
+                data-testid="button-zoom-out"
+                title="Zoom Out Y-axis"
+              >
+                −
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={fitToData}
+                className="h-8 w-14 text-xs px-1 bg-background/80 backdrop-blur-sm border-border/50 hover:bg-accent/80"
+                data-testid="button-fit-data"
+                title="Fit to Data"
+              >
+                Fit
+              </Button>
+              {yAxisMode === 'fixed' && (
+                <div className="text-xs text-muted-foreground text-center mt-1 bg-background/60 rounded px-1">
+                  ±{yAxisRange}%
+                </div>
+              )}
+            </div>
+            
             </div>
           </ChartContainer>
         )}
