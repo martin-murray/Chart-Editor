@@ -2117,35 +2117,6 @@ export function ComparisonChart({
               </LineChart>
             </ResponsiveContainer>
             
-            {/* Y-axis Zoom Controls Overlay */}
-            <div className="absolute top-2 right-2 flex flex-row gap-1 z-50">
-              <button
-                onClick={zoomIn}
-                disabled={yAxisRange <= zoomLevels[0]}
-                className="h-7 w-7 text-sm font-medium bg-[#121212] text-white border border-white hover:bg-[#5AF5FA] hover:text-[#121212] disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 flex items-center justify-center"
-                data-testid="button-zoom-in"
-                title="Zoom In Y-axis"
-              >
-                +
-              </button>
-              <button
-                onClick={zoomOut}
-                disabled={yAxisRange >= zoomLevels[zoomLevels.length - 1]}
-                className="h-7 w-7 text-sm font-medium bg-[#121212] text-white border border-white hover:bg-[#5AF5FA] hover:text-[#121212] disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 flex items-center justify-center"
-                data-testid="button-zoom-out"
-                title="Zoom Out Y-axis"
-              >
-                −
-              </button>
-              <button
-                onClick={fitToData}
-                className="h-7 w-10 text-xs font-medium bg-[#121212] text-white border border-white hover:bg-[#5AF5FA] hover:text-[#121212] transition-colors duration-150 flex items-center justify-center"
-                data-testid="button-fit-data"
-                title="Fit to Data"
-              >
-                Fit
-              </button>
-            </div>
             
             </div>
           </ChartContainer>
