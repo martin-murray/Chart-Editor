@@ -365,11 +365,22 @@ export function ComparisonChart({
           year: '2-digit'
         });
       case 'Custom':
-        return date.toLocaleDateString('en-US', { 
-          month: 'numeric',
-          day: 'numeric',
-          year: '2-digit'
-        });
+        // For Single Trading Day, show time instead of dates
+        if (singleTradingDay || (startDate && endDate && startDate.toDateString() === endDate.toDateString())) {
+          // Single trading day - show time (hours and minutes)
+          return date.toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: false 
+          });
+        } else {
+          // Date range - show date
+          return date.toLocaleDateString('en-US', { 
+            month: 'numeric',
+            day: 'numeric',
+            year: '2-digit'
+          });
+        }
       default:
         return date.toLocaleDateString('en-US', { 
           month: 'numeric',
@@ -434,7 +445,8 @@ export function ComparisonChart({
       
       const dataPoint: ChartDataPoint = {
         timestamp,
-        date: formatTime(timeString, timeframe), // Use time string like main chart
+        time: timeString, // Store raw time string for proper formatting
+        date: formatTime(timeString, timeframe), // Keep for fallback compatibility
       };
 
       // Add percentage data for each ticker
@@ -1877,7 +1889,8 @@ export function ComparisonChart({
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#3B3B3B" strokeOpacity={0.5} />
                 <XAxis 
-                  dataKey="date"
+                  dataKey="time"
+                  tickFormatter={(value) => formatTime(value, timeframe)}
                   tick={{ fontSize: 12, fill: '#888' }}
                   tickLine={{ stroke: '#888' }}
                   axisLine={{ stroke: '#888' }}
