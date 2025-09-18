@@ -1561,6 +1561,38 @@ export function PriceChart({
                   </Button>
                 </div>
                 
+                {/* Price Y-axis Zoom Controls */}
+                {activeTab === 'price-volume' && (
+                  <div className="flex border border-border rounded-md overflow-hidden bg-background">
+                    <button
+                      onClick={zoomInPrice}
+                      disabled={priceAxisRange <= priceZoomLevels[0] * priceExtremes.baseRange}
+                      className="h-8 w-8 text-sm font-medium bg-[#121212] text-white border-r border-border hover:bg-[#5AF5FA] hover:text-[#121212] disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 flex items-center justify-center"
+                      data-testid="button-zoom-in-price"
+                      title="Zoom In Price"
+                    >
+                      +
+                    </button>
+                    <button
+                      onClick={zoomOutPrice}
+                      disabled={priceAxisRange >= priceZoomLevels[priceZoomLevels.length - 1] * priceExtremes.baseRange}
+                      className="h-8 w-8 text-sm font-medium bg-[#121212] text-white border-r border-border hover:bg-[#5AF5FA] hover:text-[#121212] disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 flex items-center justify-center"
+                      data-testid="button-zoom-out-price"
+                      title="Zoom Out Price"
+                    >
+                      −
+                    </button>
+                    <button
+                      onClick={fitPriceToData}
+                      className="h-8 w-10 text-xs font-medium bg-[#121212] text-white hover:bg-[#5AF5FA] hover:text-[#121212] transition-colors duration-150 flex items-center justify-center"
+                      data-testid="button-fit-price-data"
+                      title="Fit Price to Data"
+                    >
+                      Fit
+                    </button>
+                  </div>
+                )}
+                
                 {/* Hover Tool Toggle */}
                 <div className="flex items-center gap-2">
                   <label htmlFor="hover-tool-toggle" className="text-xs text-muted-foreground">
@@ -2265,35 +2297,6 @@ export function PriceChart({
                 </AreaChart>
               </ResponsiveContainer>
               
-              {/* Price Y-axis Zoom Controls Overlay */}
-              <div className="absolute top-2 right-16 flex flex-row gap-1 z-50">
-                <button
-                  onClick={zoomInPrice}
-                  disabled={priceAxisRange <= priceZoomLevels[0] * priceExtremes.baseRange}
-                  className="h-7 w-7 text-sm font-medium bg-[#121212] text-white border border-white hover:bg-[#5AF5FA] hover:text-[#121212] disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 flex items-center justify-center"
-                  data-testid="button-zoom-in-price"
-                  title="Zoom In Price"
-                >
-                  +
-                </button>
-                <button
-                  onClick={zoomOutPrice}
-                  disabled={priceAxisRange >= priceZoomLevels[priceZoomLevels.length - 1] * priceExtremes.baseRange}
-                  className="h-7 w-7 text-sm font-medium bg-[#121212] text-white border border-white hover:bg-[#5AF5FA] hover:text-[#121212] disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 flex items-center justify-center"
-                  data-testid="button-zoom-out-price"
-                  title="Zoom Out Price"
-                >
-                  −
-                </button>
-                <button
-                  onClick={fitPriceToData}
-                  className="h-7 w-10 text-xs font-medium bg-[#121212] text-white border border-white hover:bg-[#5AF5FA] hover:text-[#121212] transition-colors duration-150 flex items-center justify-center"
-                  data-testid="button-fit-price-data"
-                  title="Fit Price to Data"
-                >
-                  Fit
-                </button>
-              </div>
               
             </div>
 
