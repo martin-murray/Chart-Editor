@@ -112,7 +112,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const chartData = await stockDataService.getStockChart(symbol, from, to, resolution);
+      let chartData = await stockDataService.getStockChart(symbol, from, to, resolution);
+      
+      // For Single Trading Day requests, if intraday data isn't available, try daily data
+      if (!chartData && timeframe === 'Custom' && customFrom && customTo) {
+        const daysDiff = (to - from) / (24 * 60 * 60);
+        if (daysDiff <= 1) {
+          console.log(`💡 No intraday data for ${symbol} on single day, trying daily data...`);
+          chartData = await stockDataService.getStockChart(symbol, from, to, 'D');
+        }
+      }
       
       if (!chartData) {
         return res.status(404).json({ error: "Chart data not available" });
