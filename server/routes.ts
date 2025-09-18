@@ -52,6 +52,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { symbol } = req.params;
       const { timeframe = '1D', from: customFrom, to: customTo } = req.query;
 
+      console.log(`📊 Chart request for ${symbol}, timeframe: ${timeframe}, from: ${customFrom}, to: ${customTo}`);
+
       // Calculate time range based on timeframe or custom dates
       const now = Math.floor(Date.now() / 1000);
       let from: number;

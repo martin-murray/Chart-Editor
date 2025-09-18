@@ -358,7 +358,20 @@ export function PriceChart({
       }
       const response = await fetch(url);
       if (!response.ok) throw new Error('Failed to fetch chart data');
-      return await response.json();
+      const data = await response.json();
+      
+      // Debug logging for Single Trading Day
+      if (selectedTimeframe === 'Custom' && singleTradingDay) {
+        console.log('🔍 Single Trading Day API response:', {
+          symbol,
+          url,
+          dataLength: data?.data?.length || 0,
+          hasData: Boolean(data?.data?.length),
+          timeframe: data?.timeframe
+        });
+      }
+      
+      return data;
     },
     enabled: !!symbol && (selectedTimeframe !== 'Custom' || (!!startDate && !!endDate)),
   });
