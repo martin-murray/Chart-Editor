@@ -1232,7 +1232,7 @@ export function PriceChart({
                 {singleTradingDay ? 'Quick Single Days' : 'Quick Ranges'}
               </label>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                {singleTradingDay ? [
+                {(singleTradingDay ? [
                   { label: 'Yesterday', getDates: () => {
                     const yesterday = new Date();
                     yesterday.setDate(yesterday.getDate() - 1);
@@ -1289,7 +1289,7 @@ export function PriceChart({
                     threeMonthsAgo.setMonth(today.getMonth() - 3);
                     return { start: threeMonthsAgo, end: today };
                   }}
-                ].map(({ label, getDates }) => (
+                ]).map(({ label, getDates }) => (
                   <Button
                     key={label}
                     variant="outline"
