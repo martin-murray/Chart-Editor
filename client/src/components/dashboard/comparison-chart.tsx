@@ -2131,41 +2131,35 @@ export function ComparisonChart({
             </ResponsiveContainer>
             
             {/* Y-axis Zoom Controls Overlay */}
-            <div className="absolute top-2 right-2 flex flex-col gap-1 z-50">
-              <Button
-                variant="outline"
-                size="sm"
+            <div className="absolute top-2 right-2 flex flex-row gap-1 z-50">
+              <button
                 onClick={zoomIn}
                 disabled={yAxisRange <= zoomLevels[0]}
-                className="h-8 w-8 p-0 bg-background/80 backdrop-blur-sm border-border/50 hover:bg-accent/80"
+                className="h-7 w-7 text-sm font-medium bg-white text-black border-0 hover:bg-[#5AF5FA] hover:text-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 flex items-center justify-center"
                 data-testid="button-zoom-in"
                 title="Zoom In Y-axis"
               >
                 +
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
+              </button>
+              <button
                 onClick={zoomOut}
                 disabled={yAxisRange >= zoomLevels[zoomLevels.length - 1]}
-                className="h-8 w-8 p-0 bg-background/80 backdrop-blur-sm border-border/50 hover:bg-accent/80"
+                className="h-7 w-7 text-sm font-medium bg-white text-black border-0 hover:bg-[#5AF5FA] hover:text-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 flex items-center justify-center"
                 data-testid="button-zoom-out"
                 title="Zoom Out Y-axis"
               >
                 −
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
+              </button>
+              <button
                 onClick={fitToData}
-                className="h-8 w-14 text-xs px-1 bg-background/80 backdrop-blur-sm border-border/50 hover:bg-accent/80"
+                className="h-7 w-10 text-xs font-medium bg-white text-black border-0 hover:bg-[#5AF5FA] hover:text-black transition-colors duration-150 flex items-center justify-center"
                 data-testid="button-fit-data"
                 title="Fit to Data"
               >
                 Fit
-              </Button>
+              </button>
               {yAxisMode === 'fixed' && (
-                <div className="text-xs text-muted-foreground text-center mt-1 bg-background/60 rounded px-1">
+                <div className="h-7 px-2 text-xs text-black bg-white/90 flex items-center justify-center">
                   ±{yAxisRange}%
                 </div>
               )}
