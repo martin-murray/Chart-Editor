@@ -329,7 +329,15 @@ export function PriceChart({
 
   // Chart data query - must be declared before useEffect that depends on it
   const { data: chartData, isLoading, error } = useQuery({
-    queryKey: ['/api/stocks', symbol, 'chart', selectedTimeframe, startDate, endDate, singleTradingDay],
+    queryKey: [
+      '/api/stocks', 
+      symbol, 
+      'chart', 
+      selectedTimeframe, 
+      startDate?.toISOString(), 
+      endDate?.toISOString(), 
+      singleTradingDay
+    ],
     queryFn: async (): Promise<ChartResponse> => {
       let url = `/api/stocks/${symbol}/chart?timeframe=${selectedTimeframe}`;
       if (selectedTimeframe === 'Custom' && startDate && endDate) {
@@ -356,8 +364,13 @@ export function PriceChart({
         
         url = `/api/stocks/${symbol}/chart?from=${fromTimestamp}&to=${toTimestamp}&timeframe=Custom`;
       }
+      
       const response = await fetch(url);
-      if (!response.ok) throw new Error('Failed to fetch chart data');
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+      
       const data = await response.json();
       
       // Debug logging for Single Trading Day
@@ -367,13 +380,27 @@ export function PriceChart({
           url,
           dataLength: data?.data?.length || 0,
           hasData: Boolean(data?.data?.length),
-          timeframe: data?.timeframe
+          timeframe: data?.timeframe,
+          response: data
         });
+      }
+      
+      // Ensure we have valid data structure
+      if (!data || !data.data) {
+        throw new Error('Invalid response format');
       }
       
       return data;
     },
     enabled: !!symbol && (selectedTimeframe !== 'Custom' || (!!startDate && !!endDate)),
+    staleTime: 30000, // Consider data fresh for 30 seconds
+    retry: (failureCount, error) => {
+      // Don't retry if it's a clear 404 or data structure issue
+      if (error?.message?.includes('404') || error?.message?.includes('Invalid response format')) {
+        return false;
+      }
+      return failureCount < 2;
+    },
   });
 
   // Add global mouse listeners for horizontal, text, and vertical line dragging
