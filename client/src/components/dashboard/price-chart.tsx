@@ -337,56 +337,17 @@ export function PriceChart({
         let toTimestamp: number;
         
         if (singleTradingDay || startDate.toDateString() === endDate.toDateString()) {
-          // Single trading day - set to US market hours (9:30 AM - 4:00 PM ET)
+          // Single trading day - use full day range to support global markets
+          // Don't restrict to US market hours - let Finnhub return whatever intraday data exists
           const tradingDay = startDate;
           
-          // Format date as YYYY-MM-DD
-          const dateStr = tradingDay.toISOString().split('T')[0];
+          // Use start and end of the selected day in UTC
+          // This allows each market's natural trading hours to show through
+          const dayStart = new Date(tradingDay.getFullYear(), tradingDay.getMonth(), tradingDay.getDate(), 0, 0, 0, 0);
+          const dayEnd = new Date(tradingDay.getFullYear(), tradingDay.getMonth(), tradingDay.getDate(), 23, 59, 59, 999);
           
-          // Robust timezone handling for US Eastern Time
-          // Get the actual UTC offset for America/New_York on this specific date
-          const getETOffsetForDate = (date: Date) => {
-            // Create a date at noon ET to avoid edge cases
-            const tempDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12, 0, 0);
-            
-            // Get the timezone offset for America/New_York on this date
-            const etDateString = tempDate.toLocaleString('en-US', { 
-              timeZone: 'America/New_York',
-              year: 'numeric',
-              month: '2-digit', 
-              day: '2-digit',
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit',
-              hour12: false
-            });
-            
-            const utcDateString = tempDate.toLocaleString('en-US', { 
-              timeZone: 'UTC',
-              year: 'numeric',
-              month: '2-digit',
-              day: '2-digit', 
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit',
-              hour12: false
-            });
-            
-            const etTime = new Date(etDateString.replace(/(\d+)\/(\d+)\/(\d+),\s/, '$3-$1-$2T') + 'Z');
-            const utcTime = new Date(utcDateString.replace(/(\d+)\/(\d+)\/(\d+),\s/, '$3-$1-$2T') + 'Z');
-            
-            const offsetHours = (etTime.getTime() - utcTime.getTime()) / (1000 * 60 * 60);
-            return offsetHours === 4 ? '-04:00' : '-05:00'; // EDT or EST
-          };
-          
-          const offset = getETOffsetForDate(tradingDay);
-          
-          // Market open: 9:30 AM ET, Market close: 4:00 PM ET
-          const marketOpen = new Date(`${dateStr}T09:30:00${offset}`);
-          const marketClose = new Date(`${dateStr}T16:00:00${offset}`);
-          
-          fromTimestamp = Math.floor(marketOpen.getTime() / 1000);
-          toTimestamp = Math.floor(marketClose.getTime() / 1000);
+          fromTimestamp = Math.floor(dayStart.getTime() / 1000);
+          toTimestamp = Math.floor(dayEnd.getTime() / 1000);
         } else {
           // Date range - use full days
           fromTimestamp = Math.floor(startDate.getTime() / 1000);
