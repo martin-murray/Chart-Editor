@@ -2455,12 +2455,8 @@ export function PriceChart({
                         return `${dateStr} ${timeStr}`;
                       }}
                       formatter={(value: number, name: string, props: any) => {
-                        // Get the data point to determine color based on close vs open
-                        const dataPoint = props.payload;
-                        const isBullish = dataPoint ? dataPoint.close >= dataPoint.open : true;
-                        const color = isBullish ? '#22c55e' : '#ef4444';
                         return [
-                          <span style={{ color }}>{formatNumber(value)}</span>, 
+                          <span style={{ color: '#AA99FF' }}>{formatNumber(value)}</span>, 
                           <span style={{ color: '#F7F7F7' }}>Volume</span>
                         ];
                       }}
@@ -2478,15 +2474,8 @@ export function PriceChart({
                     dataKey="volume" 
                     opacity={0.7}
                     radius={[1, 1, 0, 0]}
-                  >
-                    {chartDataWithPercentage?.map((entry, index) => {
-                      // Green for buying pressure (close > open), red for selling pressure (close < open)
-                      const isBullish = entry.close >= entry.open;
-                      return (
-                        <Cell key={`cell-${index}`} fill={isBullish ? '#22c55e' : '#ef4444'} />
-                      );
-                    })}
-                  </Bar>
+                    fill="#AA99FF"
+                  />
                   
                   {/* Average Daily Volume Reference Line */}
                   {chartDataWithPercentage && chartDataWithPercentage.length > 0 && (() => {
