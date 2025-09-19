@@ -460,8 +460,8 @@ function ChartMaker() {
             </div>
             <div className="mt-4 p-4 bg-muted/50 rounded-lg">
               <p className="text-sm text-muted-foreground">
-                <strong className="text-foreground">Tip:</strong> Search by company name (e.g., "Apple", "Tesla") or ticker symbol (e.g., "AAPL", "TSLA"). 
-                The search supports fuzzy matching and will find the best matches across global exchanges. It is not necessary to add the index key to the end of ticker as you normally would in Bloomberg for example .UW .SE .SW
+                <strong className="text-foreground">Tip:</strong> Search by company name ("Apple", "Tesla") or ticker ("AAPL", "TSLA"). 
+                Our intelligent search finds matches across global exchanges—no Bloomberg-style suffixes (.UW, .SE, .SW) needed!
               </p>
             </div>
           </Card>
