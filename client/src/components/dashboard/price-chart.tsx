@@ -1991,16 +1991,40 @@ export function PriceChart({
             {annotations.filter(annotation => annotation.type === 'horizontal').map((annotation) => {
               if (!chartData?.data) return null;
               
-              // Calculate Y position based on actual price within chart area
-              const prices = chartData.data.flatMap(d => [d.high, d.low, d.open, d.close]);
-              const minPrice = Math.min(...prices);
-              const maxPrice = Math.max(...prices);
-              const priceRange = maxPrice - minPrice;
+              // Calculate Y position using Y-axis domain (handles price/percentage mode)
+              const yAxisDomain = getPriceAxisDomain();
+              let annotationValue = annotation.price;
               
-              // Chart dimensions (approximate)
+              // Convert annotation price to appropriate coordinate system
+              if (yAxisDisplayMode === 'percentage' && chartData?.data?.length > 0) {
+                // Find a baseline price (first data point's close price)
+                const baselinePrice = chartData.data[0]?.close;
+                if (baselinePrice && baselinePrice > 0) {
+                  // Convert stored price to percentage change from baseline
+                  annotationValue = ((annotation.price - baselinePrice) / baselinePrice) * 100;
+                }
+              }
+              
+              // Chart dimensions (approximate)  
               const chartHeight = 320; // Price chart height
               const chartTop = 80; // Account for header margin
-              const yPercent = (maxPrice - annotation.price) / priceRange; // Position from top
+              
+              // Calculate position using Y-axis domain
+              let domainMin, domainMax;
+              if (typeof yAxisDomain[0] === 'string') {
+                // Handle 'dataMin - X' and 'dataMax + X' format
+                const prices = yAxisDisplayMode === 'percentage' 
+                  ? chartData.data.map(d => (d as any).percentageChange || 0)
+                  : chartData.data.flatMap(d => [d.high, d.low, d.open, d.close]);
+                domainMin = Math.min(...prices) - (yAxisDisplayMode === 'percentage' ? 0.5 : 1);
+                domainMax = Math.max(...prices) + (yAxisDisplayMode === 'percentage' ? 0.5 : 1);
+              } else {
+                domainMin = yAxisDomain[0];
+                domainMax = yAxisDomain[1];
+              }
+              
+              const yRange = domainMax - domainMin;
+              const yPercent = (domainMax - annotationValue) / yRange; // Position from top
               const yPixels = chartTop + (yPercent * chartHeight);
               
               return (
@@ -2272,6 +2296,105 @@ export function PriceChart({
                       
                       return (
                         <g>
+                          {/* Render horizontal annotations using proper Recharts scale */}
+                          {annotations.filter(annotation => annotation.type === 'horizontal').map((annotation) => {
+                            // Helper function to convert stored price to current display mode value
+                            const getDisplayValue = () => {
+                              if (yAxisDisplayMode === 'percentage' && chartDataWithMA?.length > 0) {
+                                // Use first data point as baseline for consistent conversion
+                                const baselinePrice = chartDataWithMA[0]?.close;
+                                if (baselinePrice && baselinePrice > 0) {
+                                  return ((annotation.price - baselinePrice) / baselinePrice) * 100;
+                                }
+                              }
+                              return annotation.price;
+                            };
+                            
+                            const displayValue = getDisplayValue();
+                            // Use Recharts scale for accurate positioning
+                            const y = yAxis.scale(displayValue);
+                            
+                            const isBeingDragged = isDragging && dragAnnotationId === annotation.id;
+                            const lineColor = isBeingDragged ? "#FFD700" : "#F7F7F7";
+                            
+                            return (
+                              <g key={`horizontal-${annotation.id}`}>
+                                {/* Invisible wider line for better hit detection */}
+                                <line
+                                  x1={xAxis.x}
+                                  y1={y}
+                                  x2={xAxis.x + xAxis.width}
+                                  y2={y}
+                                  stroke="transparent"
+                                  strokeWidth={12}
+                                  style={{ cursor: 'pointer' }}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                  }}
+                                  onDoubleClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleAnnotationDoubleClick(annotation);
+                                  }}
+                                />
+                                {/* Visible horizontal line */}
+                                <line
+                                  x1={xAxis.x}
+                                  y1={y}
+                                  x2={xAxis.x + xAxis.width}
+                                  y2={y}
+                                  stroke={lineColor}
+                                  strokeWidth={isBeingDragged ? 3 : 2}
+                                  strokeDasharray="5 5"
+                                  style={{ pointerEvents: 'none' }}
+                                />
+                                {/* Price label with larger hit area */}
+                                <rect
+                                  x={xAxis.x + xAxis.width - 80}
+                                  y={y - 10}
+                                  width={75}
+                                  height={20}
+                                  fill="transparent"
+                                  style={{ cursor: 'pointer' }}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                  }}
+                                  onDoubleClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleAnnotationDoubleClick(annotation);
+                                  }}
+                                />
+                                <rect
+                                  x={xAxis.x + xAxis.width - 80}
+                                  y={y - 10}
+                                  width={75}
+                                  height={20}
+                                  fill="#121212"
+                                  stroke={lineColor}
+                                  strokeWidth={1}
+                                  rx={3}
+                                  style={{ pointerEvents: 'none' }}
+                                />
+                                <text
+                                  x={xAxis.x + xAxis.width - 42.5}
+                                  y={y + 4}
+                                  textAnchor="middle"
+                                  fill={lineColor}
+                                  fontSize="12"
+                                  style={{ pointerEvents: 'none' }}
+                                >
+                                  {yAxisDisplayMode === 'percentage' ? 
+                                    `${displayValue.toFixed(2)}%` : 
+                                    formatPrice(annotation.price)
+                                  }
+                                </text>
+                              </g>
+                            );
+                          })}
+                          
                           {annotations.filter(annotation => annotation.type === 'percentage').map((annotation) => {
                             if (!annotation.endPrice) return null;
                             
@@ -2576,10 +2699,24 @@ export function PriceChart({
                             const x1 = xAxis.x + (startIndex / (chartData.data.length - 1)) * xAxis.width;
                             const x2 = xAxis.x + (endIndex / (chartData.data.length - 1)) * xAxis.width;
                             
-                            // Map prices to Y coordinates - ensure they stay within chart bounds
-                            const priceRange = yAxis.domain[1] - yAxis.domain[0];
-                            const rawY1 = yAxis.y + yAxis.height - ((annotation.startPrice! - yAxis.domain[0]) / priceRange) * yAxis.height;
-                            const rawY2 = yAxis.y + yAxis.height - ((annotation.endPrice! - yAxis.domain[0]) / priceRange) * yAxis.height;
+                            // Convert stored prices to appropriate coordinate system for current display mode
+                            let startValue = annotation.startPrice!;
+                            let endValue = annotation.endPrice!;
+                            
+                            if (yAxisDisplayMode === 'percentage' && chartData?.data?.length > 0) {
+                              // Find baseline price (first data point's close price)
+                              const baselinePrice = chartData.data[0]?.close;
+                              if (baselinePrice && baselinePrice > 0) {
+                                // Convert stored prices to percentage change from baseline
+                                startValue = ((annotation.startPrice! - baselinePrice) / baselinePrice) * 100;
+                                endValue = ((annotation.endPrice! - baselinePrice) / baselinePrice) * 100;
+                              }
+                            }
+                            
+                            // Map values to Y coordinates - ensure they stay within chart bounds
+                            const valueRange = yAxis.domain[1] - yAxis.domain[0];
+                            const rawY1 = yAxis.y + yAxis.height - ((startValue - yAxis.domain[0]) / valueRange) * yAxis.height;
+                            const rawY2 = yAxis.y + yAxis.height - ((endValue - yAxis.domain[0]) / valueRange) * yAxis.height;
                             // Clamp Y coordinates to stay within chart area
                             const y1 = Math.max(yAxis.y, Math.min(rawY1, yAxis.y + yAxis.height));
                             const y2 = Math.max(yAxis.y, Math.min(rawY2, yAxis.y + yAxis.height));
