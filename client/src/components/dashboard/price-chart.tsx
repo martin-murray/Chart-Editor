@@ -535,29 +535,6 @@ export function PriceChart({
     enabled: !!symbol,
   });
 
-  const formatMarketCap = (marketCapInMillions: number) => {
-    // Finnhub returns market cap in millions of local currency
-    const currencySymbol = getCurrencySymbol(stockDetails?.profile?.currency);
-    if (marketCapInMillions >= 1000000) return `${currencySymbol}${(marketCapInMillions / 1000000).toFixed(1)}T`;
-    if (marketCapInMillions >= 1000) return `${currencySymbol}${(marketCapInMillions / 1000).toFixed(1)}B`;
-    return `${currencySymbol}${marketCapInMillions.toFixed(1)}M`;
-  };
-
-  // Use stock details data if currentPrice is placeholder or invalid
-  const actualCurrentPrice = (currentPrice && currentPrice !== '--' && !isNaN(parseFloat(currentPrice))) 
-    ? currentPrice 
-    : stockDetails?.quote?.c?.toString() || '--';
-    
-  const actualPercentChange = (percentChange && percentChange !== '0' && percentChange !== '--') 
-    ? percentChange 
-    : stockDetails?.quote?.dp?.toString() || '0';
-    
-  const actualMarketCap = (marketCap && marketCap !== '--') 
-    ? marketCap 
-    : stockDetails?.profile?.marketCapitalization 
-      ? formatMarketCap(stockDetails.profile.marketCapitalization) 
-      : '--';
-
   // Currency mapping for different markets
   const getCurrencySymbol = (currencyCode: string | undefined): string => {
     if (!currencyCode) return '$';
@@ -599,15 +576,38 @@ export function PriceChart({
   };
 
   const formatPrice = (value: number) => {
-    const currencySymbol = getCurrencySymbol(stockDetails?.profile?.currency);
+    const currencySymbol = getCurrencySymbol((stockDetails?.profile as any)?.currency);
     
     // For JPY and similar currencies, don't show decimal places
-    if (stockDetails?.profile?.currency === 'JPY' || stockDetails?.profile?.currency === 'KRW') {
+    if ((stockDetails?.profile as any)?.currency === 'JPY' || (stockDetails?.profile as any)?.currency === 'KRW') {
       return `${currencySymbol}${Math.round(value).toLocaleString()}`;
     }
     
     return `${currencySymbol}${value.toFixed(2)}`;
   };
+
+  const formatMarketCap = (marketCapInMillions: number) => {
+    // Finnhub returns market cap in millions of local currency
+    const currencySymbol = getCurrencySymbol((stockDetails?.profile as any)?.currency);
+    if (marketCapInMillions >= 1000000) return `${currencySymbol}${(marketCapInMillions / 1000000).toFixed(1)}T`;
+    if (marketCapInMillions >= 1000) return `${currencySymbol}${(marketCapInMillions / 1000).toFixed(1)}B`;
+    return `${currencySymbol}${marketCapInMillions.toFixed(1)}M`;
+  };
+
+  // Use stock details data if currentPrice is placeholder or invalid
+  const actualCurrentPrice = (currentPrice && currentPrice !== '--' && !isNaN(parseFloat(currentPrice))) 
+    ? currentPrice 
+    : stockDetails?.quote?.c?.toString() || '--';
+    
+  const actualPercentChange = (percentChange && percentChange !== '0' && percentChange !== '--') 
+    ? percentChange 
+    : stockDetails?.quote?.dp?.toString() || '0';
+    
+  const actualMarketCap = (marketCap && marketCap !== '--') 
+    ? marketCap 
+    : stockDetails?.profile?.marketCapitalization 
+      ? formatMarketCap(stockDetails.profile.marketCapitalization) 
+      : '--';
   
   const formatTime = (timeStr: string, timeframe: string) => {
     const date = new Date(timeStr);
