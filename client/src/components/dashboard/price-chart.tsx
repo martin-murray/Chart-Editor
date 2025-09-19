@@ -2033,7 +2033,7 @@ export function PriceChart({
             {/* Price Chart - Dynamic chart type */}
             <div className="h-80 w-full relative">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart
+                <ComposedChart
                   data={chartDataWithMA}
                   margin={{ top: 15, right: 0, left: 0, bottom: -5 }}
                   onClick={handleChartClick}
@@ -2633,7 +2633,7 @@ export function PriceChart({
                     }}
                   />
 
-                </AreaChart>
+                </ComposedChart>
               </ResponsiveContainer>
               
               
