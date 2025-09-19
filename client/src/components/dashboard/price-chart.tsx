@@ -125,6 +125,7 @@ export function PriceChart({
   const [singleTradingDay, setSingleTradingDay] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState<Date>(new Date());
   const [activeTab, setActiveTab] = useState('price-volume');
+  const [chartType, setChartType] = useState<'line' | 'mountain' | 'candlestick'>('mountain');
   const chartRef = useRef<HTMLDivElement>(null);
   const comparisonRef = useRef<HTMLDivElement>(null);
   
@@ -1273,33 +1274,76 @@ export function PriceChart({
 
         </div>
         
-        {/* Timeframe selector */}
-        <div className="flex gap-1 items-center">
-          {timeframes.map((timeframe) => (
+        {/* Chart Controls: Timeframe and Chart Type */}
+        <div className="flex gap-4 items-center flex-wrap">
+          {/* Timeframe selector */}
+          <div className="flex gap-1 items-center">
+            {timeframes.map((timeframe) => (
+              <Button
+                key={timeframe.value}
+                variant={selectedTimeframe === timeframe.value ? "default" : "outline"}
+                size="sm"
+                onClick={() => {
+                  setSelectedTimeframe(timeframe.value);
+                  if (timeframe.value !== 'Custom') {
+                    setStartDate(undefined);
+                    setEndDate(undefined);
+                    setShowDatePicker(false);
+                  } else {
+                    setShowDatePicker(true);
+                  }
+                }}
+                className={`h-8 px-3 text-xs ${
+                  selectedTimeframe === timeframe.value 
+                    ? 'bg-[#5AF5FA] text-black hover:bg-[#5AF5FA]/90' 
+                    : 'hover:bg-muted'
+                }`}
+              >
+                {timeframe.label}
+              </Button>
+            ))}
+          </div>
+
+          {/* Chart Type selector */}
+          <div className="flex gap-1 items-center">
+            <span className="text-xs text-muted-foreground mr-1">Chart:</span>
             <Button
-              key={timeframe.value}
-              variant={selectedTimeframe === timeframe.value ? "default" : "outline"}
+              variant={chartType === 'line' ? "default" : "outline"}
               size="sm"
-              onClick={() => {
-                setSelectedTimeframe(timeframe.value);
-                if (timeframe.value !== 'Custom') {
-                  setStartDate(undefined);
-                  setEndDate(undefined);
-                  setShowDatePicker(false);
-                } else {
-                  setShowDatePicker(true);
-                }
-              }}
+              onClick={() => setChartType('line')}
               className={`h-8 px-3 text-xs ${
-                selectedTimeframe === timeframe.value 
+                chartType === 'line'
                   ? 'bg-[#5AF5FA] text-black hover:bg-[#5AF5FA]/90' 
                   : 'hover:bg-muted'
               }`}
             >
-              {timeframe.label}
+              Line
             </Button>
-          ))}
-          
+            <Button
+              variant={chartType === 'mountain' ? "default" : "outline"}
+              size="sm"
+              onClick={() => setChartType('mountain')}
+              className={`h-8 px-3 text-xs ${
+                chartType === 'mountain'
+                  ? 'bg-[#5AF5FA] text-black hover:bg-[#5AF5FA]/90' 
+                  : 'hover:bg-muted'
+              }`}
+            >
+              Mountain
+            </Button>
+            <Button
+              variant={chartType === 'candlestick' ? "default" : "outline"}
+              size="sm"
+              onClick={() => setChartType('candlestick')}
+              className={`h-8 px-3 text-xs ${
+                chartType === 'candlestick'
+                  ? 'bg-[#5AF5FA] text-black hover:bg-[#5AF5FA]/90' 
+                  : 'hover:bg-muted'
+              }`}
+            >
+              Candles
+            </Button>
+          </div>
         </div>
         
         {/* Redesigned Custom Date Picker - Limited to 10 Years */}
@@ -1962,7 +2006,7 @@ export function PriceChart({
               );
             })}
 
-            {/* Price Chart - No X-axis */}
+            {/* Price Chart - Dynamic chart type */}
             <div className="h-80 w-full relative">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart
@@ -1984,6 +2028,265 @@ export function PriceChart({
                   {/* Custom grid lines - horizontal dashed, vertical solid */}
                   {/* Horizontal grid lines (dashed) */}
                   <CartesianGrid 
+                    strokeDasharray="3 3" 
+                    stroke="#3B3B3B" 
+                    opacity={0.5}
+                    horizontal={true}
+                    vertical={false}
+                  />
+                  {/* Vertical grid lines (solid) */}
+                  <CartesianGrid 
+                    stroke="#3B3B3B" 
+                    strokeWidth={1}
+                    opacity={0.3}
+                    horizontal={false}
+                    vertical={true}
+                  />
+                  
+                  {/* X-axis with date/time labels */}
+                  <XAxis 
+                    dataKey="time"
+                    tickFormatter={(value) => formatTime(value, selectedTimeframe)}
+                    tick={{ fontSize: 12, fill: '#F7F7F7' }}
+                    tickLine={{ stroke: '#F7F7F7' }}
+                    axisLine={{ stroke: '#F7F7F7' }}
+                  />
+
+                  {/* Primary Y-axis for price (right side) - clickable to toggle to percentage view */}
+                  <YAxis 
+                    yAxisId="price"
+                    orientation="right"
+                    domain={getPriceAxisDomain()}
+                    allowDataOverflow={priceAxisMode === 'fixed'}
+                    dataKey={yAxisDisplayMode === 'percentage' ? 'percentageChange' : 'close'}
+                    tick={(props) => (
+                      <g 
+                        onClick={handleYAxisClick}
+                        style={{ cursor: 'pointer' }}
+                        className="group"
+                      >
+                        <text
+                          x={props.x}
+                          y={props.y}
+                          dx={0}
+                          dy={0}
+                          textAnchor={props.textAnchor}
+                          fill="#F7F7F7"
+                          className="group-hover:fill-[#5AF5FA] transition-colors duration-200"
+                          fontSize={12}
+                        >
+                          {yAxisDisplayMode === 'percentage' ? `${props.payload.value.toFixed(1)}%` : formatPrice(props.payload.value)}
+                        </text>
+                      </g>
+                    )}
+                    axisLine={{ stroke: '#F7F7F7' }}
+                    tickLine={{ stroke: '#F7F7F7' }}
+                    width={60}
+                  />
+                  
+                  {showHoverTooltip && (
+                    <Tooltip 
+                      active={!isDragging}
+                      allowEscapeViewBox={{ x: false, y: false }}
+                      labelFormatter={(value) => {
+                        const date = new Date(value);
+                        const dateStr = formatTime(value, selectedTimeframe);
+                        const timeStr = date.toLocaleTimeString('en-US', { 
+                          hour: '2-digit', 
+                          minute: '2-digit',
+                          second: '2-digit',
+                          hour12: false 
+                        });
+                        return `${dateStr} ${timeStr}`;
+                      }}
+                      formatter={(value: number, name: string) => {
+                        if (name === 'close') {
+                          return [formatPrice(value), 'Price'];
+                        } else if (name === 'percentageChange') {
+                          return [`${value.toFixed(2)}%`, 'Change'];
+                        }
+                        return [value, name];
+                      }}
+                      contentStyle={{
+                        backgroundColor: '#121212',
+                        border: '1px solid #333333',
+                        borderRadius: '6px',
+                        color: '#F7F7F7'
+                      }}
+                    />
+                  )}
+                  
+                  {/* Chart content based on type */}
+                  {chartType === 'line' ? (
+                    <Area
+                      yAxisId="price"
+                      type="linear" 
+                      dataKey={yAxisDisplayMode === 'percentage' ? 'percentageChange' : 'close'}
+                      stroke={lineColor}
+                      strokeWidth={2}
+                      fill="none"
+                      dot={false}
+                      activeDot={{ r: 4, fill: lineColor, stroke: '#121212', strokeWidth: 2 }}
+                    />
+                  ) : (
+                    /* Mountain area chart with gradient fill */
+                    <Area
+                      yAxisId="price"
+                      type="linear" 
+                      dataKey={yAxisDisplayMode === 'percentage' ? 'percentageChange' : 'close'}
+                      stroke={lineColor}
+                      strokeWidth={2}
+                      fill={`url(#${isPositive ? 'positiveGradient' : 'negativeGradient'})`}
+                      dot={false}
+                      activeDot={{ r: 4, fill: lineColor, stroke: '#121212', strokeWidth: 2 }}
+                    />
+                  )}
+                  
+                  {/* Text Annotation Reference Lines - yellow vertical lines */}
+                  {annotations.filter(annotation => annotation.type === 'text').map((annotation) => (
+                    <ReferenceLine 
+                      key={annotation.id}
+                      x={annotation.time}
+                      yAxisId="price"
+                      stroke="#FAFF50"
+                      strokeWidth={1}
+                      vectorEffect="non-scaling-stroke"
+                      shapeRendering="crispEdges"
+                    />
+                  ))}
+
+                  {/* Horizontal Annotation Reference Lines - purple styling */}
+                  {annotations.filter(annotation => annotation.type === 'horizontal').map((annotation) => {
+                    const isBeingDragged = isDragging && dragAnnotationId === annotation.id;
+                    const lineColor = isBeingDragged ? "#7755CC" : "#AA99FF";
+                    return (
+                      <ReferenceLine 
+                        key={annotation.id}
+                        y={annotation.price}
+                        yAxisId="price"
+                        stroke={lineColor}
+                        strokeWidth={isBeingDragged ? 3 : 2}
+                        vectorEffect="non-scaling-stroke"
+                        shapeRendering="crispEdges"
+                      />
+                    );
+                  })}
+
+                  {/* Percentage Lines */}
+                  {annotations.filter(annotation => annotation.type === 'percentage').map((annotation) => {
+                    const isBeingDragged = isDragging && dragAnnotationId === annotation.id;
+                    const lineColor = isBeingDragged ? "#7755CC" : "#AA99FF";
+                    return (
+                      <ReferenceLine 
+                        key={`${annotation.id}-start`}
+                        y={annotation.price}
+                        yAxisId="price"
+                        stroke={lineColor}
+                        strokeWidth={isBeingDragged ? 3 : 2}
+                        vectorEffect="non-scaling-stroke"
+                        shapeRendering="crispEdges"
+                      />
+                    );
+                  })}
+
+                  {/* Percentage lines - end points */}
+                  {annotations.filter(annotation => annotation.type === 'percentage' && annotation.endPrice !== undefined).map((annotation) => {
+                    const isBeingDragged = isDragging && dragAnnotationId === annotation.id;
+                    const lineColor = isBeingDragged ? "#7755CC" : "#AA99FF";
+                    return (
+                      <ReferenceLine 
+                        key={`${annotation.id}-end`}
+                        y={annotation.endPrice}
+                        yAxisId="price"
+                        stroke={lineColor}
+                        strokeWidth={isBeingDragged ? 3 : 2}
+                        vectorEffect="non-scaling-stroke"
+                        shapeRendering="crispEdges"
+                      />
+                    );
+                  })}
+
+                  {/* Custom annotation markers and percentage lines */}
+                  <Customized 
+                    component={(props: any) => {
+                      const { payload, xAxisMap, yAxisMap } = props;
+                      
+                      const xAxis = xAxisMap[Object.keys(xAxisMap)[0]];
+                      const yAxis = yAxisMap['price'];
+                      
+                      if (!xAxis || !yAxis) return null;
+                      
+                      return (
+                        <g>
+                          {annotations.filter(annotation => annotation.type === 'percentage').map((annotation) => {
+                            if (!annotation.endPrice) return null;
+                            
+                            const isBeingDragged = isDragging && dragAnnotationId === annotation.id;
+                            const lineColor = isBeingDragged ? "#7755CC" : "#AA99FF";
+                            
+                            const x1 = xAxis.scale(annotation.time) + (xAxis.offset?.left || 0);
+                            const y1 = yAxis.scale(annotation.price);
+                            const x2 = xAxis.scale(annotation.endTime || annotation.time) + (xAxis.offset?.left || 0);
+                            const y2 = yAxis.scale(annotation.endPrice);
+                            
+                            return (
+                              <g key={annotation.id}>
+                                {/* Connection line */}
+                                <line
+                                  x1={x1}
+                                  y1={y1}
+                                  x2={x2}
+                                  y2={y2}
+                                  stroke={lineColor}
+                                  strokeWidth={isBeingDragged ? 3 : 2}
+                                  strokeDasharray="4 4"
+                                />
+                                {/* Start point dot */}
+                                <circle
+                                  cx={x1}
+                                  cy={y1}
+                                  r={3}
+                                  fill={lineColor}
+                                  stroke="#121212"
+                                  strokeWidth={1}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                  }}
+                                  onDoubleClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleAnnotationDoubleClick(annotation);
+                                  }}
+                                />
+                                {/* End point dot */}
+                                <circle
+                                  cx={x2}
+                                  cy={y2}
+                                  r={3}
+                                  fill={lineColor}
+                                  stroke="#121212"
+                                  strokeWidth={1}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                  }}
+                                  onDoubleClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleAnnotationDoubleClick(annotation);
+                                  }}
+                                />
+                              </g>
+                            );
+                          })}
+                        </g>
+                      );
+                    }}
+                  />
+
+                </AreaChart>
+              </ResponsiveContainer> 
                     strokeDasharray="3 3" 
                     stroke="#3B3B3B" 
                     opacity={0.5}
