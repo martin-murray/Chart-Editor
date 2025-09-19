@@ -2124,10 +2124,19 @@ export function PriceChart({
                         return `${dateStr} ${timeStr}`;
                       }}
                       formatter={(value: number, name: string) => {
-                        if (name === 'close') {
-                          return [formatPrice(value), 'Price'];
-                        } else if (name === 'percentageChange') {
-                          return [`${value.toFixed(2)}%`, 'Change'];
+                        // Handle candlestick OHLC data display
+                        if (chartType === 'candlestick') {
+                          if (name === 'open') return [formatPrice(value), 'Open'];
+                          if (name === 'high') return [formatPrice(value), 'High'];
+                          if (name === 'low') return [formatPrice(value), 'Low'];
+                          if (name === 'close') return [formatPrice(value), 'Close'];
+                        } else {
+                          // Handle line/area chart data display
+                          if (name === 'close') {
+                            return [formatPrice(value), 'Price'];
+                          } else if (name === 'percentageChange') {
+                            return [`${value.toFixed(2)}%`, 'Change'];
+                          }
                         }
                         return [value, name];
                       }}
@@ -2223,6 +2232,16 @@ export function PriceChart({
                       dot={false}
                       activeDot={{ r: 4, fill: lineColor, stroke: '#121212', strokeWidth: 2 }}
                     />
+                  )}
+                  
+                  {/* Invisible Line components for candlestick tooltip data */}
+                  {chartType === 'candlestick' && (
+                    <>
+                      <Line yAxisId="price" type="linear" dataKey="open" stroke="transparent" strokeWidth={0} dot={false} />
+                      <Line yAxisId="price" type="linear" dataKey="high" stroke="transparent" strokeWidth={0} dot={false} />
+                      <Line yAxisId="price" type="linear" dataKey="low" stroke="transparent" strokeWidth={0} dot={false} />
+                      <Line yAxisId="price" type="linear" dataKey="close" stroke="transparent" strokeWidth={0} dot={false} />
+                    </>
                   )}
                   
                   {/* Custom annotation markers and percentage lines */}
@@ -2379,10 +2398,19 @@ export function PriceChart({
                         return `${dateStr} ${timeStr}`;
                       }}
                       formatter={(value: number, name: string) => {
-                        if (name === 'close') {
-                          return [formatPrice(value), 'Price'];
-                        } else if (name === 'percentageChange') {
-                          return [`${value.toFixed(2)}%`, 'Change'];
+                        // Handle candlestick OHLC data display
+                        if (chartType === 'candlestick') {
+                          if (name === 'open') return [formatPrice(value), 'Open'];
+                          if (name === 'high') return [formatPrice(value), 'High'];
+                          if (name === 'low') return [formatPrice(value), 'Low'];
+                          if (name === 'close') return [formatPrice(value), 'Close'];
+                        } else {
+                          // Handle line/area chart data display
+                          if (name === 'close') {
+                            return [formatPrice(value), 'Price'];
+                          } else if (name === 'percentageChange') {
+                            return [`${value.toFixed(2)}%`, 'Change'];
+                          }
                         }
                         return [value, name];
                       }}
