@@ -123,6 +123,7 @@ export function PriceChart({
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [singleTradingDay, setSingleTradingDay] = useState(false);
+  const [calendarMonth, setCalendarMonth] = useState<Date>(new Date());
   const [activeTab, setActiveTab] = useState('price-volume');
   const chartRef = useRef<HTMLDivElement>(null);
   const comparisonRef = useRef<HTMLDivElement>(null);
@@ -1376,6 +1377,8 @@ export function PriceChart({
                   mode="single"
                   selected={startDate}
                   onSelect={setStartDate}
+                  defaultMonth={calendarMonth}
+                  onMonthChange={setCalendarMonth}
                   fromDate={(() => {
                     const tenYearsAgo = new Date();
                     tenYearsAgo.setFullYear(tenYearsAgo.getFullYear() - 10);
@@ -1418,6 +1421,8 @@ export function PriceChart({
                     mode="single"
                     selected={endDate}
                     onSelect={setEndDate}
+                    defaultMonth={calendarMonth}
+                    onMonthChange={setCalendarMonth}
                     fromDate={(() => {
                       const tenYearsAgo = new Date();
                       tenYearsAgo.setFullYear(tenYearsAgo.getFullYear() - 10);
