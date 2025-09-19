@@ -1468,6 +1468,57 @@ export function ComparisonChart({
   }, [chartData, tickers]);
 
 
+  // Currency mapping for different markets
+  const getCurrencySymbol = (currencyCode: string | undefined): string => {
+    if (!currencyCode) return '$';
+    
+    const currencyMap: Record<string, string> = {
+      'USD': '$',
+      'JPY': '¥',
+      'EUR': '€',
+      'GBP': '£',
+      'CAD': 'C$',
+      'AUD': 'A$',
+      'CHF': 'CHF ',
+      'CNY': '¥',
+      'KRW': '₩',
+      'HKD': 'HK$',
+      'SGD': 'S$',
+      'INR': '₹',
+      'BRL': 'R$',
+      'MXN': '$',
+      'SEK': 'kr',
+      'NOK': 'kr',
+      'DKK': 'kr',
+      'PLN': 'zł',
+      'CZK': 'Kč',
+      'HUF': 'Ft',
+      'RUB': '₽',
+      'TRY': '₺',
+      'ZAR': 'R',
+      'ILS': '₪',
+      'THB': '฿',
+      'MYR': 'RM',
+      'PHP': '₱',
+      'IDR': 'Rp',
+      'VND': '₫',
+      'TWD': 'NT$'
+    };
+    
+    return currencyMap[currencyCode.toUpperCase()] || currencyCode.toUpperCase() + ' ';
+  };
+
+  const formatCurrencyPrice = (value: number, currencyCode: string | undefined) => {
+    const currencySymbol = getCurrencySymbol(currencyCode);
+    
+    // For JPY and similar currencies, don't show decimal places
+    if (currencyCode === 'JPY' || currencyCode === 'KRW') {
+      return `${currencySymbol}${Math.round(value).toLocaleString()}`;
+    }
+    
+    return `${currencySymbol}${value.toFixed(2)}`;
+  };
+
   // Custom tooltip that shows actual prices with better date formatting
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload || !payload.length) return null;
@@ -1485,6 +1536,7 @@ export function ComparisonChart({
           // Get actual price from data point  
           const percentage = entry.value;
           const actualPrice = entry.payload[`${ticker.symbol}_price`] || 0;
+          const currency = entry.payload[`${ticker.symbol}_currency`] || 'USD';
 
           return (
             <div key={index} className="flex items-center justify-between gap-4 py-1">
@@ -1500,7 +1552,7 @@ export function ComparisonChart({
                   {percentage > 0 ? '+' : ''}{percentage.toFixed(2)}%
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  ${actualPrice.toFixed(2)}
+                  {formatCurrencyPrice(actualPrice, currency)}
                 </div>
               </div>
             </div>
