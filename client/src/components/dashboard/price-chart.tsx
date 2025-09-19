@@ -536,10 +536,11 @@ export function PriceChart({
   });
 
   const formatMarketCap = (marketCapInMillions: number) => {
-    // Finnhub returns market cap in millions of dollars
-    if (marketCapInMillions >= 1000000) return `${(marketCapInMillions / 1000000).toFixed(1)}T`;
-    if (marketCapInMillions >= 1000) return `${(marketCapInMillions / 1000).toFixed(1)}B`;
-    return `${marketCapInMillions.toFixed(1)}M`;
+    // Finnhub returns market cap in millions of local currency
+    const currencySymbol = getCurrencySymbol(stockDetails?.profile?.currency);
+    if (marketCapInMillions >= 1000000) return `${currencySymbol}${(marketCapInMillions / 1000000).toFixed(1)}T`;
+    if (marketCapInMillions >= 1000) return `${currencySymbol}${(marketCapInMillions / 1000).toFixed(1)}B`;
+    return `${currencySymbol}${marketCapInMillions.toFixed(1)}M`;
   };
 
   // Use stock details data if currentPrice is placeholder or invalid
@@ -557,7 +558,56 @@ export function PriceChart({
       ? formatMarketCap(stockDetails.profile.marketCapitalization) 
       : '--';
 
-  const formatPrice = (value: number) => `$${value.toFixed(2)}`;
+  // Currency mapping for different markets
+  const getCurrencySymbol = (currencyCode: string | undefined): string => {
+    if (!currencyCode) return '$';
+    
+    const currencyMap: Record<string, string> = {
+      'USD': '$',
+      'JPY': '¥',
+      'EUR': '€',
+      'GBP': '£',
+      'CAD': 'C$',
+      'AUD': 'A$',
+      'CHF': 'CHF ',
+      'CNY': '¥',
+      'KRW': '₩',
+      'HKD': 'HK$',
+      'SGD': 'S$',
+      'INR': '₹',
+      'BRL': 'R$',
+      'MXN': '$',
+      'SEK': 'kr',
+      'NOK': 'kr',
+      'DKK': 'kr',
+      'PLN': 'zł',
+      'CZK': 'Kč',
+      'HUF': 'Ft',
+      'RUB': '₽',
+      'TRY': '₺',
+      'ZAR': 'R',
+      'ILS': '₪',
+      'THB': '฿',
+      'MYR': 'RM',
+      'PHP': '₱',
+      'IDR': 'Rp',
+      'VND': '₫',
+      'TWD': 'NT$'
+    };
+    
+    return currencyMap[currencyCode.toUpperCase()] || currencyCode.toUpperCase() + ' ';
+  };
+
+  const formatPrice = (value: number) => {
+    const currencySymbol = getCurrencySymbol(stockDetails?.profile?.currency);
+    
+    // For JPY and similar currencies, don't show decimal places
+    if (stockDetails?.profile?.currency === 'JPY' || stockDetails?.profile?.currency === 'KRW') {
+      return `${currencySymbol}${Math.round(value).toLocaleString()}`;
+    }
+    
+    return `${currencySymbol}${value.toFixed(2)}`;
+  };
   
   const formatTime = (timeStr: string, timeframe: string) => {
     const date = new Date(timeStr);
