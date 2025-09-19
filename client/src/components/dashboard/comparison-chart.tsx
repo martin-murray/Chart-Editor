@@ -1280,20 +1280,12 @@ export function ComparisonChart({
     return canvas;
   };
 
-  // PNG export function
+  // PNG export function - uses manual canvas to ensure legend is included
   const exportPNG = async () => {
-    const chartContainer = document.querySelector('[data-testid="comparison-chart-container"]');
-    if (!chartContainer) return;
-
     try {
-      const dataUrl = await htmlToImage.toPng(chartContainer as HTMLElement, {
-        pixelRatio: 3,
-        cacheBust: true,
-        backgroundColor: '#121212',
-        skipFonts: true,
-        style: { transform: 'scale(1)' },
-        filter: (n) => !n.classList?.contains('no-export'),
-      });
+      // Use manual canvas export to guarantee legend inclusion
+      const canvas = await captureFullChartAsCanvas();
+      const dataUrl = canvas.toDataURL('image/png');
       
       const fileName = `comparison-chart-${tickers.filter(t => t.visible).map(t => t.symbol).join('-')}-${new Date().toISOString().split('T')[0]}.png`;
       const link = document.createElement('a');
@@ -1303,7 +1295,7 @@ export function ComparisonChart({
       
       toast({
         title: 'Export Successful',
-        description: `Chart exported as ${fileName}`,
+        description: `Chart exported as ${fileName} (with ticker legend)`,
       });
     } catch (err) {
       console.error('PNG export failed:', err);
@@ -1315,24 +1307,12 @@ export function ComparisonChart({
     }
   };
 
-  // PDF export function for shared export functionality
+  // PDF export function - uses manual canvas to ensure legend is included
   const exportPDF = async () => {
-    const chartContainer = document.querySelector('[data-testid="comparison-chart-container"]');
-    if (!chartContainer) return;
-
     try {
-      const dataUrl = await htmlToImage.toPng(chartContainer as HTMLElement, {
-        pixelRatio: 3,
-        cacheBust: true,
-        backgroundColor: '#121212',
-        skipFonts: true,
-        style: { 
-          transform: 'scale(1)',
-          padding: '20px',
-          paddingBottom: '50px'
-        },
-        filter: (n) => !n.classList?.contains('no-export'),
-      });
+      // Use manual canvas export to guarantee legend inclusion
+      const canvas = await captureFullChartAsCanvas();
+      const dataUrl = canvas.toDataURL('image/png');
       
       const img = new globalThis.Image();
       img.src = dataUrl;
@@ -1344,7 +1324,7 @@ export function ComparisonChart({
       const fileName = `comparison-chart-${tickers.filter(t => t.visible).map(t => t.symbol).join('-')}-${new Date().toISOString().split('T')[0]}.pdf`;
       pdf.save(fileName);
       
-      toast({ title: 'Export Successful', description: `Chart exported as ${fileName}` });
+      toast({ title: 'Export Successful', description: `Chart exported as ${fileName} (with ticker legend)` });
     } catch (err) {
       console.error('PDF export failed:', err);
       toast({ title: 'Export Failed', description: 'PDF export failed. Please try again.', variant: 'destructive' });
