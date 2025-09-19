@@ -2271,8 +2271,9 @@ export function PriceChart({
                     }}
                   />
 
-                </AreaChart>
-              </ResponsiveContainer> 
+                  {/* Custom grid lines - horizontal dashed, vertical solid */}
+                  {/* Horizontal grid lines (dashed) */}
+                  <CartesianGrid 
                     strokeDasharray="3 3" 
                     stroke="#3B3B3B" 
                     opacity={0.5}
