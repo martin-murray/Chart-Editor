@@ -2075,7 +2075,7 @@ export function PriceChart({
                   {/* Mountain area chart with gradient fill */}
                   <Area
                     yAxisId="price"
-                    type="monotone" 
+                    type="linear" 
                     dataKey={yAxisDisplayMode === 'percentage' ? 'percentageChange' : 'close'}
                     stroke={lineColor}
                     strokeWidth={2}
@@ -2321,77 +2321,6 @@ export function PriceChart({
                     }}
                   />
 
-                  {/* Earnings Markers - small yellow dots with 'E' */}
-                  <Customized 
-                    component={(props: any) => {
-                      const { payload, xAxisMap, yAxisMap } = props;
-                      if (!earningsData?.earnings || !chartData?.data) return null;
-                      
-                      const xAxis = xAxisMap[Object.keys(xAxisMap)[0]];
-                      const yAxis = yAxisMap['price'];
-                      
-                      if (!xAxis || !yAxis) return null;
-                      
-                      return (
-                        <>
-                          {earningsData.earnings.map((earning: any, index: number) => {
-                            // Find if this earnings date falls within our chart data
-                            const earningsDate = new Date(earning.date);
-                            const earningsTime = earningsDate.toISOString();
-                            
-                            // Find corresponding data point in chart
-                            const dataPoint = chartData.data.find(d => {
-                              const chartDate = new Date(d.time);
-                              return Math.abs(chartDate.getTime() - earningsDate.getTime()) < 24 * 60 * 60 * 1000; // Within 1 day
-                            });
-                            
-                            if (!dataPoint) return null;
-                            
-                            // Calculate position using chart scales
-                            const x = xAxis.scale(dataPoint.time) + (xAxis.offset?.left || 0);
-                            const y = xAxis.y - 10; // Position on timeline (x-axis baseline)
-                            
-                            return (
-                              <g 
-                                key={`earning-${earning.date}-${index}`}
-                                style={{ cursor: 'pointer' }}
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  setEarningsModal({
-                                    visible: true,
-                                    data: earning
-                                  });
-                                }}
-                              >
-                                {/* Yellow circle */}
-                                <circle
-                                  cx={x}
-                                  cy={y}
-                                  r={10}
-                                  fill="#FAFF50"
-                                  stroke="#121212"
-                                  strokeWidth={1}
-                                />
-                                {/* 'E' text inside circle */}
-                                <text
-                                  x={x}
-                                  y={y + 2}
-                                  textAnchor="middle"
-                                  fontSize={12}
-                                  fontWeight="bold"
-                                  fill="#121212"
-                                  style={{ pointerEvents: 'none' }}
-                                >
-                                  E
-                                </text>
-                              </g>
-                            );
-                          })}
-                        </>
-                      );
-                    }}
-                  />
                 </AreaChart>
               </ResponsiveContainer>
               
@@ -2497,6 +2426,78 @@ export function PriceChart({
                       />
                     );
                   })()}
+
+                  {/* Earnings Markers - moved to volume chart */}
+                  <Customized 
+                    component={(props: any) => {
+                      const { payload, xAxisMap, yAxisMap } = props;
+                      if (!earningsData?.earnings || !chartData?.data) return null;
+                      
+                      const xAxis = xAxisMap[Object.keys(xAxisMap)[0]];
+                      const yAxis = yAxisMap[Object.keys(yAxisMap)[0]];
+                      
+                      if (!xAxis || !yAxis) return null;
+                      
+                      return (
+                        <>
+                          {earningsData.earnings.map((earning: any, index: number) => {
+                            // Find if this earnings date falls within our chart data
+                            const earningsDate = new Date(earning.date);
+                            const earningsTime = earningsDate.toISOString();
+                            
+                            // Find corresponding data point in chart
+                            const dataPoint = chartData.data.find(d => {
+                              const chartDate = new Date(d.time);
+                              return Math.abs(chartDate.getTime() - earningsDate.getTime()) < 24 * 60 * 60 * 1000; // Within 1 day
+                            });
+                            
+                            if (!dataPoint) return null;
+                            
+                            // Calculate position using chart scales - positioned in volume chart area
+                            const x = xAxis.scale(dataPoint.time) + (xAxis.offset?.left || 0);
+                            const y = xAxis.y - 25; // Position above volume chart timeline
+                            
+                            return (
+                              <g 
+                                key={`earning-${earning.date}-${index}`}
+                                style={{ cursor: 'pointer' }}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  setEarningsModal({
+                                    visible: true,
+                                    data: earning
+                                  });
+                                }}
+                              >
+                                {/* Yellow circle */}
+                                <circle
+                                  cx={x}
+                                  cy={y}
+                                  r={8}
+                                  fill="#FAFF50"
+                                  stroke="#121212"
+                                  strokeWidth={1}
+                                />
+                                {/* 'E' text inside circle */}
+                                <text
+                                  x={x}
+                                  y={y + 2}
+                                  textAnchor="middle"
+                                  fontSize={10}
+                                  fontWeight="bold"
+                                  fill="#121212"
+                                  style={{ pointerEvents: 'none' }}
+                                >
+                                  E
+                                </text>
+                              </g>
+                            );
+                          })}
+                        </>
+                      );
+                    }}
+                  />
 
                 </BarChart>
               </ResponsiveContainer>
