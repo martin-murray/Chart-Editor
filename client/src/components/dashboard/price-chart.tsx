@@ -2112,40 +2112,51 @@ export function PriceChart({
                     <Tooltip 
                       active={!isDragging}
                       allowEscapeViewBox={{ x: false, y: false }}
-                      labelFormatter={(value) => {
-                        const date = new Date(value);
-                        const dateStr = formatTime(value, selectedTimeframe);
+
+                      content={(props) => {
+                        if (!props.active || !props.payload?.length) return null;
+                        
+                        const data = props.payload[0]?.payload;
+                        if (!data) return null;
+                        
+                        const date = new Date(props.label);
+                        const dateStr = formatTime(props.label, selectedTimeframe);
                         const timeStr = date.toLocaleTimeString('en-US', { 
                           hour: '2-digit', 
                           minute: '2-digit',
                           second: '2-digit',
                           hour12: false 
                         });
-                        return `${dateStr} ${timeStr}`;
+                        
+                        return (
+                          <div style={{
+                            backgroundColor: '#121212',
+                            border: '1px solid #333333',
+                            borderRadius: '6px',
+                            color: '#F7F7F7',
+                            padding: '8px 12px'
+                          }}>
+                            <div style={{ marginBottom: '4px' }}>{`${dateStr} ${timeStr}`}</div>
+                            {chartType === 'candlestick' && data.open && data.high && data.low && data.close ? (
+                              <>
+                                <div>Open: {formatPrice(data.open)}</div>
+                                <div>High: {formatPrice(data.high)}</div>
+                                <div>Low: {formatPrice(data.low)}</div>
+                                <div>Close: {formatPrice(data.close)}</div>
+                              </>
+                            ) : (
+                              <>
+                                {yAxisDisplayMode === 'percentage' && data.percentageChange !== undefined ? (
+                                  <div>Change: {data.percentageChange.toFixed(2)}%</div>
+                                ) : (
+                                  <div>Price: {formatPrice(data.close)}</div>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        );
                       }}
-                      formatter={(value: number, name: string) => {
-                        // Handle candlestick OHLC data display
-                        if (chartType === 'candlestick') {
-                          if (name === 'open') return [formatPrice(value), 'Open'];
-                          if (name === 'high') return [formatPrice(value), 'High'];
-                          if (name === 'low') return [formatPrice(value), 'Low'];
-                          if (name === 'close') return [formatPrice(value), 'Close'];
-                        } else {
-                          // Handle line/area chart data display
-                          if (name === 'close') {
-                            return [formatPrice(value), 'Price'];
-                          } else if (name === 'percentageChange') {
-                            return [`${value.toFixed(2)}%`, 'Change'];
-                          }
-                        }
-                        return [value, name];
-                      }}
-                      contentStyle={{
-                        backgroundColor: '#121212',
-                        border: '1px solid #333333',
-                        borderRadius: '6px',
-                        color: '#F7F7F7'
-                      }}
+
                     />
                   )}
                   
@@ -2234,14 +2245,19 @@ export function PriceChart({
                     />
                   )}
                   
-                  {/* Invisible Line components for candlestick tooltip data */}
+                  {/* Invisible overlay line for candlestick tooltip data */}
                   {chartType === 'candlestick' && (
-                    <>
-                      <Line yAxisId="price" type="linear" dataKey="open" stroke="transparent" strokeWidth={0} dot={false} />
-                      <Line yAxisId="price" type="linear" dataKey="high" stroke="transparent" strokeWidth={0} dot={false} />
-                      <Line yAxisId="price" type="linear" dataKey="low" stroke="transparent" strokeWidth={0} dot={false} />
-                      <Line yAxisId="price" type="linear" dataKey="close" stroke="transparent" strokeWidth={0} dot={false} />
-                    </>
+                    <Line 
+                      yAxisId="price" 
+                      type="linear" 
+                      dataKey="close" 
+                      strokeOpacity={0} 
+                      strokeWidth={1} 
+                      dot={false} 
+                      activeDot={false} 
+                      isAnimationActive={false}
+                      connectNulls
+                    />
                   )}
                   
                   {/* Custom annotation markers and percentage lines */}
@@ -2386,40 +2402,51 @@ export function PriceChart({
                     <Tooltip 
                       active={!isDragging}
                       allowEscapeViewBox={{ x: false, y: false }}
-                      labelFormatter={(value) => {
-                        const date = new Date(value);
-                        const dateStr = formatTime(value, selectedTimeframe);
+
+                      content={(props) => {
+                        if (!props.active || !props.payload?.length) return null;
+                        
+                        const data = props.payload[0]?.payload;
+                        if (!data) return null;
+                        
+                        const date = new Date(props.label);
+                        const dateStr = formatTime(props.label, selectedTimeframe);
                         const timeStr = date.toLocaleTimeString('en-US', { 
                           hour: '2-digit', 
                           minute: '2-digit',
                           second: '2-digit',
                           hour12: false 
                         });
-                        return `${dateStr} ${timeStr}`;
+                        
+                        return (
+                          <div style={{
+                            backgroundColor: '#121212',
+                            border: '1px solid #333333',
+                            borderRadius: '6px',
+                            color: '#F7F7F7',
+                            padding: '8px 12px'
+                          }}>
+                            <div style={{ marginBottom: '4px' }}>{`${dateStr} ${timeStr}`}</div>
+                            {chartType === 'candlestick' && data.open && data.high && data.low && data.close ? (
+                              <>
+                                <div>Open: {formatPrice(data.open)}</div>
+                                <div>High: {formatPrice(data.high)}</div>
+                                <div>Low: {formatPrice(data.low)}</div>
+                                <div>Close: {formatPrice(data.close)}</div>
+                              </>
+                            ) : (
+                              <>
+                                {yAxisDisplayMode === 'percentage' && data.percentageChange !== undefined ? (
+                                  <div>Change: {data.percentageChange.toFixed(2)}%</div>
+                                ) : (
+                                  <div>Price: {formatPrice(data.close)}</div>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        );
                       }}
-                      formatter={(value: number, name: string) => {
-                        // Handle candlestick OHLC data display
-                        if (chartType === 'candlestick') {
-                          if (name === 'open') return [formatPrice(value), 'Open'];
-                          if (name === 'high') return [formatPrice(value), 'High'];
-                          if (name === 'low') return [formatPrice(value), 'Low'];
-                          if (name === 'close') return [formatPrice(value), 'Close'];
-                        } else {
-                          // Handle line/area chart data display
-                          if (name === 'close') {
-                            return [formatPrice(value), 'Price'];
-                          } else if (name === 'percentageChange') {
-                            return [`${value.toFixed(2)}%`, 'Change'];
-                          }
-                        }
-                        return [value, name];
-                      }}
-                      contentStyle={{
-                        backgroundColor: '#121212',
-                        border: '1px solid #333333',
-                        borderRadius: '6px',
-                        color: '#F7F7F7'
-                      }}
+
                     />
                   )}
                   
@@ -2718,17 +2745,7 @@ export function PriceChart({
                     <Tooltip 
                       active={!isDragging}
                       allowEscapeViewBox={{ x: false, y: false }}
-                      labelFormatter={(value) => {
-                        const date = new Date(value);
-                        const dateStr = formatTime(value, selectedTimeframe);
-                        const timeStr = date.toLocaleTimeString('en-US', { 
-                          hour: '2-digit', 
-                          minute: '2-digit',
-                          second: '2-digit',
-                          hour12: false 
-                        });
-                        return `${dateStr} ${timeStr}`;
-                      }}
+
                       formatter={(value: number, name: string, props: any) => {
                         if (name === 'volume') {
                           return [
