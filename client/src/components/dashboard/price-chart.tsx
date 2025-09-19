@@ -2711,7 +2711,7 @@ export function PriceChart({
                           ];
                         } else if (name === 'volumeMA') {
                           return [
-                            <span style={{ color: '#FF6B6B' }}>{formatNumber(value)}</span>, 
+                            <span style={{ color: '#F7F7F7' }}>{formatNumber(value)}</span>, 
                             <span style={{ color: '#F7F7F7' }}>20-Day MA</span>
                           ];
                         }
@@ -2737,27 +2737,12 @@ export function PriceChart({
                   {/* Volume Moving Average Line */}
                   <Line 
                     dataKey="volumeMA" 
-                    stroke="#FF6B6B" 
+                    stroke="#F7F7F7" 
                     strokeWidth={2}
                     dot={false}
                     connectNulls={true}
                     type="monotone"
                   />
-                  
-                  {/* Average Daily Volume Reference Line */}
-                  {chartDataWithMA && chartDataWithMA.length > 0 && (() => {
-                    const totalVolume = chartDataWithMA.reduce((sum, data) => sum + (data.volume || 0), 0);
-                    const avgVolume = totalVolume / chartDataWithMA.length;
-                    return (
-                      <ReferenceLine 
-                        y={avgVolume} 
-                        stroke="#FAFF50" 
-                        strokeWidth={1}
-                        strokeDasharray="0"
-                        label={{ value: "Avg Daily Volume", position: "top", fill: "#FAFF50", fontSize: 11 }}
-                      />
-                    );
-                  })()}
 
                   {/* Earnings Markers - moved to volume chart */}
                   <Customized 
