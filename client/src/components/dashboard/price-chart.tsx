@@ -693,20 +693,44 @@ export function PriceChart({
   const isPositive = timeframePercentChange >= 0;
   const lineColor = isPositive ? '#5AF5FA' : '#FFA5FF'; // Cyan for positive, Pink for negative
   
-  // Calculate percentage change for each data point relative to first price
+  // Calculate moving average for volume (20-period moving average)
+  const calculateMovingAverage = (data: any[], period: number = 20) => {
+    return data.map((item, index) => {
+      if (index < period - 1) {
+        // For early data points, use available data
+        const availableData = data.slice(0, index + 1);
+        const sum = availableData.reduce((acc, curr) => acc + (curr.volume || 0), 0);
+        return sum / availableData.length;
+      } else {
+        // Calculate moving average for the period
+        const slice = data.slice(index - period + 1, index + 1);
+        const sum = slice.reduce((acc, curr) => acc + (curr.volume || 0), 0);
+        return sum / period;
+      }
+    });
+  };
+
+  // Calculate percentage change for each data point relative to first price and add volume moving average
   const chartDataWithPercentage = chartData?.data?.map((item, index) => {
     const firstPrice = chartData.data[0]?.close || item.close;
     const percentageChange = ((item.close - firstPrice) / firstPrice) * 100;
     return { ...item, percentageChange };
   }) || [];
 
+  // Add volume moving averages to the data
+  const volumeMovingAverages = chartData?.data ? calculateMovingAverage(chartData.data) : [];
+  const chartDataWithMA = chartDataWithPercentage.map((item, index) => ({
+    ...item,
+    volumeMA: volumeMovingAverages[index] || 0
+  }));
+
   // Calculate current price data extremes for zoom functionality
   const priceExtremes = useMemo(() => {
-    if (!chartDataWithPercentage || chartDataWithPercentage.length === 0) {
+    if (!chartDataWithMA || chartDataWithMA.length === 0) {
       return { min: 0, max: 100, baseRange: 100, center: 50 };
     }
 
-    const prices = chartDataWithPercentage.map(d => d.close).filter(p => p != null);
+    const prices = chartDataWithMA.map(d => d.close).filter(p => p != null);
     if (prices.length === 0) {
       return { min: 0, max: 100, baseRange: 100, center: 50 };
     }
@@ -717,7 +741,7 @@ export function PriceChart({
     const center = (min + max) / 2;
     
     return { min, max, baseRange, center };
-  }, [chartDataWithPercentage]);
+  }, [chartDataWithMA]);
 
   // Price zoom control functions
   const zoomInPrice = () => {
@@ -776,7 +800,7 @@ export function PriceChart({
 
   // Handle chart click for annotations
   const handleChartClick = (event: any) => {
-    if (!event || !chartDataWithPercentage) return;
+    if (!event || !chartDataWithMA) return;
     
     // For horizontal annotations, we handle ANY click on the chart (even without activePayload)
     if (annotationMode === 'horizontal') {
@@ -784,16 +808,16 @@ export function PriceChart({
       if (event.chartY !== undefined && event.chartX !== undefined) {
         // We'll calculate the price from the click Y position
         // For timestamp, we'll use the current time or middle of the chart data
-        const middleIndex = Math.floor(chartDataWithPercentage.length / 2);
-        const timestamp = chartDataWithPercentage[middleIndex]?.timestamp || Date.now();
-        const time = chartDataWithPercentage[middleIndex]?.time || new Date().toISOString();
+        const middleIndex = Math.floor(chartDataWithMA.length / 2);
+        const timestamp = chartDataWithMA[middleIndex]?.timestamp || Date.now();
+        const time = chartDataWithMA[middleIndex]?.time || new Date().toISOString();
         
         // Calculate price from Y coordinate
         let horizontalPrice = 0;
         
         // Get price range from chart data
-        if (chartDataWithPercentage.length > 0) {
-          const prices = chartDataWithPercentage.map(d => d.close).filter(p => p != null);
+        if (chartDataWithMA.length > 0) {
+          const prices = chartDataWithMA.map(d => d.close).filter(p => p != null);
           const minPrice = Math.min(...prices);
           const maxPrice = Math.max(...prices);
           
@@ -2010,7 +2034,7 @@ export function PriceChart({
             <div className="h-80 w-full relative">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart
-                  data={chartDataWithPercentage}
+                  data={chartDataWithMA}
                   margin={{ top: 15, right: 0, left: 0, bottom: -5 }}
                   onClick={handleChartClick}
                 >
@@ -2409,13 +2433,13 @@ export function PriceChart({
                     <Customized 
                       component={(props: any) => {
                         const { offset, xAxisMap, payload } = props;
-                        if (!offset || !xAxisMap || !chartDataWithPercentage) return null;
+                        if (!offset || !xAxisMap || !chartDataWithMA) return null;
                         
                         const xAxis = xAxisMap[0];
                         if (!xAxis) return null;
                       
                       const handleOverlayClick = (e: React.MouseEvent) => {
-                        if (!chartDataWithPercentage) return;
+                        if (!chartDataWithMA) return;
                         
                         // Get SVG coordinates with fallback
                         const svg = (e.currentTarget as SVGElement).ownerSVGElement;
@@ -2443,9 +2467,9 @@ export function PriceChart({
                         
                         // Find closest data point by x coordinate
                         const xPercent = Math.max(0, Math.min(relativeX / offset.width, 1));
-                        const dataIndex = Math.round(xPercent * (chartDataWithPercentage.length - 1));
-                        const clampedIndex = Math.max(0, Math.min(dataIndex, chartDataWithPercentage.length - 1));
-                        const clickedData = chartDataWithPercentage[clampedIndex];
+                        const dataIndex = Math.round(xPercent * (chartDataWithMA.length - 1));
+                        const clampedIndex = Math.max(0, Math.min(dataIndex, chartDataWithMA.length - 1));
+                        const clickedData = chartDataWithMA[clampedIndex];
                         
                         if (clickedData) {
                           // Create synthetic event for handleChartClick
@@ -2623,8 +2647,8 @@ export function PriceChart({
             {/* Volume Bar Chart - Below with spacing */}
             <div className="h-40 w-full mt-2 relative volume-chart-container">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart 
-                  data={chartDataWithPercentage}
+                <ComposedChart 
+                  data={chartDataWithMA}
                   margin={{ top: -15, right: 0, left: 0, bottom: 15 }}
                 >
                   {/* Custom grid lines - horizontal dashed, vertical solid */}
@@ -2680,10 +2704,18 @@ export function PriceChart({
                         return `${dateStr} ${timeStr}`;
                       }}
                       formatter={(value: number, name: string, props: any) => {
-                        return [
-                          <span style={{ color: '#AA99FF' }}>{formatNumber(value)}</span>, 
-                          <span style={{ color: '#F7F7F7' }}>Volume</span>
-                        ];
+                        if (name === 'volume') {
+                          return [
+                            <span style={{ color: '#AA99FF' }}>{formatNumber(value)}</span>, 
+                            <span style={{ color: '#F7F7F7' }}>Volume</span>
+                          ];
+                        } else if (name === 'volumeMA') {
+                          return [
+                            <span style={{ color: '#FF6B6B' }}>{formatNumber(value)}</span>, 
+                            <span style={{ color: '#F7F7F7' }}>20-Day MA</span>
+                          ];
+                        }
+                        return [formatNumber(value), name];
                       }}
                       contentStyle={{
                         backgroundColor: '#121212',
@@ -2702,10 +2734,20 @@ export function PriceChart({
                     fill="#AA99FF"
                   />
                   
+                  {/* Volume Moving Average Line */}
+                  <Line 
+                    dataKey="volumeMA" 
+                    stroke="#FF6B6B" 
+                    strokeWidth={2}
+                    dot={false}
+                    connectNulls={true}
+                    type="monotone"
+                  />
+                  
                   {/* Average Daily Volume Reference Line */}
-                  {chartDataWithPercentage && chartDataWithPercentage.length > 0 && (() => {
-                    const totalVolume = chartDataWithPercentage.reduce((sum, data) => sum + (data.volume || 0), 0);
-                    const avgVolume = totalVolume / chartDataWithPercentage.length;
+                  {chartDataWithMA && chartDataWithMA.length > 0 && (() => {
+                    const totalVolume = chartDataWithMA.reduce((sum, data) => sum + (data.volume || 0), 0);
+                    const avgVolume = totalVolume / chartDataWithMA.length;
                     return (
                       <ReferenceLine 
                         y={avgVolume} 
@@ -2789,7 +2831,7 @@ export function PriceChart({
                     }}
                   />
 
-                </BarChart>
+                </ComposedChart>
               </ResponsiveContainer>
             </div>
           </div>
