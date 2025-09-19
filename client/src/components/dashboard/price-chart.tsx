@@ -2116,31 +2116,17 @@ export function PriceChart({
                     />
                   )}
                   
-                  {/* Chart content based on type */}
-                  {chartType === 'line' ? (
-                    <Area
-                      yAxisId="price"
-                      type="linear" 
-                      dataKey={yAxisDisplayMode === 'percentage' ? 'percentageChange' : 'close'}
-                      stroke={lineColor}
-                      strokeWidth={2}
-                      fill="none"
-                      dot={false}
-                      activeDot={{ r: 4, fill: lineColor, stroke: '#121212', strokeWidth: 2 }}
-                    />
-                  ) : (
-                    /* Mountain area chart with gradient fill */
-                    <Area
-                      yAxisId="price"
-                      type="linear" 
-                      dataKey={yAxisDisplayMode === 'percentage' ? 'percentageChange' : 'close'}
-                      stroke={lineColor}
-                      strokeWidth={2}
-                      fill={`url(#${isPositive ? 'positiveGradient' : 'negativeGradient'})`}
-                      dot={false}
-                      activeDot={{ r: 4, fill: lineColor, stroke: '#121212', strokeWidth: 2 }}
-                    />
-                  )}
+                  {/* Mountain area chart with gradient fill */}
+                  <Area
+                    yAxisId="price"
+                    type="linear" 
+                    dataKey={yAxisDisplayMode === 'percentage' ? 'percentageChange' : 'close'}
+                    stroke={lineColor}
+                    strokeWidth={2}
+                    fill={`url(#${isPositive ? 'positiveGradient' : 'negativeGradient'})`}
+                    dot={false}
+                    activeDot={{ r: 4, fill: lineColor, stroke: '#121212', strokeWidth: 2 }}
+                  />
                   
                   {/* Text Annotation Reference Lines - yellow vertical lines */}
                   {annotations.filter(annotation => annotation.type === 'text').map((annotation) => (
