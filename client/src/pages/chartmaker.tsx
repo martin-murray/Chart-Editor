@@ -436,25 +436,25 @@ function ChartMaker() {
               <div>
                 <h4 className="font-medium text-foreground mb-2">US Markets</h4>
                 <ul className="space-y-1">
-                  <li>• NYSE (New York)</li>
-                  <li>• NASDAQ</li>
-                  <li>• NYSE American</li>
+                  <li>• <a href="https://www.nyse.com/" target="_blank" rel="noopener noreferrer" className="text-[#5AF5FA] hover:text-[#4FE5EA] transition-colors underline underline-offset-2" data-testid="link-nyse">NYSE (New York)</a></li>
+                  <li>• <a href="https://www.nasdaq.com/" target="_blank" rel="noopener noreferrer" className="text-[#5AF5FA] hover:text-[#4FE5EA] transition-colors underline underline-offset-2" data-testid="link-nasdaq">NASDAQ</a></li>
+                  <li>• <a href="https://www.nyse.com/markets/nyse-american" target="_blank" rel="noopener noreferrer" className="text-[#5AF5FA] hover:text-[#4FE5EA] transition-colors underline underline-offset-2" data-testid="link-nyse-american">NYSE American</a></li>
                 </ul>
               </div>
               <div>
                 <h4 className="font-medium text-foreground mb-2">European Markets</h4>
                 <ul className="space-y-1">
-                  <li>• LSE (London)</li>
-                  <li>• Euronext (Paris)</li>
-                  <li>• Frankfurt (XETRA)</li>
+                  <li>• <a href="https://www.londonstockexchange.com/" target="_blank" rel="noopener noreferrer" className="text-[#5AF5FA] hover:text-[#4FE5EA] transition-colors underline underline-offset-2" data-testid="link-lse">LSE (London)</a></li>
+                  <li>• <a href="https://www.euronext.com/" target="_blank" rel="noopener noreferrer" className="text-[#5AF5FA] hover:text-[#4FE5EA] transition-colors underline underline-offset-2" data-testid="link-euronext">Euronext (Paris)</a></li>
+                  <li>• <a href="https://www.xetra.com/" target="_blank" rel="noopener noreferrer" className="text-[#5AF5FA] hover:text-[#4FE5EA] transition-colors underline underline-offset-2" data-testid="link-xetra">Frankfurt (XETRA)</a></li>
                 </ul>
               </div>
               <div>
                 <h4 className="font-medium text-foreground mb-2">Asian Markets</h4>
                 <ul className="space-y-1">
-                  <li>• TSE (Tokyo)</li>
-                  <li>• HKEX (Hong Kong)</li>
-                  <li>• NSE (India)</li>
+                  <li>• <a href="https://www.jpx.co.jp/english/" target="_blank" rel="noopener noreferrer" className="text-[#5AF5FA] hover:text-[#4FE5EA] transition-colors underline underline-offset-2" data-testid="link-tse">TSE (Tokyo)</a></li>
+                  <li>• <a href="https://www.hkex.com.hk/" target="_blank" rel="noopener noreferrer" className="text-[#5AF5FA] hover:text-[#4FE5EA] transition-colors underline underline-offset-2" data-testid="link-hkex">HKEX (Hong Kong)</a></li>
+                  <li>• <a href="https://www.nseindia.com/" target="_blank" rel="noopener noreferrer" className="text-[#5AF5FA] hover:text-[#4FE5EA] transition-colors underline underline-offset-2" data-testid="link-nse">NSE (India)</a></li>
                 </ul>
               </div>
             </div>
