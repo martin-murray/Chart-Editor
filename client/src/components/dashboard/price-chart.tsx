@@ -147,6 +147,7 @@ export function PriceChart({
   // Price Y-axis zoom state
   const [priceAxisMode, setPriceAxisMode] = useState<'auto' | 'fixed'>('auto');
   const [priceAxisRange, setPriceAxisRange] = useState<number>(100); // Current zoom range in price units
+  const [yAxisDisplayMode, setYAxisDisplayMode] = useState<'price' | 'percentage'>('price');
   
   // Predefined zoom levels for price scaling (percentage of current price range)
   const priceZoomLevels = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 0.6, 0.7, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 7.5, 10.0];
@@ -680,15 +681,32 @@ export function PriceChart({
     setPriceAxisMode('auto');
   };
 
-  // Get current price Y-axis domain based on zoom state
+  // Get current price Y-axis domain based on zoom state and display mode
   const getPriceAxisDomain = (): any => {
-    if (priceAxisMode === 'auto') {
-      return ['dataMin - 1', 'dataMax + 1'];
+    if (yAxisDisplayMode === 'percentage') {
+      // For percentage mode, use dataMin/dataMax of percentage changes
+      if (priceAxisMode === 'auto') {
+        return ['dataMin - 0.5', 'dataMax + 0.5'];
+      } else {
+        // For fixed mode in percentage, calculate based on current percentage range
+        const halfRange = priceAxisRange / 2;
+        return [-halfRange, halfRange];
+      }
     } else {
-      const halfRange = priceAxisRange / 2;
-      const center = priceExtremes.center;
-      return [center - halfRange, center + halfRange];
+      // Original price mode logic
+      if (priceAxisMode === 'auto') {
+        return ['dataMin - 1', 'dataMax + 1'];
+      } else {
+        const halfRange = priceAxisRange / 2;
+        const center = priceExtremes.center;
+        return [center - halfRange, center + halfRange];
+      }
     }
+  };
+
+  // Handle Y-axis click to toggle between price and percentage view
+  const handleYAxisClick = () => {
+    setYAxisDisplayMode(prev => prev === 'price' ? 'percentage' : 'price');
   };
 
   const formatNumber = (num: number) => {
@@ -1934,14 +1952,33 @@ export function PriceChart({
                     axisLine={{ stroke: '#F7F7F7' }}
                   />
 
-                  {/* Primary Y-axis for price (right side) */}
+                  {/* Primary Y-axis for price (right side) - clickable to toggle to percentage view */}
                   <YAxis 
                     yAxisId="price"
                     orientation="right"
                     domain={getPriceAxisDomain()}
                     allowDataOverflow={priceAxisMode === 'fixed'}
-                    tickFormatter={formatPrice}
-                    tick={{ fontSize: 12, fill: '#F7F7F7' }}
+                    dataKey={yAxisDisplayMode === 'percentage' ? 'percentageChange' : 'close'}
+                    tick={(props) => (
+                      <g 
+                        onClick={handleYAxisClick}
+                        style={{ cursor: 'pointer' }}
+                        className="group"
+                      >
+                        <text
+                          x={props.x}
+                          y={props.y}
+                          dx={0}
+                          dy={0}
+                          textAnchor={props.textAnchor}
+                          fill="#F7F7F7"
+                          className="group-hover:fill-[#5AF5FA] transition-colors duration-200"
+                          fontSize={12}
+                        >
+                          {yAxisDisplayMode === 'percentage' ? `${props.payload.value.toFixed(1)}%` : formatPrice(props.payload.value)}
+                        </text>
+                      </g>
+                    )}
                     axisLine={{ stroke: '#F7F7F7' }}
                     tickLine={{ stroke: '#F7F7F7' }}
                     width={60}
@@ -1983,7 +2020,7 @@ export function PriceChart({
                   <Area
                     yAxisId="price"
                     type="monotone" 
-                    dataKey="close" 
+                    dataKey={yAxisDisplayMode === 'percentage' ? 'percentageChange' : 'close'}
                     stroke={lineColor}
                     strokeWidth={2}
                     fill={`url(#${isPositive ? 'positiveGradient' : 'negativeGradient'})`}
