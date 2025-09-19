@@ -3,7 +3,8 @@
 @tailwind utilities;
 
 :root {
-  /* Default to dark mode values - dark mode only app */
+  /* Force dark mode globally - dark mode only app */
+  color-scheme: dark;
   --background: oklch(0.1822 0 0);
   --foreground: oklch(0.9219 0 0);
   --card: oklch(0.2264 0 0);

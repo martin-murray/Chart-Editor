@@ -18,7 +18,7 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="dark" storageKey="chartmaker-theme">
+      <ThemeProvider>
         <TooltipProvider>
           <Toaster />
           <Router />
