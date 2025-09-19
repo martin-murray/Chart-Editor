@@ -459,7 +459,7 @@ function ChartMaker() {
               </div>
             </div>
             <div className="mt-4 p-4 bg-muted/50 rounded-lg">
-              <p className="text-base text-white">
+              <p className="text-sm text-white">
                 <strong className="text-white">Tip:</strong> Search by company name ("Apple", "Tesla") or ticker ("AAPL", "TSLA"). 
                 Our intelligent search finds matches across global exchanges—no Bloomberg-style suffixes (.UW, .SE, .SW) needed!
               </p>
