@@ -2140,82 +2140,18 @@ export function PriceChart({
                     />
                   )}
                   
-                  {/* Mountain area chart with gradient fill */}
+                  {/* Dynamic area/line chart based on chart type */}
                   <Area
                     yAxisId="price"
                     type="linear" 
                     dataKey={yAxisDisplayMode === 'percentage' ? 'percentageChange' : 'close'}
                     stroke={lineColor}
                     strokeWidth={2}
-                    fill={`url(#${isPositive ? 'positiveGradient' : 'negativeGradient'})`}
+                    fill={chartType === 'line' ? 'none' : `url(#${isPositive ? 'positiveGradient' : 'negativeGradient'})`}
                     dot={false}
                     activeDot={{ r: 4, fill: lineColor, stroke: '#121212', strokeWidth: 2 }}
                   />
                   
-                  {/* Text Annotation Reference Lines - yellow vertical lines */}
-                  {annotations.filter(annotation => annotation.type === 'text').map((annotation) => (
-                    <ReferenceLine 
-                      key={annotation.id}
-                      x={annotation.time}
-                      yAxisId="price"
-                      stroke="#FAFF50"
-                      strokeWidth={1}
-                      vectorEffect="non-scaling-stroke"
-                      shapeRendering="crispEdges"
-                    />
-                  ))}
-
-                  {/* Horizontal Annotation Reference Lines - purple styling */}
-                  {annotations.filter(annotation => annotation.type === 'horizontal').map((annotation) => {
-                    const isBeingDragged = isDragging && dragAnnotationId === annotation.id;
-                    const lineColor = isBeingDragged ? "#7755CC" : "#AA99FF";
-                    return (
-                      <ReferenceLine 
-                        key={annotation.id}
-                        y={annotation.price}
-                        yAxisId="price"
-                        stroke={lineColor}
-                        strokeWidth={isBeingDragged ? 3 : 2}
-                        vectorEffect="non-scaling-stroke"
-                        shapeRendering="crispEdges"
-                      />
-                    );
-                  })}
-
-                  {/* Percentage Lines */}
-                  {annotations.filter(annotation => annotation.type === 'percentage').map((annotation) => {
-                    const isBeingDragged = isDragging && dragAnnotationId === annotation.id;
-                    const lineColor = isBeingDragged ? "#7755CC" : "#AA99FF";
-                    return (
-                      <ReferenceLine 
-                        key={`${annotation.id}-start`}
-                        y={annotation.price}
-                        yAxisId="price"
-                        stroke={lineColor}
-                        strokeWidth={isBeingDragged ? 3 : 2}
-                        vectorEffect="non-scaling-stroke"
-                        shapeRendering="crispEdges"
-                      />
-                    );
-                  })}
-
-                  {/* Percentage lines - end points */}
-                  {annotations.filter(annotation => annotation.type === 'percentage' && annotation.endPrice !== undefined).map((annotation) => {
-                    const isBeingDragged = isDragging && dragAnnotationId === annotation.id;
-                    const lineColor = isBeingDragged ? "#7755CC" : "#AA99FF";
-                    return (
-                      <ReferenceLine 
-                        key={`${annotation.id}-end`}
-                        y={annotation.endPrice}
-                        yAxisId="price"
-                        stroke={lineColor}
-                        strokeWidth={isBeingDragged ? 3 : 2}
-                        vectorEffect="non-scaling-stroke"
-                        shapeRendering="crispEdges"
-                      />
-                    );
-                  })}
-
                   {/* Custom annotation markers and percentage lines */}
                   <Customized 
                     component={(props: any) => {
