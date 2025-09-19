@@ -594,6 +594,12 @@ export function PriceChart({
     return `${currencySymbol}${marketCapInMillions.toFixed(1)}M`;
   };
 
+  const formatRevenue = (revenueInMillions: number) => {
+    // Format revenue in millions with correct currency
+    const currencySymbol = getCurrencySymbol((stockDetails?.profile as any)?.currency);
+    return `${currencySymbol}${(revenueInMillions / 1000000).toFixed(1)}M`;
+  };
+
   // Use stock details data if currentPrice is placeholder or invalid
   const actualCurrentPrice = (currentPrice && currentPrice !== '--' && !isNaN(parseFloat(currentPrice))) 
     ? currentPrice 
@@ -2599,13 +2605,13 @@ export function PriceChart({
                   {earningsModal.data.epsActual !== null && (
                     <div className="flex justify-between gap-4">
                       <span className="text-muted-foreground">EPS Actual:</span>
-                      <span className="font-medium text-[#5AF5FA]">${earningsModal.data.epsActual}</span>
+                      <span className="font-medium text-[#5AF5FA]">{formatPrice(earningsModal.data.epsActual)}</span>
                     </div>
                   )}
                   {earningsModal.data.epsEstimate !== null && (
                     <div className="flex justify-between gap-4">
                       <span className="text-muted-foreground">EPS Estimate:</span>
-                      <span className="font-medium">${earningsModal.data.epsEstimate}</span>
+                      <span className="font-medium">{formatPrice(earningsModal.data.epsEstimate)}</span>
                     </div>
                   )}
                   {earningsModal.data.epsActual !== null && earningsModal.data.epsEstimate !== null && (
@@ -2629,13 +2635,13 @@ export function PriceChart({
                     {earningsModal.data.revenueActual !== null && (
                       <div className="flex justify-between gap-4">
                         <span className="text-muted-foreground">Revenue Actual:</span>
-                        <span className="font-medium text-[#5AF5FA]">${(earningsModal.data.revenueActual / 1000000).toFixed(1)}M</span>
+                        <span className="font-medium text-[#5AF5FA]">{formatRevenue(earningsModal.data.revenueActual)}</span>
                       </div>
                     )}
                     {earningsModal.data.revenueEstimate !== null && (
                       <div className="flex justify-between gap-4">
                         <span className="text-muted-foreground">Revenue Estimate:</span>
-                        <span className="font-medium">${(earningsModal.data.revenueEstimate / 1000000).toFixed(1)}M</span>
+                        <span className="font-medium">{formatRevenue(earningsModal.data.revenueEstimate)}</span>
                       </div>
                     )}
                   </div>
