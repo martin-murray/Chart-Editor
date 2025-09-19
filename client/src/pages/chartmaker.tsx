@@ -432,7 +432,7 @@ function ChartMaker() {
           {/* Info Section */}
           <Card className="p-6">
             <h3 className="text-lg font-semibold mb-4">Global Market Coverage</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm text-muted-foreground">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm text-muted-foreground">
               <div>
                 <h4 className="font-medium text-foreground mb-2">US Markets</h4>
                 <ul className="space-y-1">
