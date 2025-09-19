@@ -2140,17 +2140,90 @@ export function PriceChart({
                     />
                   )}
                   
-                  {/* Dynamic area/line chart based on chart type */}
-                  <Area
-                    yAxisId="price"
-                    type="linear" 
-                    dataKey={yAxisDisplayMode === 'percentage' ? 'percentageChange' : 'close'}
-                    stroke={lineColor}
-                    strokeWidth={2}
-                    fill={chartType === 'line' ? 'none' : `url(#${isPositive ? 'positiveGradient' : 'negativeGradient'})`}
-                    dot={false}
-                    activeDot={{ r: 4, fill: lineColor, stroke: '#121212', strokeWidth: 2 }}
-                  />
+                  {/* Dynamic chart rendering based on chart type */}
+                  {chartType === 'line' ? (
+                    <Line
+                      yAxisId="price"
+                      type="linear"
+                      dataKey={yAxisDisplayMode === 'percentage' ? 'percentageChange' : 'close'}
+                      stroke={lineColor}
+                      strokeWidth={2}
+                      dot={false}
+                      activeDot={{ r: 4, fill: lineColor, stroke: '#121212', strokeWidth: 2 }}
+                    />
+                  ) : chartType === 'candlestick' ? (
+                    <Customized 
+                      component={(props: any) => {
+                        const { payload, xAxisMap, yAxisMap } = props;
+                        if (!xAxisMap || !yAxisMap || !chartDataWithMA) return null;
+                        
+                        const xAxis = xAxisMap[0];
+                        const yAxis = yAxisMap.price;
+                        if (!xAxis || !yAxis) return null;
+                        
+                        return (
+                          <g>
+                            {chartDataWithMA.map((data, index) => {
+                              if (!data.open || !data.high || !data.low || !data.close) return null;
+                              
+                              const x = xAxis.x + (index / (chartDataWithMA.length - 1)) * xAxis.width;
+                              const bodyWidth = Math.max(1, xAxis.width / chartDataWithMA.length * 0.6);
+                              
+                              // Calculate Y positions
+                              const priceRange = yAxis.domain[1] - yAxis.domain[0];
+                              const openY = yAxis.y + yAxis.height - ((data.open - yAxis.domain[0]) / priceRange) * yAxis.height;
+                              const closeY = yAxis.y + yAxis.height - ((data.close - yAxis.domain[0]) / priceRange) * yAxis.height;
+                              const highY = yAxis.y + yAxis.height - ((data.high - yAxis.domain[0]) / priceRange) * yAxis.height;
+                              const lowY = yAxis.y + yAxis.height - ((data.low - yAxis.domain[0]) / priceRange) * yAxis.height;
+                              
+                              const isGreen = data.close >= data.open;
+                              const bodyColor = isGreen ? '#22C55E' : '#EF4444';
+                              const wickColor = '#F7F7F7';
+                              
+                              const bodyTop = isGreen ? closeY : openY;
+                              const bodyBottom = isGreen ? openY : closeY;
+                              const bodyHeight = Math.abs(closeY - openY) || 1;
+                              
+                              return (
+                                <g key={index}>
+                                  {/* High-Low Wick */}
+                                  <line
+                                    x1={x}
+                                    y1={highY}
+                                    x2={x}
+                                    y2={lowY}
+                                    stroke={wickColor}
+                                    strokeWidth={1}
+                                  />
+                                  {/* Body */}
+                                  <rect
+                                    x={x - bodyWidth / 2}
+                                    y={bodyTop}
+                                    width={bodyWidth}
+                                    height={bodyHeight}
+                                    fill={bodyColor}
+                                    stroke={bodyColor}
+                                    strokeWidth={1}
+                                  />
+                                </g>
+                              );
+                            })}
+                          </g>
+                        );
+                      }}
+                    />
+                  ) : (
+                    <Area
+                      yAxisId="price"
+                      type="linear" 
+                      dataKey={yAxisDisplayMode === 'percentage' ? 'percentageChange' : 'close'}
+                      stroke={lineColor}
+                      strokeWidth={2}
+                      fill={`url(#${isPositive ? 'positiveGradient' : 'negativeGradient'})`}
+                      dot={false}
+                      activeDot={{ r: 4, fill: lineColor, stroke: '#121212', strokeWidth: 2 }}
+                    />
+                  )}
                   
                   {/* Custom annotation markers and percentage lines */}
                   <Customized 
