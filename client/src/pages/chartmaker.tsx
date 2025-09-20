@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Search, TrendingUp, TrendingDown, BarChart3, Trash2, RotateCcw } from "lucide-react";
+import { Search, TrendingUp, TrendingDown, BarChart3, Trash2, RotateCcw, BarChart2 } from "lucide-react";
 import { Link } from "wouter";
 import { cn } from "@/lib/utils";
 import { PriceChart } from "@/components/dashboard/price-chart";
@@ -406,6 +406,12 @@ function ChartMaker() {
               />
             </div>
             <div className="flex items-center gap-4">
+              <Link href="/analytics" data-testid="link-analytics">
+                <Button variant="outline" size="sm" className="flex items-center gap-2">
+                  <BarChart2 className="w-4 h-4" />
+                  Analytics
+                </Button>
+              </Link>
               <FeedbackButton />
             </div>
           </div>

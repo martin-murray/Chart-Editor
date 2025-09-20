@@ -3,6 +3,9 @@ import { createServer, type Server } from "http";
 import { stockDataService } from "./services/stockData";
 import multer from "multer";
 import { sendFeedbackToSlack } from "./slack";
+import { db } from "./db";
+import { visitorAnalytics } from "@shared/schema";
+import { desc, count, sql } from "drizzle-orm";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Global stock search endpoint using Finnhub symbol lookup
@@ -237,6 +240,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         message: "Failed to submit feedback. Please try again." 
       });
+    }
+  });
+
+  // Visitor analytics endpoints
+  app.get("/api/analytics/visitors", async (req, res) => {
+    try {
+      const limit = Math.min(parseInt(req.query.limit as string) || 100, 1000);
+      const offset = parseInt(req.query.offset as string) || 0;
+      
+      const visitors = await db
+        .select()
+        .from(visitorAnalytics)
+        .orderBy(desc(visitorAnalytics.visitedAt))
+        .limit(limit)
+        .offset(offset);
+      
+      res.json(visitors);
+    } catch (error) {
+      console.error("Error fetching visitor analytics:", error);
+      res.status(500).json({ message: "Failed to fetch visitor analytics" });
+    }
+  });
+
+  app.get("/api/analytics/summary", async (req, res) => {
+    try {
+      // Total visitors
+      const totalVisitors = await db
+        .select({ count: count() })
+        .from(visitorAnalytics);
+
+      // Unique visitors by IP
+      const uniqueVisitors = await db
+        .select({ count: count() })
+        .from(visitorAnalytics)
+        .groupBy(visitorAnalytics.ipAddress);
+
+      // Top countries
+      const topCountries = await db
+        .select({
+          country: visitorAnalytics.country,
+          count: count()
+        })
+        .from(visitorAnalytics)
+        .where(sql`${visitorAnalytics.country} IS NOT NULL`)
+        .groupBy(visitorAnalytics.country)
+        .orderBy(desc(count()))
+        .limit(10);
+
+      // Top cities
+      const topCities = await db
+        .select({
+          city: visitorAnalytics.city,
+          country: visitorAnalytics.country,
+          count: count()
+        })
+        .from(visitorAnalytics)
+        .where(sql`${visitorAnalytics.city} IS NOT NULL`)
+        .groupBy(visitorAnalytics.city, visitorAnalytics.country)
+        .orderBy(desc(count()))
+        .limit(10);
+
+      // Recent visitors (last 24 hours)
+      const recentVisitors = await db
+        .select({ count: count() })
+        .from(visitorAnalytics)
+        .where(sql`${visitorAnalytics.visitedAt} > NOW() - INTERVAL '24 hours'`);
+
+      res.json({
+        totalVisitors: totalVisitors[0]?.count || 0,
+        uniqueVisitors: uniqueVisitors.length || 0,
+        recentVisitors: recentVisitors[0]?.count || 0,
+        topCountries,
+        topCities,
+      });
+    } catch (error) {
+      console.error("Error fetching analytics summary:", error);
+      res.status(500).json({ message: "Failed to fetch analytics summary" });
+    }
+  });
+
+  app.get("/api/analytics/locations", async (req, res) => {
+    try {
+      const locations = await db
+        .select({
+          ipAddress: visitorAnalytics.ipAddress,
+          country: visitorAnalytics.country,
+          region: visitorAnalytics.region,
+          city: visitorAnalytics.city,
+          latitude: visitorAnalytics.latitude,
+          longitude: visitorAnalytics.longitude,
+          isp: visitorAnalytics.isp,
+          visitedAt: visitorAnalytics.visitedAt,
+        })
+        .from(visitorAnalytics)
+        .where(sql`${visitorAnalytics.latitude} IS NOT NULL AND ${visitorAnalytics.longitude} IS NOT NULL`)
+        .orderBy(desc(visitorAnalytics.visitedAt))
+        .limit(500);
+      
+      res.json(locations);
+    } catch (error) {
+      console.error("Error fetching visitor locations:", error);
+      res.status(500).json({ message: "Failed to fetch visitor locations" });
     }
   });
 
