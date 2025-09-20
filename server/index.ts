@@ -1,10 +1,82 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { db } from "./db";
+import { visitorAnalytics } from "@/shared/schema";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// IP tracking middleware
+app.use(async (req, res, next) => {
+  try {
+    // Skip API routes and static assets to avoid excessive tracking
+    if (req.path.startsWith('/api') || req.path.startsWith('/assets') || req.path.includes('.')) {
+      return next();
+    }
+
+    // Get real IP address (considering proxies/load balancers)
+    const getClientIP = (req: Request): string => {
+      return (
+        (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
+        (req.headers['x-real-ip'] as string) ||
+        (req.headers['x-client-ip'] as string) ||
+        req.connection.remoteAddress ||
+        req.socket.remoteAddress ||
+        '127.0.0.1'
+      );
+    };
+
+    const ipAddress = getClientIP(req);
+    const userAgent = req.headers['user-agent'] || 'Unknown';
+    const path = req.path;
+
+    // Skip localhost/development IPs
+    if (ipAddress === '127.0.0.1' || ipAddress === '::1' || ipAddress.startsWith('192.168.')) {
+      return next();
+    }
+
+    // Fetch geolocation data from IP-API (free, no API key required)
+    let geoData: any = {};
+    try {
+      const geoResponse = await fetch(`http://ip-api.com/json/${ipAddress}?fields=status,country,regionName,city,lat,lon,timezone,isp,org`);
+      if (geoResponse.ok) {
+        const data = await geoResponse.json();
+        if (data.status === 'success') {
+          geoData = {
+            country: data.country,
+            region: data.regionName,
+            city: data.city,
+            latitude: data.lat?.toString(),
+            longitude: data.lon?.toString(),
+            timezone: data.timezone,
+            isp: data.isp,
+            org: data.org,
+          };
+        }
+      }
+    } catch (error) {
+      console.log(`Geolocation lookup failed for ${ipAddress}:`, error);
+    }
+
+    // Store visitor data in database
+    try {
+      await db.insert(visitorAnalytics).values({
+        ipAddress,
+        userAgent,
+        path,
+        ...geoData,
+      });
+    } catch (error) {
+      console.log(`Failed to store visitor analytics for ${ipAddress}:`, error);
+    }
+  } catch (error) {
+    console.log('IP tracking middleware error:', error);
+  }
+
+  next();
+});
 
 app.use((req, res, next) => {
   const start = Date.now();
