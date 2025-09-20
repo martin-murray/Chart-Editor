@@ -40,6 +40,22 @@ export const marketSummary = pgTable("market_summary", {
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 
+export const visitorAnalytics = pgTable("visitor_analytics", {
+  id: serial("id").primaryKey(),
+  ipAddress: text("ip_address").notNull(),
+  userAgent: text("user_agent"),
+  country: text("country"),
+  region: text("region"),
+  city: text("city"),
+  latitude: decimal("latitude", { precision: 10, scale: 8 }),
+  longitude: decimal("longitude", { precision: 11, scale: 8 }),
+  timezone: text("timezone"),
+  isp: text("isp"),
+  org: text("org"),
+  visitedAt: timestamp("visited_at").notNull().defaultNow(),
+  path: text("path").notNull().default("/"),
+});
+
 export const insertStockSchema = createInsertSchema(stocks).omit({
   id: true,
   lastUpdated: true,
@@ -55,12 +71,19 @@ export const insertMarketSummarySchema = createInsertSchema(marketSummary).omit(
   lastUpdated: true,
 });
 
+export const insertVisitorAnalyticsSchema = createInsertSchema(visitorAnalytics).omit({
+  id: true,
+  visitedAt: true,
+});
+
 export type Stock = typeof stocks.$inferSelect;
 export type InsertStock = z.infer<typeof insertStockSchema>;
 export type SlackAlert = typeof slackAlerts.$inferSelect;
 export type InsertSlackAlert = z.infer<typeof insertSlackAlertSchema>;
 export type MarketSummary = typeof marketSummary.$inferSelect;
 export type InsertMarketSummary = z.infer<typeof insertMarketSummarySchema>;
+export type VisitorAnalytics = typeof visitorAnalytics.$inferSelect;
+export type InsertVisitorAnalytics = z.infer<typeof insertVisitorAnalyticsSchema>;
 
 // Filter schemas
 export const stockFilterSchema = z.object({
