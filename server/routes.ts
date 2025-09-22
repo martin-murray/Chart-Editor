@@ -5,7 +5,7 @@ import multer from "multer";
 import { sendFeedbackToSlack } from "./slack";
 import { db } from "./db";
 import { visitorAnalytics } from "@shared/schema";
-import { desc, count, sql } from "drizzle-orm";
+import { desc, count, sql, gte, lte, and } from "drizzle-orm";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Global stock search endpoint using Finnhub symbol lookup
@@ -243,19 +243,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Helper function to get date range based on filter
+  const getDateRange = (dateFilter: string) => {
+    const now = new Date();
+    
+    switch (dateFilter) {
+      case 'today':
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const endOfToday = new Date(startOfToday.getTime() + 24 * 60 * 60 * 1000);
+        return { start: startOfToday, end: endOfToday };
+      
+      case 'yesterday':
+        const startOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+        const endOfYesterday = new Date(startOfYesterday.getTime() + 24 * 60 * 60 * 1000);
+        return { start: startOfYesterday, end: endOfYesterday };
+      
+      case '7days':
+        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        return { start: sevenDaysAgo, end: now };
+      
+      case '30days':
+        const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        return { start: thirtyDaysAgo, end: now };
+      
+      case '90days':
+        const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+        return { start: ninetyDaysAgo, end: now };
+      
+      default: // 'all'
+        return null;
+    }
+  };
+
   // Visitor analytics endpoints
   app.get("/api/analytics/visitors", async (req, res) => {
     try {
       const limit = Math.min(parseInt(req.query.limit as string) || 100, 1000);
       const offset = parseInt(req.query.offset as string) || 0;
+      const dateFilter = req.query.dateFilter as string || 'all';
       
-      const visitors = await db
+      // Apply date filtering if specified
+      const dateRange = getDateRange(dateFilter);
+      
+      let query = db
         .select()
         .from(visitorAnalytics)
         .orderBy(desc(visitorAnalytics.visitedAt))
         .limit(limit)
         .offset(offset);
+
+      if (dateRange) {
+        query = query.where(
+          and(
+            gte(visitorAnalytics.visitedAt, dateRange.start),
+            lte(visitorAnalytics.visitedAt, dateRange.end)
+          )
+        );
+      }
       
+      const visitors = await query;
       res.json(visitors);
     } catch (error) {
       console.error("Error fetching visitor analytics:", error);
@@ -265,47 +311,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/analytics/summary", async (req, res) => {
     try {
-      // Total visitors
-      const totalVisitors = await db
-        .select({ count: count() })
-        .from(visitorAnalytics);
+      const dateFilter = req.query.dateFilter as string || 'all';
+      const dateRange = getDateRange(dateFilter);
 
-      // Unique visitors by IP
-      const uniqueVisitors = await db
-        .select({ count: count() })
-        .from(visitorAnalytics)
-        .groupBy(visitorAnalytics.ipAddress);
+      // Build where condition for date filtering
+      const dateCondition = dateRange ? 
+        and(
+          gte(visitorAnalytics.visitedAt, dateRange.start),
+          lte(visitorAnalytics.visitedAt, dateRange.end)
+        ) : undefined;
+
+      // Total visitors
+      const totalVisitors = dateCondition ? 
+        await db.select({ count: count() }).from(visitorAnalytics).where(dateCondition) :
+        await db.select({ count: count() }).from(visitorAnalytics);
+
+      // Unique visitors by IP  
+      const uniqueVisitors = dateCondition ?
+        await db
+          .select({ count: count() })
+          .from(visitorAnalytics)
+          .where(dateCondition)
+          .groupBy(visitorAnalytics.ipAddress) :
+        await db
+          .select({ count: count() })
+          .from(visitorAnalytics)
+          .groupBy(visitorAnalytics.ipAddress);
 
       // Top countries
-      const topCountries = await db
-        .select({
-          country: visitorAnalytics.country,
-          count: count()
-        })
-        .from(visitorAnalytics)
-        .where(sql`${visitorAnalytics.country} IS NOT NULL`)
-        .groupBy(visitorAnalytics.country)
-        .orderBy(desc(count()))
-        .limit(10);
+      const topCountries = dateCondition ?
+        await db
+          .select({
+            country: visitorAnalytics.country,
+            count: count()
+          })
+          .from(visitorAnalytics)
+          .where(and(sql`${visitorAnalytics.country} IS NOT NULL`, dateCondition))
+          .groupBy(visitorAnalytics.country)
+          .orderBy(desc(count()))
+          .limit(10) :
+        await db
+          .select({
+            country: visitorAnalytics.country,
+            count: count()
+          })
+          .from(visitorAnalytics)
+          .where(sql`${visitorAnalytics.country} IS NOT NULL`)
+          .groupBy(visitorAnalytics.country)
+          .orderBy(desc(count()))
+          .limit(10);
 
       // Top cities
-      const topCities = await db
-        .select({
-          city: visitorAnalytics.city,
-          country: visitorAnalytics.country,
-          count: count()
-        })
-        .from(visitorAnalytics)
-        .where(sql`${visitorAnalytics.city} IS NOT NULL`)
-        .groupBy(visitorAnalytics.city, visitorAnalytics.country)
-        .orderBy(desc(count()))
-        .limit(10);
+      const topCities = dateCondition ?
+        await db
+          .select({
+            city: visitorAnalytics.city,
+            country: visitorAnalytics.country,
+            count: count()
+          })
+          .from(visitorAnalytics)
+          .where(and(sql`${visitorAnalytics.city} IS NOT NULL`, dateCondition))
+          .groupBy(visitorAnalytics.city, visitorAnalytics.country)
+          .orderBy(desc(count()))
+          .limit(10) :
+        await db
+          .select({
+            city: visitorAnalytics.city,
+            country: visitorAnalytics.country,
+            count: count()
+          })
+          .from(visitorAnalytics)
+          .where(sql`${visitorAnalytics.city} IS NOT NULL`)
+          .groupBy(visitorAnalytics.city, visitorAnalytics.country)
+          .orderBy(desc(count()))
+          .limit(10);
 
-      // Recent visitors (last 24 hours)
-      const recentVisitors = await db
-        .select({ count: count() })
-        .from(visitorAnalytics)
-        .where(sql`${visitorAnalytics.visitedAt} > NOW() - INTERVAL '24 hours'`);
+      // Recent visitors (last 24 hours or filtered period)
+      let recentVisitorsQuery;
+      if (dateFilter === 'all') {
+        recentVisitorsQuery = db
+          .select({ count: count() })
+          .from(visitorAnalytics)
+          .where(sql`${visitorAnalytics.visitedAt} > NOW() - INTERVAL '24 hours'`);
+      } else {
+        recentVisitorsQuery = db
+          .select({ count: count() })
+          .from(visitorAnalytics)
+          .where(dateCondition);
+      }
+      const recentVisitors = await recentVisitorsQuery;
 
       res.json({
         totalVisitors: totalVisitors[0]?.count || 0,
@@ -322,22 +416,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/analytics/locations", async (req, res) => {
     try {
-      const locations = await db
-        .select({
-          ipAddress: visitorAnalytics.ipAddress,
-          country: visitorAnalytics.country,
-          region: visitorAnalytics.region,
-          city: visitorAnalytics.city,
-          latitude: visitorAnalytics.latitude,
-          longitude: visitorAnalytics.longitude,
-          isp: visitorAnalytics.isp,
-          visitedAt: visitorAnalytics.visitedAt,
-        })
-        .from(visitorAnalytics)
-        .where(sql`${visitorAnalytics.latitude} IS NOT NULL AND ${visitorAnalytics.longitude} IS NOT NULL`)
-        .orderBy(desc(visitorAnalytics.visitedAt))
-        .limit(500);
-      
+      const dateFilter = req.query.dateFilter as string || 'all';
+      const dateRange = getDateRange(dateFilter);
+
+      const locations = dateRange ? 
+        await db
+          .select({
+            ipAddress: visitorAnalytics.ipAddress,
+            country: visitorAnalytics.country,
+            region: visitorAnalytics.region,
+            city: visitorAnalytics.city,
+            latitude: visitorAnalytics.latitude,
+            longitude: visitorAnalytics.longitude,
+            isp: visitorAnalytics.isp,
+            visitedAt: visitorAnalytics.visitedAt,
+          })
+          .from(visitorAnalytics)
+          .where(
+            and(
+              sql`${visitorAnalytics.latitude} IS NOT NULL AND ${visitorAnalytics.longitude} IS NOT NULL`,
+              gte(visitorAnalytics.visitedAt, dateRange.start),
+              lte(visitorAnalytics.visitedAt, dateRange.end)
+            )
+          )
+          .orderBy(desc(visitorAnalytics.visitedAt))
+          .limit(500) :
+        await db
+          .select({
+            ipAddress: visitorAnalytics.ipAddress,
+            country: visitorAnalytics.country,
+            region: visitorAnalytics.region,
+            city: visitorAnalytics.city,
+            latitude: visitorAnalytics.latitude,
+            longitude: visitorAnalytics.longitude,
+            isp: visitorAnalytics.isp,
+            visitedAt: visitorAnalytics.visitedAt,
+          })
+          .from(visitorAnalytics)
+          .where(sql`${visitorAnalytics.latitude} IS NOT NULL AND ${visitorAnalytics.longitude} IS NOT NULL`)
+          .orderBy(desc(visitorAnalytics.visitedAt))
+          .limit(500);
       res.json(locations);
     } catch (error) {
       console.error("Error fetching visitor locations:", error);
