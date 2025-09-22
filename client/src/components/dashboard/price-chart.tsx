@@ -1680,19 +1680,33 @@ export function PriceChart({
                     </div>
                     Vertical
                   </Button>
-                  <Button
-                    size="sm"
-                    variant={annotationMode === 'percentage' ? 'default' : 'ghost'}
-                    onClick={() => {
-                      setAnnotationMode('percentage');
-                      setPendingPercentageStart(null);
-                    }}
-                    className="h-8 px-3 text-xs rounded-none border-0"
-                    data-testid="button-annotation-percentage"
-                  >
-                    <Ruler className="w-3 h-3 mr-1" />
-                    Measure
-                  </Button>
+                  <HoverTooltip>
+                    <HoverTooltipTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant={annotationMode === 'percentage' ? 'default' : 'ghost'}
+                        onClick={() => {
+                          if (activeTab !== 'comparison') {
+                            setAnnotationMode('percentage');
+                            setPendingPercentageStart(null);
+                          }
+                        }}
+                        disabled={activeTab === 'comparison'}
+                        className={`h-8 px-3 text-xs rounded-none border-0 ${
+                          activeTab === 'comparison' ? 'opacity-40 cursor-not-allowed' : ''
+                        }`}
+                        data-testid="button-annotation-percentage"
+                      >
+                        <Ruler className="w-3 h-3 mr-1" />
+                        Measure
+                      </Button>
+                    </HoverTooltipTrigger>
+                    {activeTab === 'comparison' && (
+                      <HoverTooltipContent>
+                        <p>Percentage measurement is deactivated on Compare</p>
+                      </HoverTooltipContent>
+                    )}
+                  </HoverTooltip>
                   <Button
                     size="sm"
                     variant={annotationMode === 'horizontal' ? 'default' : 'ghost'}
