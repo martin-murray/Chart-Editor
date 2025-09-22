@@ -53,6 +53,10 @@ export const visitorAnalytics = pgTable("visitor_analytics", {
   isp: text("isp"),
   org: text("org"),
   visitedAt: timestamp("visited_at").notNull().defaultNow(),
+  leftAt: timestamp("left_at"),
+  duration: integer("duration"), // Duration in seconds
+  returnVisits: integer("return_visits").default(1),
+  sessionId: text("session_id"),
   path: text("path").notNull().default("/"),
 });
 
