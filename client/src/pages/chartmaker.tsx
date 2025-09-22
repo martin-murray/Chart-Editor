@@ -477,12 +477,6 @@ function ChartMaker() {
               />
             </div>
             <div className="flex items-center gap-4">
-              <Link href="/analytics" data-testid="link-analytics">
-                <Button variant="outline" size="sm" className="flex items-center gap-2">
-                  <BarChart2 className="w-4 h-4" />
-                  Analytics
-                </Button>
-              </Link>
               <FeedbackButton />
             </div>
           </div>

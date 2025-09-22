@@ -5,13 +5,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import ChartMaker from "@/pages/chartmaker";
-import Analytics from "@/pages/analytics";
+import PublishingAnalytics from "@/pages/publishing-analytics";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={ChartMaker} />
-      <Route path="/analytics" component={Analytics} />
+      <Route path="/publishing/analytics" component={PublishingAnalytics} />
       <Route component={ChartMaker} />
     </Switch>
   );

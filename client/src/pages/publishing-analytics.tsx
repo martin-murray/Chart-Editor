@@ -1,32 +1,12 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Globe, MapPin, Users, Clock, Wifi, CalendarDays } from "lucide-react";
-import { format, subDays, startOfDay, endOfDay } from "date-fns";
-
-interface VisitorRecord {
-  id: number;
-  ipAddress: string;
-  userAgent: string;
-  country: string;
-  region: string;
-  city: string;
-  latitude: string;
-  longitude: string;
-  timezone: string;
-  isp: string;
-  org: string;
-  visitedAt: string;
-  leftAt: string | null;
-  duration: number | null;
-  returnVisits: number;
-  sessionId: string;
-  path: string;
-}
+import { CalendarDays, MapPin, Globe, Clock, Wifi } from "lucide-react";
+import { format } from "date-fns";
 
 interface AnalyticsSummary {
   totalVisitors: number;
@@ -36,7 +16,24 @@ interface AnalyticsSummary {
   topCities: Array<{ city: string; country: string; count: number }>;
 }
 
-export default function Analytics() {
+interface VisitorRecord {
+  id: number;
+  ipAddress: string;
+  country?: string;
+  region?: string;
+  city?: string;
+  latitude?: string;
+  longitude?: string;
+  isp?: string;
+  org?: string;
+  timezone?: string;
+  visitedAt: string;
+  path: string;
+  duration?: number;
+  returnVisits?: number;
+}
+
+export default function PublishingAnalytics() {
   const [dateFilter, setDateFilter] = useState("all");
 
   const { data: summary, isLoading: summaryLoading } = useQuery<AnalyticsSummary>({
@@ -47,32 +44,25 @@ export default function Analytics() {
     queryKey: ["/api/analytics/visitors", dateFilter],
   });
 
-  const { data: locations } = useQuery<VisitorRecord[]>({
-    queryKey: ["/api/analytics/locations", dateFilter],
-  });
-
   if (summaryLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 p-6">
         <div className="max-w-7xl mx-auto space-y-8">
           <div className="text-center">
             <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-              Visitor Analytics
+              Publishing Analytics
             </h1>
             <p className="text-muted-foreground mt-2">
-              Real-time visitor tracking and geolocation insights
+              Visitor tracking and insights for publishing metrics
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[1, 2, 3, 4].map((i) => (
-              <Card key={i}>
-                <CardHeader className="pb-2">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-8 w-16" />
-                </CardHeader>
-              </Card>
-            ))}
+          <div className="flex justify-center">
+            <Card className="w-80">
+              <CardContent className="pt-6">
+                <Skeleton className="h-10 w-full" />
+              </CardContent>
+            </Card>
           </div>
 
           <div className="space-y-6">
@@ -100,10 +90,10 @@ export default function Analytics() {
         {/* Header */}
         <div className="text-center">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            Visitor Analytics
+            Publishing Analytics
           </h1>
           <p className="text-muted-foreground mt-2">
-            Real-time visitor tracking and geolocation insights
+            Visitor tracking and insights for publishing metrics
           </p>
         </div>
 
@@ -133,104 +123,28 @@ export default function Analytics() {
           </Card>
         </div>
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card data-testid="card-total-visitors">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Visitors</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{summary?.totalVisitors || 0}</div>
-              <p className="text-xs text-muted-foreground">All time visits</p>
-            </CardContent>
-          </Card>
-
-          <Card data-testid="card-unique-visitors">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Unique Visitors</CardTitle>
-              <Globe className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{summary?.uniqueVisitors || 0}</div>
-              <p className="text-xs text-muted-foreground">Unique IP addresses</p>
-            </CardContent>
-          </Card>
-
-          <Card data-testid="card-recent-visitors">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Recent Visitors</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{summary?.recentVisitors || 0}</div>
-              <p className="text-xs text-muted-foreground">Last 24 hours</p>
-            </CardContent>
-          </Card>
-
-          <Card data-testid="card-geolocations">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Geolocations</CardTitle>
-              <MapPin className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{locations?.length || 0}</div>
-              <p className="text-xs text-muted-foreground">Mapped locations</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Top Countries & Cities */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card data-testid="card-top-countries">
-            <CardHeader>
-              <CardTitle>Top Countries</CardTitle>
-              <CardDescription>Countries with most visitors</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {summary?.topCountries?.map((country, index) => (
-                  <div key={country.country} className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <Badge variant="secondary">{index + 1}</Badge>
-                      <span className="font-medium">{country.country}</span>
-                    </div>
-                    <span className="text-muted-foreground">{country.count} visits</span>
+        {/* Top Countries */}
+        <Card data-testid="card-top-countries">
+          <CardHeader>
+            <CardTitle>Top Countries</CardTitle>
+            <CardDescription>Countries with most visitors</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {summary?.topCountries?.map((country, index) => (
+                <div key={country.country} className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <Badge variant="secondary">{index + 1}</Badge>
+                    <span className="font-medium">{country.country}</span>
                   </div>
-                )) || (
-                  <p className="text-muted-foreground text-sm">No country data available</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card data-testid="card-top-cities">
-            <CardHeader>
-              <CardTitle>Top Cities</CardTitle>
-              <CardDescription>Cities with most visitors</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {summary?.topCities?.map((city, index) => (
-                  <div key={`${city.city}-${city.country}`} className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <Badge variant="secondary">{index + 1}</Badge>
-                      <div>
-                        <span className="font-medium">{city.city}</span>
-                        <span className="text-muted-foreground text-sm ml-2">
-                          {city.country}
-                        </span>
-                      </div>
-                    </div>
-                    <span className="text-muted-foreground">{city.count} visits</span>
-                  </div>
-                )) || (
-                  <p className="text-muted-foreground text-sm">No city data available</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                  <span className="text-muted-foreground">{country.count} visits</span>
+                </div>
+              )) || (
+                <p className="text-muted-foreground text-sm">No country data available</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Detailed Visitor List */}
         <Card data-testid="card-detailed-visitor-list">
