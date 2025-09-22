@@ -1700,8 +1700,10 @@ export function PriceChart({
                           if (activeTab !== 'comparison') {
                             setAnnotationMode('percentage');
                             setPendingPercentageStart(null);
-                          } else {
-                            // Show flash tooltip when disabled
+                          }
+                        }}
+                        onMouseEnter={() => {
+                          if (activeTab === 'comparison') {
                             setShowMeasureTooltip(true);
                           }
                         }}
