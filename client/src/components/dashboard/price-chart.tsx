@@ -2349,48 +2349,6 @@ export function PriceChart({
                                   strokeDasharray="5 5"
                                   style={{ pointerEvents: 'none' }}
                                 />
-                                {/* Price label with larger hit area */}
-                                <rect
-                                  x={xAxis.x + xAxis.width - 80}
-                                  y={y - 10}
-                                  width={75}
-                                  height={20}
-                                  fill="transparent"
-                                  style={{ cursor: 'pointer' }}
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                  }}
-                                  onDoubleClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    handleAnnotationDoubleClick(annotation);
-                                  }}
-                                />
-                                <rect
-                                  x={xAxis.x + xAxis.width - 80}
-                                  y={y - 10}
-                                  width={75}
-                                  height={20}
-                                  fill="#121212"
-                                  stroke={lineColor}
-                                  strokeWidth={1}
-                                  rx={3}
-                                  style={{ pointerEvents: 'none' }}
-                                />
-                                <text
-                                  x={xAxis.x + xAxis.width - 42.5}
-                                  y={y + 4}
-                                  textAnchor="middle"
-                                  fill={lineColor}
-                                  fontSize="12"
-                                  style={{ pointerEvents: 'none' }}
-                                >
-                                  {yAxisDisplayMode === 'percentage' ? 
-                                    `${displayValue.toFixed(2)}%` : 
-                                    formatPrice(annotation.price)
-                                  }
-                                </text>
                               </g>
                             );
                           })}
