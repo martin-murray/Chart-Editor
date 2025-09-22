@@ -2315,7 +2315,7 @@ export function PriceChart({
                             const y = yAxis.scale(displayValue);
                             
                             const isBeingDragged = isDragging && dragAnnotationId === annotation.id;
-                            const lineColor = isBeingDragged ? "#FFD700" : "#F7F7F7";
+                            const lineColor = isBeingDragged ? "#FFD700" : "#AA99FF";
                             
                             return (
                               <g key={`horizontal-${annotation.id}`}>
@@ -2346,7 +2346,6 @@ export function PriceChart({
                                   y2={y}
                                   stroke={lineColor}
                                   strokeWidth={isBeingDragged ? 3 : 2}
-                                  strokeDasharray="5 5"
                                   style={{ pointerEvents: 'none' }}
                                 />
                               </g>
