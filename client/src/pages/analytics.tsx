@@ -1,10 +1,12 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Globe, MapPin, Users, Clock, Wifi } from "lucide-react";
-import { format } from "date-fns";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Globe, MapPin, Users, Clock, Wifi, CalendarDays } from "lucide-react";
+import { format, subDays, startOfDay, endOfDay } from "date-fns";
 
 interface VisitorRecord {
   id: number;
@@ -19,6 +21,10 @@ interface VisitorRecord {
   isp: string;
   org: string;
   visitedAt: string;
+  leftAt: string | null;
+  duration: number | null;
+  returnVisits: number;
+  sessionId: string;
   path: string;
 }
 
@@ -31,16 +37,18 @@ interface AnalyticsSummary {
 }
 
 export default function Analytics() {
+  const [dateFilter, setDateFilter] = useState("all");
+
   const { data: summary, isLoading: summaryLoading } = useQuery<AnalyticsSummary>({
-    queryKey: ["/api/analytics/summary"],
+    queryKey: ["/api/analytics/summary", dateFilter],
   });
 
   const { data: visitors, isLoading: visitorsLoading } = useQuery<VisitorRecord[]>({
-    queryKey: ["/api/analytics/visitors"],
+    queryKey: ["/api/analytics/visitors", dateFilter],
   });
 
   const { data: locations } = useQuery<VisitorRecord[]>({
-    queryKey: ["/api/analytics/locations"],
+    queryKey: ["/api/analytics/locations", dateFilter],
   });
 
   if (summaryLoading) {
@@ -97,6 +105,32 @@ export default function Analytics() {
           <p className="text-muted-foreground mt-2">
             Real-time visitor tracking and geolocation insights
           </p>
+        </div>
+
+        {/* Date Filter */}
+        <div className="flex justify-center">
+          <Card className="w-80">
+            <CardContent className="pt-6">
+              <div className="flex items-center space-x-3">
+                <CalendarDays className="h-5 w-5 text-muted-foreground" />
+                <div className="flex-1">
+                  <Select value={dateFilter} onValueChange={setDateFilter} data-testid="select-date-filter">
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select time period" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Time</SelectItem>
+                      <SelectItem value="today">Today</SelectItem>
+                      <SelectItem value="yesterday">Yesterday</SelectItem>
+                      <SelectItem value="7days">Last 7 Days</SelectItem>
+                      <SelectItem value="30days">Last 30 Days</SelectItem>
+                      <SelectItem value="90days">Last 90 Days</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Summary Cards */}
@@ -198,17 +232,17 @@ export default function Analytics() {
           </Card>
         </div>
 
-        {/* Visitor List */}
-        <Card data-testid="card-visitor-list">
+        {/* Detailed Visitor List */}
+        <Card data-testid="card-detailed-visitor-list">
           <CardHeader>
-            <CardTitle>Recent Visitors</CardTitle>
-            <CardDescription>IP addresses and their geolocations</CardDescription>
+            <CardTitle>Detailed Visitor Information</CardTitle>
+            <CardDescription>Complete visitor data with session details and return visits</CardDescription>
           </CardHeader>
           <CardContent>
             {visitorsLoading ? (
               <div className="space-y-3">
                 {[1, 2, 3, 4, 5].map((i) => (
-                  <Skeleton key={i} className="h-12 w-full" />
+                  <Skeleton key={i} className="h-16 w-full" />
                 ))}
               </div>
             ) : (
@@ -217,68 +251,92 @@ export default function Analytics() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>IP Address</TableHead>
-                      <TableHead>Location</TableHead>
-                      <TableHead>ISP</TableHead>
-                      <TableHead>Visit Time</TableHead>
-                      <TableHead>Path</TableHead>
+                      <TableHead>Date & Time</TableHead>
+                      <TableHead>Duration</TableHead>
+                      <TableHead>Country</TableHead>
+                      <TableHead>Province/State</TableHead>
+                      <TableHead>City</TableHead>
+                      <TableHead>Returns</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {visitors?.map((visitor) => (
-                      <TableRow key={visitor.id} data-testid={`row-visitor-${visitor.id}`}>
+                      <TableRow key={visitor.id} data-testid={`row-detailed-visitor-${visitor.id}`}>
                         <TableCell className="font-mono text-sm">
-                          {visitor.ipAddress}
+                          <div className="flex flex-col space-y-1">
+                            <span>{visitor.ipAddress}</span>
+                            {visitor.isp && (
+                              <span className="text-xs text-muted-foreground">{visitor.isp}</span>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-col space-y-1">
-                            {visitor.city && visitor.country ? (
-                              <div className="flex items-center space-x-1">
-                                <MapPin className="h-3 w-3 text-muted-foreground" />
-                                <span className="text-sm">
-                                  {visitor.city}, {visitor.region && `${visitor.region}, `}{visitor.country}
-                                </span>
-                              </div>
-                            ) : (
-                              <span className="text-muted-foreground text-sm">Unknown location</span>
+                            <span className="text-sm font-medium">
+                              {format(new Date(visitor.visitedAt), 'MMM dd, yyyy')}
+                            </span>
+                            <span className="text-sm text-muted-foreground">
+                              {format(new Date(visitor.visitedAt), 'HH:mm:ss')}
+                            </span>
+                            {visitor.timezone && (
+                              <span className="text-xs text-muted-foreground">{visitor.timezone}</span>
                             )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center space-x-1">
+                            <Clock className="h-3 w-3 text-muted-foreground" />
+                            <span className="text-sm">
+                              {visitor.duration ? 
+                                `${Math.floor(visitor.duration / 60)}m ${visitor.duration % 60}s` : 
+                                'Active'
+                              }
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center space-x-1">
+                            <Globe className="h-3 w-3 text-muted-foreground" />
+                            <span className="text-sm">
+                              {visitor.country || 'Unknown'}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm">
+                            {visitor.region || 'Unknown'}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col space-y-1">
+                            <div className="flex items-center space-x-1">
+                              <MapPin className="h-3 w-3 text-muted-foreground" />
+                              <span className="text-sm">
+                                {visitor.city || 'Unknown'}
+                              </span>
+                            </div>
                             {visitor.latitude && visitor.longitude && (
                               <span className="text-xs text-muted-foreground font-mono">
-                                {parseFloat(visitor.latitude).toFixed(4)}, {parseFloat(visitor.longitude).toFixed(4)}
+                                {parseFloat(visitor.latitude).toFixed(3)}, {parseFloat(visitor.longitude).toFixed(3)}
                               </span>
                             )}
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="flex flex-col space-y-1">
-                            {visitor.isp && (
-                              <div className="flex items-center space-x-1">
-                                <Wifi className="h-3 w-3 text-muted-foreground" />
-                                <span className="text-sm">{visitor.isp}</span>
-                              </div>
-                            )}
-                            {visitor.org && visitor.org !== visitor.isp && (
-                              <span className="text-xs text-muted-foreground">{visitor.org}</span>
-                            )}
+                          <div className="flex items-center space-x-2">
+                            <Badge variant="secondary" className="text-xs">
+                              {visitor.returnVisits || 1}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">
+                              {(visitor.returnVisits || 1) === 1 ? 'First visit' : 'Return visitor'}
+                            </span>
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm">
-                            {format(new Date(visitor.visitedAt), 'MMM dd, yyyy HH:mm')}
-                          </span>
-                          {visitor.timezone && (
-                            <div className="text-xs text-muted-foreground">{visitor.timezone}</div>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <code className="text-sm bg-secondary px-2 py-1 rounded">
-                            {visitor.path}
-                          </code>
                         </TableCell>
                       </TableRow>
                     )) || (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center text-muted-foreground">
-                          No visitor data available
+                        <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                          No visitor data available for the selected time period
                         </TableCell>
                       </TableRow>
                     )}
