@@ -3,10 +3,15 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { db } from "./db";
 import { visitorAnalytics } from "@shared/schema";
+import { count, eq, desc } from "drizzle-orm";
+import { randomUUID } from "crypto";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Session tracking storage
+const activeSessions = new Map<string, { sessionId: string; startTime: number }>();
 
 // IP tracking middleware
 app.use(async (req, res, next) => {
@@ -37,39 +42,60 @@ app.use(async (req, res, next) => {
       return next();
     }
 
-    // Fetch geolocation data from IP-API (free, no API key required)
-    let geoData: any = {};
-    try {
-      const geoResponse = await fetch(`http://ip-api.com/json/${ipAddress}?fields=status,country,regionName,city,lat,lon,timezone,isp,org`);
-      if (geoResponse.ok) {
-        const data = await geoResponse.json();
-        if (data.status === 'success') {
-          geoData = {
-            country: data.country,
-            region: data.regionName,
-            city: data.city,
-            latitude: data.lat?.toString(),
-            longitude: data.lon?.toString(),
-            timezone: data.timezone,
-            isp: data.isp,
-            org: data.org,
-          };
-        }
-      }
-    } catch (error) {
-      console.log(`Geolocation lookup failed for ${ipAddress}:`, error);
-    }
+    // Check for existing sessions
+    let sessionInfo = activeSessions.get(ipAddress);
+    const now = Date.now();
 
-    // Store visitor data in database
-    try {
-      await db.insert(visitorAnalytics).values({
-        ipAddress,
-        userAgent,
-        path,
-        ...geoData,
-      });
-    } catch (error) {
-      console.log(`Failed to store visitor analytics for ${ipAddress}:`, error);
+    // If no active session or session is older than 30 minutes, create new session
+    if (!sessionInfo || (now - sessionInfo.startTime) > 30 * 60 * 1000) {
+      const sessionId = randomUUID();
+      sessionInfo = { sessionId, startTime: now };
+      activeSessions.set(ipAddress, sessionInfo);
+
+      // Get return visit count for this IP
+      const returnVisitCount = await db
+        .select({ count: count() })
+        .from(visitorAnalytics)
+        .where(eq(visitorAnalytics.ipAddress, ipAddress));
+
+      const returnVisits = (returnVisitCount[0]?.count || 0) + 1;
+
+      // Fetch geolocation data from IP-API (free, no API key required)
+      let geoData: any = {};
+      try {
+        const geoResponse = await fetch(`http://ip-api.com/json/${ipAddress}?fields=status,country,regionName,city,lat,lon,timezone,isp,org`);
+        if (geoResponse.ok) {
+          const data = await geoResponse.json();
+          if (data.status === 'success') {
+            geoData = {
+              country: data.country,
+              region: data.regionName,
+              city: data.city,
+              latitude: data.lat?.toString(),
+              longitude: data.lon?.toString(),
+              timezone: data.timezone,
+              isp: data.isp,
+              org: data.org,
+            };
+          }
+        }
+      } catch (error) {
+        console.log(`Geolocation lookup failed for ${ipAddress}:`, error);
+      }
+
+      // Store new visitor session in database
+      try {
+        await db.insert(visitorAnalytics).values({
+          ipAddress,
+          userAgent,
+          path,
+          sessionId: sessionInfo.sessionId,
+          returnVisits,
+          ...geoData,
+        });
+      } catch (error) {
+        console.log(`Failed to store visitor analytics for ${ipAddress}:`, error);
+      }
     }
   } catch (error) {
     console.log('IP tracking middleware error:', error);
@@ -77,6 +103,18 @@ app.use(async (req, res, next) => {
 
   next();
 });
+
+// Clean up old sessions periodically (every 10 minutes)
+setInterval(() => {
+  const now = Date.now();
+  const thirtyMinutesAgo = now - 30 * 60 * 1000;
+  
+  for (const [ip, session] of Array.from(activeSessions.entries())) {
+    if (session.startTime < thirtyMinutesAgo) {
+      activeSessions.delete(ip);
+    }
+  }
+}, 10 * 60 * 1000);
 
 app.use((req, res, next) => {
   const start = Date.now();
