@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Search, TrendingUp, TrendingDown, BarChart3, Trash2, RotateCcw, BarChart2 } from "lucide-react";
+import { Search, TrendingUp, TrendingDown, BarChart3, Trash2, RotateCcw, BarChart2, Cookie, X } from "lucide-react";
 import { Link } from "wouter";
 import { cn } from "@/lib/utils";
 import { PriceChart } from "@/components/dashboard/price-chart";
@@ -390,6 +390,77 @@ function FeedbackButton() {
   );
 }
 
+// Cookie Policy Banner Component
+function CookiePolicyBanner() {
+  const [showBanner, setShowBanner] = useState(false);
+
+  useEffect(() => {
+    // Check if user has already accepted/declined cookies
+    const cookieConsent = localStorage.getItem('cookie-consent');
+    if (!cookieConsent) {
+      setShowBanner(true);
+    }
+  }, []);
+
+  const handleAccept = () => {
+    localStorage.setItem('cookie-consent', 'accepted');
+    setShowBanner(false);
+  };
+
+  const handleDecline = () => {
+    localStorage.setItem('cookie-consent', 'declined');
+    setShowBanner(false);
+  };
+
+  if (!showBanner) return null;
+
+  return (
+    <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-card border-t shadow-lg" data-testid="cookie-policy-banner">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="flex items-start gap-3 flex-1">
+            <Cookie className="w-5 h-5 text-[#5AF5FA] mt-0.5 flex-shrink-0" />
+            <div className="text-sm">
+              <p className="text-foreground">
+                <strong>Cookie Policy:</strong> This website uses necessary cookies to ensure optimal functionality and enhance your browsing experience. 
+                We use session cookies for chart annotations and visitor analytics. No personal data is shared with third parties.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleDecline}
+              data-testid="button-decline-cookies"
+              className="text-xs"
+            >
+              Decline
+            </Button>
+            <Button 
+              size="sm" 
+              onClick={handleAccept}
+              data-testid="button-accept-cookies"
+              className="bg-[#5AF5FA] hover:bg-[#4FE5EA] text-black text-xs"
+            >
+              Accept
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowBanner(false)}
+              data-testid="button-close-banner"
+              className="p-1 h-auto"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ChartMaker() {
   return (
     <div className="min-h-screen bg-background">
@@ -473,6 +544,9 @@ function ChartMaker() {
           </Card>
         </div>
       </main>
+      
+      {/* Cookie Policy Banner */}
+      <CookiePolicyBanner />
     </div>
   );
 }

@@ -285,23 +285,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Apply date filtering if specified
       const dateRange = getDateRange(dateFilter);
       
-      let query = db
-        .select()
-        .from(visitorAnalytics)
-        .orderBy(desc(visitorAnalytics.visitedAt))
-        .limit(limit)
-        .offset(offset);
-
-      if (dateRange) {
-        query = query.where(
-          and(
-            gte(visitorAnalytics.visitedAt, dateRange.start),
-            lte(visitorAnalytics.visitedAt, dateRange.end)
+      const visitors = dateRange ? 
+        await db
+          .select()
+          .from(visitorAnalytics)
+          .where(
+            and(
+              gte(visitorAnalytics.visitedAt, dateRange.start),
+              lte(visitorAnalytics.visitedAt, dateRange.end)
+            )
           )
-        );
-      }
-      
-      const visitors = await query;
+          .orderBy(desc(visitorAnalytics.visitedAt))
+          .limit(limit)
+          .offset(offset) :
+        await db
+          .select()
+          .from(visitorAnalytics)
+          .orderBy(desc(visitorAnalytics.visitedAt))
+          .limit(limit)
+          .offset(offset);
       res.json(visitors);
     } catch (error) {
       console.error("Error fetching visitor analytics:", error);
