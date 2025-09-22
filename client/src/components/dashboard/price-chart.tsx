@@ -144,6 +144,17 @@ export function PriceChart({
     price: number;
     time: string;
   } | null>(null);
+  const [showMeasureTooltip, setShowMeasureTooltip] = useState(false);
+
+  // Flash tooltip timeout management
+  useEffect(() => {
+    if (showMeasureTooltip) {
+      const timer = setTimeout(() => {
+        setShowMeasureTooltip(false);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showMeasureTooltip]);
 
   // Price Y-axis zoom state
   const [priceAxisMode, setPriceAxisMode] = useState<'auto' | 'fixed'>('auto');
@@ -1689,6 +1700,9 @@ export function PriceChart({
                           if (activeTab !== 'comparison') {
                             setAnnotationMode('percentage');
                             setPendingPercentageStart(null);
+                          } else {
+                            // Show flash tooltip when disabled
+                            setShowMeasureTooltip(true);
                           }
                         }}
                         disabled={activeTab === 'comparison'}
@@ -1721,6 +1735,13 @@ export function PriceChart({
                     Horizontal
                   </Button>
                 </div>
+
+                {/* Flash Tooltip for Measure Tool */}
+                {showMeasureTooltip && (
+                  <div className="absolute top-16 left-1/2 transform -translate-x-1/2 z-50 bg-red-600 text-white px-3 py-2 rounded-md text-xs font-medium shadow-lg animate-in fade-in-0 zoom-in-95">
+                    Measure tool deactivated
+                  </div>
+                )}
                 
                 {/* Price Y-axis Zoom Controls */}
                 {activeTab === 'price-volume' && (
