@@ -82,6 +82,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Regular ticker search endpoint (for dashboard ticker search component)
+  app.get("/api/stocks/search", async (req, res) => {
+    try {
+      const query = req.query.q as string;
+      if (!query || query.trim().length === 0) {
+        return res.json([]);
+      }
+
+      console.log(`🔍 Ticker search for: "${query}"`);
+      
+      // Use the existing stockDataService for US market search
+      const searchResults = await stockDataService.searchStocks(query);
+      
+      // Transform to include exchange and currency information for suffixed tickers
+      const enhancedResults = searchResults.map((stock: any) => {
+        const baseResult = {
+          symbol: stock.symbol,
+          name: stock.name,
+          price: stock.price,
+          percentChange: stock.percentChange,
+          marketCap: stock.marketCap
+        };
+
+        // Apply universal suffix detection for exchange/currency info
+        const exchangeInfo = getExchangeInfoFromSuffix(stock.symbol);
+        if (exchangeInfo) {
+          return {
+            ...baseResult,
+            exchange: exchangeInfo.exchange,
+            currency: exchangeInfo.currency
+          };
+        }
+
+        // For US stocks without suffixes, add default US exchange info when available
+        if (!stock.symbol.includes('.')) {
+          return {
+            ...baseResult,
+            exchange: 'NASDAQ/NYSE',
+            currency: 'USD'
+          };
+        }
+
+        return baseResult;
+      });
+      
+      console.log(`🔍 Ticker search completed: ${enhancedResults.length} results for "${query}"`);
+      res.json(enhancedResults);
+    } catch (error) {
+      console.error("Error in ticker search:", error);
+      res.status(500).json({ message: "Failed to search ticker stocks" });
+    }
+  });
+
   // Stock chart data endpoint
   app.get("/api/stocks/:symbol/chart", async (req, res) => {
     try {
