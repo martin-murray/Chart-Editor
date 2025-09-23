@@ -2166,7 +2166,7 @@ export function ComparisonChart({
                   .map((ticker, index) => (
                     <Line
                       key={ticker.symbol}
-                      type="monotone"
+                      type="linear"
                       dataKey={`${ticker.symbol}_percentage`}
                       stroke={ticker.color}
                       strokeWidth={2}
