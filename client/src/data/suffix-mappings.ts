@@ -1,0 +1,214 @@
+// Bloomberg-style ticker suffix mappings
+// This will be the data source for the suffix search tool
+
+export interface SuffixInfo {
+  suffix: string;
+  country: string;
+  exchange: string;
+  fullExchangeName: string;
+  notes?: string;
+  currency?: string;
+}
+
+export const suffixMappings: Record<string, SuffixInfo> = {
+  // United States
+  ".UW": {
+    suffix: ".UW",
+    country: "United States",
+    exchange: "NASDAQ",
+    fullExchangeName: "NASDAQ Stock Market",
+    currency: "USD",
+    notes: "NASDAQ-listed securities in Bloomberg terminal notation"
+  },
+  ".UQ": {
+    suffix: ".UQ",
+    country: "United States", 
+    exchange: "NASDAQ",
+    fullExchangeName: "NASDAQ Stock Market",
+    currency: "USD",
+    notes: "Alternative NASDAQ notation for certain securities"
+  },
+  ".UN": {
+    suffix: ".UN",
+    country: "United States",
+    exchange: "NYSE",
+    fullExchangeName: "New York Stock Exchange",
+    currency: "USD",
+    notes: "NYSE-listed securities in Bloomberg terminal notation"
+  },
+
+  // Europe
+  ".SE": {
+    suffix: ".SE",
+    country: "Sweden",
+    exchange: "OMX Stockholm",
+    fullExchangeName: "Nasdaq Stockholm (OMX Stockholm)",
+    currency: "SEK",
+    notes: "Swedish stocks listed on Nasdaq Stockholm"
+  },
+  ".MC": {
+    suffix: ".MC",
+    country: "Spain", 
+    exchange: "BME",
+    fullExchangeName: "Bolsas y Mercados Españoles (Madrid Stock Exchange)",
+    currency: "EUR",
+    notes: "Spanish stocks listed on the Madrid Stock Exchange"
+  },
+  ".PA": {
+    suffix: ".PA",
+    country: "France",
+    exchange: "Euronext Paris",
+    fullExchangeName: "Euronext Paris",
+    currency: "EUR",
+    notes: "French stocks listed on Euronext Paris"
+  },
+  ".DE": {
+    suffix: ".DE",
+    country: "Germany",
+    exchange: "XETRA",
+    fullExchangeName: "Deutsche Börse XETRA",
+    currency: "EUR",
+    notes: "German stocks listed on XETRA electronic trading system"
+  },
+  ".L": {
+    suffix: ".L",
+    country: "United Kingdom",
+    exchange: "LSE",
+    fullExchangeName: "London Stock Exchange",
+    currency: "GBP",
+    notes: "UK stocks listed on the London Stock Exchange"
+  },
+  ".AS": {
+    suffix: ".AS",
+    country: "Netherlands",
+    exchange: "Euronext Amsterdam", 
+    fullExchangeName: "Euronext Amsterdam",
+    currency: "EUR",
+    notes: "Dutch stocks listed on Euronext Amsterdam"
+  },
+  ".SW": {
+    suffix: ".SW",
+    country: "Switzerland",
+    exchange: "SIX",
+    fullExchangeName: "SIX Swiss Exchange",
+    currency: "CHF",
+    notes: "Swiss stocks listed on SIX Swiss Exchange"
+  },
+  ".MI": {
+    suffix: ".MI",
+    country: "Italy",
+    exchange: "Borsa Italiana",
+    fullExchangeName: "Borsa Italiana (Milan Stock Exchange)",
+    currency: "EUR",
+    notes: "Italian stocks listed on Borsa Italiana"
+  },
+
+  // Asia Pacific
+  ".T": {
+    suffix: ".T",
+    country: "Japan",
+    exchange: "TSE",
+    fullExchangeName: "Tokyo Stock Exchange",
+    currency: "JPY",
+    notes: "Japanese stocks listed on the Tokyo Stock Exchange"
+  },
+  ".HK": {
+    suffix: ".HK",
+    country: "Hong Kong",
+    exchange: "HKEX",
+    fullExchangeName: "Hong Kong Exchanges and Clearing",
+    currency: "HKD",
+    notes: "Hong Kong stocks listed on HKEX"
+  },
+  ".SS": {
+    suffix: ".SS",
+    country: "China",
+    exchange: "SSE",
+    fullExchangeName: "Shanghai Stock Exchange",
+    currency: "CNY",
+    notes: "Chinese A-shares listed on Shanghai Stock Exchange"
+  },
+  ".SZ": {
+    suffix: ".SZ", 
+    country: "China",
+    exchange: "SZSE",
+    fullExchangeName: "Shenzhen Stock Exchange",
+    currency: "CNY",
+    notes: "Chinese A-shares listed on Shenzhen Stock Exchange"
+  },
+  ".AX": {
+    suffix: ".AX",
+    country: "Australia",
+    exchange: "ASX",
+    fullExchangeName: "Australian Securities Exchange", 
+    currency: "AUD",
+    notes: "Australian stocks listed on the ASX"
+  },
+  ".KS": {
+    suffix: ".KS",
+    country: "South Korea",
+    exchange: "KOSPI",
+    fullExchangeName: "Korea Composite Stock Price Index",
+    currency: "KRW",
+    notes: "South Korean stocks listed on KOSPI"
+  },
+
+  // Canada
+  ".TO": {
+    suffix: ".TO",
+    country: "Canada",
+    exchange: "TSX",
+    fullExchangeName: "Toronto Stock Exchange",
+    currency: "CAD",
+    notes: "Canadian stocks listed on the Toronto Stock Exchange"
+  },
+  ".V": {
+    suffix: ".V",
+    country: "Canada", 
+    exchange: "TSXV",
+    fullExchangeName: "TSX Venture Exchange",
+    currency: "CAD",
+    notes: "Canadian venture stocks listed on TSX Venture Exchange"
+  },
+
+  // Nordic
+  ".NO": {
+    suffix: ".NO",
+    country: "Norway",
+    exchange: "OSE",
+    fullExchangeName: "Oslo Stock Exchange (Euronext Oslo)",
+    currency: "NOK",
+    notes: "Norwegian stocks listed on Oslo Stock Exchange"
+  },
+  ".CO": {
+    suffix: ".CO",
+    country: "Denmark",
+    exchange: "OMXC",
+    fullExchangeName: "Nasdaq Copenhagen (OMX Copenhagen)",
+    currency: "DKK", 
+    notes: "Danish stocks listed on Nasdaq Copenhagen"
+  },
+  ".HE": {
+    suffix: ".HE",
+    country: "Finland",
+    exchange: "OMXH",
+    fullExchangeName: "Nasdaq Helsinki (OMX Helsinki)",
+    currency: "EUR",
+    notes: "Finnish stocks listed on Nasdaq Helsinki"
+  }
+};
+
+// Helper function to search suffixes
+export const searchSuffix = (query: string): SuffixInfo | null => {
+  const cleanQuery = query.trim().toUpperCase();
+  
+  // Add leading dot if not present
+  const searchKey = cleanQuery.startsWith('.') ? cleanQuery : `.${cleanQuery}`;
+  
+  return suffixMappings[searchKey] || null;
+};
+
+// Get all available suffixes for autocomplete/suggestions
+export const getAllSuffixes = (): string[] => {
+  return Object.keys(suffixMappings).sort();
+};

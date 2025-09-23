@@ -1,0 +1,89 @@
+High-Level Goal
+
+I want to build a simple search tool for stock ticker suffixes. The purpose is to let users type in a suffix (e.g., .uw, .se, .mc) and instantly see what that suffix means — the country, the exchange, and other basic info.
+
+Key Requirements
+
+Input/Query:
+
+A small search bar or input box where the user can type or select a suffix (e.g., .uw).
+
+Should work for exact suffix matches (not fuzzy searching).
+
+Output/Display:
+
+Present a clean UI card or table that shows:
+
+Suffix
+
+Country (e.g., .se → Sweden)
+
+Exchange (e.g., .mc → Madrid Stock Exchange)
+
+Notes/extra info if available
+
+Data Source:
+
+I already have the mapping of suffixes → country/exchange from Bloomberg.
+
+The tool doesn’t need to connect to Bloomberg directly. It just needs to use a static JSON or dictionary that I’ll provide (with suffixes as keys).
+
+Simplicity:
+
+This isn’t a trading tool, just a reference lookup.
+
+A single-page app with a search bar and results panel is enough.
+
+Suggested Structure
+
+Frontend:
+
+Search input (user types .se, .mc, etc.).
+
+Display panel with suffix info.
+
+Backend / Data Handling:
+
+JSON or dictionary file containing mappings like:
+
+{
+  ".uw": { "country": "United States", "exchange": "NASDAQ" },
+  ".se": { "country": "Sweden", "exchange": "Stockholm Exchange" },
+  ".mc": { "country": "Spain", "exchange": "Madrid Stock Exchange" }
+}
+
+
+Simple function to search the mapping and return the result.
+
+Example Interaction
+
+User action: Types .mc in the search box.
+Tool response: Shows a card with:
+
+Suffix: .mc
+
+Country: Spain
+
+Exchange: Madrid Stock Exchange
+
+Implementation Notes
+
+Since this is for Replit, you can:
+
+Use Python with Flask/FastAPI for backend + static JSON mapping.
+
+Or make it pure HTML/JS/CSS with a hardcoded JSON object in JavaScript for instant lookup.
+
+Keep the UI minimal: just a search box and result card.
+
+👉 If you give your copilot this structured explanation, it will know:
+
+What the tool does (purpose).
+
+What data it works with (static mapping of suffixes).
+
+How it should look (search input + results card).
+
+What not to do (no Bloomberg integration, no real-time trading).
+
+Would you like me to also draft a ready-to-run Replit example (say, a small Python + Flask app or a vanilla HTML/JS app) so you can paste it directly and test?
