@@ -6,7 +6,7 @@ import { sendFeedbackToSlack } from "./slack";
 import { db } from "./db";
 import { visitorAnalytics } from "@shared/schema";
 import { desc, count, sql, gte, lte, and } from "drizzle-orm";
-import { getExchangeInfoFromSuffix } from "./utils/suffixMappings";
+import { getExchangeInfoFromSuffix, applySuffixOverride } from "./utils/suffixMappings";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Global stock search endpoint using Finnhub symbol lookup
@@ -45,33 +45,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
           type: item.type || 'Unknown'
         };
 
-        // Universal suffix detection for ANY ticker symbol
-        const exchangeInfo = getExchangeInfoFromSuffix(item.symbol);
-        if (exchangeInfo) {
-          return {
-            ...baseResult,
-            exchange: exchangeInfo.exchange,
-            currency: exchangeInfo.currency
-          };
-        }
+        // Apply centralized suffix override - this ALWAYS takes precedence
+        let result = applySuffixOverride(item.symbol, baseResult);
 
         // Special case: Handle tickers without suffixes that we know are specific exchanges
         // For multi-listed stocks, prioritize main US listing when no suffix
-        const specialCases: Record<string, { exchange: string; currency: string }> = {
-          'FER': { exchange: 'NasdaqGS', currency: 'USD' }, // Ferrovial SE US listing priority
-          // Add other multi-listed stocks here as needed
-        };
-
-        const specialCase = specialCases[item.symbol];
-        if (specialCase) {
-          return {
-            ...baseResult,
-            exchange: specialCase.exchange,
-            currency: specialCase.currency
+        if (!result.exchange) {
+          const specialCases: Record<string, { exchange: string; currency: string }> = {
+            'FER': { exchange: 'NasdaqGS', currency: 'USD' }, // Ferrovial SE US listing priority
+            // Add other multi-listed stocks here as needed
           };
+
+          const specialCase = specialCases[item.symbol];
+          if (specialCase) {
+            result = {
+              ...result,
+              exchange: specialCase.exchange,
+              currency: specialCase.currency
+            };
+          }
         }
 
-        return baseResult;
+        return result;
       }) || [];
 
       console.log(`🌍 Global search completed: ${globalResults.length} results for "${query}"`);
@@ -105,26 +100,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           marketCap: stock.marketCap
         };
 
-        // Apply universal suffix detection for exchange/currency info
-        const exchangeInfo = getExchangeInfoFromSuffix(stock.symbol);
-        if (exchangeInfo) {
-          return {
-            ...baseResult,
-            exchange: exchangeInfo.exchange,
-            currency: exchangeInfo.currency
-          };
-        }
+        // Apply centralized suffix override - this ALWAYS takes precedence
+        let result = applySuffixOverride(stock.symbol, baseResult);
 
         // For US stocks without suffixes, add default US exchange info when available
-        if (!stock.symbol.includes('.')) {
-          return {
-            ...baseResult,
+        if (!result.exchange && !stock.symbol.includes('.')) {
+          result = {
+            ...result,
             exchange: 'NASDAQ/NYSE',
             currency: 'USD'
           };
         }
 
-        return baseResult;
+        return result;
       });
       
       console.log(`🔍 Ticker search completed: ${enhancedResults.length} results for "${query}"`);
@@ -250,7 +238,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Stock details not available" });
       }
 
-      res.json(stockDetails);
+      // Apply centralized suffix override - this ALWAYS takes precedence over external API data
+      const enhancedDetails = applySuffixOverride(symbol, stockDetails);
+
+      res.json(enhancedDetails);
     } catch (error) {
       console.error("Stock details error:", error);
       res.status(500).json({ error: "Failed to fetch stock details" });

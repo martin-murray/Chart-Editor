@@ -165,10 +165,11 @@ export const suffixMappings: Record<string, SuffixInfo> = {
 
 /**
  * Extract suffix from ticker symbol and return exchange/currency information
+ * Case-insensitive and robust suffix detection
  */
-export function getExchangeInfoFromSuffix(symbol: string): { exchange: string; currency: string } | null {
-  // Look for suffix pattern (dot followed by letters)
-  const suffixMatch = symbol.match(/(\.[A-Z]+)$/);
+export function getExchangeInfoFromSuffix(symbol: string): { exchange: string; currency: string; fullExchangeName?: string } | null {
+  // Look for suffix pattern (dot followed by letters) - case insensitive
+  const suffixMatch = symbol.toUpperCase().match(/(\.[A-Z]+)$/);
   
   if (!suffixMatch) {
     // No suffix found - could be US stock or needs special handling
@@ -181,11 +182,32 @@ export function getExchangeInfoFromSuffix(symbol: string): { exchange: string; c
   if (suffixInfo) {
     return {
       exchange: suffixInfo.exchange,
-      currency: suffixInfo.currency || 'USD'
+      currency: suffixInfo.currency || 'USD',
+      fullExchangeName: suffixInfo.fullExchangeName
     };
   }
   
   return null;
+}
+
+/**
+ * Centralized function to apply suffix-based exchange overrides to any data object
+ * This ensures our suffix mappings ALWAYS take precedence over external API data
+ */
+export function applySuffixOverride(symbol: string, dataObj: any): any {
+  const suffixInfo = getExchangeInfoFromSuffix(symbol);
+  
+  if (suffixInfo) {
+    // Force override exchange and currency with our suffix-based data
+    return {
+      ...dataObj,
+      exchange: suffixInfo.exchange,
+      currency: suffixInfo.currency,
+      fullExchangeName: suffixInfo.fullExchangeName
+    };
+  }
+  
+  return dataObj;
 }
 
 /**
