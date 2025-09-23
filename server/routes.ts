@@ -38,6 +38,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Exchange override for stocks that trade on multiple exchanges  
       const exchangeOverrides: Record<string, { exchange: string; currency: string }> = {
         'FER': { exchange: 'NasdaqGS', currency: 'USD' }, // Ferrovial SE US listing
+        'FER.AS': { exchange: 'Euronext Amsterdam', currency: 'EUR' }, // Amsterdam
+        'FER.BE': { exchange: 'Berlin', currency: 'EUR' }, // Berlin
+        'FER.DU': { exchange: 'Dusseldorf', currency: 'EUR' }, // Dusseldorf  
+        'FER.MC': { exchange: 'BME', currency: 'EUR' }, // Madrid Stock Exchange
         // Add more overrides as needed
       };
 
