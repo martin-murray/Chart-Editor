@@ -6,6 +6,7 @@ import { sendFeedbackToSlack } from "./slack";
 import { db } from "./db";
 import { visitorAnalytics } from "@shared/schema";
 import { desc, count, sql, gte, lte, and } from "drizzle-orm";
+import { getExchangeInfoFromSuffix } from "./utils/suffixMappings";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Global stock search endpoint using Finnhub symbol lookup
@@ -35,17 +36,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const data = await response.json();
       
-      // Exchange override for stocks that trade on multiple exchanges  
-      const exchangeOverrides: Record<string, { exchange: string; currency: string }> = {
-        'FER': { exchange: 'NasdaqGS', currency: 'USD' }, // Ferrovial SE US listing
-        'FER.AS': { exchange: 'Euronext Amsterdam', currency: 'EUR' }, // Amsterdam
-        'FER.BE': { exchange: 'Berlin', currency: 'EUR' }, // Berlin
-        'FER.DU': { exchange: 'Dusseldorf', currency: 'EUR' }, // Dusseldorf  
-        'FER.MC': { exchange: 'BME', currency: 'EUR' }, // Madrid Stock Exchange
-        // Add more overrides as needed
-      };
-
-      // Transform Finnhub response to our format with exchange info
+      // Transform Finnhub response to our format with universal exchange info
       const globalResults = data.result?.slice(0, 10).map((item: any) => {
         const baseResult = {
           symbol: item.symbol,
@@ -54,13 +45,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
           type: item.type || 'Unknown'
         };
 
-        // Add exchange and currency if available in overrides
-        const override = exchangeOverrides[item.symbol];
-        if (override) {
+        // Universal suffix detection for ANY ticker symbol
+        const exchangeInfo = getExchangeInfoFromSuffix(item.symbol);
+        if (exchangeInfo) {
           return {
             ...baseResult,
-            exchange: override.exchange,
-            currency: override.currency
+            exchange: exchangeInfo.exchange,
+            currency: exchangeInfo.currency
+          };
+        }
+
+        // Special case: Handle tickers without suffixes that we know are specific exchanges
+        // For multi-listed stocks, prioritize main US listing when no suffix
+        const specialCases: Record<string, { exchange: string; currency: string }> = {
+          'FER': { exchange: 'NasdaqGS', currency: 'USD' }, // Ferrovial SE US listing priority
+          // Add other multi-listed stocks here as needed
+        };
+
+        const specialCase = specialCases[item.symbol];
+        if (specialCase) {
+          return {
+            ...baseResult,
+            exchange: specialCase.exchange,
+            currency: specialCase.currency
           };
         }
 
