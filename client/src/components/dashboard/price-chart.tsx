@@ -351,6 +351,18 @@ export function PriceChart({
   };
 
   // Chart data query - must be declared before useEffect that depends on it
+  // Stock Details Query for Exchange and Currency Info
+  const { data: stockDetails } = useQuery({
+    queryKey: ['/api/stocks', symbol, 'details'],
+    queryFn: async () => {
+      const response = await fetch(`/api/stocks/${symbol}/details`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!symbol,
+    staleTime: 300000, // 5 minutes
+  });
+
   const { data: chartData, isLoading, error } = useQuery({
     queryKey: [
       '/api/stocks', 
@@ -536,16 +548,6 @@ export function PriceChart({
   });
 
   // Chart data query moved above to fix initialization order
-
-  const { data: stockDetails } = useQuery({
-    queryKey: ['/api/stocks', symbol, 'details'],
-    queryFn: async (): Promise<StockDetails> => {
-      const response = await fetch(`/api/stocks/${symbol}/details`);
-      if (!response.ok) throw new Error('Failed to fetch stock details');
-      return await response.json();
-    },
-    enabled: !!symbol,
-  });
 
   // Currency mapping for different markets
   const getCurrencySymbol = (currencyCode: string | undefined): string => {
@@ -1279,10 +1281,17 @@ export function PriceChart({
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-4 flex-wrap">
-              <div className="flex items-center gap-2">
-                <span className="text-[#5AF5FA] text-xl font-medium">{symbol}</span>
-                <span className="text-muted-foreground">-</span>
-                <span className="text-sm font-normal text-muted-foreground">{name}</span>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-[#5AF5FA] text-xl font-medium">{symbol}</span>
+                  <span className="text-muted-foreground">-</span>
+                  <span className="text-sm font-normal text-muted-foreground">{name}</span>
+                </div>
+                {stockDetails?.profile && (
+                  <div className="text-xs text-muted-foreground" style={{ fontSize: '14px' }}>
+                    {stockDetails.profile.exchange} - {stockDetails.profile.currency}
+                  </div>
+                )}
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-2xl font-bold">{actualCurrentPrice !== '--' ? formatPrice(parseFloat(actualCurrentPrice)) : '--'}</span>
