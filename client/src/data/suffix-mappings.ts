@@ -18,10 +18,23 @@ export const suffixMappings: Record<string, SuffixInfo> = {
   ".UW": {
     suffix: ".UW",
     country: "United States",
-    exchange: "NASDAQ",
-    fullExchangeName: "NASDAQ Stock Market",
+    exchange: "NASDAQ Global Select Market",
+    fullExchangeName: "NASDAQ Global Select Market",
     currency: "USD",
-    notes: "NASDAQ-listed securities in Bloomberg terminal notation",
+    notes: "Top tier of NASDAQ for large-cap companies with the most stringent listing requirements",
+    marketHours: {
+      timezone: "America/New_York",
+      sessions: [{ open: "09:30", close: "16:00" }],
+      days: [1, 2, 3, 4, 5] // Monday to Friday
+    }
+  },
+  ".UF": {
+    suffix: ".UF",
+    country: "United States",
+    exchange: "NASDAQ Global Market",
+    fullExchangeName: "NASDAQ Global Market",
+    currency: "USD",
+    notes: "Middle tier of NASDAQ for mid-cap companies with strict financial and liquidity requirements",
     marketHours: {
       timezone: "America/New_York",
       sessions: [{ open: "09:30", close: "16:00" }],
@@ -31,10 +44,10 @@ export const suffixMappings: Record<string, SuffixInfo> = {
   ".UQ": {
     suffix: ".UQ",
     country: "United States", 
-    exchange: "NASDAQ",
-    fullExchangeName: "NASDAQ Stock Market",
+    exchange: "NASDAQ Capital Market",
+    fullExchangeName: "NASDAQ Capital Market",
     currency: "USD",
-    notes: "Alternative NASDAQ notation for certain securities"
+    notes: "NASDAQ Capital Market for smaller companies with less stringent listing requirements"
   },
   ".UN": {
     suffix: ".UN",
