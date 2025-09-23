@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Search, Globe, Building2, DollarSign, Info } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, Globe, Building2, DollarSign, Info, Clock } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { searchSuffix, getAllSuffixes, type SuffixInfo } from "@/data/suffix-mappings";
+import { computeMarketStatus, type MarketStatus } from "@/lib/marketHours";
 import { cn } from "@/lib/utils";
 
 interface SuffixSearchModalProps {
@@ -18,6 +19,7 @@ export function SuffixSearchModal({ children }: SuffixSearchModalProps) {
   const [searchResult, setSearchResult] = useState<SuffixInfo | null>(null);
   const [noResults, setNoResults] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [marketStatus, setMarketStatus] = useState<MarketStatus | null>(null);
 
   const allSuffixes = getAllSuffixes();
 
@@ -27,14 +29,22 @@ export function SuffixSearchModal({ children }: SuffixSearchModalProps) {
 
     if (!query.trim()) {
       setSearchResult(null);
+      setMarketStatus(null);
       return;
     }
 
     const result = searchSuffix(query);
     if (result) {
       setSearchResult(result);
+      // Update market status if market hours are available
+      if (result.marketHours) {
+        setMarketStatus(computeMarketStatus(result.marketHours));
+      } else {
+        setMarketStatus(null);
+      }
     } else {
       setSearchResult(null);
+      setMarketStatus(null);
       setNoResults(true);
     }
   };
@@ -48,8 +58,24 @@ export function SuffixSearchModal({ children }: SuffixSearchModalProps) {
   const handleClear = () => {
     setSearchQuery("");
     setSearchResult(null);
+    setMarketStatus(null);
     setNoResults(false);
   };
+
+  // Update market status every second when modal is open and we have results
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    
+    if (isOpen && searchResult?.marketHours) {
+      interval = setInterval(() => {
+        setMarketStatus(computeMarketStatus(searchResult.marketHours!));
+      }, 1000);
+    }
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isOpen, searchResult]);
 
   const popularSuffixes = ['.UW', '.UN', '.L', '.T', '.HK', '.MC', '.PA', '.SE', '.TO', '.AX'];
 
@@ -61,7 +87,7 @@ export function SuffixSearchModal({ children }: SuffixSearchModalProps) {
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
-            <Globe className="h-5 w-5 text-blue-500" />
+            <Globe className="h-5 w-5 text-[#FAFF50]" />
             Stock Ticker Suffix Guide
           </DialogTitle>
         </DialogHeader>
@@ -114,10 +140,10 @@ export function SuffixSearchModal({ children }: SuffixSearchModalProps) {
 
           {/* Search Results */}
           {searchResult && (
-            <Card className="border-l-4 border-l-blue-500" data-testid="card-search-result">
+            <Card className="border-l-4 border-l-[#FAFF50]" data-testid="card-search-result">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-lg">
-                  <span className="font-mono text-blue-600 dark:text-blue-400">
+                  <span className="font-mono text-[#FAFF50] dark:text-[#FAFF50]">
                     {searchResult.suffix}
                   </span>
                   <span className="text-muted-foreground">•</span>
@@ -127,7 +153,7 @@ export function SuffixSearchModal({ children }: SuffixSearchModalProps) {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex items-start gap-3">
-                    <Building2 className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <Building2 className="h-5 w-5 text-[#FAFF50] mt-0.5 flex-shrink-0" />
                     <div>
                       <p className="font-medium text-sm">Exchange</p>
                       <p className="text-sm text-muted-foreground">{searchResult.exchange}</p>
@@ -137,7 +163,7 @@ export function SuffixSearchModal({ children }: SuffixSearchModalProps) {
                   
                   {searchResult.currency && (
                     <div className="flex items-start gap-3">
-                      <DollarSign className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+                      <DollarSign className="h-5 w-5 text-[#FAFF50] mt-0.5 flex-shrink-0" />
                       <div>
                         <p className="font-medium text-sm">Currency</p>
                         <p className="text-sm text-muted-foreground">{searchResult.currency}</p>
@@ -148,10 +174,40 @@ export function SuffixSearchModal({ children }: SuffixSearchModalProps) {
 
                 {searchResult.notes && (
                   <div className="flex items-start gap-3 pt-2 border-t">
-                    <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <Info className="h-5 w-5 text-[#FAFF50] mt-0.5 flex-shrink-0" />
                     <div>
                       <p className="font-medium text-sm">Notes</p>
                       <p className="text-sm text-muted-foreground">{searchResult.notes}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Market Status Section */}
+                {marketStatus && (
+                  <div className="flex items-start gap-3 pt-2 border-t">
+                    <Clock className="h-5 w-5 text-[#FAFF50] mt-0.5 flex-shrink-0" data-testid="icon-clock" />
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-sm">Market Status</p>
+                        <Badge 
+                          variant={marketStatus.isOpen ? "default" : "secondary"}
+                          className={cn(
+                            "text-xs px-2 py-0.5",
+                            marketStatus.isOpen 
+                              ? "bg-green-100 text-green-800 border-green-300 dark:bg-green-900 dark:text-green-100" 
+                              : "bg-red-100 text-red-800 border-red-300 dark:bg-red-900 dark:text-red-100"
+                          )}
+                          data-testid="text-market-status"
+                        >
+                          {marketStatus.isOpen ? 'OPEN' : 'CLOSED'}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground" data-testid="text-countdown">
+                        {marketStatus.formattedCountdown}
+                      </p>
+                      <p className="text-xs text-muted-foreground" data-testid="text-market-hours">
+                        {marketStatus.marketHoursGMT}
+                      </p>
                     </div>
                   </div>
                 )}

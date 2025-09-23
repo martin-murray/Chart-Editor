@@ -1,6 +1,8 @@
 // Bloomberg-style ticker suffix mappings
 // This will be the data source for the suffix search tool
 
+import { MarketHours } from '@/lib/marketHours';
+
 export interface SuffixInfo {
   suffix: string;
   country: string;
@@ -8,6 +10,7 @@ export interface SuffixInfo {
   fullExchangeName: string;
   notes?: string;
   currency?: string;
+  marketHours?: MarketHours;
 }
 
 export const suffixMappings: Record<string, SuffixInfo> = {
@@ -18,7 +21,12 @@ export const suffixMappings: Record<string, SuffixInfo> = {
     exchange: "NASDAQ",
     fullExchangeName: "NASDAQ Stock Market",
     currency: "USD",
-    notes: "NASDAQ-listed securities in Bloomberg terminal notation"
+    notes: "NASDAQ-listed securities in Bloomberg terminal notation",
+    marketHours: {
+      timezone: "America/New_York",
+      sessions: [{ open: "09:30", close: "16:00" }],
+      days: [1, 2, 3, 4, 5] // Monday to Friday
+    }
   },
   ".UQ": {
     suffix: ".UQ",
@@ -34,7 +42,12 @@ export const suffixMappings: Record<string, SuffixInfo> = {
     exchange: "NYSE",
     fullExchangeName: "New York Stock Exchange",
     currency: "USD",
-    notes: "NYSE-listed securities in Bloomberg terminal notation"
+    notes: "NYSE-listed securities in Bloomberg terminal notation",
+    marketHours: {
+      timezone: "America/New_York",
+      sessions: [{ open: "09:30", close: "16:00" }],
+      days: [1, 2, 3, 4, 5] // Monday to Friday
+    }
   },
 
   // Europe
@@ -44,7 +57,12 @@ export const suffixMappings: Record<string, SuffixInfo> = {
     exchange: "OMX Stockholm",
     fullExchangeName: "Nasdaq Stockholm (OMX Stockholm)",
     currency: "SEK",
-    notes: "Swedish stocks listed on Nasdaq Stockholm"
+    notes: "Swedish stocks listed on Nasdaq Stockholm",
+    marketHours: {
+      timezone: "Europe/Stockholm",
+      sessions: [{ open: "09:00", close: "17:30" }],
+      days: [1, 2, 3, 4, 5] // Monday to Friday
+    }
   },
   ".MC": {
     suffix: ".MC",
@@ -52,7 +70,12 @@ export const suffixMappings: Record<string, SuffixInfo> = {
     exchange: "BME",
     fullExchangeName: "Bolsas y Mercados Españoles (Madrid Stock Exchange)",
     currency: "EUR",
-    notes: "Spanish stocks listed on the Madrid Stock Exchange"
+    notes: "Spanish stocks listed on the Madrid Stock Exchange",
+    marketHours: {
+      timezone: "Europe/Madrid",
+      sessions: [{ open: "09:00", close: "17:30" }],
+      days: [1, 2, 3, 4, 5] // Monday to Friday
+    }
   },
   ".PA": {
     suffix: ".PA",
@@ -60,7 +83,12 @@ export const suffixMappings: Record<string, SuffixInfo> = {
     exchange: "Euronext Paris",
     fullExchangeName: "Euronext Paris",
     currency: "EUR",
-    notes: "French stocks listed on Euronext Paris"
+    notes: "French stocks listed on Euronext Paris",
+    marketHours: {
+      timezone: "Europe/Paris",
+      sessions: [{ open: "09:00", close: "17:30" }],
+      days: [1, 2, 3, 4, 5] // Monday to Friday
+    }
   },
   ".DE": {
     suffix: ".DE",
@@ -76,7 +104,12 @@ export const suffixMappings: Record<string, SuffixInfo> = {
     exchange: "LSE",
     fullExchangeName: "London Stock Exchange",
     currency: "GBP",
-    notes: "UK stocks listed on the London Stock Exchange"
+    notes: "UK stocks listed on the London Stock Exchange",
+    marketHours: {
+      timezone: "Europe/London",
+      sessions: [{ open: "08:00", close: "16:30" }],
+      days: [1, 2, 3, 4, 5] // Monday to Friday
+    }
   },
   ".AS": {
     suffix: ".AS",
@@ -110,7 +143,15 @@ export const suffixMappings: Record<string, SuffixInfo> = {
     exchange: "TSE",
     fullExchangeName: "Tokyo Stock Exchange",
     currency: "JPY",
-    notes: "Japanese stocks listed on the Tokyo Stock Exchange"
+    notes: "Japanese stocks listed on the Tokyo Stock Exchange",
+    marketHours: {
+      timezone: "Asia/Tokyo",
+      sessions: [
+        { open: "09:00", close: "11:30" },
+        { open: "12:30", close: "15:00" }
+      ],
+      days: [1, 2, 3, 4, 5] // Monday to Friday
+    }
   },
   ".HK": {
     suffix: ".HK",
@@ -118,7 +159,15 @@ export const suffixMappings: Record<string, SuffixInfo> = {
     exchange: "HKEX",
     fullExchangeName: "Hong Kong Exchanges and Clearing",
     currency: "HKD",
-    notes: "Hong Kong stocks listed on HKEX"
+    notes: "Hong Kong stocks listed on HKEX",
+    marketHours: {
+      timezone: "Asia/Hong_Kong",
+      sessions: [
+        { open: "09:30", close: "12:00" },
+        { open: "13:00", close: "16:00" }
+      ],
+      days: [1, 2, 3, 4, 5] // Monday to Friday
+    }
   },
   ".SS": {
     suffix: ".SS",
@@ -142,7 +191,12 @@ export const suffixMappings: Record<string, SuffixInfo> = {
     exchange: "ASX",
     fullExchangeName: "Australian Securities Exchange", 
     currency: "AUD",
-    notes: "Australian stocks listed on the ASX"
+    notes: "Australian stocks listed on the ASX",
+    marketHours: {
+      timezone: "Australia/Sydney",
+      sessions: [{ open: "10:00", close: "16:00" }],
+      days: [1, 2, 3, 4, 5] // Monday to Friday
+    }
   },
   ".KS": {
     suffix: ".KS",
@@ -160,7 +214,12 @@ export const suffixMappings: Record<string, SuffixInfo> = {
     exchange: "TSX",
     fullExchangeName: "Toronto Stock Exchange",
     currency: "CAD",
-    notes: "Canadian stocks listed on the Toronto Stock Exchange"
+    notes: "Canadian stocks listed on the Toronto Stock Exchange",
+    marketHours: {
+      timezone: "America/Toronto",
+      sessions: [{ open: "09:30", close: "16:00" }],
+      days: [1, 2, 3, 4, 5] // Monday to Friday
+    }
   },
   ".V": {
     suffix: ".V",
