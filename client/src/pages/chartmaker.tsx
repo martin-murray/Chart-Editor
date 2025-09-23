@@ -18,6 +18,8 @@ interface GlobalSearchResult {
   description: string;
   displaySymbol: string;
   type: string;
+  exchange?: string;
+  currency?: string;
 }
 
 interface Annotation {
@@ -287,6 +289,11 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
                       </div>
                       <div className="text-sm text-muted-foreground mt-1 truncate">
                         {stock.description}
+                        {stock.exchange && stock.currency && (
+                          <span className="ml-2 text-[#5AF5FA]">
+                            - {stock.exchange} - {stock.currency}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-2 ml-4">
@@ -326,6 +333,11 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
                         </div>
                         <div className="text-sm text-muted-foreground mt-1 truncate">
                           {stock.description}
+                          {stock.exchange && stock.currency && (
+                            <span className="ml-2 text-[#5AF5FA]">
+                              - {stock.exchange} - {stock.currency}
+                            </span>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-2 ml-4">

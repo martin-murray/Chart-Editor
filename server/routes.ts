@@ -35,13 +35,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const data = await response.json();
       
-      // Transform Finnhub response to our format
-      const globalResults = data.result?.slice(0, 10).map((item: any) => ({
-        symbol: item.symbol,
-        description: item.description,
-        displaySymbol: item.displaySymbol,
-        type: item.type || 'Unknown'
-      })) || [];
+      // Exchange override for stocks that trade on multiple exchanges  
+      const exchangeOverrides: Record<string, { exchange: string; currency: string }> = {
+        'FER': { exchange: 'NasdaqGS', currency: 'USD' }, // Ferrovial SE US listing
+        // Add more overrides as needed
+      };
+
+      // Transform Finnhub response to our format with exchange info
+      const globalResults = data.result?.slice(0, 10).map((item: any) => {
+        const baseResult = {
+          symbol: item.symbol,
+          description: item.description,
+          displaySymbol: item.displaySymbol,
+          type: item.type || 'Unknown'
+        };
+
+        // Add exchange and currency if available in overrides
+        const override = exchangeOverrides[item.symbol];
+        if (override) {
+          return {
+            ...baseResult,
+            exchange: override.exchange,
+            currency: override.currency
+          };
+        }
+
+        return baseResult;
+      }) || [];
 
       console.log(`🌍 Global search completed: ${globalResults.length} results for "${query}"`);
       res.json(globalResults);
