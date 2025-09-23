@@ -511,12 +511,28 @@ export class FinnhubService {
         console.log(`⚠️  DATA VERIFICATION: ${symbol} - Finnhub shows $${(actual/1000).toFixed(1)}B but expected $${(expected/1000).toFixed(1)}B (${knownIssues[symbol].source})`);
       }
 
+      // Exchange override for stocks that trade on multiple exchanges
+      // Finnhub sometimes returns primary/home exchange instead of US listing
+      const exchangeOverrides: Record<string, { exchange: string; currency: string }> = {
+        'FER': { exchange: 'NasdaqGS', currency: 'USD' }, // Ferrovial SE US listing
+        // Add more overrides as needed
+      };
+
+      let finalProfile = { ...profileResult, marketCapitalization: marketCap };
+      
+      // Apply exchange override if exists
+      if (exchangeOverrides[symbol]) {
+        finalProfile = {
+          ...finalProfile,
+          exchange: exchangeOverrides[symbol].exchange,
+          currency: exchangeOverrides[symbol].currency
+        };
+        console.log(`🔄 EXCHANGE OVERRIDE: ${symbol} - Using ${exchangeOverrides[symbol].exchange} (${exchangeOverrides[symbol].currency}) instead of ${profileResult.exchange} (${profileResult.currency})`);
+      }
+
       return {
         quote,
-        profile: {
-          ...profileResult,
-          marketCapitalization: marketCap  // Use the potentially more current value
-        },
+        profile: finalProfile,
         metrics: metricsResult?.metric || {}
       };
     } catch (error) {
