@@ -485,7 +485,7 @@ function ChartMaker() {
                   className="flex items-center gap-2"
                   data-testid="button-suffix-search"
                 >
-                  <Globe className="h-4 w-4" />
+                  <Globe className="h-4 w-4 text-[#FAFF50]" />
                   Suffix Guide
                 </Button>
               </SuffixSearchModal>
