@@ -183,12 +183,20 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
   };
   
 
+  // Type display text conversion - convert ETP to ETF for display
+  const getDisplayType = (type: string | undefined) => {
+    if (!type) return "Common Stock";
+    if (type.toLowerCase() === 'etp') return 'ETF';
+    return type;
+  };
+
   const getTypeColor = (type: string) => {
     switch (type.toLowerCase()) {
       case 'common stock':
         return 'text-blue-600 dark:text-blue-400 bg-blue-500/10';
+      case 'etp':
       case 'etf':
-        return 'text-green-600 dark:text-green-400 bg-green-500/10';
+        return 'text-[#FFA5FF] bg-[#FFA5FF]/30'; // Pink ETF styling as requested
       case 'index':
         return 'index-tag'; // Brand yellow with 30% opacity background, 100% text
       case 'reit':
@@ -292,7 +300,7 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
                             "px-2 py-1 rounded-md text-xs font-medium",
                             getTypeColor(stock.type)
                           )}>
-                            {stock.type}
+                            {getDisplayType(stock.type)}
                           </div>
                         </div>
                         <div className="text-sm text-muted-foreground mt-1 truncate">
