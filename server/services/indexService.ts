@@ -45,10 +45,10 @@ export const GLOBAL_INDICES: Record<string, IndexInfo> = {
     type: 'Index',
     currency: 'USD'
   },
-  '^IXIC': {
-    symbol: '^IXIC',
-    name: 'NASDAQ Composite',
-    description: 'NASDAQ Composite Index',
+  'QQQ': {
+    symbol: 'QQQ',
+    name: 'NASDAQ Composite (QQQ)',
+    description: 'NASDAQ Composite (QQQ ETF)',
     country: 'United States',
     region: 'North America',
     type: 'Index',
