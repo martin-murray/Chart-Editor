@@ -187,7 +187,9 @@ export function getUpcomingHolidays(market?: string, daysAhead: number = 30): Ma
   const todayStr = today.toISOString().split('T')[0];
   const maxDateStr = maxDate.toISOString().split('T')[0];
   
-  return MARKET_HOLIDAYS
+  console.log('Debug filter - Today:', todayStr, 'Max date:', maxDateStr, 'Market:', market);
+  
+  const filtered = MARKET_HOLIDAYS
     .filter(holiday => {
       // Filter by date range
       if (holiday.date < todayStr || holiday.date > maxDateStr) return false;
@@ -199,6 +201,9 @@ export function getUpcomingHolidays(market?: string, daysAhead: number = 30): Ma
     })
     .sort((a, b) => a.date.localeCompare(b.date))
     .slice(0, 5); // Limit to next 5 holidays
+    
+  console.log('Debug filter - Filtered holidays:', filtered);
+  return filtered;
 }
 
 /**

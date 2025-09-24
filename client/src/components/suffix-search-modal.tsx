@@ -48,10 +48,13 @@ export function SuffixSearchModal({ children }: SuffixSearchModalProps) {
       
       // Get upcoming holidays for this market
       const market = getMarketFromExchange(result.exchange);
+      console.log('Debug holidays - Exchange:', result.exchange, 'Market:', market);
       if (market) {
         const holidays = getUpcomingHolidays(market, 60); // Next 60 days
+        console.log('Debug holidays - Found holidays:', holidays);
         setUpcomingHolidays(holidays);
       } else {
+        console.log('Debug holidays - No market found for exchange:', result.exchange);
         setUpcomingHolidays([]);
       }
     } else {
