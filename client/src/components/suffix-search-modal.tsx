@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, Globe, Building2, DollarSign, Info, Clock, Calendar } from "lucide-react";
+import { Search, Globe, Building2, Info, Clock, Calendar } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,42 @@ import { searchSuffix, getAllSuffixes, type SuffixInfo } from "@/data/suffix-map
 import { computeMarketStatus, type MarketStatus } from "@/lib/marketHours";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
+
+// Custom Payment Card Icon Component
+const PaymentCardIcon = ({ className }: { className?: string }) => (
+  <svg 
+    className={className} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <rect 
+      x="2" 
+      y="5" 
+      width="20" 
+      height="14" 
+      rx="3" 
+      ry="3" 
+      stroke="currentColor" 
+      strokeWidth="2" 
+      fill="none"
+    />
+    <circle 
+      cx="7" 
+      cy="12" 
+      r="2.5" 
+      fill="currentColor"
+    />
+    <rect 
+      x="12" 
+      y="9" 
+      width="8" 
+      height="6" 
+      rx="1" 
+      fill="currentColor"
+    />
+  </svg>
+);
 
 interface SuffixSearchModalProps {
   children: React.ReactNode;
@@ -264,7 +300,7 @@ export function SuffixSearchModal({ children }: SuffixSearchModalProps) {
                   
                   {searchResult.currency && (
                     <div className="flex items-start gap-3">
-                      <DollarSign className="h-5 w-5 text-[#FAFF50] mt-0.5 flex-shrink-0" />
+                      <PaymentCardIcon className="h-5 w-5 text-[#FAFF50] mt-0.5 flex-shrink-0" />
                       <div>
                         <p className="font-medium text-sm">Currency</p>
                         <p className="text-sm text-muted-foreground">{searchResult.currency}</p>
