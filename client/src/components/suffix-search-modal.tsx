@@ -55,6 +55,9 @@ const exchangeToFinnhubCode: { [key: string]: string } = {
   'Nasdaq Helsinki (OMX Helsinki)': 'HE',
   'Euronext Amsterdam': 'AS',  // Amsterdam
   'Madrid Stock Exchange': 'MC',  // Madrid
+  'BME Spanish Exchanges': 'MC',  // Madrid
+  'BME': 'MC',  // Madrid
+  'Bolsas y Mercados Españoles (Madrid Stock Exchange)': 'MC',
   'OSE': 'OL',  // Oslo
   'Oslo Stock Exchange (Euronext Oslo)': 'OL'
 };
