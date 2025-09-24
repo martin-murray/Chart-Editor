@@ -25,17 +25,26 @@ const exchangeToFinnhubCode: { [key: string]: string } = {
   'NASDAQ Capital Market': 'US',
   'New York Stock Exchange': 'US',
   
-  // International (fallback to US for now)
-  'LSE': 'US',
-  'London Stock Exchange': 'US',
-  'Euronext Paris': 'US',
-  'Frankfurt Stock Exchange': 'US',
-  'SIX Swiss Exchange': 'US', 
-  'Milan Stock Exchange': 'US',
-  'Tokyo Stock Exchange': 'US',
-  'Hong Kong Stock Exchange': 'US',
-  'TSX': 'US',
-  'ASX': 'US'
+  // International Exchanges - Finnhub codes
+  'LSE': 'L',  // London Stock Exchange
+  'London Stock Exchange': 'L',
+  'Euronext Paris': 'PA',  // Paris
+  'Frankfurt Stock Exchange': 'F',  // Frankfurt
+  'SIX Swiss Exchange': 'SW',  // Switzerland
+  'Milan Stock Exchange': 'MI',  // Milan
+  'Tokyo Stock Exchange': 'T',  // Tokyo
+  'Hong Kong Stock Exchange': 'HK',  // Hong Kong
+  'TSX': 'TO',  // Toronto
+  'ASX': 'AX',  // Australia
+  
+  // Additional European markets
+  'OMX Stockholm': 'ST',  // Stockholm
+  'Nasdaq Stockholm': 'ST',  // Stockholm
+  'OMX Copenhagen': 'CO',  // Copenhagen
+  'OMX Helsinki': 'HE',  // Helsinki
+  'Euronext Amsterdam': 'AS',  // Amsterdam
+  'Madrid Stock Exchange': 'MC',  // Madrid
+  'Oslo Stock Exchange': 'OL',  // Oslo
 };
 
 export function SuffixSearchModal({ children }: SuffixSearchModalProps) {
