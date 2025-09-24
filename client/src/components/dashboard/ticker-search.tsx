@@ -148,6 +148,13 @@ export function TickerSearch({ onSelectStock }: TickerSearchProps) {
     };
   };
 
+  // Type display text conversion - convert ETP to ETF for display
+  const getDisplayType = (type: string | undefined) => {
+    if (!type) return "Common Stock";
+    if (type.toLowerCase() === 'etp') return 'ETF';
+    return type;
+  };
+
   // Type tag styling function - matches comparison chart styling
   const getTypeColor = (type: string) => {
     switch (type.toLowerCase()) {
@@ -212,7 +219,7 @@ export function TickerSearch({ onSelectStock }: TickerSearchProps) {
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-foreground">{stock.symbol}</span>
                           <span className={cn("px-2 py-1 rounded-full text-xs font-medium", getTypeColor(stock.type || "Common Stock"))}>
-                            {stock.type || "Common Stock"}
+                            {getDisplayType(stock.type)}
                           </span>
                         </div>
                         <div className="text-sm text-muted-foreground truncate">
@@ -277,7 +284,7 @@ export function TickerSearch({ onSelectStock }: TickerSearchProps) {
                           <div className="flex items-center gap-2">
                             <span className="font-semibold text-foreground">{stock.symbol}</span>
                             <span className={cn("px-2 py-1 rounded-full text-xs font-medium", getTypeColor(stock.type || "Common Stock"))}>
-                              {stock.type || "Common Stock"}
+                              {getDisplayType(stock.type)}
                             </span>
                           </div>
                           <div className="text-sm text-muted-foreground truncate mt-1">
