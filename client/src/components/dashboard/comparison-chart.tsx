@@ -817,8 +817,8 @@ export function ComparisonChart({
   };
 
   const addTicker = (symbol: string, stock?: SearchResult) => {
-    if (tickers.length >= 5) {
-      return; // Max 5 tickers
+    if (tickers.length >= 12) {
+      return; // Max 12 tickers
     }
     
     if (tickers.find(t => t.symbol === symbol)) {
@@ -1637,7 +1637,7 @@ export function ComparisonChart({
         ))}
 
         {/* Add Ticker Button */}
-        {tickers.length < 5 && (
+        {tickers.length < 12 && (
           <Button
             variant="outline"
             size="sm"
