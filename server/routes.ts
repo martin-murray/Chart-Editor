@@ -368,6 +368,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Market holidays endpoint for exchanges
+  app.get("/api/exchanges/:exchange/holidays", async (req, res) => {
+    try {
+      const { exchange } = req.params;
+      console.log(`🏦 Market holidays request for: ${exchange}`);
+      
+      const holidayData = await stockDataService.getMarketHolidays(exchange);
+      
+      if (!holidayData) {
+        return res.status(404).json({ error: "Holiday data not available for this exchange" });
+      }
+      
+      res.json({
+        exchange,
+        holidays: holidayData.data || []
+      });
+    } catch (error) {
+      console.error("Error fetching market holidays:", error);
+      res.status(500).json({ message: "Failed to fetch market holidays" });
+    }
+  });
+
   // Configure multer for file uploads (in memory for email attachment)
   const upload = multer({ 
     storage: multer.memoryStorage(),

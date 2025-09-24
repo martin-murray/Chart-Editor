@@ -8,12 +8,27 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { searchSuffix, getAllSuffixes, type SuffixInfo } from "@/data/suffix-mappings";
 import { computeMarketStatus, type MarketStatus } from "@/lib/marketHours";
-import { getUpcomingHolidays, getMarketFromExchange, type MarketHoliday } from "@/data/market-holidays";
+import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 
 interface SuffixSearchModalProps {
   children: React.ReactNode;
 }
+
+// Mapping from exchange names to Finnhub exchange codes
+const exchangeToFinnhubCode: { [key: string]: string } = {
+  'LSE': 'US', // London Stock Exchange -> use US for UK market holidays
+  'NYSE': 'US',
+  'NASDAQ': 'US', 
+  'Euronext Paris': 'US', // Using US as fallback, can be updated as needed
+  'Frankfurt Stock Exchange': 'US',
+  'SIX Swiss Exchange': 'US',
+  'Milan Stock Exchange': 'US',
+  'Tokyo Stock Exchange': 'US',
+  'Hong Kong Stock Exchange': 'US',
+  'TSX': 'US',
+  'ASX': 'US'
+};
 
 export function SuffixSearchModal({ children }: SuffixSearchModalProps) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -21,9 +36,34 @@ export function SuffixSearchModal({ children }: SuffixSearchModalProps) {
   const [noResults, setNoResults] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [marketStatus, setMarketStatus] = useState<MarketStatus | null>(null);
-  const [upcomingHolidays, setUpcomingHolidays] = useState<MarketHoliday[]>([]);
 
   const allSuffixes = getAllSuffixes();
+
+  // Get Finnhub exchange code for the selected exchange
+  const finnhubExchange = searchResult?.exchange ? exchangeToFinnhubCode[searchResult.exchange] || 'US' : null;
+
+  // Fetch holidays from Finnhub API
+  const { data: holidayData } = useQuery({
+    queryKey: ['market-holidays', finnhubExchange],
+    queryFn: async () => {
+      if (!finnhubExchange) return null;
+      const response = await fetch(`/api/exchanges/${finnhubExchange}/holidays`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!finnhubExchange,
+    staleTime: 24 * 60 * 60 * 1000, // 24 hours
+    gcTime: 24 * 60 * 60 * 1000, // 24 hours
+  });
+
+  // Process holiday data to get upcoming holidays
+  const upcomingHolidays = holidayData?.holidays?.filter((holiday: any) => {
+    const holidayDate = new Date(holiday.eventDate);
+    const today = new Date();
+    const maxDate = new Date();
+    maxDate.setDate(today.getDate() + 90); // Next 90 days
+    return holidayDate >= today && holidayDate <= maxDate;
+  }).slice(0, 5) || []; // Limit to 5 upcoming holidays
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -32,7 +72,6 @@ export function SuffixSearchModal({ children }: SuffixSearchModalProps) {
     if (!query.trim()) {
       setSearchResult(null);
       setMarketStatus(null);
-      setUpcomingHolidays([]);
       return;
     }
 
@@ -45,22 +84,9 @@ export function SuffixSearchModal({ children }: SuffixSearchModalProps) {
       } else {
         setMarketStatus(null);
       }
-      
-      // Get upcoming holidays for this market
-      const market = getMarketFromExchange(result.exchange);
-      console.log('Debug holidays - Exchange:', result.exchange, 'Market:', market);
-      if (market) {
-        const holidays = getUpcomingHolidays(market, 60); // Next 60 days
-        console.log('Debug holidays - Found holidays:', holidays);
-        setUpcomingHolidays(holidays);
-      } else {
-        console.log('Debug holidays - No market found for exchange:', result.exchange);
-        setUpcomingHolidays([]);
-      }
     } else {
       setSearchResult(null);
       setMarketStatus(null);
-      setUpcomingHolidays([]);
       setNoResults(true);
     }
   };
@@ -75,7 +101,6 @@ export function SuffixSearchModal({ children }: SuffixSearchModalProps) {
     setSearchQuery("");
     setSearchResult(null);
     setMarketStatus(null);
-    setUpcomingHolidays([]);
     setNoResults(false);
   };
 
@@ -236,8 +261,8 @@ export function SuffixSearchModal({ children }: SuffixSearchModalProps) {
                     <div className="space-y-2">
                       <p className="font-medium text-sm">Upcoming Market Holidays</p>
                       <div className="space-y-1">
-                        {upcomingHolidays.map((holiday, index) => {
-                          const holidayDate = new Date(holiday.date);
+                        {upcomingHolidays.map((holiday: any, index: number) => {
+                          const holidayDate = new Date(holiday.eventDate || holiday.date);
                           const isToday = new Date().toDateString() === holidayDate.toDateString();
                           const dayOfWeek = holidayDate.toLocaleDateString('en-US', { weekday: 'short' });
                           const formattedDate = holidayDate.toLocaleDateString('en-US', { 
@@ -246,10 +271,10 @@ export function SuffixSearchModal({ children }: SuffixSearchModalProps) {
                           });
                           
                           return (
-                            <div key={`${holiday.date}-${index}`} className="flex items-center justify-between">
+                            <div key={`${holiday.eventDate || holiday.date}-${index}`} className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
                                 <p className="text-sm text-muted-foreground">
-                                  {holiday.name}
+                                  {holiday.name || holiday.event || 'Market Holiday'}
                                 </p>
                                 {holiday.isHalfDay && (
                                   <Badge variant="outline" className="text-xs px-1 py-0 text-orange-600 border-orange-300 dark:text-orange-400">

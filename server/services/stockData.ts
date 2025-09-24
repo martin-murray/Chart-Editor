@@ -63,6 +63,18 @@ export class StockDataService {
   }
 
   /**
+   * Get market holidays for a specific exchange
+   */
+  async getMarketHolidays(exchange: string): Promise<any> {
+    try {
+      return await finnhubService.getMarketHolidays(exchange);
+    } catch (error) {
+      console.error("Error getting market holidays:", error);
+      return null;
+    }
+  }
+
+  /**
    * Get API status - placeholder for new API
    */
   async getApiStatus(): Promise<{remainingRequests: number, resetTime?: string}> {

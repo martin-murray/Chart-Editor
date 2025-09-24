@@ -424,6 +424,29 @@ export class FinnhubService {
     }
   }
 
+  /**
+   * Get market holidays for a specific exchange
+   */
+  async getMarketHolidays(exchange: string): Promise<any> {
+    try {
+      console.log(`🏦 Fetching market holidays for ${exchange} from Finnhub...`);
+      
+      const endpoint = `/stock/market-holiday?exchange=${exchange}`;
+      const response = await this.makeRequest(endpoint);
+      
+      if (!response || !response.data) {
+        console.warn(`No holiday data returned for exchange: ${exchange}`);
+        return null;
+      }
+      
+      console.log(`📅 Found ${response.data?.length || 0} holidays for ${exchange}`);
+      return response;
+    } catch (error) {
+      console.error(`Error fetching market holidays for ${exchange}:`, error);
+      return null;
+    }
+  }
+
   async getEarningsCalendar(symbol: string): Promise<any> {
     try {
       console.log(`📈 Fetching earnings calendar for ${symbol} from Finnhub...`);
