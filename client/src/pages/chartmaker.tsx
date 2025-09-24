@@ -544,10 +544,12 @@ function ChartMaker() {
             </div>
           )}
 
-          {/* Info Section */}
+          {/* Combined Info Section */}
           <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Global Market Coverage</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm text-muted-foreground">
+            <h3 className="text-lg font-semibold mb-4">Global Market Coverage & Index Coverage</h3>
+            
+            {/* Global Market Coverage */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm text-muted-foreground mb-6">
               <div>
                 <h4 className="font-medium text-foreground mb-2">US Markets</h4>
                 <ul className="space-y-1">
@@ -573,17 +575,11 @@ function ChartMaker() {
                 </ul>
               </div>
             </div>
-            <div className="mt-4 p-4 bg-muted/50 rounded-lg">
-              <p className="text-sm text-white">
-                <strong className="text-white">Tip:</strong> Search by company name ("Apple", "Tesla") or ticker ("AAPL", "TSLA"). 
-                Our intelligent search finds matches across global exchanges—no Bloomberg-style suffixes (.UW, .SE, .SW) needed!
-              </p>
-            </div>
-          </Card>
 
-          {/* Index Coverage Section */}
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Index Coverage</h3>
+            {/* Line break separator */}
+            <hr className="border-muted-foreground/20 mb-6" />
+
+            {/* Index Coverage */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm text-muted-foreground">
               <div>
                 <h4 className="font-medium text-foreground mb-2">US Indices</h4>
@@ -661,9 +657,12 @@ function ChartMaker() {
                 </ul>
               </div>
             </div>
+            
             <div className="mt-4 p-4 bg-muted/50 rounded-lg">
               <p className="text-sm text-white">
-                <strong className="text-white">Tip:</strong> Click any index to view its price chart with real-time data, technical indicators, and annotation tools.
+                <strong className="text-white">Tip:</strong> Search by company name ("Apple", "Tesla") or ticker ("AAPL", "TSLA"). 
+                Our intelligent search finds matches across global exchanges—no Bloomberg-style suffixes (.UW, .SE, .SW) needed!
+                Click any index to view its price chart with real-time data, technical indicators, and annotation tools.
               </p>
             </div>
           </Card>
