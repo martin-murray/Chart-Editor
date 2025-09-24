@@ -89,15 +89,6 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
   const [recentSearches, setRecentSearches] = useState<GlobalSearchResult[]>([]);
-  
-  // Annotation state management
-  const [annotationsBySymbol, setAnnotationsBySymbol] = useState<Record<string, Annotation[]>>(() => getStoredAnnotations());
-  const [rememberPerTicker, setRememberPerTicker] = useState(() => getRememberSetting());
-  
-  // Current annotations for selected stock
-  const currentAnnotations = selectedStock && rememberPerTicker 
-    ? annotationsBySymbol[selectedStock.displaySymbol] || []
-    : [];
 
   // Load recent searches from localStorage on mount
   useEffect(() => {
@@ -184,42 +175,13 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
     addToRecentSearches(stock);
   };
 
+
   const addToRecentSearches = (stock: GlobalSearchResult) => {
     const newRecent = [stock, ...recentSearches.filter(s => s.displaySymbol !== stock.displaySymbol)].slice(0, 6);
     setRecentSearches(newRecent);
     localStorage.setItem('recentTickerSearches', JSON.stringify(newRecent));
   };
   
-  // Annotation management functions
-  const handleAnnotationsChange = (newAnnotations: Annotation[]) => {
-    if (selectedStock && rememberPerTicker) {
-      const updated = {
-        ...annotationsBySymbol,
-        [selectedStock.displaySymbol]: newAnnotations
-      };
-      setAnnotationsBySymbol(updated);
-      saveAnnotations(updated);
-    }
-  };
-  
-  const handleRememberToggle = (remember: boolean) => {
-    setRememberPerTicker(remember);
-    saveRememberSetting(remember);
-  };
-  
-  const clearCurrentTickerAnnotations = () => {
-    if (selectedStock) {
-      const updated = { ...annotationsBySymbol };
-      delete updated[selectedStock.displaySymbol];
-      setAnnotationsBySymbol(updated);
-      saveAnnotations(updated);
-    }
-  };
-  
-  const clearAllAnnotations = () => {
-    setAnnotationsBySymbol({});
-    saveAnnotations({});
-  };
 
   const getTypeColor = (type: string) => {
     switch (type.toLowerCase()) {
@@ -368,22 +330,6 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
       )}
 
 
-      {/* Price Chart */}
-      {selectedStock && (
-        <div className="mt-6">
-          <PriceChart
-            symbol={selectedStock.displaySymbol}
-            name={selectedStock.description}
-            currentPrice="--"
-            percentChange="0"
-            marketCap="--"
-            annotations={currentAnnotations}
-            onAnnotationsChange={handleAnnotationsChange}
-            rememberPerTicker={rememberPerTicker}
-            onClearAll={Object.keys(annotationsBySymbol).length > 0 ? clearAllAnnotations : undefined}
-          />
-        </div>
-      )}
     </div>
   );
 }
@@ -477,6 +423,61 @@ function CookiePolicyBanner() {
 }
 
 function ChartMaker() {
+  const [chartMakerSelectedStock, setChartMakerSelectedStock] = useState<GlobalSearchResult | null>(null);
+  
+  // Annotation state management - moved from GlobalTickerSearch
+  const [annotationsBySymbol, setAnnotationsBySymbol] = useState<Record<string, Annotation[]>>(() => getStoredAnnotations());
+  const [rememberPerTicker, setRememberPerTicker] = useState(() => getRememberSetting());
+  
+  // Current annotations for selected stock
+  const currentAnnotations = chartMakerSelectedStock && rememberPerTicker 
+    ? annotationsBySymbol[chartMakerSelectedStock.displaySymbol] || []
+    : [];
+
+  // Annotation management functions
+  const handleAnnotationsChange = (newAnnotations: Annotation[]) => {
+    if (chartMakerSelectedStock && rememberPerTicker) {
+      const updated = {
+        ...annotationsBySymbol,
+        [chartMakerSelectedStock.displaySymbol]: newAnnotations
+      };
+      setAnnotationsBySymbol(updated);
+      saveAnnotations(updated);
+    }
+  };
+  
+  const handleRememberToggle = (remember: boolean) => {
+    setRememberPerTicker(remember);
+    saveRememberSetting(remember);
+  };
+  
+  const clearCurrentTickerAnnotations = () => {
+    if (chartMakerSelectedStock) {
+      const updated = { ...annotationsBySymbol };
+      delete updated[chartMakerSelectedStock.displaySymbol];
+      setAnnotationsBySymbol(updated);
+      saveAnnotations(updated);
+    }
+  };
+  
+  const clearAllAnnotations = () => {
+    setAnnotationsBySymbol({});
+    saveAnnotations({});
+  };
+
+  const handleIndexSelect = (symbol: string, name: string) => {
+    const indexResult: GlobalSearchResult = {
+      symbol: symbol,
+      description: name,
+      displaySymbol: symbol,
+      type: 'Index',
+      exchange: symbol.startsWith('^') ? 'Index' : 'ETF',
+      currency: symbol.startsWith('^') ? 'USD' : 'USD'
+    };
+    
+    setChartMakerSelectedStock(indexResult);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -523,7 +524,7 @@ function ChartMaker() {
               </p>
             </div>
             
-            <GlobalTickerSearch />
+            <GlobalTickerSearch onSelectStock={setChartMakerSelectedStock} />
           </Card>
 
           {/* Info Section */}
@@ -562,6 +563,110 @@ function ChartMaker() {
               </p>
             </div>
           </Card>
+
+          {/* Index Coverage Section */}
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold mb-4">Index Coverage</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm text-muted-foreground">
+              <div>
+                <h4 className="font-medium text-foreground mb-2">US Indices</h4>
+                <ul className="space-y-1">
+                  <li>• <button 
+                    onClick={() => handleIndexSelect('^GSPC', 'S&P 500')} 
+                    className="text-[#5AF5FA] hover:text-[#4FE5EA] transition-colors underline underline-offset-2 text-left bg-transparent border-none cursor-pointer" 
+                    data-testid="link-sp500"
+                  >S&P 500 (^GSPC)</button></li>
+                  <li>• <button 
+                    onClick={() => handleIndexSelect('^DJI', 'Dow Jones Industrial Average')} 
+                    className="text-[#5AF5FA] hover:text-[#4FE5EA] transition-colors underline underline-offset-2 text-left bg-transparent border-none cursor-pointer" 
+                    data-testid="link-dow"
+                  >Dow Jones (^DJI)</button></li>
+                  <li>• <button 
+                    onClick={() => handleIndexSelect('^IXIC', 'NASDAQ Composite')} 
+                    className="text-[#5AF5FA] hover:text-[#4FE5EA] transition-colors underline underline-offset-2 text-left bg-transparent border-none cursor-pointer" 
+                    data-testid="link-nasdaq-comp"
+                  >NASDAQ Composite (^IXIC)</button></li>
+                  <li>• <button 
+                    onClick={() => handleIndexSelect('^RUT', 'Russell 2000')} 
+                    className="text-[#5AF5FA] hover:text-[#4FE5EA] transition-colors underline underline-offset-2 text-left bg-transparent border-none cursor-pointer" 
+                    data-testid="link-russell"
+                  >Russell 2000 (^RUT)</button></li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-medium text-foreground mb-2">European Indices</h4>
+                <ul className="space-y-1">
+                  <li>• <button 
+                    onClick={() => handleIndexSelect('^FTSE', 'FTSE 100')} 
+                    className="text-[#5AF5FA] hover:text-[#4FE5EA] transition-colors underline underline-offset-2 text-left bg-transparent border-none cursor-pointer" 
+                    data-testid="link-ftse100"
+                  >FTSE 100 (^FTSE)</button></li>
+                  <li>• <button 
+                    onClick={() => handleIndexSelect('^GDAXI', 'DAX')} 
+                    className="text-[#5AF5FA] hover:text-[#4FE5EA] transition-colors underline underline-offset-2 text-left bg-transparent border-none cursor-pointer" 
+                    data-testid="link-dax"
+                  >DAX (^GDAXI)</button></li>
+                  <li>• <button 
+                    onClick={() => handleIndexSelect('^FCHI', 'CAC 40')} 
+                    className="text-[#5AF5FA] hover:text-[#4FE5EA] transition-colors underline underline-offset-2 text-left bg-transparent border-none cursor-pointer" 
+                    data-testid="link-cac40"
+                  >CAC 40 (^FCHI)</button></li>
+                  <li>• <button 
+                    onClick={() => handleIndexSelect('^STOXX50E', 'Euro Stoxx 50')} 
+                    className="text-[#5AF5FA] hover:text-[#4FE5EA] transition-colors underline underline-offset-2 text-left bg-transparent border-none cursor-pointer" 
+                    data-testid="link-eurostoxx"
+                  >Euro Stoxx 50 (^STOXX50E)</button></li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-medium text-foreground mb-2">Asian & Global Indices</h4>
+                <ul className="space-y-1">
+                  <li>• <button 
+                    onClick={() => handleIndexSelect('^N225', 'Nikkei 225')} 
+                    className="text-[#5AF5FA] hover:text-[#4FE5EA] transition-colors underline underline-offset-2 text-left bg-transparent border-none cursor-pointer" 
+                    data-testid="link-nikkei"
+                  >Nikkei 225 (^N225)</button></li>
+                  <li>• <button 
+                    onClick={() => handleIndexSelect('^HSI', 'Hang Seng')} 
+                    className="text-[#5AF5FA] hover:text-[#4FE5EA] transition-colors underline underline-offset-2 text-left bg-transparent border-none cursor-pointer" 
+                    data-testid="link-hangseng"
+                  >Hang Seng (^HSI)</button></li>
+                  <li>• <button 
+                    onClick={() => handleIndexSelect('ACWI', 'iShares MSCI ACWI ETF')} 
+                    className="text-[#5AF5FA] hover:text-[#4FE5EA] transition-colors underline underline-offset-2 text-left bg-transparent border-none cursor-pointer" 
+                    data-testid="link-acwi"
+                  >MSCI All Country (ACWI)</button></li>
+                  <li>• <button 
+                    onClick={() => handleIndexSelect('KSA', 'iShares MSCI Saudi Arabia ETF')} 
+                    className="text-[#5AF5FA] hover:text-[#4FE5EA] transition-colors underline underline-offset-2 text-left bg-transparent border-none cursor-pointer" 
+                    data-testid="link-ksa"
+                  >Saudi Arabia (KSA)</button></li>
+                </ul>
+              </div>
+            </div>
+            <div className="mt-4 p-4 bg-muted/50 rounded-lg">
+              <p className="text-sm text-white">
+                <strong className="text-white">Tip:</strong> Click any index to view its price chart with real-time data, technical indicators, and annotation tools.
+              </p>
+            </div>
+          </Card>
+
+          {/* Price Chart - renders for both search results and index selections */}
+          {chartMakerSelectedStock && (
+            <div className="mt-6">
+              <PriceChart
+                symbol={chartMakerSelectedStock.displaySymbol}
+                name={chartMakerSelectedStock.description}
+                currentPrice="--"
+                percentChange="0"
+                marketCap="--"
+                annotations={currentAnnotations}
+                onAnnotationsChange={handleAnnotationsChange}
+                rememberPerTicker={rememberPerTicker}
+                onClearAll={Object.keys(annotationsBySymbol).length > 0 ? clearAllAnnotations : undefined}
+              />
+            </div>
+          )}
         </div>
       </main>
       
