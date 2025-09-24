@@ -228,21 +228,21 @@ export function PriceChart({
     const priceAtMouse = maxPrice - (relativeY / chartHeight) * priceRange;
     
     // Find the closest horizontal annotation
-    const horizontalAnnotations = annotations.filter(ann => ann.type === 'horizontal') as Annotation[];
     let closestHorizontalAnnotation: Annotation | null = null;
     let closestHorizontalDistance = Infinity;
     
-    horizontalAnnotations.forEach(annotation => {
-      const distance = Math.abs(annotation.price - priceAtMouse);
-      const toleranceInPrice = priceRange * 0.005; // 0.5% of price range tolerance - much more precise
-      if (distance < closestHorizontalDistance && distance < toleranceInPrice) {
-        closestHorizontalDistance = distance;
-        closestHorizontalAnnotation = annotation;
+    annotations.forEach(annotation => {
+      if (annotation.type === 'horizontal' && 'price' in annotation) {
+        const distance = Math.abs(annotation.price - priceAtMouse);
+        const toleranceInPrice = priceRange * 0.005; // 0.5% of price range tolerance - much more precise
+        if (distance < closestHorizontalDistance && distance < toleranceInPrice) {
+          closestHorizontalDistance = distance;
+          closestHorizontalAnnotation = annotation;
+        }
       }
     });
     
     // Find the closest vertical annotation (text annotation)
-    const verticalAnnotations = annotations.filter(ann => ann.type === 'text') as Annotation[];
     let closestVerticalAnnotation: Annotation | null = null;
     let closestVerticalDistance = Infinity;
     
@@ -254,28 +254,30 @@ export function PriceChart({
       const xPercent = relativeX / chartWidth;
       const estimatedDataIndex = Math.round(xPercent * (chartData.data.length - 1));
       
-      verticalAnnotations.forEach(annotation => {
-        const actualDataIndex = chartData.data.findIndex(d => d.timestamp === annotation.timestamp);
-        if (actualDataIndex !== -1) {
-          const distance = Math.abs(actualDataIndex - estimatedDataIndex);
-          const toleranceInDataPoints = Math.max(2, chartData.data.length * 0.02); // 2% of data points tolerance
-          if (distance < closestVerticalDistance && distance < toleranceInDataPoints) {
-            closestVerticalDistance = distance;
-            closestVerticalAnnotation = annotation;
+      annotations.forEach(annotation => {
+        if (annotation.type === 'text' && 'timestamp' in annotation) {
+          const actualDataIndex = chartData.data.findIndex(d => d.timestamp === annotation.timestamp);
+          if (actualDataIndex !== -1) {
+            const distance = Math.abs(actualDataIndex - estimatedDataIndex);
+            const toleranceInDataPoints = Math.max(2, chartData.data.length * 0.02); // 2% of data points tolerance
+            if (distance < closestVerticalDistance && distance < toleranceInDataPoints) {
+              closestVerticalDistance = distance;
+              closestVerticalAnnotation = annotation;
+            }
           }
         }
       });
     }
     
     // Prioritize the closest annotation (horizontal or vertical)
-    if (closestHorizontalAnnotation && 'price' in closestHorizontalAnnotation && (!closestVerticalAnnotation || closestHorizontalDistance < closestVerticalDistance * 0.5)) {
+    if (closestHorizontalAnnotation && closestHorizontalAnnotation.type === 'horizontal' && 'price' in closestHorizontalAnnotation && (!closestVerticalAnnotation || closestHorizontalDistance < closestVerticalDistance * 0.5)) {
       setIsDragging(true);
       setDragAnnotationId(closestHorizontalAnnotation.id);
       setDragStartY(mouseY);
       setDragStartPrice(closestHorizontalAnnotation.price);
       event.preventDefault();
       event.stopPropagation();
-    } else if (closestVerticalAnnotation && 'timestamp' in closestVerticalAnnotation && closestVerticalAnnotation.id && closestVerticalAnnotation.timestamp) {
+    } else if (closestVerticalAnnotation && closestVerticalAnnotation.type === 'text' && 'timestamp' in closestVerticalAnnotation && closestVerticalAnnotation.id && closestVerticalAnnotation.timestamp) {
       setIsDraggingVertical(true);
       setDragVerticalAnnotationId(closestVerticalAnnotation.id);
       setDragVerticalStartX(event.clientX);
