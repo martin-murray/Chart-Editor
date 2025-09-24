@@ -760,7 +760,7 @@ export function ComparisonChart({
         return 'text-[#FAFF50] bg-[#FAFF50]/30';
       case 'etp':
       case 'etf':
-        return 'text-purple-600 dark:text-purple-400 bg-purple-500/10';
+        return 'text-[#FFA5FF] bg-[#FFA5FF]/30';
       case 'mutual fund':
         return 'text-orange-600 dark:text-orange-400 bg-orange-500/10';
       default:

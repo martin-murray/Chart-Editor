@@ -13,6 +13,7 @@ interface SearchResult {
   price: string;
   percentChange: string;
   marketCap: string;
+  type?: string;
 }
 
 interface TickerSearchProps {
@@ -50,16 +51,26 @@ export function TickerSearch({ onSelectStock }: TickerSearchProps) {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Fetch search results
+  // Fetch search results using global search for type tags
   const { data: searchResults = [], isLoading } = useQuery({
-    queryKey: ["/api/stocks/search", debouncedQuery],
+    queryKey: ["/api/stocks/global-search", debouncedQuery],
     queryFn: async (): Promise<SearchResult[]> => {
       if (!debouncedQuery || debouncedQuery.trim().length < 2) {
         return [];
       }
-      const response = await fetch(`/api/stocks/search?q=${encodeURIComponent(debouncedQuery.trim())}`);
+      const response = await fetch(`/api/stocks/global-search?q=${encodeURIComponent(debouncedQuery.trim())}`);
       if (!response.ok) throw new Error("Search failed");
-      return await response.json();
+      const globalResults = await response.json();
+      
+      // Transform global search results to SearchResult format
+      return globalResults.map((result: any) => ({
+        symbol: result.symbol,
+        name: result.description,
+        price: "0.00", // Global search doesn't include price, will be shown when selected
+        percentChange: "0.00", // Global search doesn't include change, will be shown when selected
+        marketCap: "N/A", // Global search doesn't include market cap
+        type: result.type || "Common Stock" // Include type for tags
+      }));
     },
     enabled: debouncedQuery.trim().length >= 2,
   });
@@ -137,6 +148,23 @@ export function TickerSearch({ onSelectStock }: TickerSearchProps) {
     };
   };
 
+  // Type tag styling function - matches comparison chart styling
+  const getTypeColor = (type: string) => {
+    switch (type.toLowerCase()) {
+      case 'common stock':
+        return 'text-blue-600 dark:text-blue-400 bg-blue-500/10';
+      case 'index':
+        return 'text-[#FAFF50] bg-[#FAFF50]/30';
+      case 'etp':
+      case 'etf':
+        return 'text-[#FFA5FF] bg-[#FFA5FF]/30';
+      case 'mutual fund':
+        return 'text-orange-600 dark:text-orange-400 bg-orange-500/10';
+      default:
+        return 'text-gray-600 dark:text-gray-400 bg-gray-500/10';
+    }
+  };
+
   return (
     <div ref={containerRef} className="relative">
       {/* Search Input */}
@@ -183,9 +211,12 @@ export function TickerSearch({ onSelectStock }: TickerSearchProps) {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-foreground">{stock.symbol}</span>
-                          <span className="text-sm text-muted-foreground truncate">
-                            {stock.name}
+                          <span className={cn("px-2 py-1 rounded-full text-xs font-medium", getTypeColor(stock.type || "Common Stock"))}>
+                            {stock.type || "Common Stock"}
                           </span>
+                        </div>
+                        <div className="text-sm text-muted-foreground truncate">
+                          {stock.name}
                         </div>
                         <div className="text-xs text-muted-foreground mt-1">
                           {stock.marketCap}
@@ -245,9 +276,12 @@ export function TickerSearch({ onSelectStock }: TickerSearchProps) {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <span className="font-semibold text-foreground">{stock.symbol}</span>
-                            <span className="text-sm text-muted-foreground truncate">
-                              {stock.name}
+                            <span className={cn("px-2 py-1 rounded-full text-xs font-medium", getTypeColor(stock.type || "Common Stock"))}>
+                              {stock.type || "Common Stock"}
                             </span>
+                          </div>
+                          <div className="text-sm text-muted-foreground truncate mt-1">
+                            {stock.name}
                           </div>
                           <div className="text-xs text-muted-foreground mt-1">
                             {stock.marketCap}

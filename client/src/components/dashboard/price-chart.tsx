@@ -589,8 +589,13 @@ export function PriceChart({
     return currencyMap[currencyCode.toUpperCase()] || currencyCode.toUpperCase() + ' ';
   };
 
-  const formatPrice = (value: number) => {
+  const formatPrice = (value: number | undefined | null) => {
     const currencySymbol = getCurrencySymbol((stockDetails?.profile as any)?.currency);
+    
+    // Handle undefined/null values
+    if (value === undefined || value === null || isNaN(value)) {
+      return `${currencySymbol}N/A`;
+    }
     
     // For JPY and similar currencies, don't show decimal places
     if ((stockDetails?.profile as any)?.currency === 'JPY' || (stockDetails?.profile as any)?.currency === 'KRW') {
