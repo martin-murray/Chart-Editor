@@ -527,6 +527,23 @@ function ChartMaker() {
             <GlobalTickerSearch onSelectStock={setChartMakerSelectedStock} />
           </Card>
 
+          {/* Price Chart - renders for both search results and index selections */}
+          {chartMakerSelectedStock && (
+            <div className="mt-6">
+              <PriceChart
+                symbol={chartMakerSelectedStock.displaySymbol}
+                name={chartMakerSelectedStock.description}
+                currentPrice="--"
+                percentChange="0"
+                marketCap="--"
+                annotations={currentAnnotations}
+                onAnnotationsChange={handleAnnotationsChange}
+                rememberPerTicker={rememberPerTicker}
+                onClearAll={Object.keys(annotationsBySymbol).length > 0 ? clearAllAnnotations : undefined}
+              />
+            </div>
+          )}
+
           {/* Info Section */}
           <Card className="p-6">
             <h3 className="text-lg font-semibold mb-4">Global Market Coverage</h3>
@@ -650,23 +667,6 @@ function ChartMaker() {
               </p>
             </div>
           </Card>
-
-          {/* Price Chart - renders for both search results and index selections */}
-          {chartMakerSelectedStock && (
-            <div className="mt-6">
-              <PriceChart
-                symbol={chartMakerSelectedStock.displaySymbol}
-                name={chartMakerSelectedStock.description}
-                currentPrice="--"
-                percentChange="0"
-                marketCap="--"
-                annotations={currentAnnotations}
-                onAnnotationsChange={handleAnnotationsChange}
-                rememberPerTicker={rememberPerTicker}
-                onClearAll={Object.keys(annotationsBySymbol).length > 0 ? clearAllAnnotations : undefined}
-              />
-            </div>
-          )}
         </div>
       </main>
       
