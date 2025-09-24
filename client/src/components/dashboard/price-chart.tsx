@@ -270,20 +270,24 @@ export function PriceChart({
     }
     
     // Prioritize the closest annotation (horizontal or vertical)
-    if (closestHorizontalAnnotation && closestHorizontalAnnotation.type === 'horizontal' && 'price' in closestHorizontalAnnotation && (!closestVerticalAnnotation || closestHorizontalDistance < closestVerticalDistance * 0.5)) {
-      setIsDragging(true);
-      setDragAnnotationId(closestHorizontalAnnotation.id);
-      setDragStartY(mouseY);
-      setDragStartPrice(closestHorizontalAnnotation.price);
-      event.preventDefault();
-      event.stopPropagation();
-    } else if (closestVerticalAnnotation && closestVerticalAnnotation.type === 'text' && 'timestamp' in closestVerticalAnnotation && closestVerticalAnnotation.id && closestVerticalAnnotation.timestamp) {
-      setIsDraggingVertical(true);
-      setDragVerticalAnnotationId(closestVerticalAnnotation.id);
-      setDragVerticalStartX(event.clientX);
-      setDragVerticalStartTimestamp(closestVerticalAnnotation.timestamp);
-      event.preventDefault();
-      event.stopPropagation();
+    if (closestHorizontalAnnotation && (!closestVerticalAnnotation || closestHorizontalDistance < closestVerticalDistance * 0.5)) {
+      if (closestHorizontalAnnotation.type === 'horizontal') {
+        setIsDragging(true);
+        setDragAnnotationId(closestHorizontalAnnotation.id);
+        setDragStartY(mouseY);
+        setDragStartPrice(closestHorizontalAnnotation.price);
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    } else if (closestVerticalAnnotation) {
+      if (closestVerticalAnnotation.type === 'text' && closestVerticalAnnotation.id && closestVerticalAnnotation.timestamp) {
+        setIsDraggingVertical(true);
+        setDragVerticalAnnotationId(closestVerticalAnnotation.id);
+        setDragVerticalStartX(event.clientX);
+        setDragVerticalStartTimestamp(closestVerticalAnnotation.timestamp);
+        event.preventDefault();
+        event.stopPropagation();
+      }
     }
   };
 
