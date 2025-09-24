@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, Globe, Building2, DollarSign, Info, Clock } from "lucide-react";
+import { Search, Globe, Building2, DollarSign, Info, Clock, Calendar } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { searchSuffix, getAllSuffixes, type SuffixInfo } from "@/data/suffix-mappings";
 import { computeMarketStatus, type MarketStatus } from "@/lib/marketHours";
+import { getUpcomingHolidays, getMarketFromExchange, type MarketHoliday } from "@/data/market-holidays";
 import { cn } from "@/lib/utils";
 
 interface SuffixSearchModalProps {
@@ -20,6 +21,7 @@ export function SuffixSearchModal({ children }: SuffixSearchModalProps) {
   const [noResults, setNoResults] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [marketStatus, setMarketStatus] = useState<MarketStatus | null>(null);
+  const [upcomingHolidays, setUpcomingHolidays] = useState<MarketHoliday[]>([]);
 
   const allSuffixes = getAllSuffixes();
 
@@ -30,6 +32,7 @@ export function SuffixSearchModal({ children }: SuffixSearchModalProps) {
     if (!query.trim()) {
       setSearchResult(null);
       setMarketStatus(null);
+      setUpcomingHolidays([]);
       return;
     }
 
@@ -42,9 +45,19 @@ export function SuffixSearchModal({ children }: SuffixSearchModalProps) {
       } else {
         setMarketStatus(null);
       }
+      
+      // Get upcoming holidays for this market
+      const market = getMarketFromExchange(result.exchange);
+      if (market) {
+        const holidays = getUpcomingHolidays(market, 60); // Next 60 days
+        setUpcomingHolidays(holidays);
+      } else {
+        setUpcomingHolidays([]);
+      }
     } else {
       setSearchResult(null);
       setMarketStatus(null);
+      setUpcomingHolidays([]);
       setNoResults(true);
     }
   };
@@ -59,6 +72,7 @@ export function SuffixSearchModal({ children }: SuffixSearchModalProps) {
     setSearchQuery("");
     setSearchResult(null);
     setMarketStatus(null);
+    setUpcomingHolidays([]);
     setNoResults(false);
   };
 
@@ -207,6 +221,53 @@ export function SuffixSearchModal({ children }: SuffixSearchModalProps) {
                       </p>
                       <p className="text-xs text-muted-foreground" data-testid="text-market-hours">
                         {marketStatus.marketHoursGMT}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* National Holidays Section */}
+                {upcomingHolidays.length > 0 && (
+                  <div className="flex items-start gap-3 pt-2 border-t">
+                    <Calendar className="h-5 w-5 text-[#FAFF50] mt-0.5 flex-shrink-0" data-testid="icon-calendar" />
+                    <div className="space-y-2">
+                      <p className="font-medium text-sm">Upcoming Market Holidays</p>
+                      <div className="space-y-1">
+                        {upcomingHolidays.map((holiday, index) => {
+                          const holidayDate = new Date(holiday.date);
+                          const isToday = new Date().toDateString() === holidayDate.toDateString();
+                          const dayOfWeek = holidayDate.toLocaleDateString('en-US', { weekday: 'short' });
+                          const formattedDate = holidayDate.toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric' 
+                          });
+                          
+                          return (
+                            <div key={`${holiday.date}-${index}`} className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <p className="text-sm text-muted-foreground">
+                                  {holiday.name}
+                                </p>
+                                {holiday.isHalfDay && (
+                                  <Badge variant="outline" className="text-xs px-1 py-0 text-orange-600 border-orange-300 dark:text-orange-400">
+                                    Half Day
+                                  </Badge>
+                                )}
+                                {isToday && (
+                                  <Badge variant="secondary" className="text-xs px-1 py-0 bg-red-100 text-red-800 border-red-300 dark:bg-red-900 dark:text-red-100">
+                                    Today
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-xs text-muted-foreground">
+                                {dayOfWeek} {formattedDate}
+                              </p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Markets will be closed on these dates
                       </p>
                     </div>
                   </div>
