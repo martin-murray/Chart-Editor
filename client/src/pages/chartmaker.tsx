@@ -599,10 +599,10 @@ function ChartMaker() {
                     data-testid="link-dow"
                   >Dow Jones (^DJI)</button></li>
                   <li>• <button 
-                    onClick={() => handleIndexSelect('^IXIC', 'NASDAQ Composite')} 
+                    onClick={() => handleIndexSelect('QQQ', 'NASDAQ Composite (QQQ)')} 
                     className="text-[#5AF5FA] hover:text-[#4FE5EA] transition-colors underline underline-offset-2 text-left bg-transparent border-none cursor-pointer" 
                     data-testid="link-nasdaq-comp"
-                  >NASDAQ Composite (^IXIC)</button></li>
+                  >NASDAQ Composite (QQQ)</button></li>
                   <li>• <button 
                     onClick={() => handleIndexSelect('^RUT', 'Russell 2000')} 
                     className="text-[#5AF5FA] hover:text-[#4FE5EA] transition-colors underline underline-offset-2 text-left bg-transparent border-none cursor-pointer" 
