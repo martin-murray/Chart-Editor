@@ -15,14 +15,22 @@ interface SuffixSearchModalProps {
   children: React.ReactNode;
 }
 
-// Mapping from exchange names to Finnhub exchange codes
+// Mapping from exchange names to Finnhub exchange codes  
 const exchangeToFinnhubCode: { [key: string]: string } = {
-  'LSE': 'US', // London Stock Exchange -> use US for UK market holidays
+  // US Exchanges
   'NYSE': 'US',
-  'NASDAQ': 'US', 
-  'Euronext Paris': 'US', // Using US as fallback, can be updated as needed
+  'NASDAQ': 'US',
+  'NASDAQ Global Select Market': 'US',
+  'NASDAQ Global Market': 'US', 
+  'NASDAQ Capital Market': 'US',
+  'New York Stock Exchange': 'US',
+  
+  // International (fallback to US for now)
+  'LSE': 'US',
+  'London Stock Exchange': 'US',
+  'Euronext Paris': 'US',
   'Frankfurt Stock Exchange': 'US',
-  'SIX Swiss Exchange': 'US',
+  'SIX Swiss Exchange': 'US', 
   'Milan Stock Exchange': 'US',
   'Tokyo Stock Exchange': 'US',
   'Hong Kong Stock Exchange': 'US',
@@ -56,13 +64,21 @@ export function SuffixSearchModal({ children }: SuffixSearchModalProps) {
     gcTime: 24 * 60 * 60 * 1000, // 24 hours
   });
 
-  // Process holiday data to get upcoming holidays
+  // Process holiday data to get upcoming holidays  
   const upcomingHolidays = holidayData?.holidays?.filter((holiday: any) => {
-    const holidayDate = new Date(holiday.eventDate);
-    const today = new Date();
-    const maxDate = new Date();
-    maxDate.setDate(today.getDate() + 90); // Next 90 days
-    return holidayDate >= today && holidayDate <= maxDate;
+    try {
+      const holidayDate = new Date(holiday.atDate || holiday.eventDate || holiday.date);
+      if (isNaN(holidayDate.getTime())) {
+        return false;
+      }
+      
+      const today = new Date();
+      const maxDate = new Date();
+      maxDate.setDate(today.getDate() + 365); // Next 365 days (full year)
+      return holidayDate >= today && holidayDate <= maxDate;
+    } catch (error) {
+      return false;
+    }
   }).slice(0, 5) || []; // Limit to 5 upcoming holidays
 
   const handleSearch = (query: string) => {
@@ -255,48 +271,60 @@ export function SuffixSearchModal({ children }: SuffixSearchModalProps) {
                 )}
 
                 {/* National Holidays Section */}
-                {upcomingHolidays.length > 0 && (
+                {searchResult && finnhubExchange && (
                   <div className="flex items-start gap-3 pt-2 border-t">
                     <Calendar className="h-5 w-5 text-[#FAFF50] mt-0.5 flex-shrink-0" data-testid="icon-calendar" />
                     <div className="space-y-2">
                       <p className="font-medium text-sm">Upcoming Market Holidays</p>
-                      <div className="space-y-1">
-                        {upcomingHolidays.map((holiday: any, index: number) => {
-                          const holidayDate = new Date(holiday.eventDate || holiday.date);
-                          const isToday = new Date().toDateString() === holidayDate.toDateString();
-                          const dayOfWeek = holidayDate.toLocaleDateString('en-US', { weekday: 'short' });
-                          const formattedDate = holidayDate.toLocaleDateString('en-US', { 
-                            month: 'short', 
-                            day: 'numeric' 
-                          });
-                          
-                          return (
-                            <div key={`${holiday.eventDate || holiday.date}-${index}`} className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <p className="text-sm text-muted-foreground">
-                                  {holiday.name || holiday.event || 'Market Holiday'}
-                                </p>
-                                {holiday.isHalfDay && (
-                                  <Badge variant="outline" className="text-xs px-1 py-0 text-orange-600 border-orange-300 dark:text-orange-400">
-                                    Half Day
-                                  </Badge>
-                                )}
-                                {isToday && (
-                                  <Badge variant="secondary" className="text-xs px-1 py-0 bg-red-100 text-red-800 border-red-300 dark:bg-red-900 dark:text-red-100">
-                                    Today
-                                  </Badge>
-                                )}
-                              </div>
-                              <p className="text-xs text-muted-foreground">
-                                {dayOfWeek} {formattedDate}
-                              </p>
-                            </div>
-                          );
-                        })}
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Markets will be closed on these dates
-                      </p>
+                      {upcomingHolidays.length > 0 ? (
+                        <>
+                          <div className="space-y-1">
+                            {upcomingHolidays.map((holiday: any, index: number) => {
+                              const holidayDate = new Date(holiday.atDate || holiday.eventDate || holiday.date);
+                              const isToday = new Date().toDateString() === holidayDate.toDateString();
+                              const dayOfWeek = holidayDate.toLocaleDateString('en-US', { weekday: 'short' });
+                              const formattedDate = holidayDate.toLocaleDateString('en-US', { 
+                                month: 'short', 
+                                day: 'numeric',
+                                year: 'numeric'
+                              });
+                              
+                              return (
+                                <div key={`${holiday.atDate || holiday.eventDate || holiday.date}-${index}`} className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <p className="text-sm text-muted-foreground">
+                                      {holiday.eventName || holiday.name || holiday.event || 'Market Holiday'}
+                                    </p>
+                                    {(holiday.tradingHour && holiday.tradingHour !== '') && (
+                                      <Badge variant="outline" className="text-xs px-1 py-0 text-orange-600 border-orange-300 dark:text-orange-400">
+                                        Half Day
+                                      </Badge>
+                                    )}
+                                    {isToday && (
+                                      <Badge variant="secondary" className="text-xs px-1 py-0 bg-red-100 text-red-800 border-red-300 dark:bg-red-900 dark:text-red-100">
+                                        Today
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <p className="text-xs text-muted-foreground">
+                                    {dayOfWeek} {formattedDate}
+                                  </p>
+                                </div>
+                              );
+                            })}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Markets will be closed on these dates
+                          </p>
+                        </>
+                      ) : (
+                        <div className="text-sm text-muted-foreground">
+                          <p>Market is closed on: Loading holiday data...</p>
+                          <p className="text-xs mt-1">
+                            Holiday information provided by Finnhub API
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
