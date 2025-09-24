@@ -25,26 +25,38 @@ const exchangeToFinnhubCode: { [key: string]: string } = {
   'NASDAQ Capital Market': 'US',
   'New York Stock Exchange': 'US',
   
-  // International Exchanges - Finnhub codes
+  // International Exchanges - matching suffix-mappings.ts names
   'LSE': 'L',  // London Stock Exchange
   'London Stock Exchange': 'L',
   'Euronext Paris': 'PA',  // Paris
-  'Frankfurt Stock Exchange': 'F',  // Frankfurt
-  'SIX Swiss Exchange': 'SW',  // Switzerland
-  'Milan Stock Exchange': 'MI',  // Milan
-  'Tokyo Stock Exchange': 'T',  // Tokyo
-  'Hong Kong Stock Exchange': 'HK',  // Hong Kong
+  'XETRA': 'F',  // Frankfurt/Germany
+  'Deutsche Börse XETRA': 'F',
+  'SIX': 'SW',  // Switzerland
+  'SIX Swiss Exchange': 'SW',
+  'Borsa Italiana': 'MI',  // Milan
+  'Borsa Italiana (Milan Stock Exchange)': 'MI',
+  'TSE': 'T',  // Tokyo
+  'Tokyo Stock Exchange': 'T',
+  'HKEX': 'HK',  // Hong Kong
+  'Hong Kong Exchanges and Clearing': 'HK',
   'TSX': 'TO',  // Toronto
   'ASX': 'AX',  // Australia
+  'SSE': 'SS',  // Shanghai
+  'Shanghai Stock Exchange': 'SS',
+  'SZSE': 'SZ',  // Shenzhen
+  'Shenzhen Stock Exchange': 'SZ',
   
   // Additional European markets
   'OMX Stockholm': 'ST',  // Stockholm
   'Nasdaq Stockholm': 'ST',  // Stockholm
-  'OMX Copenhagen': 'CO',  // Copenhagen
-  'OMX Helsinki': 'HE',  // Helsinki
+  'OMXC': 'CO',  // Copenhagen
+  'Nasdaq Copenhagen (OMX Copenhagen)': 'CO',
+  'OMXH': 'HE',  // Helsinki  
+  'Nasdaq Helsinki (OMX Helsinki)': 'HE',
   'Euronext Amsterdam': 'AS',  // Amsterdam
   'Madrid Stock Exchange': 'MC',  // Madrid
-  'Oslo Stock Exchange': 'OL',  // Oslo
+  'OSE': 'OL',  // Oslo
+  'Oslo Stock Exchange (Euronext Oslo)': 'OL'
 };
 
 export function SuffixSearchModal({ children }: SuffixSearchModalProps) {
@@ -58,6 +70,11 @@ export function SuffixSearchModal({ children }: SuffixSearchModalProps) {
 
   // Get Finnhub exchange code for the selected exchange
   const finnhubExchange = searchResult?.exchange ? exchangeToFinnhubCode[searchResult.exchange] || 'US' : null;
+  
+  // Debug exchange mapping
+  if (searchResult?.exchange) {
+    console.log('Debug exchange mapping - Exchange:', searchResult.exchange, 'Mapped to Finnhub code:', finnhubExchange);
+  }
 
   // Fetch holidays from Finnhub API
   const { data: holidayData } = useQuery({
@@ -78,19 +95,30 @@ export function SuffixSearchModal({ children }: SuffixSearchModalProps) {
     try {
       const holidayDate = new Date(holiday.atDate || holiday.eventDate || holiday.date);
       if (isNaN(holidayDate.getTime())) {
+        console.warn('Invalid holiday date for exchange', finnhubExchange, ':', holiday);
         return false;
       }
       
       const today = new Date();
       const maxDate = new Date();
       maxDate.setDate(today.getDate() + 365); // Next 365 days (full year)
-      return holidayDate >= today && holidayDate <= maxDate;
+      const isUpcoming = holidayDate >= today && holidayDate <= maxDate;
+      
+      if (isUpcoming) {
+        console.log('Valid upcoming holiday for', finnhubExchange, ':', holiday.eventName || holiday.name, 'on', holidayDate.toDateString());
+      }
+      
+      return isUpcoming;
     } catch (error) {
+      console.error('Error processing holiday for', finnhubExchange, ':', holiday, error);
       return false;
     }
   }).slice(0, 5) || []; // Limit to 5 upcoming holidays
+  
+  console.log('Final upcoming holidays for', finnhubExchange, ':', upcomingHolidays.length, 'holidays');
 
   const handleSearch = (query: string) => {
+    console.log('Debug search - Query:', query);
     setSearchQuery(query);
     setNoResults(false);
 
@@ -101,8 +129,11 @@ export function SuffixSearchModal({ children }: SuffixSearchModalProps) {
     }
 
     const result = searchSuffix(query);
+    console.log('Debug search - Search result:', result);
+    
     if (result) {
       setSearchResult(result);
+      console.log('Debug search - Setting result with exchange:', result.exchange);
       // Update market status if market hours are available
       if (result.marketHours) {
         setMarketStatus(computeMarketStatus(result.marketHours));
@@ -284,7 +315,9 @@ export function SuffixSearchModal({ children }: SuffixSearchModalProps) {
                   <div className="flex items-start gap-3 pt-2 border-t">
                     <Calendar className="h-5 w-5 text-[#FAFF50] mt-0.5 flex-shrink-0" data-testid="icon-calendar" />
                     <div className="space-y-2">
-                      <p className="font-medium text-sm">Upcoming Market Holidays</p>
+                      <p className="font-medium text-sm">
+                        Upcoming Market Holidays - {searchResult.country}
+                      </p>
                       {upcomingHolidays.length > 0 ? (
                         <>
                           <div className="space-y-1">
@@ -328,9 +361,9 @@ export function SuffixSearchModal({ children }: SuffixSearchModalProps) {
                         </>
                       ) : (
                         <div className="text-sm text-muted-foreground">
-                          <p>Market is closed on: Loading holiday data...</p>
+                          <p>Market is closed on: Loading holiday data for {searchResult.country}...</p>
                           <p className="text-xs mt-1">
-                            Holiday information provided by Finnhub API
+                            Holiday information provided by Finnhub API (Exchange: {finnhubExchange})
                           </p>
                         </div>
                       )}
