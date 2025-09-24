@@ -413,64 +413,79 @@ export function ComparisonChart({
 
     if (allChartData.length === 0) return [];
 
-    // Find common timestamps (intersection of all tickers)
-    const allTimestamps = allChartData.map(item => 
-      new Set(item.data.map((d: any) => d.timestamp as number))
-    );
+    // Smart timestamp alignment - handles indices vs stocks with different data sources
+    // Instead of requiring exact timestamp matches, use nearest-time alignment
     
-    let commonTimestamps: number[];
-    if (allTimestamps.length === 1) {
-      commonTimestamps = Array.from(allTimestamps[0]) as number[];
-    } else {
-      // Find intersection of all timestamp sets
-      commonTimestamps = (Array.from(allTimestamps[0]) as number[]).filter(timestamp =>
-        allTimestamps.every(set => set.has(timestamp))
-      );
-    }
+    // Get all unique timestamps from all tickers and sort them
+    const allTimestamps = new Set<number>();
+    allChartData.forEach(({ data }) => {
+      data.forEach((d: any) => allTimestamps.add(d.timestamp as number));
+    });
+    
+    const sortedTimestamps = Array.from(allTimestamps).sort((a, b) => a - b);
+    
+    if (sortedTimestamps.length === 0) return [];
 
-    // Sort timestamps
-    commonTimestamps.sort((a, b) => a - b);
+    // Helper function to find nearest data point for a given timestamp
+    const findNearestPoint = (data: any[], targetTimestamp: number) => {
+      if (data.length === 0) return null;
+      
+      // Find the closest timestamp within a reasonable window (6 hours = 21600 seconds)
+      const maxDiff = 21600 * 1000; // 6 hours in milliseconds
+      let nearest = null;
+      let minDiff = Infinity;
+      
+      for (const point of data) {
+        const diff = Math.abs(point.timestamp - targetTimestamp);
+        if (diff < minDiff && diff <= maxDiff) {
+          minDiff = diff;
+          nearest = point;
+        }
+      }
+      
+      return nearest;
+    };
 
-    if (commonTimestamps.length === 0) return [];
-
-    // Calculate base prices for each ticker from the first common timestamp
+    // Calculate base prices using first available data point for each ticker
     const basePrices: Record<string, number> = {};
-    const firstTimestamp = commonTimestamps[0];
-    
     allChartData.forEach(({ ticker, data }) => {
-      const firstPoint = data.find((d: any) => d.timestamp === firstTimestamp);
-      if (firstPoint) {
-        basePrices[ticker.symbol] = firstPoint.close;
+      if (data.length > 0) {
+        // Use the first data point as base for percentage calculation
+        basePrices[ticker.symbol] = data[0].close;
       }
     });
 
-    // Build aligned chart data with percentage calculations
-    const alignedData: ChartDataPoint[] = commonTimestamps.map(timestamp => {
-      // Find the time string from the first ticker's data for this timestamp
-      const firstTickerData = allChartData[0]?.data.find((d: any) => d.timestamp === timestamp);
-      const timeString = firstTickerData?.time || new Date(timestamp * 1000).toISOString();
-      
+    // Build aligned chart data with smart timestamp matching
+    const alignedData: ChartDataPoint[] = [];
+    
+    for (const timestamp of sortedTimestamps) {
       const dataPoint: ChartDataPoint = {
         timestamp,
-        time: timeString, // Store raw time string for proper formatting
-        date: formatTime(timeString, timeframe), // Keep for fallback compatibility
+        time: new Date(timestamp).toISOString(),
+        date: formatTime(new Date(timestamp).toISOString(), timeframe)
       };
-
-      // Add percentage data for each ticker
+      
+      let hasAnyData = false;
+      
+      // For each ticker, find the nearest data point to this timestamp
       allChartData.forEach(({ ticker, data }) => {
-        const tickerPoint = data.find((d: any) => d.timestamp === timestamp);
+        const nearestPoint = findNearestPoint(data, timestamp);
         const basePrice = basePrices[ticker.symbol];
         
-        if (tickerPoint && basePrice > 0) {
+        if (nearestPoint && basePrice > 0) {
           // Calculate percentage change from base price
-          const percentageChange = ((tickerPoint.close - basePrice) / basePrice) * 100;
+          const percentageChange = ((nearestPoint.close - basePrice) / basePrice) * 100;
           dataPoint[`${ticker.symbol}_percentage`] = parseFloat(percentageChange.toFixed(2));
-          dataPoint[`${ticker.symbol}_price`] = tickerPoint.close;
+          dataPoint[`${ticker.symbol}_price`] = nearestPoint.close;
+          hasAnyData = true;
         }
       });
-
-      return dataPoint;
-    });
+      
+      // Only include data points where at least one ticker has data
+      if (hasAnyData) {
+        alignedData.push(dataPoint);
+      }
+    }
 
     return alignedData;
   }, [tickers, tickerQueries, timeframe]);
