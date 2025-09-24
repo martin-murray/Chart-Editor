@@ -42,6 +42,7 @@ interface SearchResult {
   price: string;
   percentChange: string;
   marketCap: string;
+  type?: string;
 }
 
 interface Annotation {
@@ -722,7 +723,8 @@ export function ComparisonChart({
         name: result.description,
         price: "0.00", // Global search doesn't include price, will be fetched when added
         percentChange: "0.00", // Global search doesn't include change, will be fetched when added
-        marketCap: "N/A" // Global search doesn't include market cap, will be fetched when added
+        marketCap: "N/A", // Global search doesn't include market cap, will be fetched when added
+        type: result.type || "Common Stock" // Include type for tags
       }));
     },
     enabled: debouncedQuery.trim().length >= 2,
@@ -747,6 +749,23 @@ export function ComparisonChart({
     const newRecent = [stock, ...recentSearches.filter(s => s.symbol !== stock.symbol)].slice(0, 6);
     setRecentSearches(newRecent);
     localStorage.setItem('recentComparisonSearches', JSON.stringify(newRecent));
+  };
+
+  // Type tag styling function - matches main search styling
+  const getTypeColor = (type: string) => {
+    switch (type.toLowerCase()) {
+      case 'common stock':
+        return 'text-blue-600 dark:text-blue-400 bg-blue-500/10';
+      case 'index':
+        return 'text-[#FAFF50] bg-[#FAFF50]/30';
+      case 'etp':
+      case 'etf':
+        return 'text-purple-600 dark:text-purple-400 bg-purple-500/10';
+      case 'mutual fund':
+        return 'text-orange-600 dark:text-orange-400 bg-orange-500/10';
+      default:
+        return 'text-gray-600 dark:text-gray-400 bg-gray-500/10';
+    }
   };
 
   // Handle input focus and dropdown positioning
@@ -1798,9 +1817,12 @@ export function ComparisonChart({
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
                                 <span className="font-semibold text-foreground">{stock.symbol}</span>
-                                <span className="text-sm text-muted-foreground truncate">
-                                  {stock.name}
+                                <span className={cn("px-2 py-1 rounded-full text-xs font-medium", getTypeColor(stock.type || "Common Stock"))}>
+                                  {stock.type || "Common Stock"}
                                 </span>
+                              </div>
+                              <div className="text-sm text-muted-foreground truncate mt-1">
+                                {stock.name}
                               </div>
                               <div className="text-xs text-muted-foreground mt-1">
                                 {stock.marketCap}
