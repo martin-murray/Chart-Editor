@@ -227,6 +227,8 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
         return 'text-blue-600 dark:text-blue-400 bg-blue-500/10';
       case 'etf':
         return 'text-green-600 dark:text-green-400 bg-green-500/10';
+      case 'index':
+        return 'index-tag'; // Brand yellow with 30% opacity background, 100% text
       case 'reit':
         return 'text-purple-600 dark:text-purple-400 bg-purple-500/10';
       case 'mutual fund':
@@ -244,7 +246,7 @@ function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
         <Input
           ref={inputRef}
           type="text"
-          placeholder="Search global stocks, ETFs, and companies..."
+          placeholder="Search global stocks, indices, ETFs, and companies..."
           value={searchQuery}
           onChange={(e) => handleInputChange(e.target.value)}
           onFocus={handleInputFocus}

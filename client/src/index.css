@@ -54,6 +54,7 @@
   --gainer: hsl(142, 76%, 36%);
   --loser: hsl(0, 84%, 60%);
   --neutral: hsl(215, 20%, 65%);
+  --brand-yellow: #FAFF50;
 }
 
 .dark {
@@ -104,6 +105,7 @@
   --gainer: hsl(142, 76%, 36%);
   --loser: hsl(0, 84%, 60%);
   --neutral: hsl(215, 20%, 65%);
+  --brand-yellow: #FAFF50;
 }
 
 @theme inline {
@@ -281,5 +283,17 @@
   /* Make volume chart Y-axis line full height */
   .volume-chart-container .recharts-cartesian-axis-line {
     height: 100% !important;
+  }
+
+  /* Index tag styling - Brand yellow with 30% opacity background, 100% text */
+  .index-tag {
+    background-color: rgba(250, 255, 80, 0.3) !important; /* #FAFF50 at 30% opacity */
+    color: #FAFF50 !important; /* 100% brand yellow text */
+    border: 1px solid rgba(250, 255, 80, 0.5) !important; /* Subtle yellow border */
+  }
+
+  /* Index tag hover effect */
+  .index-tag:hover {
+    background-color: rgba(250, 255, 80, 0.4) !important; /* Slightly more opaque on hover */
   }
 }

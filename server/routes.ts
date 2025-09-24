@@ -7,6 +7,7 @@ import { db } from "./db";
 import { visitorAnalytics } from "@shared/schema";
 import { desc, count, sql, gte, lte, and } from "drizzle-orm";
 import { getExchangeInfoFromSuffix, applySuffixOverride } from "./utils/suffixMappings";
+import { indexService } from "./services/indexService";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Global stock search endpoint using Finnhub symbol lookup
@@ -37,7 +38,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const data = await response.json();
       
       // Transform Finnhub response to our format with universal exchange info
-      const globalResults = data.result?.slice(0, 10).map((item: any) => {
+      const stockResults = data.result?.slice(0, 8).map((item: any) => {
         const baseResult = {
           symbol: item.symbol,
           description: item.description,
@@ -68,6 +69,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         return result;
       }) || [];
+
+      // Search global indices and include them in results
+      const indexResults = indexService.searchIndices(query).slice(0, 2).map(index => ({
+        symbol: index.symbol,
+        description: index.description,
+        displaySymbol: index.symbol,
+        type: 'Index',
+        exchange: index.country,
+        currency: index.currency,
+        country: index.country,
+        region: index.region
+      }));
+
+      // Combine stock and index results, prioritizing stocks
+      const globalResults = [...stockResults, ...indexResults];
 
       console.log(`🌍 Global search completed: ${globalResults.length} results for "${query}"`);
       res.json(globalResults);
@@ -120,6 +136,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error in ticker search:", error);
       res.status(500).json({ message: "Failed to search ticker stocks" });
+    }
+  });
+
+  // Index search endpoint - dedicated index search
+  app.get("/api/indices/search", async (req, res) => {
+    try {
+      const query = req.query.q as string;
+      if (!query || query.trim().length === 0) {
+        return res.json([]);
+      }
+
+      console.log(`📊 Index search for: "${query}"`);
+      
+      const indexResults = indexService.searchIndices(query).map(index => ({
+        symbol: index.symbol,
+        name: index.name,
+        description: index.description,
+        type: 'Index',
+        country: index.country,
+        region: index.region,
+        currency: index.currency,
+        exchange: index.country // For consistency with stock results
+      }));
+      
+      console.log(`📊 Index search completed: ${indexResults.length} results for "${query}"`);
+      res.json(indexResults);
+    } catch (error) {
+      console.error("Error in index search:", error);
+      res.status(500).json({ message: "Failed to search indices" });
+    }
+  });
+
+  // Index details endpoint - get detailed index information
+  app.get("/api/indices/:symbol/details", async (req, res) => {
+    try {
+      const { symbol } = req.params;
+      console.log(`📊 Index details request for: ${symbol}`);
+      
+      const indexDetails = await indexService.getDetailedIndexInfo(symbol);
+      
+      if (!indexDetails) {
+        return res.status(404).json({ error: "Index not found or data not available" });
+      }
+
+      res.json(indexDetails);
+    } catch (error) {
+      console.error("Index details error:", error);
+      res.status(500).json({ error: "Failed to fetch index details" });
+    }
+  });
+
+  // Index quote endpoint - get real-time index price
+  app.get("/api/indices/:symbol/quote", async (req, res) => {
+    try {
+      const { symbol } = req.params;
+      const quote = await indexService.getIndexQuote(symbol);
+      
+      if (!quote) {
+        return res.status(404).json({ error: "Index quote not available" });
+      }
+
+      res.json({
+        symbol,
+        quote,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Index quote error:", error);
+      res.status(500).json({ error: "Failed to fetch index quote" });
+    }
+  });
+
+  // Index constituents endpoint - get stocks in the index
+  app.get("/api/indices/:symbol/constituents", async (req, res) => {
+    try {
+      const { symbol } = req.params;
+      const constituents = await indexService.getIndexConstituents(symbol);
+      
+      if (!constituents) {
+        return res.status(404).json({ error: "Index constituents not available" });
+      }
+
+      res.json(constituents);
+    } catch (error) {
+      console.error("Index constituents error:", error);
+      res.status(500).json({ error: "Failed to fetch index constituents" });
     }
   });
 
