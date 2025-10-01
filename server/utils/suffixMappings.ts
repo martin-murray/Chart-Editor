@@ -296,6 +296,218 @@ export const suffixMappings: Record<string, SuffixInfo> = {
     fullExchangeName: "Prague Stock Exchange",
     currency: "CZK",
     notes: "Czech stocks listed on Prague Stock Exchange"
+  },
+
+  // Additional Global Markets (from Bloomberg exchange data)
+  ".AB": {
+    suffix: ".AB",
+    country: "Saudi Arabia",
+    exchange: "Saudi Stock Exchange",
+    fullExchangeName: "Saudi Stock Exchange (Tadawul)",
+    currency: "SAR"
+  },
+  ".BD": {
+    suffix: ".BD",
+    country: "Bangladesh",
+    exchange: "Dhaka Stock Exchange",
+    fullExchangeName: "Dhaka Stock Exchange",
+    currency: "BDT"
+  },
+  ".BU": {
+    suffix: ".BU",
+    country: "Bulgaria",
+    exchange: "Bulgarian Stock Exchange",
+    fullExchangeName: "Bulgarian Stock Exchange",
+    currency: "BGN"
+  },
+  ".CR": {
+    suffix: ".CR",
+    country: "Costa Rica",
+    exchange: "Costa Rica Stock Exchange",
+    fullExchangeName: "Bolsa Nacional de Valores",
+    currency: "CRC"
+  },
+  ".CY": {
+    suffix: ".CY",
+    country: "Cyprus",
+    exchange: "Cyprus Stock Exchange",
+    fullExchangeName: "Cyprus Stock Exchange",
+    currency: "EUR"
+  },
+  ".EC": {
+    suffix: ".EC",
+    country: "Egypt",
+    exchange: "Egyptian Exchange",
+    fullExchangeName: "Egyptian Exchange (EGX)",
+    currency: "EGP"
+  },
+  ".JR": {
+    suffix: ".JR",
+    country: "Jordan",
+    exchange: "Amman Stock Exchange",
+    fullExchangeName: "Amman Stock Exchange",
+    currency: "JOD"
+  },
+  ".JT": {
+    suffix: ".JT",
+    country: "Japan",
+    exchange: "Tokyo Stock Exchange",
+    fullExchangeName: "Tokyo Stock Exchange",
+    currency: "JPY"
+  },
+  ".KH": {
+    suffix: ".KH",
+    country: "Cambodia",
+    exchange: "Cambodia Securities Exchange",
+    fullExchangeName: "Cambodia Securities Exchange",
+    currency: "KHR"
+  },
+  ".KK": {
+    suffix: ".KK",
+    country: "Kuwait",
+    exchange: "Kuwait Stock Exchange",
+    fullExchangeName: "Kuwait Stock Exchange (Boursa Kuwait)",
+    currency: "KWD"
+  },
+  ".KN": {
+    suffix: ".KN",
+    country: "Kenya",
+    exchange: "Nairobi Securities Exchange",
+    fullExchangeName: "Nairobi Securities Exchange",
+    currency: "KES"
+  },
+  ".KP": {
+    suffix: ".KP",
+    country: "South Korea",
+    exchange: "Korea Exchange",
+    fullExchangeName: "Korea Exchange (KRX)",
+    currency: "KRW"
+  },
+  ".KQ": {
+    suffix: ".KQ",
+    country: "South Korea",
+    exchange: "KOSDAQ",
+    fullExchangeName: "Korea Exchange (KOSDAQ)",
+    currency: "KRW"
+  },
+  ".KZ": {
+    suffix: ".KZ",
+    country: "Kazakhstan",
+    exchange: "Kazakhstan Stock Exchange",
+    fullExchangeName: "Kazakhstan Stock Exchange",
+    currency: "KZT"
+  },
+  ".LK": {
+    suffix: ".LK",
+    country: "Sri Lanka",
+    exchange: "Colombo Stock Exchange",
+    fullExchangeName: "Colombo Stock Exchange",
+    currency: "LKR"
+  },
+  ".MO": {
+    suffix: ".MO",
+    country: "Mongolia",
+    exchange: "Mongolian Stock Exchange",
+    fullExchangeName: "Mongolian Stock Exchange",
+    currency: "MNT"
+  },
+  ".PE": {
+    suffix: ".PE",
+    country: "Peru",
+    exchange: "Lima Stock Exchange",
+    fullExchangeName: "Bolsa de Valores de Lima",
+    currency: "PEN"
+  },
+  ".PH": {
+    suffix: ".PH",
+    country: "Philippines",
+    exchange: "Philippine Stock Exchange",
+    fullExchangeName: "Philippine Stock Exchange",
+    currency: "PHP"
+  },
+  ".PK": {
+    suffix: ".PK",
+    country: "Pakistan",
+    exchange: "Pakistan Stock Exchange",
+    fullExchangeName: "Pakistan Stock Exchange",
+    currency: "PKR"
+  },
+  ".QA": {
+    suffix: ".QA",
+    country: "Qatar",
+    exchange: "Qatar Stock Exchange",
+    fullExchangeName: "Qatar Stock Exchange",
+    currency: "QAR"
+  },
+  ".RO": {
+    suffix: ".RO",
+    country: "Romania",
+    exchange: "Bucharest Stock Exchange",
+    fullExchangeName: "Bucharest Stock Exchange",
+    currency: "RON"
+  },
+  ".SK": {
+    suffix: ".SK",
+    country: "Slovakia",
+    exchange: "Bratislava Stock Exchange",
+    fullExchangeName: "Bratislava Stock Exchange",
+    currency: "EUR"
+  },
+  ".TU": {
+    suffix: ".TU",
+    country: "Tunisia",
+    exchange: "Tunis Stock Exchange",
+    fullExchangeName: "Bourse de Tunis",
+    currency: "TND"
+  },
+  ".UA": {
+    suffix: ".UA",
+    country: "Ukraine",
+    exchange: "Ukrainian Exchange",
+    fullExchangeName: "Ukrainian Exchange",
+    currency: "UAH"
+  },
+  ".UY": {
+    suffix: ".UY",
+    country: "Uruguay",
+    exchange: "Montevideo Stock Exchange",
+    fullExchangeName: "Bolsa de Valores de Montevideo",
+    currency: "UYU"
+  },
+  ".VB": {
+    suffix: ".VB",
+    country: "Bolivia",
+    exchange: "Bolivian Stock Exchange",
+    fullExchangeName: "Bolsa Boliviana de Valores",
+    currency: "BOB"
+  },
+  ".VH": {
+    suffix: ".VH",
+    country: "Vietnam",
+    exchange: "Hanoi Stock Exchange",
+    fullExchangeName: "Hanoi Stock Exchange",
+    currency: "VND"
+  },
+  ".VM": {
+    suffix: ".VM",
+    country: "Vietnam",
+    exchange: "Ho Chi Minh Stock Exchange",
+    fullExchangeName: "Ho Chi Minh Stock Exchange",
+    currency: "VND"
+  },
+  ".ZH": {
+    suffix: ".ZH",
+    country: "Zimbabwe",
+    exchange: "Zimbabwe Stock Exchange",
+    fullExchangeName: "Zimbabwe Stock Exchange",
+    currency: "ZWL"
+  },
+  ".ZL": {
+    suffix: ".ZL",
+    country: "Zambia",
+    exchange: "Lusaka Stock Exchange",
+    fullExchangeName: "Lusaka Stock Exchange",
+    currency: "ZMW"
   }
 };
 
