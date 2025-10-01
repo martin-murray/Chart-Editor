@@ -95,7 +95,9 @@ const exchangeToFinnhubCode: { [key: string]: string } = {
   'BME': 'MC',  // Madrid
   'Bolsas y Mercados Españoles (Madrid Stock Exchange)': 'MC',
   'OSE': 'OL',  // Oslo
-  'Oslo Stock Exchange (Euronext Oslo)': 'OL'
+  'Oslo Stock Exchange (Euronext Oslo)': 'OL',
+  'BMV': 'MX',  // Mexico
+  'Bolsa Mexicana de Valores (Mexican Stock Exchange)': 'MX'
 };
 
 export function SuffixSearchModal({ children }: SuffixSearchModalProps) {

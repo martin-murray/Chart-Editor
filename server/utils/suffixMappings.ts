@@ -160,6 +160,142 @@ export const suffixMappings: Record<string, SuffixInfo> = {
     exchange: "Dusseldorf",
     fullExchangeName: "Dusseldorf Stock Exchange",
     currency: "EUR"
+  },
+
+  // Latin America
+  ".MX": {
+    suffix: ".MX",
+    country: "Mexico",
+    exchange: "BMV",
+    fullExchangeName: "Bolsa Mexicana de Valores (Mexican Stock Exchange)",
+    currency: "MXN",
+    notes: "Mexican stocks listed on the Mexican Stock Exchange's Global Market"
+  },
+  ".SA": {
+    suffix: ".SA",
+    country: "Brazil",
+    exchange: "B3",
+    fullExchangeName: "B3 - Brasil Bolsa Balcão",
+    currency: "BRL",
+    notes: "Brazilian stocks listed on B3"
+  },
+
+  // Additional Asia Pacific
+  ".SI": {
+    suffix: ".SI",
+    country: "Singapore",
+    exchange: "SGX",
+    fullExchangeName: "Singapore Exchange",
+    currency: "SGD",
+    notes: "Singapore stocks listed on SGX"
+  },
+  ".NZ": {
+    suffix: ".NZ",
+    country: "New Zealand",
+    exchange: "NZX",
+    fullExchangeName: "New Zealand Exchange",
+    currency: "NZD",
+    notes: "New Zealand stocks listed on NZX"
+  },
+  ".TW": {
+    suffix: ".TW",
+    country: "Taiwan",
+    exchange: "TWSE",
+    fullExchangeName: "Taiwan Stock Exchange",
+    currency: "TWD",
+    notes: "Taiwanese stocks listed on TWSE"
+  },
+  ".KL": {
+    suffix: ".KL",
+    country: "Malaysia",
+    exchange: "Bursa Malaysia",
+    fullExchangeName: "Bursa Malaysia",
+    currency: "MYR",
+    notes: "Malaysian stocks listed on Bursa Malaysia"
+  },
+  ".JK": {
+    suffix: ".JK",
+    country: "Indonesia",
+    exchange: "IDX",
+    fullExchangeName: "Indonesia Stock Exchange",
+    currency: "IDR",
+    notes: "Indonesian stocks listed on IDX"
+  },
+  ".BK": {
+    suffix: ".BK",
+    country: "Thailand",
+    exchange: "SET",
+    fullExchangeName: "Stock Exchange of Thailand",
+    currency: "THB",
+    notes: "Thai stocks listed on SET"
+  },
+
+  // Middle East
+  ".TA": {
+    suffix: ".TA",
+    country: "Israel",
+    exchange: "TASE",
+    fullExchangeName: "Tel Aviv Stock Exchange",
+    currency: "ILS",
+    notes: "Israeli stocks listed on TASE"
+  },
+
+  // Additional Europe
+  ".VI": {
+    suffix: ".VI",
+    country: "Austria",
+    exchange: "Vienna",
+    fullExchangeName: "Vienna Stock Exchange",
+    currency: "EUR",
+    notes: "Austrian stocks listed on Vienna Stock Exchange"
+  },
+  ".IR": {
+    suffix: ".IR",
+    country: "Ireland",
+    exchange: "Euronext Dublin",
+    fullExchangeName: "Euronext Dublin",
+    currency: "EUR",
+    notes: "Irish stocks listed on Euronext Dublin"
+  },
+  ".WA": {
+    suffix: ".WA",
+    country: "Poland",
+    exchange: "WSE",
+    fullExchangeName: "Warsaw Stock Exchange",
+    currency: "PLN",
+    notes: "Polish stocks listed on WSE"
+  },
+  ".LS": {
+    suffix: ".LS",
+    country: "Portugal",
+    exchange: "Euronext Lisbon",
+    fullExchangeName: "Euronext Lisbon",
+    currency: "EUR",
+    notes: "Portuguese stocks listed on Euronext Lisbon"
+  },
+  ".AT": {
+    suffix: ".AT",
+    country: "Greece",
+    exchange: "ATHEX",
+    fullExchangeName: "Athens Stock Exchange",
+    currency: "EUR",
+    notes: "Greek stocks listed on ATHEX"
+  },
+  ".IS": {
+    suffix: ".IS",
+    country: "Iceland",
+    exchange: "Nasdaq Iceland",
+    fullExchangeName: "Nasdaq Iceland",
+    currency: "ISK",
+    notes: "Icelandic stocks listed on Nasdaq Iceland"
+  },
+  ".PR": {
+    suffix: ".PR",
+    country: "Czech Republic",
+    exchange: "Prague Stock Exchange",
+    fullExchangeName: "Prague Stock Exchange",
+    currency: "CZK",
+    notes: "Czech stocks listed on Prague Stock Exchange"
   }
 };
 
