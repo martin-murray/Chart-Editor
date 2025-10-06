@@ -5,12 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Search, TrendingUp, TrendingDown, BarChart3, Trash2, RotateCcw, BarChart2, Cookie, X, Globe } from "lucide-react";
-import { Link } from "wouter";
+import { Search, TrendingUp, TrendingDown, BarChart3, Trash2, RotateCcw, BarChart2, Cookie, X, Globe, LogOut } from "lucide-react";
+import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { PriceChart } from "@/components/dashboard/price-chart";
 import { FeedbackForm } from "@/components/feedback-form";
 import { SuffixSearchModal } from "@/components/suffix-search-modal";
+import { useAuth } from "@/contexts/AuthContext";
 import logoImage from "@assets/IPO Intelligence@2x_1758060026530.png";
 
 interface GlobalSearchResult {
@@ -79,6 +80,30 @@ const saveRememberSetting = (remember: boolean) => {
     // Ignore localStorage errors
   }
 };
+
+function LogoutButton() {
+  const { logout } = useAuth();
+  const [, setLocation] = useLocation();
+
+  const handleLogout = () => {
+    logout();
+    setLocation('/login');
+  };
+
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={handleLogout}
+      className="flex items-center gap-2 border-[#5AF5FA]/30 hover:bg-[#5AF5FA]/10 hover:border-[#5AF5FA]/50 transition-all"
+      data-testid="button-logout"
+      style={{ fontFamily: 'var(--font-sans)' }}
+    >
+      <LogOut className="h-4 w-4 text-[#5AF5FA]" />
+      <span className="text-sm">Sign Out</span>
+    </Button>
+  );
+}
 
 function GlobalTickerSearch({ onSelectStock }: GlobalTickerSearchProps) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -513,6 +538,7 @@ function ChartMaker() {
                 </Button>
               </SuffixSearchModal>
               <FeedbackButton />
+              <LogoutButton />
             </div>
           </div>
         </div>
