@@ -1604,10 +1604,10 @@ export function ComparisonChart({
   };
 
   return (
-    <div className="space-y-4" data-testid="comparison-chart-full-container">
+    <div className="space-y-4 overflow-x-hidden w-full max-[900px]:space-y-3" data-testid="comparison-chart-full-container">
       {/* Header with Ticker Management and Export */}
-      <div className="flex flex-col max-[900px]:gap-3 min-[901px]:flex-row min-[901px]:items-center min-[901px]:justify-between gap-2 mb-4">
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-col max-[900px]:gap-3 min-[901px]:flex-row min-[901px]:items-center min-[901px]:justify-between gap-2 mb-4 w-full">
+        <div className="flex flex-wrap items-center gap-2 max-[600px]:gap-1.5">
         {/* Active Tickers */}
         {tickers.map((ticker) => (
           <div

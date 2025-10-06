@@ -1286,7 +1286,7 @@ export function PriceChart({
   // Handle chart click for annotations - implementation is in the main handleChartClick function above
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-6 overflow-x-hidden max-[900px]:space-y-4">
       {/* Header Section */}
       <div className="space-y-4">
         <div className="flex flex-col max-[900px]:gap-3 min-[901px]:flex-row min-[901px]:items-start min-[901px]:justify-between">
@@ -1330,9 +1330,9 @@ export function PriceChart({
         </div>
         
         {/* Chart Controls: Timeframe and Chart Type */}
-        <div className="flex gap-4 items-center flex-wrap max-[900px]:gap-2">
+        <div className="flex gap-4 items-center flex-wrap max-[900px]:gap-2 w-full">
           {/* Timeframe selector */}
-          <div className="flex gap-1 items-center flex-wrap">
+          <div className="flex gap-1 items-center flex-wrap max-[600px]:w-full max-[600px]:justify-start">
             {timeframes.map((timeframe) => (
               <Button
                 key={timeframe.value}
@@ -1360,8 +1360,8 @@ export function PriceChart({
           </div>
 
           {/* Chart Type selector */}
-          <div className="flex gap-1 items-center flex-wrap">
-            <span className="text-xs text-muted-foreground mr-1">Chart:</span>
+          <div className="flex gap-1 items-center flex-wrap max-[600px]:w-full max-[600px]:justify-start">
+            <span className="text-xs text-muted-foreground mr-1 max-[600px]:w-full max-[600px]:mb-1">Chart:</span>
             <Button
               variant={chartType === 'line' ? "default" : "outline"}
               size="sm"

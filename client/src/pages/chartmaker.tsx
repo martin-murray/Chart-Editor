@@ -545,10 +545,10 @@ function ChartMaker() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mx-auto" style={{ maxWidth: '1200px' }}>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 max-[900px]:px-3 max-[900px]:py-4 overflow-x-hidden">
+        <div className="mx-auto w-full" style={{ maxWidth: '1200px' }}>
           {/* Search Section */}
-          <Card className="p-6 mb-8" style={{ backgroundColor: '#121212' }}>
+          <Card className="p-6 mb-8 max-[900px]:p-4 max-[600px]:p-3" style={{ backgroundColor: '#121212' }}>
             <div className="mb-6">
               <div className="flex items-center gap-3 mb-4">
                 <BarChart3 className="w-6 h-6 text-[#5AF5FA]" />

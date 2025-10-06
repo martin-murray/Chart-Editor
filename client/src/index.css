@@ -178,6 +178,18 @@
     font-family: 'Mulish', system-ui, sans-serif;
     font-weight: 400; /* Mulish Regular */
     letter-spacing: var(--tracking-normal);
+    overflow-x: hidden;
+    width: 100%;
+  }
+  
+  html {
+    overflow-x: hidden;
+    width: 100%;
+  }
+  
+  #root {
+    overflow-x: hidden;
+    width: 100%;
   }
 
   /* Ensure all text elements use Mulish */
