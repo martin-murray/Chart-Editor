@@ -55,7 +55,7 @@ export default function Login() {
               <Input
                 id="username"
                 type="email"
-                placeholder="test@intropic.io"
+                placeholder="Enter your email"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="h-11 bg-input border-border/50 focus:border-[#5AF5FA] focus:ring-[#5AF5FA]/20"
