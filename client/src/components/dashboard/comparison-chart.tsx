@@ -1606,7 +1606,7 @@ export function ComparisonChart({
   return (
     <div className="space-y-4" data-testid="comparison-chart-full-container">
       {/* Header with Ticker Management and Export */}
-      <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+      <div className="flex flex-col max-[900px]:gap-3 min-[901px]:flex-row min-[901px]:items-center min-[901px]:justify-between gap-2 mb-4">
         <div className="flex flex-wrap items-center gap-2">
         {/* Active Tickers */}
         {tickers.map((ticker) => (
@@ -1651,7 +1651,7 @@ export function ComparisonChart({
         )}
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 max-[900px]:justify-between">
           {/* Pending Percentage Indicator */}
           {annotationMode === 'percentage' && pendingPercentageStart && (
             <div className="text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded border">

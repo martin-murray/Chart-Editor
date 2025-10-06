@@ -1289,11 +1289,11 @@ export function PriceChart({
     <div className="w-full space-y-6">
       {/* Header Section */}
       <div className="space-y-4">
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col max-[900px]:gap-3 min-[901px]:flex-row min-[901px]:items-start min-[901px]:justify-between">
           <div>
             <div className="flex items-center gap-4 flex-wrap">
               <div className="space-y-1">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-[#5AF5FA] text-xl font-medium">{symbol}</span>
                   <span className="text-muted-foreground">-</span>
                   <span className="text-sm font-normal text-muted-foreground">{name}</span>
@@ -1304,7 +1304,7 @@ export function PriceChart({
                   </div>
                 )}
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 flex-wrap">
                 <span className="text-2xl font-bold">{actualCurrentPrice !== '--' ? formatPrice(parseFloat(actualCurrentPrice)) : '--'}</span>
                 <Badge 
                   variant="secondary"
@@ -1330,9 +1330,9 @@ export function PriceChart({
         </div>
         
         {/* Chart Controls: Timeframe and Chart Type */}
-        <div className="flex gap-4 items-center flex-wrap">
+        <div className="flex gap-4 items-center flex-wrap max-[900px]:gap-2">
           {/* Timeframe selector */}
-          <div className="flex gap-1 items-center">
+          <div className="flex gap-1 items-center flex-wrap">
             {timeframes.map((timeframe) => (
               <Button
                 key={timeframe.value}
@@ -1360,7 +1360,7 @@ export function PriceChart({
           </div>
 
           {/* Chart Type selector */}
-          <div className="flex gap-1 items-center">
+          <div className="flex gap-1 items-center flex-wrap">
             <span className="text-xs text-muted-foreground mr-1">Chart:</span>
             <Button
               variant={chartType === 'line' ? "default" : "outline"}

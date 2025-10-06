@@ -516,25 +516,26 @@ function ChartMaker() {
       {/* Header */}
       <header className="bg-card border-b shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
+          <div className="flex justify-between items-center min-h-16 py-2 max-[900px]:flex-wrap max-[900px]:gap-3">
+            <div className="flex items-center max-[900px]:w-full max-[900px]:justify-center">
               <img 
                 src={logoImage} 
                 alt="Intropic Chart Studio" 
-                className="w-[240px] h-auto"
+                className="w-[240px] h-auto max-[600px]:w-[180px]"
                 data-testid="header-logo"
               />
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 max-[900px]:w-full max-[900px]:justify-center max-[600px]:gap-2 max-[600px]:flex-wrap">
               <SuffixSearchModal>
                 <Button 
                   variant="outline" 
                   size="sm"
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 max-[600px]:text-xs"
                   data-testid="button-suffix-search"
                 >
                   <Globe className="h-4 w-4 text-[#FAFF50]" />
-                  Suffix Guide
+                  <span className="max-[600px]:hidden">Suffix Guide</span>
+                  <span className="min-[601px]:hidden">Guide</span>
                 </Button>
               </SuffixSearchModal>
               <FeedbackButton />
