@@ -410,6 +410,112 @@ export class FinnhubService {
 
   async getStockCandles(symbol: string, from: number, to: number, resolution: string = '1'): Promise<any> {
     try {
+      // For VG specifically or any stock with longer date ranges, split into chunks
+      // to work around Finnhub's limitation where it skips early data in long ranges
+      const daysDiff = (to - from) / (24 * 60 * 60);
+      const needsChunking = (symbol === 'VG' && daysDiff > 7) || (daysDiff > 30 && (resolution === 'D' || resolution === '60'));
+      
+      if (needsChunking) {
+        console.log(`📊 Chunking long date range for ${symbol}: ${daysDiff.toFixed(1)} days`);
+        
+        // For VG, use smaller chunks to ensure we get all data
+        const chunkSizeDays = symbol === 'VG' ? 7 : 30; // 7 days for VG, 30 for others
+        const chunkSize = chunkSizeDays * 24 * 60 * 60; // Convert to seconds
+        const chunks: any[] = [];
+        let currentFrom = from;
+        
+        while (currentFrom < to) {
+          const currentTo = Math.min(currentFrom + chunkSize, to);
+          const endpoint = `/stock/candle?symbol=${symbol}&resolution=${resolution}&from=${currentFrom}&to=${currentTo}`;
+          
+          const fromDate = new Date(currentFrom * 1000).toLocaleDateString();
+          const toDate = new Date(currentTo * 1000).toLocaleDateString();
+          console.log(`  📊 Fetching chunk: ${fromDate} to ${toDate}`);
+          
+          const chunkResponse = await this.makeRequest(endpoint);
+          
+          if (chunkResponse?.s !== 'no_data' && chunkResponse?.t && chunkResponse.t.length > 0) {
+            chunks.push(chunkResponse);
+            console.log(`    ✓ Got ${chunkResponse.t.length} data points`);
+          } else {
+            console.log(`    ✗ No data for this chunk`);
+          }
+          
+          currentFrom = currentTo + 1; // Move to next chunk
+        }
+        
+        // Combine all chunks
+        if (chunks.length === 0) {
+          return null;
+        }
+        
+        const combined = {
+          s: 'ok',
+          t: [] as number[],
+          o: [] as number[],
+          h: [] as number[],
+          l: [] as number[],
+          c: [] as number[],
+          v: [] as number[]
+        };
+        
+        for (const chunk of chunks) {
+          combined.t.push(...(chunk.t || []));
+          combined.o.push(...(chunk.o || []));
+          combined.h.push(...(chunk.h || []));
+          combined.l.push(...(chunk.l || []));
+          combined.c.push(...(chunk.c || []));
+          combined.v.push(...(chunk.v || []));
+        }
+        
+        // Remove duplicates and sort by timestamp
+        const uniqueIndices: number[] = [];
+        const seenTimestamps = new Set<number>();
+        
+        for (let i = 0; i < combined.t.length; i++) {
+          if (!seenTimestamps.has(combined.t[i])) {
+            seenTimestamps.add(combined.t[i]);
+            uniqueIndices.push(i);
+          }
+        }
+        
+        // Create deduplicated arrays
+        const deduplicated = {
+          s: 'ok',
+          t: uniqueIndices.map(i => combined.t[i]),
+          o: uniqueIndices.map(i => combined.o[i]),
+          h: uniqueIndices.map(i => combined.h[i]),
+          l: uniqueIndices.map(i => combined.l[i]),
+          c: uniqueIndices.map(i => combined.c[i]),
+          v: uniqueIndices.map(i => combined.v[i])
+        };
+        
+        // Sort by timestamp
+        const sortedIndices = deduplicated.t
+          .map((t, i) => ({ t, i }))
+          .sort((a, b) => a.t - b.t)
+          .map(item => item.i);
+        
+        const response = {
+          s: 'ok',
+          t: sortedIndices.map(i => deduplicated.t[i]),
+          o: sortedIndices.map(i => deduplicated.o[i]),
+          h: sortedIndices.map(i => deduplicated.h[i]),
+          l: sortedIndices.map(i => deduplicated.l[i]),
+          c: sortedIndices.map(i => deduplicated.c[i]),
+          v: sortedIndices.map(i => deduplicated.v[i])
+        };
+        
+        if (response.t.length > 0) {
+          const firstDate = new Date(response.t[0] * 1000).toLocaleDateString();
+          const lastDate = new Date(response.t[response.t.length - 1] * 1000).toLocaleDateString();
+          console.log(`✅ Combined ${chunks.length} chunks: ${response.t.length} total data points (${firstDate} to ${lastDate})`);
+        }
+        
+        return response;
+      }
+      
+      // Normal single request for shorter ranges
       const endpoint = `/stock/candle?symbol=${symbol}&resolution=${resolution}&from=${from}&to=${to}`;
       const response = await this.makeRequest(endpoint);
       
