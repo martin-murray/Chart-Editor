@@ -398,9 +398,13 @@ export function PriceChart({
           fromTimestamp = Math.floor(dayStart.getTime() / 1000);
           toTimestamp = Math.floor(dayEnd.getTime() / 1000);
         } else {
-          // Date range - use full days
-          fromTimestamp = Math.floor(startDate.getTime() / 1000);
-          toTimestamp = Math.floor(endDate.getTime() / 1000);
+          // Date range - use full days, ensuring we capture the entire selected dates
+          // Create new dates at midnight local time to avoid timezone issues
+          const rangeStart = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), 0, 0, 0, 0);
+          const rangeEnd = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate(), 23, 59, 59, 999);
+          
+          fromTimestamp = Math.floor(rangeStart.getTime() / 1000);
+          toTimestamp = Math.floor(rangeEnd.getTime() / 1000);
         }
         
         url = `/api/stocks/${symbol}/chart?from=${fromTimestamp}&to=${toTimestamp}&timeframe=Custom`;
