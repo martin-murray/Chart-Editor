@@ -1973,7 +1973,7 @@ export function PriceChart({
                           onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
                           title="Click and drag to move in any direction, double-click to delete"
                         >
-                          <div className="text-foreground">{annotation.text || ''}</div>
+                          <div className="text-foreground whitespace-pre-wrap">{annotation.text || ''}</div>
                         </div>
                       </div>
                     );
