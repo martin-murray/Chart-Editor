@@ -2957,14 +2957,26 @@ export function PriceChart({
                         <>
                           {earningsData.earnings.map((earning: any, index: number) => {
                             // Find if this earnings date falls within our chart data
-                            const earningsDate = new Date(earning.date);
+                            // Parse the date at noon UTC to avoid timezone issues with date-only strings
+                            const earningsDate = new Date(earning.date + 'T12:00:00Z');
                             const earningsTime = earningsDate.toISOString();
                             
-                            // Find corresponding data point in chart
-                            const dataPoint = chartData.data.find(d => {
+                            // Find the closest data point in chart (not just any within 24 hours)
+                            let closestDataPoint = null;
+                            let minTimeDiff = Infinity;
+                            
+                            for (const d of chartData.data) {
                               const chartDate = new Date(d.time);
-                              return Math.abs(chartDate.getTime() - earningsDate.getTime()) < 24 * 60 * 60 * 1000; // Within 1 day
-                            });
+                              const timeDiff = Math.abs(chartDate.getTime() - earningsDate.getTime());
+                              
+                              // Only consider points within 2 days (earnings could be pre/post market)
+                              if (timeDiff < 2 * 24 * 60 * 60 * 1000 && timeDiff < minTimeDiff) {
+                                minTimeDiff = timeDiff;
+                                closestDataPoint = d;
+                              }
+                            }
+                            
+                            const dataPoint = closestDataPoint;
                             
                             if (!dataPoint) return null;
                             
