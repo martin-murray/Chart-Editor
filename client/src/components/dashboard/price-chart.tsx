@@ -431,6 +431,23 @@ export function PriceChart({
         throw new Error('Invalid response format');
       }
       
+      // Check if we have data and if it covers the requested date range
+      if (selectedTimeframe === 'Custom' && data.data.length > 0) {
+        const firstDataPoint = new Date(data.data[0].time);
+        const lastDataPoint = new Date(data.data[data.data.length - 1].time);
+        const requestedStart = startDate;
+        const requestedEnd = endDate;
+        
+        // If data doesn't start from the requested date, show a warning
+        if (requestedStart && firstDataPoint > requestedStart) {
+          toast({
+            title: "Partial Data Available",
+            description: `Data for ${symbol} is only available from ${firstDataPoint.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}. This may be due to the stock's IPO date or data availability.`,
+            variant: "default",
+          });
+        }
+      }
+      
       return data;
     },
     enabled: !!symbol && (selectedTimeframe !== 'Custom' || (!!startDate && !!endDate)),
@@ -1400,6 +1417,28 @@ export function PriceChart({
             </Button>
           </div>
         </div>
+        
+        {/* Data availability notice for custom ranges */}
+        {selectedTimeframe === 'Custom' && chartData?.data && chartData.data.length > 0 && startDate && (() => {
+          const firstDataPoint = new Date(chartData.data[0].time);
+          const requestedStart = startDate;
+          return firstDataPoint > requestedStart;
+        })() && (
+          <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+            <div className="flex items-start gap-2">
+              <svg className="w-5 h-5 text-yellow-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <div className="flex-1 text-sm">
+                <div className="font-medium text-yellow-200">Limited Historical Data</div>
+                <div className="text-yellow-100/80 mt-1">
+                  Data for {symbol} is only available from {new Date(chartData.data[0].time).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}.
+                  This is likely the stock's IPO date or when trading began.
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         
         {/* Redesigned Custom Date Picker - Limited to 10 Years */}
         {selectedTimeframe === 'Custom' && showDatePicker && (
