@@ -1484,6 +1484,25 @@ export function PriceChart({
               Click second point to measure
             </div>
           )}
+          
+          {/* Position Tool Instructions */}
+          {chartType === 'position' && annotationMode === 'position' && positionToolState.step !== 'complete' && (
+            <div className="text-xs bg-muted/50 px-3 py-2 rounded border space-y-1">
+              <div className="font-semibold text-[#5AF5FA]">Position Setup</div>
+              <div className={`flex items-center gap-2 ${positionToolState.step === 'entry' ? 'text-[#FAFF50]' : 'text-muted-foreground'}`}>
+                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${positionToolState.step === 'entry' ? 'bg-[#FAFF50] text-[#121212]' : 'bg-muted'}`}>1</span>
+                Click to set Entry Price
+              </div>
+              <div className={`flex items-center gap-2 ${positionToolState.step === 'takeProfit' ? 'text-[#00FF88]' : 'text-muted-foreground'}`}>
+                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${positionToolState.step === 'takeProfit' ? 'bg-[#00FF88] text-[#121212]' : 'bg-muted'}`}>2</span>
+                Click to set Take Profit
+              </div>
+              <div className={`flex items-center gap-2 ${positionToolState.step === 'stopLoss' ? 'text-[#FF4444]' : 'text-muted-foreground'}`}>
+                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${positionToolState.step === 'stopLoss' ? 'bg-[#FF4444] text-[#121212]' : 'bg-muted'}`}>3</span>
+                Click to set Stop Loss
+              </div>
+            </div>
+          )}
 
         </div>
         
