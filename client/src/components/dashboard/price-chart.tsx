@@ -1127,6 +1127,13 @@ export function PriceChart({
     } else if (annotation.type === 'percentage') {
       // Percentage annotations can be deleted on double-click
       handlePercentageAnnotationDelete(annotation);
+    } else if (annotation.type === 'position') {
+      // Position annotations can be deleted on double-click
+      updateAnnotations(prev => prev.filter(a => a.id !== annotation.id));
+      // Reset position tool state if needed
+      if (positionToolState.step === 'complete') {
+        setPositionToolState({ step: 'entry', entry: null, takeProfit: null, stopLoss: null });
+      }
     }
   };
 
