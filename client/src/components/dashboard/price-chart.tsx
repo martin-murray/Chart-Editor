@@ -1,6 +1,6 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { AreaChart, Area, LineChart, Line, BarChart, Bar, ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine, Customized } from 'recharts';
+import { AreaChart, Area, LineChart, Line, BarChart, Bar, ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine, ReferenceArea, Customized } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -2876,6 +2876,58 @@ export function PriceChart({
                         vectorEffect="non-scaling-stroke"
                         shapeRendering="crispEdges"
                       />
+                    );
+                  })}
+
+                  {/* Position Zones and Lines */}
+                  {annotations.filter(annotation => annotation.type === 'position' && annotation.positionData).map((annotation) => {
+                    const pd = annotation.positionData!;
+                    return (
+                      <g key={`position-zones-${annotation.id}`}>
+                        {/* Profit Zone (Entry to TP) */}
+                        <ReferenceArea
+                          yAxisId="price"
+                          y1={pd.entryPrice}
+                          y2={pd.takeProfitPrice}
+                          fill={pd.isLong ? "#00FF88" : "#FF4444"}
+                          fillOpacity={0.1}
+                          strokeOpacity={0}
+                        />
+                        {/* Loss Zone (Entry to SL) */}
+                        <ReferenceArea
+                          yAxisId="price"
+                          y1={pd.entryPrice}
+                          y2={pd.stopLossPrice}
+                          fill={pd.isLong ? "#FF4444" : "#00FF88"}
+                          fillOpacity={0.1}
+                          strokeOpacity={0}
+                        />
+                        {/* Entry Line */}
+                        <ReferenceLine 
+                          y={pd.entryPrice}
+                          yAxisId="price"
+                          stroke="#FFFFFF"
+                          strokeWidth={2}
+                          strokeDasharray="5 3"
+                          label={{ value: `Entry: $${pd.entryPrice.toFixed(2)}`, position: 'right', fill: '#FFFFFF', fontSize: 11 }}
+                        />
+                        {/* Take Profit Line */}
+                        <ReferenceLine 
+                          y={pd.takeProfitPrice}
+                          yAxisId="price"
+                          stroke="#00FF88"
+                          strokeWidth={2}
+                          label={{ value: `TP: $${pd.takeProfitPrice.toFixed(2)}`, position: 'right', fill: '#00FF88', fontSize: 11 }}
+                        />
+                        {/* Stop Loss Line */}
+                        <ReferenceLine 
+                          y={pd.stopLossPrice}
+                          yAxisId="price"
+                          stroke="#FF4444"
+                          strokeWidth={2}
+                          label={{ value: `SL: $${pd.stopLossPrice.toFixed(2)}`, position: 'right', fill: '#FF4444', fontSize: 11 }}
+                        />
+                      </g>
                     );
                   })}
 
