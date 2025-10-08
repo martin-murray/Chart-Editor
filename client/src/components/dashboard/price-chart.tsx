@@ -1390,41 +1390,44 @@ export function PriceChart({
           </div>
 
           {/* Chart Type selector */}
-          <div className="flex items-center" style={{ gap: '40px' }}>
-            <button
-              onClick={() => setChartType('line')}
-              className="hover:opacity-80 transition-opacity"
-              style={{ 
-                fontSize: '16px', 
-                color: chartType === 'line' ? '#5AF5FA' : '#f7f7f7' 
-              }}
-              data-testid="button-chart-line"
-            >
-              Line
-            </button>
-            <button
-              onClick={() => setChartType('mountain')}
-              className="hover:opacity-80 transition-opacity"
-              style={{ 
-                fontSize: '16px', 
-                color: chartType === 'mountain' ? '#5AF5FA' : '#f7f7f7' 
-              }}
-              data-testid="button-chart-mountain"
-            >
-              Mountain
-            </button>
-            <button
-              onClick={() => setChartType('candlestick')}
-              className="hover:opacity-80 transition-opacity"
-              style={{ 
-                fontSize: '16px', 
-                color: chartType === 'candlestick' ? '#5AF5FA' : '#f7f7f7' 
-              }}
-              data-testid="button-chart-candles"
-            >
-              Candles
-            </button>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 px-3 text-xs"
+                data-testid="button-chart-type-dropdown"
+              >
+                {chartType === 'line' && 'Line'}
+                {chartType === 'mountain' && 'Mountain'}
+                {chartType === 'candlestick' && 'Candles'}
+                <ChevronDown className="w-3 h-3 ml-1" style={{ color: '#5AF5FA' }} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <DropdownMenuItem
+                onClick={() => setChartType('line')}
+                className="cursor-pointer"
+                data-testid="menu-chart-line"
+              >
+                Line
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setChartType('mountain')}
+                className="cursor-pointer"
+                data-testid="menu-chart-mountain"
+              >
+                Mountain
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setChartType('candlestick')}
+                className="cursor-pointer"
+                data-testid="menu-chart-candles"
+              >
+                Candles
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         
         {/* Redesigned Custom Date Picker - Limited to 10 Years */}
