@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { format } from 'date-fns';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, ReferenceDot, ResponsiveContainer, Customized } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
@@ -78,6 +78,9 @@ interface ComparisonChartProps {
   setPendingPercentageStart?: (start: { timestamp: number; price: number; time: string } | null) => void;
   updateAnnotations?: (newAnnotations: Annotation[] | ((prev: Annotation[]) => Annotation[])) => void;
   showHoverTooltip?: boolean;
+  onZoomIn?: (fn: () => void) => void;
+  onZoomOut?: (fn: () => void) => void;
+  onFitToData?: (fn: () => void) => void;
 }
 
 
@@ -92,7 +95,10 @@ export function ComparisonChart({
   pendingPercentageStart,
   setPendingPercentageStart,
   updateAnnotations,
-  showHoverTooltip = true
+  showHoverTooltip = true,
+  onZoomIn: parentZoomIn,
+  onZoomOut: parentZoomOut,
+  onFitToData: parentFitToData
 }: ComparisonChartProps) {
   const [tickers, setTickers] = useState<TickerData[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -522,24 +528,48 @@ export function ComparisonChart({
     return { min, max, baseRange };
   }, [chartData, tickers]);
 
-  // Y-axis zoom control functions
-  const zoomIn = () => {
-    const currentIndex = zoomLevels.findIndex(level => level >= yAxisRange);
-    const nextIndex = Math.max(0, currentIndex - 1);
-    setYAxisRange(zoomLevels[nextIndex]);
+  // Y-axis zoom control functions (memoized for stable references)
+  const zoomIn = useCallback(() => {
+    setYAxisRange(prevRange => {
+      const currentIndex = zoomLevels.findIndex(level => level >= prevRange);
+      const nextIndex = Math.max(0, currentIndex - 1);
+      return zoomLevels[nextIndex];
+    });
     setYAxisMode('fixed');
-  };
+  }, []);
 
-  const zoomOut = () => {
-    const currentIndex = zoomLevels.findIndex(level => level >= yAxisRange);
-    const nextIndex = Math.min(zoomLevels.length - 1, currentIndex + 1);
-    setYAxisRange(zoomLevels[nextIndex]);
+  const zoomOut = useCallback(() => {
+    setYAxisRange(prevRange => {
+      const currentIndex = zoomLevels.findIndex(level => level >= prevRange);
+      const nextIndex = Math.min(zoomLevels.length - 1, currentIndex + 1);
+      return zoomLevels[nextIndex];
+    });
     setYAxisMode('fixed');
-  };
+  }, []);
 
-  const fitToData = () => {
+  const fitToData = useCallback(() => {
     setYAxisMode('auto');
-  };
+  }, []);
+
+  // Expose zoom functions to parent via callbacks (only when they change)
+  useEffect(() => {
+    if (parentZoomIn) {
+      parentZoomIn(zoomIn);
+    }
+    if (parentZoomOut) {
+      parentZoomOut(zoomOut);
+    }
+    if (parentFitToData) {
+      parentFitToData(fitToData);
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      if (parentZoomIn) parentZoomIn(() => {});
+      if (parentZoomOut) parentZoomOut(() => {});
+      if (parentFitToData) parentFitToData(() => {});
+    };
+  }, [parentZoomIn, parentZoomOut, parentFitToData, zoomIn, zoomOut, fitToData]);
 
   // Get current Y-axis domain based on zoom state
   const getYAxisDomain = (): any => {
@@ -1658,38 +1688,6 @@ export function ComparisonChart({
               Click second point to measure
             </div>
           )}
-
-          {/* Percentage Y-axis Zoom Controls */}
-          <div className="flex bg-[#121212] border border-white rounded-md overflow-hidden">
-            <button
-              onClick={zoomIn}
-              disabled={yAxisRange <= zoomLevels[0]}
-              className="h-8 w-8 text-sm font-medium bg-[#121212] text-white border-r border-white hover:bg-[#5AF5FA] hover:text-[#121212] disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 flex items-center justify-center"
-              data-testid="button-zoom-in-percentage"
-              title="Zoom In Percentage"
-            >
-              +
-            </button>
-            <button
-              onClick={zoomOut}
-              disabled={yAxisRange >= zoomLevels[zoomLevels.length - 1]}
-              className="h-8 w-8 text-sm font-medium bg-[#121212] text-white border-r border-white hover:bg-[#5AF5FA] hover:text-[#121212] disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 flex items-center justify-center"
-              data-testid="button-zoom-out-percentage"
-              title="Zoom Out Percentage"
-            >
-              −
-            </button>
-            <button
-              onClick={fitToData}
-              className="h-8 w-10 text-xs font-medium bg-[#121212] text-white hover:bg-[#5AF5FA] hover:text-[#121212] transition-colors duration-150 flex items-center justify-center"
-              data-testid="button-fit-percentage-data"
-              title="Fit Percentage to Data"
-            >
-              Fit
-            </button>
-          </div>
-          
-        
         </div>
       </div>
 

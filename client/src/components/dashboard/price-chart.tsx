@@ -129,6 +129,20 @@ export function PriceChart({
   const chartRef = useRef<HTMLDivElement>(null);
   const comparisonRef = useRef<HTMLDivElement>(null);
   
+  // Refs to store comparison chart zoom functions
+  const comparisonZoomInRef = useRef<(() => void) | null>(null);
+  const comparisonZoomOutRef = useRef<(() => void) | null>(null);
+  const comparisonFitToDataRef = useRef<(() => void) | null>(null);
+
+  // Clear comparison zoom refs when switching away from comparison tab
+  useEffect(() => {
+    if (activeTab !== 'comparison') {
+      comparisonZoomInRef.current = null;
+      comparisonZoomOutRef.current = null;
+      comparisonFitToDataRef.current = null;
+    }
+  }, [activeTab]);
+  
   // Annotation state - controlled if parent provides annotations
   const [internalAnnotations, setInternalAnnotations] = useState<Annotation[]>([]);
   const [showAnnotationInput, setShowAnnotationInput] = useState(false);
@@ -771,23 +785,35 @@ export function PriceChart({
     return { min, max, baseRange, center };
   }, [chartDataWithMA]);
 
-  // Price zoom control functions
+  // Unified zoom control functions that work for both charts
   const zoomInPrice = () => {
-    const currentIndex = priceZoomLevels.findIndex(level => level >= (priceAxisRange / priceExtremes.baseRange));
-    const nextIndex = Math.max(0, currentIndex - 1);
-    setPriceAxisRange(priceZoomLevels[nextIndex] * priceExtremes.baseRange);
-    setPriceAxisMode('fixed');
+    if (activeTab === 'comparison' && comparisonZoomInRef.current) {
+      comparisonZoomInRef.current();
+    } else {
+      const currentIndex = priceZoomLevels.findIndex(level => level >= (priceAxisRange / priceExtremes.baseRange));
+      const nextIndex = Math.max(0, currentIndex - 1);
+      setPriceAxisRange(priceZoomLevels[nextIndex] * priceExtremes.baseRange);
+      setPriceAxisMode('fixed');
+    }
   };
 
   const zoomOutPrice = () => {
-    const currentIndex = priceZoomLevels.findIndex(level => level >= (priceAxisRange / priceExtremes.baseRange));
-    const nextIndex = Math.min(priceZoomLevels.length - 1, currentIndex + 1);
-    setPriceAxisRange(priceZoomLevels[nextIndex] * priceExtremes.baseRange);
-    setPriceAxisMode('fixed');
+    if (activeTab === 'comparison' && comparisonZoomOutRef.current) {
+      comparisonZoomOutRef.current();
+    } else {
+      const currentIndex = priceZoomLevels.findIndex(level => level >= (priceAxisRange / priceExtremes.baseRange));
+      const nextIndex = Math.min(priceZoomLevels.length - 1, currentIndex + 1);
+      setPriceAxisRange(priceZoomLevels[nextIndex] * priceExtremes.baseRange);
+      setPriceAxisMode('fixed');
+    }
   };
 
   const fitPriceToData = () => {
-    setPriceAxisMode('auto');
+    if (activeTab === 'comparison' && comparisonFitToDataRef.current) {
+      comparisonFitToDataRef.current();
+    } else {
+      setPriceAxisMode('auto');
+    }
   };
 
   // Get current price Y-axis domain based on zoom state and display mode
@@ -3217,6 +3243,9 @@ export function PriceChart({
             setPendingPercentageStart={setPendingPercentageStart}
             updateAnnotations={updateAnnotations}
             showHoverTooltip={showHoverTooltip}
+            onZoomIn={(fn) => { if (fn && typeof fn === 'function') comparisonZoomInRef.current = fn; }}
+            onZoomOut={(fn) => { if (fn && typeof fn === 'function') comparisonZoomOutRef.current = fn; }}
+            onFitToData={(fn) => { if (fn && typeof fn === 'function') comparisonFitToDataRef.current = fn; }}
           />
         </TabsContent>
         </Tabs>
