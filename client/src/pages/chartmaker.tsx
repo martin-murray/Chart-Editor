@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Search, TrendingUp, TrendingDown, BarChart3, Trash2, RotateCcw, BarChart2, Cookie, X, Globe, LogOut } from "lucide-react";
+import { Search, TrendingUp, TrendingDown, BarChart3, Trash2, RotateCcw, BarChart2, Cookie, X, Globe, LogOut, MessageSquare } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { PriceChart } from "@/components/dashboard/price-chart";
@@ -91,17 +91,15 @@ function LogoutButton() {
   };
 
   return (
-    <Button
-      variant="outline"
-      size="sm"
+    <button
       onClick={handleLogout}
-      className="flex items-center gap-2 border-[#5AF5FA]/30 hover:bg-[#5AF5FA]/10 hover:border-[#5AF5FA]/50 transition-all"
+      className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
       data-testid="button-logout"
-      style={{ fontFamily: 'var(--font-sans)' }}
+      style={{ fontFamily: 'var(--font-sans)', fontSize: '18px' }}
     >
-      <LogOut className="h-4 w-4 text-[#5AF5FA]" />
-      <span className="text-sm">Sign Out</span>
-    </Button>
+      <LogOut className="h-5 w-5 text-[#5AF5FA]" />
+      <span>Sign Out</span>
+    </button>
   );
 }
 
@@ -374,10 +372,12 @@ function FeedbackButton() {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+        className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
         data-testid="button-feedback"
+        style={{ fontSize: '18px' }}
       >
-        Issues / Feedback
+        <MessageSquare className="h-5 w-5 text-[#5AF5FA]" />
+        <span>Issues / Feedback</span>
       </button>
       <FeedbackForm open={isOpen} onOpenChange={setIsOpen} />
     </>
@@ -527,16 +527,15 @@ function ChartMaker() {
             </div>
             <div className="flex items-center gap-4 max-[900px]:w-full max-[900px]:justify-center max-[600px]:gap-2 max-[600px]:flex-wrap">
               <SuffixSearchModal>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="flex items-center gap-2 max-[600px]:text-xs"
+                <button 
+                  className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors max-[600px]:text-xs"
                   data-testid="button-suffix-search"
+                  style={{ fontSize: '18px' }}
                 >
-                  <Globe className="h-4 w-4 text-[#FAFF50]" />
+                  <Globe className="h-5 w-5 text-[#FAFF50]" />
                   <span className="max-[600px]:hidden">Suffix Guide</span>
                   <span className="min-[601px]:hidden">Guide</span>
-                </Button>
+                </button>
               </SuffixSearchModal>
               <FeedbackButton />
               <LogoutButton />
