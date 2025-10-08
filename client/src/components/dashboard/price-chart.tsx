@@ -1699,68 +1699,95 @@ export function PriceChart({
               
               {/* Annotation Mode Controls */}
               <div className="flex items-center gap-2">
-                <div className="flex border border-border rounded-md overflow-hidden bg-background">
-                  <Button
-                    size="sm"
-                    variant={annotationMode === 'text' ? 'default' : 'ghost'}
-                    onClick={() => {
-                      setAnnotationMode('text');
-                      setPendingPercentageStart(null);
-                    }}
-                    className="h-8 px-3 text-xs rounded-none border-0"
-                    data-testid="button-annotation-text"
-                  >
-                    <div className="w-3 h-3 mr-1 flex items-center justify-center">
-                      <div className="w-0.5 h-3 bg-current" />
-                    </div>
-                    Vertical
-                  </Button>
-                  <HoverTooltip>
-                    <HoverTooltipTrigger asChild>
-                      <Button
-                        size="sm"
-                        variant={annotationMode === 'percentage' ? 'default' : 'ghost'}
-                        onClick={() => {
-                          if (activeTab !== 'comparison') {
-                            setAnnotationMode('percentage');
-                            setPendingPercentageStart(null);
-                          }
-                        }}
-                        onMouseEnter={() => {
-                          if (activeTab === 'comparison') {
-                            setShowMeasureTooltip(true);
-                          }
-                        }}
-                        disabled={activeTab === 'comparison'}
-                        className={`h-8 px-3 text-xs rounded-none border-0 ${
-                          activeTab === 'comparison' ? 'opacity-40 cursor-not-allowed' : ''
-                        }`}
-                        data-testid="button-annotation-percentage"
-                      >
-                        <Ruler className="w-3 h-3 mr-1" />
-                        Measure
-                      </Button>
-                    </HoverTooltipTrigger>
-                    {activeTab === 'comparison' && (
-                      <HoverTooltipContent>
-                        <p>Percentage measurement is deactivated on Compare</p>
-                      </HoverTooltipContent>
-                    )}
-                  </HoverTooltip>
-                  <Button
-                    size="sm"
-                    variant={annotationMode === 'horizontal' ? 'default' : 'ghost'}
-                    onClick={() => {
-                      setAnnotationMode('horizontal');
-                      setPendingPercentageStart(null);
-                    }}
-                    className="h-8 px-3 text-xs rounded-none border-0"
-                    data-testid="button-annotation-horizontal"
-                  >
-                    <Minus className="w-3 h-3 mr-1" />
-                    Horizontal
-                  </Button>
-                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 px-3 text-xs"
+                      data-testid="button-annotation-dropdown"
+                    >
+                      {annotationMode === 'text' && (
+                        <>
+                          <div className="w-3 h-3 mr-1 flex items-center justify-center">
+                            <div className="w-0.5 h-3 bg-current" />
+                          </div>
+                          Vertical
+                        </>
+                      )}
+                      {annotationMode === 'percentage' && (
+                        <>
+                          <Ruler className="w-3 h-3 mr-1" />
+                          Measure
+                        </>
+                      )}
+                      {annotationMode === 'horizontal' && (
+                        <>
+                          <Minus className="w-3 h-3 mr-1" />
+                          Horizontal
+                        </>
+                      )}
+                      {!annotationMode && 'Select Tool'}
+                      <ChevronDown className="w-3 h-3 ml-1 opacity-50" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setAnnotationMode('text');
+                        setPendingPercentageStart(null);
+                      }}
+                      className="cursor-pointer"
+                      data-testid="menu-annotation-text"
+                    >
+                      <div className="w-3 h-3 mr-2 flex items-center justify-center">
+                        <div className="w-0.5 h-3 bg-current" />
+                      </div>
+                      Vertical
+                    </DropdownMenuItem>
+                    <HoverTooltip>
+                      <HoverTooltipTrigger asChild>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            if (activeTab !== 'comparison') {
+                              setAnnotationMode('percentage');
+                              setPendingPercentageStart(null);
+                            }
+                          }}
+                          onMouseEnter={() => {
+                            if (activeTab === 'comparison') {
+                              setShowMeasureTooltip(true);
+                            }
+                          }}
+                          disabled={activeTab === 'comparison'}
+                          className={`cursor-pointer ${
+                            activeTab === 'comparison' ? 'opacity-40 cursor-not-allowed' : ''
+                          }`}
+                          data-testid="menu-annotation-percentage"
+                        >
+                          <Ruler className="w-3 h-3 mr-2" />
+                          Measure
+                        </DropdownMenuItem>
+                      </HoverTooltipTrigger>
+                      {activeTab === 'comparison' && (
+                        <HoverTooltipContent>
+                          <p>Percentage measurement is deactivated on Compare</p>
+                        </HoverTooltipContent>
+                      )}
+                    </HoverTooltip>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setAnnotationMode('horizontal');
+                        setPendingPercentageStart(null);
+                      }}
+                      className="cursor-pointer"
+                      data-testid="menu-annotation-horizontal"
+                    >
+                      <Minus className="w-3 h-3 mr-2" />
+                      Horizontal
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
                 {/* Flash Tooltip for Measure Tool */}
                 {showMeasureTooltip && (
