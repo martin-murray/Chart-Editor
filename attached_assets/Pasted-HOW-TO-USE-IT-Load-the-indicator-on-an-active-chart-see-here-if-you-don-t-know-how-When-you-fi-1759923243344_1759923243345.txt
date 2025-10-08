@@ -1,0 +1,54 @@
+HOW TO USE IT
+
+
+Load the indicator on an active chart (see here if you don't know how).
+
+When you first load this script on a chart, you will enter an interactive selection mode where the script asks you to pick three points in price and time on your chart by clicking on the chart. Directions will appear in a blue box at the bottom of the screen with each click of the mouse. The first selection is the entry point for the trade you are considering, which takes into account both the time and level you choose, the next are the take profit and stop levels. Once you have selected all three points, the script will draw trade zones and labels containing the trade metrics. The script determines if the trade is a long or short from the position of the take profit and stop loss levels in relation to the entry price. If the take profit level is above the entry price, the stop must be below and vice versa, otherwise an error occurs.
+
+You can change levels by dragging the handles that appear when you select the indicator, or by entering new values in the script's settings. The only way to re-enter interactive mode is to re-add the indicator to your chart.
+
+Once you place the position tool on a chart, it will appear at the same levels on all symbols you use. If your scale is not set to "Scale price chart only", the position tool's levels will be taken into account when scaling the chart, which can cause the symbol's bars to be compressed. If your scale is set to "Scale price chart only", the position tool will still be there, but it will not impact the scale of the chart's bars, so you won't see it if it sits outside the symbol's price scale.
+
+If you select the position tool on your chart and delete it, this will also delete the indicator from the chart. You will need to re-add it if you want to draw another position tool. You can add multiple instances of the indicator if you need a position tool on more than one of your charts.
+
+
+
+█  FEATURES
+
+
+Display
+
+The position tool displays the following information for entries:
+ • The entry's price level with an '@' sign before it.
+ • Open or Closed P&L: For an open trade, the "Open P&L" displays the difference in money value between the entry level and the chart's current price.
+  For a closed trade, the "Closed P&L" displays the realized P&L on the trade.
+ • Quantity: The trade size, which takes into account the risk tolerance you set in the script's settings.
+ • RR: The reward to risk ratio expresses the relationship of the distance between the entry and the take profit level vs the entry and the stop level.
+  Example: A $100 stop with a $100 target will have a ratio of 1:1, whereas a $200 target with the same stop will have a 2:1 ratio.
+ • Per tick/pip: Represents the money value of a tick or pip movement.
+ • CAGR: The Compound Annual Growth Rate will be displayed on the main order label on trades that exceed one day in duration.
+  This value is calculated the same way as in our CAGR Custom Range indicator.
+  If the trade duration is less than one day, the metric will not be present in the display.
+
+The stop and take profit levels display:
+ • Their price level with an '@' sign before it.
+ • Their distance from the entry in money value, percentage and ticks/pips.
+ • The projected end money value of the position if the level is reached. These values are calculated based on the trade size and the currency.
+
+
+Currency adjustments
+
+This indicator modifies the trade label's colors and values based on the final Profit and Loss (P&L), which considers the dynamic exchange rate between base and conversion currencies in its calculations when the conversion currency is a specified value other than the default. Depending on the cross rate between the base and account currencies, this process can yield a negative P&L on an otherwise successful simulated trade.
+
+For instance, if your account is in currency XYZ, you might buy 10 Apple shares at $150 each, with the XYZ to USD exchange rate being 2:1. This purchase would cost you 3000 units of XYZ. Suppose that later on, the shares appreciate to $170 each, and you decide to sell. One might expect this trade to result in profit. However, if the exchange rate has now equalized to 1:1, the return on selling the shares, calculated in XYZ, would only be 1700 units, resulting in a loss of 1300 units XYZ.
+
+The indicator will mark the P&L and the target labels in red in such cases, regardless of whether the market price reached the profit target, as the trade produced a net loss due to reduced funds after currency conversion. Conversely, an otherwise unsuccessful position can result in a net profit in the account currency due to conversion rate fluctuations. The final losses or gains appear in the label metrics, and the corresponding color coding reflects the trade's success or failure.
+
+
+Settings
+
+The settings in the "Trade sizing" section are used to calculate the position size and the monetary value of trades. Two types of risk can be chosen from the menu; a percentage based risk calculation, or a fixed money value. The risk is used to calculate the quantity of units to purchase to achieve that level of risk exposure. Example: An account size of $1000 and 10% risk will have a projected end amount of $900 if the stop loss is hit. The quantity is a product of this relationship; a projected number of units to allow for the equivalent of $100 of risk exposure over the change in price from the entry to the stop value.
+
+The "Trade levels" allow you to manually set the entry, take profit and stop levels of an existing position tool on your chart.
+
+You can control the appearance of the tool and the values it displays in the settings following these first two sections.
