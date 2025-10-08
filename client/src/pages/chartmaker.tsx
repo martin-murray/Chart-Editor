@@ -93,9 +93,9 @@ function LogoutButton() {
   return (
     <button
       onClick={handleLogout}
-      className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+      className="flex items-center gap-2 hover:opacity-80 transition-opacity"
       data-testid="button-logout"
-      style={{ fontFamily: 'var(--font-sans)', fontSize: '18px' }}
+      style={{ fontFamily: 'var(--font-sans)', fontSize: '16px', color: '#f7f7f7' }}
     >
       <LogOut className="h-5 w-5 text-[#5AF5FA]" />
       <span>Sign Out</span>
@@ -372,9 +372,9 @@ function FeedbackButton() {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+        className="flex items-center gap-2 hover:opacity-80 transition-opacity"
         data-testid="button-feedback"
-        style={{ fontSize: '18px' }}
+        style={{ fontSize: '16px', color: '#f7f7f7' }}
       >
         <MessageSquare className="h-5 w-5 text-[#5AF5FA]" />
         <span>Issues / Feedback</span>
@@ -525,12 +525,12 @@ function ChartMaker() {
                 data-testid="header-logo"
               />
             </div>
-            <div className="flex items-center gap-4 max-[900px]:w-full max-[900px]:justify-center max-[600px]:gap-2 max-[600px]:flex-wrap">
+            <div className="flex items-center max-[900px]:w-full max-[900px]:justify-center max-[600px]:flex-wrap" style={{ gap: '40px' }}>
               <SuffixSearchModal>
                 <button 
-                  className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors max-[600px]:text-xs"
+                  className="flex items-center gap-2 hover:opacity-80 transition-opacity max-[600px]:text-xs"
                   data-testid="button-suffix-search"
-                  style={{ fontSize: '18px' }}
+                  style={{ fontSize: '16px', color: '#f7f7f7' }}
                 >
                   <Globe className="h-5 w-5 text-[#FAFF50]" />
                   <span className="max-[600px]:hidden">Suffix Guide</span>
