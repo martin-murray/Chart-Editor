@@ -1682,14 +1682,14 @@ export function PriceChart({
               <TabsList className="grid grid-cols-2 h-8">
                 <TabsTrigger 
                   value="price-volume" 
-                  className="data-[state=active]:bg-[#5AF5FA] data-[state=active]:text-black h-8 text-xs"
+                  className="data-[state=active]:bg-[#5AF5FA] data-[state=active]:text-black h-8 text-xs py-0"
                   data-testid="trigger-price-volume"
                 >
                   Price
                 </TabsTrigger>
                 <TabsTrigger 
                   value="comparison" 
-                  className="data-[state=active]:bg-[#5AF5FA] data-[state=active]:text-black h-8 text-xs"
+                  className="data-[state=active]:bg-[#5AF5FA] data-[state=active]:text-black h-8 text-xs py-0"
                   data-testid="trigger-comparison"
                 >
                   Compare
@@ -1796,36 +1796,34 @@ export function PriceChart({
                 )}
                 
                 {/* Price Y-axis Zoom Controls */}
-                {activeTab === 'price-volume' && (
-                  <div className="flex border border-border rounded-md overflow-hidden bg-background">
-                    <button
-                      onClick={zoomInPrice}
-                      disabled={priceAxisRange <= priceZoomLevels[0] * priceExtremes.baseRange}
-                      className="h-8 w-8 text-sm font-medium bg-[#121212] text-white border-r border-border hover:bg-[#5AF5FA] hover:text-[#121212] disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 flex items-center justify-center"
-                      data-testid="button-zoom-in-price"
-                      title="Zoom In Price"
-                    >
-                      +
-                    </button>
-                    <button
-                      onClick={zoomOutPrice}
-                      disabled={priceAxisRange >= priceZoomLevels[priceZoomLevels.length - 1] * priceExtremes.baseRange}
-                      className="h-8 w-8 text-sm font-medium bg-[#121212] text-white border-r border-border hover:bg-[#5AF5FA] hover:text-[#121212] disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 flex items-center justify-center"
-                      data-testid="button-zoom-out-price"
-                      title="Zoom Out Price"
-                    >
-                      −
-                    </button>
-                    <button
-                      onClick={fitPriceToData}
-                      className="h-8 w-10 text-xs font-medium bg-[#121212] text-white hover:bg-[#5AF5FA] hover:text-[#121212] transition-colors duration-150 flex items-center justify-center"
-                      data-testid="button-fit-price-data"
-                      title="Fit Price to Data"
-                    >
-                      Fit
-                    </button>
-                  </div>
-                )}
+                <div className="flex border border-border rounded-md overflow-hidden bg-background">
+                  <button
+                    onClick={zoomInPrice}
+                    disabled={priceAxisRange <= priceZoomLevels[0] * priceExtremes.baseRange}
+                    className="h-8 w-8 text-sm font-medium bg-[#121212] text-white border-r border-border hover:bg-[#5AF5FA] hover:text-[#121212] disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 flex items-center justify-center"
+                    data-testid="button-zoom-in-price"
+                    title="Zoom In Price"
+                  >
+                    +
+                  </button>
+                  <button
+                    onClick={zoomOutPrice}
+                    disabled={priceAxisRange >= priceZoomLevels[priceZoomLevels.length - 1] * priceExtremes.baseRange}
+                    className="h-8 w-8 text-sm font-medium bg-[#121212] text-white border-r border-border hover:bg-[#5AF5FA] hover:text-[#121212] disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 flex items-center justify-center"
+                    data-testid="button-zoom-out-price"
+                    title="Zoom Out Price"
+                  >
+                    −
+                  </button>
+                  <button
+                    onClick={fitPriceToData}
+                    className="h-8 w-10 text-xs font-medium bg-[#121212] text-white hover:bg-[#5AF5FA] hover:text-[#121212] transition-colors duration-150 flex items-center justify-center"
+                    data-testid="button-fit-price-data"
+                    title="Fit Price to Data"
+                  >
+                    Fit
+                  </button>
+                </div>
                 
                 {/* Hover Tool Toggle */}
                 <div className="flex items-center gap-2">
