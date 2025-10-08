@@ -1364,45 +1364,44 @@ export function PriceChart({
           </div>
 
           {/* Chart Type selector */}
-          <div className="flex gap-1 items-center flex-wrap max-[600px]:w-full max-[600px]:justify-start">
-            <span className="text-xs text-muted-foreground mr-1 max-[600px]:w-full max-[600px]:mb-1">Chart:</span>
-            <Button
-              variant={chartType === 'line' ? "default" : "outline"}
-              size="sm"
-              onClick={() => setChartType('line')}
-              className={`h-8 px-3 text-xs ${
-                chartType === 'line'
-                  ? 'bg-[#5AF5FA] text-black hover:bg-[#5AF5FA]/90' 
-                  : 'hover:bg-muted'
-              }`}
-            >
-              Line
-            </Button>
-            <Button
-              variant={chartType === 'mountain' ? "default" : "outline"}
-              size="sm"
-              onClick={() => setChartType('mountain')}
-              className={`h-8 px-3 text-xs ${
-                chartType === 'mountain'
-                  ? 'bg-[#5AF5FA] text-black hover:bg-[#5AF5FA]/90' 
-                  : 'hover:bg-muted'
-              }`}
-            >
-              Mountain
-            </Button>
-            <Button
-              variant={chartType === 'candlestick' ? "default" : "outline"}
-              size="sm"
-              onClick={() => setChartType('candlestick')}
-              className={`h-8 px-3 text-xs ${
-                chartType === 'candlestick'
-                  ? 'bg-[#5AF5FA] text-black hover:bg-[#5AF5FA]/90' 
-                  : 'hover:bg-muted'
-              }`}
-            >
-              Candles
-            </Button>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 px-3 text-xs"
+                data-testid="button-chart-type-dropdown"
+              >
+                {chartType === 'line' && 'Line'}
+                {chartType === 'mountain' && 'Mountain'}
+                {chartType === 'candlestick' && 'Candles'}
+                <ChevronDown className="w-3 h-3 ml-1" style={{ color: '#5AF5FA' }} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <DropdownMenuItem
+                onClick={() => setChartType('line')}
+                className="cursor-pointer"
+                data-testid="menu-chart-line"
+              >
+                Line
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setChartType('mountain')}
+                className="cursor-pointer"
+                data-testid="menu-chart-mountain"
+              >
+                Mountain
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setChartType('candlestick')}
+                className="cursor-pointer"
+                data-testid="menu-chart-candles"
+              >
+                Candles
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         
         {/* Redesigned Custom Date Picker - Limited to 10 Years */}
@@ -1680,17 +1679,17 @@ export function PriceChart({
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <TabsList className="grid grid-cols-2">
+              <TabsList className="grid grid-cols-2 h-8">
                 <TabsTrigger 
                   value="price-volume" 
-                  className="data-[state=active]:bg-[#5AF5FA] data-[state=active]:text-black"
+                  className="data-[state=active]:bg-[#5AF5FA] data-[state=active]:text-black h-8 text-xs"
                   data-testid="trigger-price-volume"
                 >
                   Price
                 </TabsTrigger>
                 <TabsTrigger 
                   value="comparison" 
-                  className="data-[state=active]:bg-[#5AF5FA] data-[state=active]:text-black"
+                  className="data-[state=active]:bg-[#5AF5FA] data-[state=active]:text-black h-8 text-xs"
                   data-testid="trigger-comparison"
                 >
                   Compare
@@ -1728,7 +1727,7 @@ export function PriceChart({
                         </>
                       )}
                       {!annotationMode && 'Select Tool'}
-                      <ChevronDown className="w-3 h-3 ml-1 opacity-50" />
+                      <ChevronDown className="w-3 h-3 ml-1" style={{ color: '#5AF5FA' }} />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start">
@@ -1867,7 +1866,7 @@ export function PriceChart({
                 >
                   <Download className="w-3 h-3 mr-1" />
                   Export
-                  <ChevronDown className="w-3 h-3 ml-1" />
+                  <ChevronDown className="w-3 h-3 ml-1" style={{ color: '#5AF5FA' }} />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="center" className="w-36">
