@@ -1492,21 +1492,69 @@ export function PriceChart({
             </div>
           )}
           
-          {/* Position Tool Instructions */}
-          {chartType === 'position' && annotationMode === 'position' && positionToolState.step !== 'complete' && (
-            <div className="text-xs bg-muted/50 px-3 py-2 rounded border space-y-1">
-              <div className="font-semibold text-[#5AF5FA]">Position Setup</div>
-              <div className={`flex items-center gap-2 ${positionToolState.step === 'entry' ? 'text-[#FAFF50]' : 'text-muted-foreground'}`}>
-                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${positionToolState.step === 'entry' ? 'bg-[#FAFF50] text-[#121212]' : 'bg-muted'}`}>1</span>
-                Click to set Entry Price
-              </div>
-              <div className={`flex items-center gap-2 ${positionToolState.step === 'takeProfit' ? 'text-[#00FF88]' : 'text-muted-foreground'}`}>
-                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${positionToolState.step === 'takeProfit' ? 'bg-[#00FF88] text-[#121212]' : 'bg-muted'}`}>2</span>
-                Click to set Take Profit
-              </div>
-              <div className={`flex items-center gap-2 ${positionToolState.step === 'stopLoss' ? 'text-[#FF4444]' : 'text-muted-foreground'}`}>
-                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${positionToolState.step === 'stopLoss' ? 'bg-[#FF4444] text-[#121212]' : 'bg-muted'}`}>3</span>
-                Click to set Stop Loss
+          {/* Position Tool Instructions and Configuration */}
+          {chartType === 'position' && annotationMode === 'position' && (
+            <div className="flex gap-3 flex-wrap">
+              {positionToolState.step !== 'complete' && (
+                <div className="text-xs bg-muted/50 px-3 py-2 rounded border space-y-1">
+                  <div className="font-semibold text-[#5AF5FA]">Position Setup</div>
+                  <div className={`flex items-center gap-2 ${positionToolState.step === 'entry' ? 'text-[#FAFF50]' : 'text-muted-foreground'}`}>
+                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${positionToolState.step === 'entry' ? 'bg-[#FAFF50] text-[#121212]' : 'bg-muted'}`}>1</span>
+                    Click to set Entry Price
+                  </div>
+                  <div className={`flex items-center gap-2 ${positionToolState.step === 'takeProfit' ? 'text-[#00FF88]' : 'text-muted-foreground'}`}>
+                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${positionToolState.step === 'takeProfit' ? 'bg-[#00FF88] text-[#121212]' : 'bg-muted'}`}>2</span>
+                    Click to set Take Profit
+                  </div>
+                  <div className={`flex items-center gap-2 ${positionToolState.step === 'stopLoss' ? 'text-[#FF4444]' : 'text-muted-foreground'}`}>
+                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${positionToolState.step === 'stopLoss' ? 'bg-[#FF4444] text-[#121212]' : 'bg-muted'}`}>3</span>
+                    Click to set Stop Loss
+                  </div>
+                </div>
+              )}
+              
+              {/* Position Configuration Panel */}
+              <div className="text-xs bg-muted/50 px-3 py-2 rounded border space-y-2">
+                <div className="font-semibold text-[#5AF5FA] mb-1">Account Settings</div>
+                <div className="flex items-center gap-2">
+                  <label className="text-muted-foreground whitespace-nowrap">Size:</label>
+                  <input
+                    type="number"
+                    value={positionConfig.accountSize}
+                    onChange={(e) => setPositionConfig({ ...positionConfig, accountSize: parseFloat(e.target.value) || 10000 })}
+                    className="w-20 px-1 py-0.5 rounded bg-background border text-foreground"
+                    min="0"
+                    step="1000"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-muted-foreground whitespace-nowrap">Risk %:</label>
+                  <input
+                    type="number"
+                    value={positionConfig.riskPercent}
+                    onChange={(e) => setPositionConfig({ ...positionConfig, riskPercent: parseFloat(e.target.value) || 2 })}
+                    className="w-12 px-1 py-0.5 rounded bg-background border text-foreground"
+                    min="0.1"
+                    max="100"
+                    step="0.5"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-muted-foreground whitespace-nowrap">Currency:</label>
+                  <select
+                    value={positionConfig.currency}
+                    onChange={(e) => setPositionConfig({ ...positionConfig, currency: e.target.value })}
+                    className="px-1 py-0.5 rounded bg-background border text-foreground"
+                  >
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                    <option value="GBP">GBP</option>
+                    <option value="JPY">JPY</option>
+                    <option value="AUD">AUD</option>
+                    <option value="CAD">CAD</option>
+                    <option value="CHF">CHF</option>
+                  </select>
+                </div>
               </div>
             </div>
           )}
