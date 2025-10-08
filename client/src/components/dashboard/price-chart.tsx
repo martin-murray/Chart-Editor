@@ -63,7 +63,7 @@ interface StockDetails {
 
 interface Annotation {
   id: string;
-  type: 'text' | 'percentage' | 'horizontal';
+  type: 'text' | 'percentage' | 'horizontal' | 'position';
   x: number; // X coordinate on chart
   y: number; // Y coordinate on chart
   timestamp: number; // Data point timestamp
@@ -80,6 +80,23 @@ interface Annotation {
   endPrice?: number;
   endTime?: string;
   percentage?: number;
+  // For position tool
+  positionData?: {
+    entryPrice: number;
+    entryTime: string;
+    entryTimestamp: number;
+    takeProfitPrice: number;
+    stopLossPrice: number;
+    accountSize: number;
+    riskPercent: number;
+    currency: string;
+    lotSize: number;
+    isLong: boolean;
+    quantity?: number;
+    riskRewardRatio?: number;
+    riskAmount?: number;
+    profitAmount?: number;
+  };
 }
 
 interface PriceChartProps {
@@ -125,7 +142,7 @@ export function PriceChart({
   const [singleTradingDay, setSingleTradingDay] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState<Date>(new Date());
   const [activeTab, setActiveTab] = useState('price-volume');
-  const [chartType, setChartType] = useState<'line' | 'mountain' | 'candlestick'>('mountain');
+  const [chartType, setChartType] = useState<'line' | 'mountain' | 'candlestick' | 'position'>('mountain');
   const chartRef = useRef<HTMLDivElement>(null);
   const comparisonRef = useRef<HTMLDivElement>(null);
   
@@ -152,13 +169,34 @@ export function PriceChart({
   const [isEditMode, setIsEditMode] = useState(false);
   
   // Percentage measurement state
-  const [annotationMode, setAnnotationMode] = useState<'text' | 'percentage' | 'horizontal'>('text');
+  const [annotationMode, setAnnotationMode] = useState<'text' | 'percentage' | 'horizontal' | 'position'>('text');
   const [pendingPercentageStart, setPendingPercentageStart] = useState<{
     timestamp: number;
     price: number;
     time: string;
   } | null>(null);
   const [showMeasureTooltip, setShowMeasureTooltip] = useState(false);
+
+  // Position tool state
+  const [positionToolState, setPositionToolState] = useState<{
+    step: 'entry' | 'takeProfit' | 'stopLoss' | 'complete';
+    entry: { timestamp: number; price: number; time: string } | null;
+    takeProfit: { price: number } | null;
+    stopLoss: { price: number } | null;
+  }>({
+    step: 'entry',
+    entry: null,
+    takeProfit: null,
+    stopLoss: null
+  });
+
+  // Position tool configuration
+  const [positionConfig, setPositionConfig] = useState({
+    accountSize: 10000,
+    riskPercent: 2,
+    currency: 'USD',
+    lotSize: 1
+  });
 
   // Flash tooltip timeout management
   useEffect(() => {
@@ -205,6 +243,28 @@ export function PriceChart({
   
   // Hover tool toggle state
   const [showHoverTooltip, setShowHoverTooltip] = useState(true);
+  
+  // Position tool calculation functions
+  const calculatePositionMetrics = (entry: number, takeProfit: number, stopLoss: number, config: typeof positionConfig) => {
+    const isLong = takeProfit > entry; // Long if TP is above entry
+    const riskPerTrade = (config.accountSize * config.riskPercent) / 100;
+    const riskPerUnit = Math.abs(entry - stopLoss);
+    const quantity = riskPerUnit > 0 ? riskPerTrade / riskPerUnit : 0;
+    const profitDistance = Math.abs(takeProfit - entry);
+    const lossDistance = Math.abs(entry - stopLoss);
+    const riskRewardRatio = lossDistance > 0 ? profitDistance / lossDistance : 0;
+    const potentialProfit = quantity * profitDistance;
+    const potentialLoss = quantity * lossDistance;
+    
+    return {
+      isLong,
+      quantity: Math.round(quantity * 100) / 100, // Round to 2 decimals
+      riskRewardRatio: Math.round(riskRewardRatio * 100) / 100,
+      riskAmount: riskPerTrade,
+      profitAmount: potentialProfit,
+      lossAmount: potentialLoss
+    };
+  };
   
   // Helper function to update annotations in both controlled and uncontrolled modes
   const updateAnnotations = (newAnnotations: Annotation[] | ((prev: Annotation[]) => Annotation[])) => {
@@ -986,6 +1046,74 @@ export function PriceChart({
           setPendingPercentageStart(null);
         }
       }
+    } else if (annotationMode === 'position' && chartType === 'position') {
+      // Handle position tool 3-click setup
+      if (event.activePayload && event.activePayload[0]) {
+        const { timestamp, time } = event.activePayload[0].payload;
+        const price = event.activePayload[0].value;
+        
+        if (positionToolState.step === 'entry') {
+          // First click - set entry point
+          setPositionToolState({
+            ...positionToolState,
+            step: 'takeProfit',
+            entry: { timestamp, price, time }
+          });
+        } else if (positionToolState.step === 'takeProfit') {
+          // Second click - set take profit
+          setPositionToolState({
+            ...positionToolState,
+            step: 'stopLoss',
+            takeProfit: { price }
+          });
+        } else if (positionToolState.step === 'stopLoss') {
+          // Third click - set stop loss and create position annotation
+          if (positionToolState.entry && positionToolState.takeProfit) {
+            const metrics = calculatePositionMetrics(
+              positionToolState.entry.price,
+              positionToolState.takeProfit.price,
+              price,
+              positionConfig
+            );
+            
+            const positionAnnotation: Annotation = {
+              id: `position-${Date.now()}`,
+              type: 'position',
+              x: 0,
+              y: 0,
+              timestamp: positionToolState.entry.timestamp,
+              price: positionToolState.entry.price,
+              time: positionToolState.entry.time,
+              positionData: {
+                entryPrice: positionToolState.entry.price,
+                entryTime: positionToolState.entry.time,
+                entryTimestamp: positionToolState.entry.timestamp,
+                takeProfitPrice: positionToolState.takeProfit.price,
+                stopLossPrice: price,
+                accountSize: positionConfig.accountSize,
+                riskPercent: positionConfig.riskPercent,
+                currency: positionConfig.currency,
+                lotSize: positionConfig.lotSize,
+                isLong: metrics.isLong,
+                quantity: metrics.quantity,
+                riskRewardRatio: metrics.riskRewardRatio,
+                riskAmount: metrics.riskAmount,
+                profitAmount: metrics.profitAmount
+              }
+            };
+            
+            updateAnnotations(prev => [...prev, positionAnnotation]);
+            
+            // Reset position tool state
+            setPositionToolState({
+              step: 'complete',
+              entry: positionToolState.entry,
+              takeProfit: positionToolState.takeProfit,
+              stopLoss: { price }
+            });
+          }
+        }
+      }
     }
   };
 
@@ -1401,30 +1529,63 @@ export function PriceChart({
                 {chartType === 'line' && 'Line'}
                 {chartType === 'mountain' && 'Mountain'}
                 {chartType === 'candlestick' && 'Candles'}
+                {chartType === 'position' && 'Position'}
                 <ChevronDown className="w-3 h-3 ml-1" style={{ color: '#5AF5FA' }} />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
               <DropdownMenuItem
-                onClick={() => setChartType('line')}
+                onClick={() => {
+                  setChartType('line');
+                  if (annotationMode === 'position') {
+                    setAnnotationMode('text');
+                  }
+                }}
                 className="cursor-pointer"
                 data-testid="menu-chart-line"
               >
                 Line
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => setChartType('mountain')}
+                onClick={() => {
+                  setChartType('mountain');
+                  if (annotationMode === 'position') {
+                    setAnnotationMode('text');
+                  }
+                }}
                 className="cursor-pointer"
                 data-testid="menu-chart-mountain"
               >
                 Mountain
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => setChartType('candlestick')}
+                onClick={() => {
+                  setChartType('candlestick');
+                  if (annotationMode === 'position') {
+                    setAnnotationMode('text');
+                  }
+                }}
                 className="cursor-pointer"
                 data-testid="menu-chart-candles"
               >
                 Candles
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setChartType('position');
+                  setAnnotationMode('position');
+                  // Reset position tool state when entering position mode
+                  setPositionToolState({
+                    step: 'entry',
+                    entry: null,
+                    takeProfit: null,
+                    stopLoss: null
+                  });
+                }}
+                className="cursor-pointer"
+                data-testid="menu-chart-position"
+              >
+                Position
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -2089,6 +2250,52 @@ export function PriceChart({
                               {formatTime(annotation.startTime, selectedTimeframe)} → {formatTime(annotation.endTime, selectedTimeframe)}
                             </div>
                           )}
+                        </div>
+                      </div>
+                    );
+                  } else if (annotation.type === 'position' && annotation.positionData) {
+                    // Position tool - display zones and labels
+                    const pd = annotation.positionData;
+                    const dataIndex = chartData?.data?.findIndex(d => d.timestamp === pd.entryTimestamp) ?? -1;
+                    if (dataIndex === -1) return null;
+                    
+                    const totalDataPoints = (chartData?.data?.length ?? 1) - 1;
+                    const xPercent = totalDataPoints > 0 ? (dataIndex / totalDataPoints) * 100 : 0;
+                    
+                    return (
+                      <div
+                        key={annotation.id}
+                        className="absolute"
+                        style={{ 
+                          left: `${xPercent}%`, 
+                          top: '10px', 
+                          transform: 'translateX(-50%)',
+                          zIndex: 1001
+                        }}
+                      >
+                        <div 
+                          className="rounded px-3 py-2 text-xs pointer-events-auto cursor-pointer hover:opacity-90 shadow-xl"
+                          style={{ 
+                            backgroundColor: '#121212', 
+                            border: pd.isLong ? '2px solid #00FF88' : '2px solid #FF4444',
+                            minWidth: '180px'
+                          }}
+                          onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
+                          title="Position Tool - Double-click to delete"
+                        >
+                          <div className="font-bold mb-1" style={{ color: pd.isLong ? '#00FF88' : '#FF4444' }}>
+                            {pd.isLong ? 'LONG' : 'SHORT'} POSITION
+                          </div>
+                          <div className="text-[#f7f7f7] space-y-1">
+                            <div>Entry: ${pd.entryPrice.toFixed(2)}</div>
+                            <div>TP: ${pd.takeProfitPrice.toFixed(2)}</div>
+                            <div>SL: ${pd.stopLossPrice.toFixed(2)}</div>
+                            <div className="font-semibold text-[#5AF5FA]">
+                              R:R = {pd.riskRewardRatio?.toFixed(2)}:1
+                            </div>
+                            <div>Qty: {pd.quantity}</div>
+                            <div>Risk: ${pd.riskAmount?.toFixed(2)}</div>
+                          </div>
                         </div>
                       </div>
                     );
