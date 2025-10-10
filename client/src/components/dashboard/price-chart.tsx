@@ -228,6 +228,21 @@ export function PriceChart({
   // Hover tool toggle state
   const [showHoverTooltip, setShowHoverTooltip] = useState(true);
   
+  // Helper function to calculate time span for box annotations
+  const calculateTimeSpan = (startTimestamp: number, endTimestamp: number): string => {
+    const diffMs = Math.abs(endTimestamp - startTimestamp);
+    const diffHours = diffMs / (1000 * 60 * 60);
+    const diffDays = diffHours / 24;
+    
+    if (diffDays >= 1) {
+      const days = Math.round(diffDays);
+      return `${days} day${days !== 1 ? 's' : ''}`;
+    } else {
+      const hours = Math.round(diffHours);
+      return `${hours} hour${hours !== 1 ? 's' : ''}`;
+    }
+  };
+  
   // Helper function to update annotations in both controlled and uncontrolled modes
   const updateAnnotations = (newAnnotations: Annotation[] | ((prev: Annotation[]) => Annotation[])) => {
     if (onAnnotationsChange) {
@@ -1008,6 +1023,71 @@ export function PriceChart({
           setPendingPercentageStart(null);
         }
       }
+    } else if (annotationMode === 'box') {
+      // Handle box annotation - mouse down to start
+      if (event.activePayload && event.activePayload[0]) {
+        const { timestamp, time } = event.activePayload[0].payload;
+        const price = event.activePayload[0].value;
+        
+        // Start the box drag
+        setPendingBoxStart({
+          timestamp,
+          price,
+          time,
+          x: event.chartX || 0,
+          y: event.chartY || 0
+        });
+        setIsBoxDragging(true);
+      }
+    }
+  };
+  
+  // Handle box drag (mouse move) - update preview
+  const handleBoxDrag = (event: any) => {
+    if (annotationMode === 'box' && isBoxDragging && pendingBoxStart && event.activePayload && event.activePayload[0]) {
+      // We could update a preview state here if needed, but for now we'll finalize on mouse up
+    }
+  };
+  
+  // Handle box release (mouse up) - finalize box
+  const handleBoxRelease = (event: any) => {
+    if (annotationMode === 'box' && isBoxDragging && pendingBoxStart && event.activePayload && event.activePayload[0]) {
+      const { timestamp: endTimestamp, time: endTime } = event.activePayload[0].payload;
+      const endPrice = event.activePayload[0].value;
+      
+      // Calculate metrics
+      const startPrice = pendingBoxStart.price;
+      const percentage = ((endPrice - startPrice) / startPrice) * 100;
+      const isPositive = percentage >= 0;
+      const timeSpan = calculateTimeSpan(pendingBoxStart.timestamp, endTimestamp);
+      
+      // Create box annotation
+      const boxAnnotation: Annotation = {
+        id: `box-${Date.now()}`,
+        type: 'box',
+        x: 0,
+        y: 0,
+        timestamp: pendingBoxStart.timestamp,
+        price: pendingBoxStart.price,
+        time: pendingBoxStart.time,
+        boxData: {
+          startTimestamp: pendingBoxStart.timestamp,
+          startPrice,
+          startTime: pendingBoxStart.time,
+          endTimestamp,
+          endPrice,
+          endTime,
+          percentage,
+          timeSpan,
+          isPositive
+        }
+      };
+      
+      updateAnnotations(prev => [...prev, boxAnnotation]);
+      
+      // Reset state
+      setPendingBoxStart(null);
+      setIsBoxDragging(false);
     }
   };
 
@@ -1018,9 +1098,9 @@ export function PriceChart({
       setIsEditMode(true);
       setAnnotationInput(annotation.text || '');
       setShowAnnotationInput(true);
-    } else if (annotation.type === 'percentage') {
-      // Percentage annotations can be deleted on double-click
-      handlePercentageAnnotationDelete(annotation);
+    } else if (annotation.type === 'percentage' || annotation.type === 'box') {
+      // Percentage and box annotations can be deleted on double-click
+      updateAnnotations(prev => prev.filter(a => a.id !== annotation.id));
     }
   };
 
@@ -2932,6 +3012,137 @@ export function PriceChart({
                                 />
                                 
                                 {/* Percentage text box - COMPLETELY REMOVED per user request to eliminate duplicate */}
+                              </g>
+                            );
+                          })}
+                        </g>
+                      );
+                    }}
+                  />
+                  
+                  {/* Box Annotations Rendering */}
+                  <Customized 
+                    component={(props: any) => {
+                      const { xAxisMap, yAxisMap } = props;
+                      if (!xAxisMap || !yAxisMap || !chartData?.data) return null;
+                      
+                      const xAxis = xAxisMap[0];
+                      const yAxis = yAxisMap.price;
+                      if (!xAxis || !yAxis) return null;
+                      
+                      return (
+                        <g>
+                          {annotations.filter(annotation => 
+                            annotation.type === 'box' && 
+                            annotation.boxData
+                          ).map((annotation) => {
+                            const bd = annotation.boxData!;
+                            const startIndex = chartData.data.findIndex(d => d.timestamp === bd.startTimestamp);
+                            const endIndex = chartData.data.findIndex(d => d.timestamp === bd.endTimestamp);
+                            if (startIndex === -1 || endIndex === -1) return null;
+                            
+                            // Calculate positions
+                            const x1 = xAxis.x + (startIndex / (chartData.data.length - 1)) * xAxis.width;
+                            const x2 = xAxis.x + (endIndex / (chartData.data.length - 1)) * xAxis.width;
+                            
+                            const y1 = yAxis.y + yAxis.height - ((bd.startPrice - yAxis.domain[0]) / (yAxis.domain[1] - yAxis.domain[0])) * yAxis.height;
+                            const y2 = yAxis.y + yAxis.height - ((bd.endPrice - yAxis.domain[0]) / (yAxis.domain[1] - yAxis.domain[0])) * yAxis.height;
+                            
+                            // Box dimensions
+                            const boxX = Math.min(x1, x2);
+                            const boxY = Math.min(y1, y2);
+                            const boxWidth = Math.abs(x2 - x1);
+                            const boxHeight = Math.abs(y2 - y1);
+                            
+                            // Center of box for crosshair
+                            const centerX = (x1 + x2) / 2;
+                            const centerY = (y1 + y2) / 2;
+                            
+                            // Color based on direction
+                            const boxColor = bd.isPositive ? '#5AF5FA' : '#FFA5FF';
+                            
+                            // Arrow size
+                            const arrowSize = 8;
+                            
+                            return (
+                              <g key={annotation.id}>
+                                {/* Semi-transparent box */}
+                                <rect
+                                  x={boxX}
+                                  y={boxY}
+                                  width={boxWidth}
+                                  height={boxHeight}
+                                  fill={boxColor}
+                                  fillOpacity={0.3}
+                                  stroke={boxColor}
+                                  strokeWidth={1.5}
+                                  onDoubleClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleAnnotationDoubleClick(annotation);
+                                  }}
+                                  style={{ cursor: 'pointer' }}
+                                />
+                                
+                                {/* Y-axis arrow (vertical) */}
+                                <line
+                                  x1={centerX}
+                                  y1={boxY}
+                                  x2={centerX}
+                                  y2={boxY + boxHeight}
+                                  stroke={boxColor}
+                                  strokeWidth={2}
+                                />
+                                {/* Y-axis arrow head (top) */}
+                                <polygon
+                                  points={`${centerX},${boxY} ${centerX - arrowSize/2},${boxY + arrowSize} ${centerX + arrowSize/2},${boxY + arrowSize}`}
+                                  fill={boxColor}
+                                />
+                                {/* Y-axis arrow head (bottom) */}
+                                <polygon
+                                  points={`${centerX},${boxY + boxHeight} ${centerX - arrowSize/2},${boxY + boxHeight - arrowSize} ${centerX + arrowSize/2},${boxY + boxHeight - arrowSize}`}
+                                  fill={boxColor}
+                                />
+                                
+                                {/* X-axis arrow (horizontal - always facing right) */}
+                                <line
+                                  x1={boxX}
+                                  y1={centerY}
+                                  x2={boxX + boxWidth}
+                                  y2={centerY}
+                                  stroke={boxColor}
+                                  strokeWidth={2}
+                                />
+                                {/* X-axis arrow head (right) */}
+                                <polygon
+                                  points={`${boxX + boxWidth},${centerY} ${boxX + boxWidth - arrowSize},${centerY - arrowSize/2} ${boxX + boxWidth - arrowSize},${centerY + arrowSize/2}`}
+                                  fill={boxColor}
+                                />
+                                
+                                {/* Percentage label (next to Y-axis) */}
+                                <text
+                                  x={centerX + 10}
+                                  y={centerY - 5}
+                                  fill={boxColor}
+                                  fontSize="12"
+                                  fontWeight="bold"
+                                  style={{ textShadow: '0 0 3px #121212, 0 0 3px #121212' }}
+                                >
+                                  {bd.isPositive ? '+' : ''}{bd.percentage.toFixed(2)}%
+                                </text>
+                                
+                                {/* Time span label (below X-axis) */}
+                                <text
+                                  x={centerX}
+                                  y={centerY + 15}
+                                  fill={boxColor}
+                                  fontSize="11"
+                                  fontWeight="600"
+                                  textAnchor="middle"
+                                  style={{ textShadow: '0 0 3px #121212, 0 0 3px #121212' }}
+                                >
+                                  {bd.timeSpan}
+                                </text>
                               </g>
                             );
                           })}
