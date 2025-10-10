@@ -2298,6 +2298,21 @@ export function PriceChart({
                   data={chartDataWithMA}
                   margin={{ top: 15, right: 0, left: 0, bottom: -5 }}
                   onClick={handleChartClick}
+                  onMouseDown={(e: any) => {
+                    if (annotationMode === 'box') {
+                      handleChartClick(e);
+                    }
+                  }}
+                  onMouseMove={(e: any) => {
+                    if (annotationMode === 'box' && isBoxDragging) {
+                      handleBoxDrag(e);
+                    }
+                  }}
+                  onMouseUp={(e: any) => {
+                    if (annotationMode === 'box' && isBoxDragging) {
+                      handleBoxRelease(e);
+                    }
+                  }}
                 >
                   <defs>
                     <linearGradient id="positiveGradient" x1="0" y1="0" x2="0" y2="1">
