@@ -63,7 +63,7 @@ interface StockDetails {
 
 interface Annotation {
   id: string;
-  type: 'text' | 'percentage' | 'horizontal';
+  type: 'text' | 'percentage' | 'horizontal' | 'box';
   x: number; // X coordinate on chart
   y: number; // Y coordinate on chart
   timestamp: number; // Data point timestamp
@@ -80,6 +80,18 @@ interface Annotation {
   endPrice?: number;
   endTime?: string;
   percentage?: number;
+  // For box annotations
+  boxData?: {
+    startTimestamp: number;
+    startPrice: number;
+    startTime: string;
+    endTimestamp: number;
+    endPrice: number;
+    endTime: string;
+    percentage: number;
+    timeSpan: string; // e.g., "5 days" or "12 hours"
+    isPositive: boolean;
+  };
 }
 
 interface PriceChartProps {
@@ -152,13 +164,23 @@ export function PriceChart({
   const [isEditMode, setIsEditMode] = useState(false);
   
   // Percentage measurement state
-  const [annotationMode, setAnnotationMode] = useState<'text' | 'percentage' | 'horizontal'>('text');
+  const [annotationMode, setAnnotationMode] = useState<'text' | 'percentage' | 'horizontal' | 'box'>('text');
   const [pendingPercentageStart, setPendingPercentageStart] = useState<{
     timestamp: number;
     price: number;
     time: string;
   } | null>(null);
   const [showMeasureTooltip, setShowMeasureTooltip] = useState(false);
+
+  // Box annotation state - for click and drag
+  const [pendingBoxStart, setPendingBoxStart] = useState<{
+    timestamp: number;
+    price: number;
+    time: string;
+    x: number;
+    y: number;
+  } | null>(null);
+  const [isBoxDragging, setIsBoxDragging] = useState(false);
 
   // Flash tooltip timeout management
   useEffect(() => {
@@ -1758,6 +1780,12 @@ export function PriceChart({
                           Horizontal
                         </>
                       )}
+                      {annotationMode === 'box' && (
+                        <>
+                          <Square className="w-3 h-3 mr-1" />
+                          Box
+                        </>
+                      )}
                       {!annotationMode && 'Select Tool'}
                       <ChevronDown className="w-3 h-3 ml-1" style={{ color: '#5AF5FA' }} />
                     </Button>
@@ -1816,6 +1844,18 @@ export function PriceChart({
                     >
                       <Minus className="w-3 h-3 mr-2" />
                       Horizontal
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setAnnotationMode('box');
+                        setPendingPercentageStart(null);
+                        setPendingBoxStart(null);
+                      }}
+                      className="cursor-pointer"
+                      data-testid="menu-annotation-box"
+                    >
+                      <Square className="w-3 h-3 mr-2" />
+                      Box
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
