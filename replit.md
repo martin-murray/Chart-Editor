@@ -3,6 +3,12 @@
 ## Overview
 A full-stack stock market tracking application built with React, Express.js, and PostgreSQL. The application provides real-time stock market data with filtering capabilities, Slack integration for alerts, and comprehensive market analytics. The system features both in-memory and database storage options for flexible deployment, aiming to provide comprehensive global market coverage and real-time insights for investors.
 
+## Recent Changes (October 17, 2025)
+- **Chart Data Coverage Fix**: Added 1-day buffer to daily resolution timeframes (3M, 1Y, 3Y, 5Y) to ensure the most recent trading day's data is included, even if the trading day hasn't completed yet. This ensures users always see the latest available data including the current day.
+- **Annotation Text Overflow Fix**: Added `overflow-hidden` and `break-words` styling to all annotation text boxes to prevent text from extending beyond box boundaries during display and export.
+- **Measure Tool Display Fix**: Removed time labels from measure tool and added `whitespace-nowrap` to prevent price text from overlapping with date labels at the bottom of charts.
+- **Tab Highlight Fix**: Removed padding from TabsList to ensure the blue active tab indicator fits perfectly within the tab container without overhanging.
+
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 Testing preference: User prefers to handle testing themselves rather than internal automated testing. Skip QA testing for speed - user will test the app directly.

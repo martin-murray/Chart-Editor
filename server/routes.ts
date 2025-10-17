@@ -252,6 +252,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           resolution = '60'; // 1-hour intervals for up to 3 months
         } else {
           resolution = 'D'; // Daily intervals for longer periods
+          // For daily resolution, add buffer to ensure we get today's data
+          to = now + (24 * 60 * 60);
         }
       } else {
         switch (timeframe) {
@@ -274,18 +276,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
           case '3M':
             from = now - (90 * 24 * 60 * 60); // 3 months
             resolution = 'D'; // Daily intervals
+            to = now + (24 * 60 * 60); // Add 1 day buffer to ensure we get today's data
             break;
           case '1Y':
             from = now - (365 * 24 * 60 * 60); // 1 year
             resolution = 'D'; // Daily intervals
+            to = now + (24 * 60 * 60); // Add 1 day buffer to ensure we get today's data
             break;
           case '3Y':
             from = now - (3 * 365 * 24 * 60 * 60); // 3 years
             resolution = 'D'; // Daily intervals
+            to = now + (24 * 60 * 60); // Add 1 day buffer to ensure we get today's data
             break;
           case '5Y':
             from = now - (5 * 365 * 24 * 60 * 60); // 5 years
             resolution = 'D'; // Daily intervals
+            to = now + (24 * 60 * 60); // Add 1 day buffer to ensure we get today's data
             break;
           default:
             from = now - (24 * 60 * 60);
