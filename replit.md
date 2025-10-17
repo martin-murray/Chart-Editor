@@ -11,6 +11,8 @@ A full-stack stock market tracking application built with React, Express.js, and
 - **Measure Tool Time Span**: Added time span display to measure annotations showing duration between measurement points (e.g., "5 days", "3 hours", "45 mins") positioned below the price range.
 - **Cross-Browser Text Rendering Fix**: Fixed vertical/horizontal line annotation text truncation in Firefox and Safari by using explicit inline styles (word-break, overflow-wrap, min-width) instead of Tailwind classes for consistent cross-browser rendering.
 - **Tooltip Date/Time Overlap Fix**: Fixed chart tooltip date/time text overlapping price values when wrapping to 2 lines by adding proper line-height, padding, and border separator between date and price sections.
+- **Annotation Font Size Fix**: Reduced annotation text size from 12px to 10px and decreased padding/width for better chart scaling and readability.
+- **Cross-Browser Background Fix**: Added explicit hex color (#3A3A3A) fallback backgrounds to dropdowns, modals, and date pickers for consistent rendering in Firefox and Safari where CSS variables may not apply properly.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.

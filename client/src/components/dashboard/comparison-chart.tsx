@@ -1897,11 +1897,12 @@ export function ComparisonChart({
                     }}
                   >
                     <div 
-                      className="rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-grab hover:opacity-80 shadow-lg select-none"
+                      className="rounded px-1.5 py-0.5 max-w-32 pointer-events-auto cursor-grab hover:opacity-80 shadow-lg select-none"
                       style={{ 
                         backgroundColor: '#121212', 
                         border: '1px solid #FAFF50',
-                        minWidth: '60px',
+                        minWidth: '40px',
+                        fontSize: '10px',
                         wordBreak: 'break-word',
                         overflowWrap: 'break-word',
                         whiteSpace: 'pre-wrap'
@@ -1933,11 +1934,12 @@ export function ComparisonChart({
                     }}
                   >
                     <div 
-                      className="rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-grab hover:opacity-80 shadow-lg select-none"
+                      className="rounded px-1.5 py-0.5 max-w-32 pointer-events-auto cursor-grab hover:opacity-80 shadow-lg select-none"
                       style={{ 
                         backgroundColor: '#121212', 
                         border: '1px solid #AA99FF',
-                        minWidth: '60px',
+                        minWidth: '40px',
+                        fontSize: '10px',
                         wordBreak: 'break-word',
                         overflowWrap: 'break-word',
                         whiteSpace: 'pre-wrap'
@@ -2304,7 +2306,7 @@ export function ComparisonChart({
       {/* Annotation Input Modal */}
       {showAnnotationInput && (pendingAnnotation || editingAnnotation) && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-card border border-border rounded-lg p-6 w-96 max-w-[90vw]">
+          <div className="border border-border rounded-lg p-6 w-96 max-w-[90vw]" style={{ backgroundColor: '#3A3A3A' }}>
             <h3 className="text-lg font-semibold mb-4">
               {isEditMode ? 'Edit Annotation' : 'Add Annotation'}
             </h3>
