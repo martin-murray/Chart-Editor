@@ -8,6 +8,7 @@ A full-stack stock market tracking application built with React, Express.js, and
 - **Annotation Text Overflow Fix**: Added `overflow-hidden` and `break-words` styling to all annotation text boxes to prevent text from extending beyond box boundaries during display and export.
 - **Measure Tool Display Fix**: Removed time labels from measure tool and added `whitespace-nowrap` to prevent price text from overlapping with date labels at the bottom of charts.
 - **Tab Highlight Fix**: Removed padding from TabsList to ensure the blue active tab indicator fits perfectly within the tab container without overhanging.
+- **Measure Tool Time Span**: Added time span display to measure annotations showing duration between measurement points (e.g., "5 days", "3 hours", "45 mins") positioned below the price range.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.

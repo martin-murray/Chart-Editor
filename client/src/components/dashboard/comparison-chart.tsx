@@ -1949,6 +1949,24 @@ export function ComparisonChart({
                 
                 const isPositive = (annotation.percentage || 0) >= 0;
                 
+                // Calculate time span between start and end
+                const timeDiffMs = annotation.endTimestamp - annotation.startTimestamp;
+                const timeDiffDays = timeDiffMs / (1000 * 60 * 60 * 24);
+                const timeDiffHours = timeDiffMs / (1000 * 60 * 60);
+                const timeDiffMinutes = timeDiffMs / (1000 * 60);
+                
+                let timeSpanText = '';
+                if (timeDiffDays >= 1) {
+                  const days = Math.floor(timeDiffDays);
+                  timeSpanText = `${days} day${days !== 1 ? 's' : ''}`;
+                } else if (timeDiffHours >= 1) {
+                  const hours = Math.floor(timeDiffHours);
+                  timeSpanText = `${hours} hour${hours !== 1 ? 's' : ''}`;
+                } else {
+                  const minutes = Math.floor(timeDiffMinutes);
+                  timeSpanText = `${minutes} min${minutes !== 1 ? 's' : ''}`;
+                }
+                
                 return (
                   <div
                     key={annotation.id}
@@ -1967,6 +1985,9 @@ export function ComparisonChart({
                       </div>
                       <div className="text-xs text-muted-foreground text-left whitespace-nowrap">
                         {(annotation.startPrice || 0).toFixed(2)}% → {(annotation.endPrice || 0).toFixed(2)}%
+                      </div>
+                      <div className="text-[10px] text-muted-foreground text-left mt-0.5 whitespace-nowrap">
+                        {timeSpanText}
                       </div>
                     </div>
                   </div>
