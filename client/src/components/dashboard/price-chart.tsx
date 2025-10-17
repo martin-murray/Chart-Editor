@@ -2023,13 +2023,20 @@ export function PriceChart({
                         }}
                       >
                         <div 
-                          className="rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-grab hover:opacity-80 shadow-lg select-none overflow-hidden"
-                          style={{ backgroundColor: '#121212', border: '1px solid #FAFF50' }}
+                          className="rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-grab hover:opacity-80 shadow-lg select-none"
+                          style={{ 
+                            backgroundColor: '#121212', 
+                            border: '1px solid #FAFF50',
+                            minWidth: '60px',
+                            wordBreak: 'break-word',
+                            overflowWrap: 'break-word',
+                            whiteSpace: 'pre-wrap'
+                          }}
                           onMouseDown={(e) => handleTextMouseDown(e, annotation)}
                           onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
                           title="Click and drag to move in any direction, double-click to delete"
                         >
-                          <div className="text-foreground whitespace-pre-wrap break-words">{annotation.text || ''}</div>
+                          <div className="text-foreground">{annotation.text || ''}</div>
                         </div>
                       </div>
                     );
@@ -2048,13 +2055,20 @@ export function PriceChart({
                         style={{ left: `${xPercent}%`, top: `${20 + (annotation.verticalOffset || 0)}px`, transform: `translateX(calc(-50% + ${annotation.horizontalOffset || 0}px))` }}
                       >
                         <div 
-                          className="rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-grab hover:opacity-80 shadow-lg select-none overflow-hidden"
-                          style={{ backgroundColor: '#121212', border: '1px solid #AA99FF' }}
+                          className="rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-grab hover:opacity-80 shadow-lg select-none"
+                          style={{ 
+                            backgroundColor: '#121212', 
+                            border: '1px solid #AA99FF',
+                            minWidth: '60px',
+                            wordBreak: 'break-word',
+                            overflowWrap: 'break-word',
+                            whiteSpace: 'pre-wrap'
+                          }}
                           onMouseDown={(e) => handleTextMouseDown(e, annotation)}
                           onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
                           title="Click and drag to move in any direction, double-click to delete"
                         >
-                          <div className="text-foreground whitespace-pre-wrap break-words">{annotation.text || ''}</div>
+                          <div className="text-foreground">{annotation.text || ''}</div>
                         </div>
                       </div>
                     );
@@ -2293,7 +2307,12 @@ export function PriceChart({
                             color: '#F7F7F7',
                             padding: '8px 12px'
                           }}>
-                            <div style={{ marginBottom: '4px' }}>{`${dateStr} ${timeStr}`}</div>
+                            <div style={{ 
+                              marginBottom: '8px', 
+                              lineHeight: '1.4',
+                              paddingBottom: '4px',
+                              borderBottom: '1px solid #333333'
+                            }}>{`${dateStr} ${timeStr}`}</div>
                             {chartType === 'candlestick' && data.open && data.high && data.low && data.close ? (
                               <>
                                 <div>Open: {formatPrice(data.open)}</div>
@@ -2639,7 +2658,12 @@ export function PriceChart({
                             color: '#F7F7F7',
                             padding: '8px 12px'
                           }}>
-                            <div style={{ marginBottom: '4px' }}>{`${dateStr} ${timeStr}`}</div>
+                            <div style={{ 
+                              marginBottom: '8px', 
+                              lineHeight: '1.4',
+                              paddingBottom: '4px',
+                              borderBottom: '1px solid #333333'
+                            }}>{`${dateStr} ${timeStr}`}</div>
                             {chartType === 'candlestick' && data.open && data.high && data.low && data.close ? (
                               <>
                                 <div>Open: {formatPrice(data.open)}</div>

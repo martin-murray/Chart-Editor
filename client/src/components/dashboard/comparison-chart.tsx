@@ -1599,7 +1599,7 @@ export function ComparisonChart({
 
     return (
       <div className="bg-background border border-border rounded-lg p-3 shadow-lg">
-        <div className="font-medium mb-2">{formattedDate}</div>
+        <div className="font-medium mb-2 pb-2 border-b border-border/50" style={{ lineHeight: '1.4' }}>{formattedDate}</div>
         {payload.map((entry: any, index: number) => {
           const ticker = tickers.find(t => `${t.symbol}_percentage` === entry.dataKey);
           if (!ticker || !ticker.visible) return null;
@@ -1897,13 +1897,20 @@ export function ComparisonChart({
                     }}
                   >
                     <div 
-                      className="rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-grab hover:opacity-80 shadow-lg select-none overflow-hidden"
-                      style={{ backgroundColor: '#121212', border: '1px solid #FAFF50' }}
+                      className="rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-grab hover:opacity-80 shadow-lg select-none"
+                      style={{ 
+                        backgroundColor: '#121212', 
+                        border: '1px solid #FAFF50',
+                        minWidth: '60px',
+                        wordBreak: 'break-word',
+                        overflowWrap: 'break-word',
+                        whiteSpace: 'pre-wrap'
+                      }}
                       onMouseDown={(e) => handleTextMouseDown(e, annotation)}
                       onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
                       title="Click and drag to move in any direction, double-click to delete"
                     >
-                      <div className="text-foreground whitespace-pre-wrap break-words">{annotation.text || ''}</div>
+                      <div className="text-foreground">{annotation.text || ''}</div>
                     </div>
                   </div>
                 );
@@ -1926,13 +1933,20 @@ export function ComparisonChart({
                     }}
                   >
                     <div 
-                      className="rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-grab hover:opacity-80 shadow-lg select-none overflow-hidden"
-                      style={{ backgroundColor: '#121212', border: '1px solid #AA99FF' }}
+                      className="rounded px-2 py-1 text-xs max-w-48 pointer-events-auto cursor-grab hover:opacity-80 shadow-lg select-none"
+                      style={{ 
+                        backgroundColor: '#121212', 
+                        border: '1px solid #AA99FF',
+                        minWidth: '60px',
+                        wordBreak: 'break-word',
+                        overflowWrap: 'break-word',
+                        whiteSpace: 'pre-wrap'
+                      }}
                       onMouseDown={(e) => handleTextMouseDown(e, annotation)}
                       onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
                       title="Click and drag to move in any direction, double-click to delete"
                     >
-                      <div className="text-foreground whitespace-pre-wrap break-words">{annotation.text || ''}</div>
+                      <div className="text-foreground">{annotation.text || ''}</div>
                     </div>
                   </div>
                 );
