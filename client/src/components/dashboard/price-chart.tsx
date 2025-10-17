@@ -1711,7 +1711,7 @@ export function PriceChart({
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <TabsList className="grid grid-cols-2 h-8">
+              <TabsList className="grid grid-cols-2 h-8 p-0">
                 <TabsTrigger 
                   value="price-volume" 
                   className="data-[state=active]:bg-[#5AF5FA] data-[state=active]:text-black h-8 text-xs py-0"
