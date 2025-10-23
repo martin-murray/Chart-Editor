@@ -64,6 +64,7 @@ export const loginAttempts = pgTable("login_attempts", {
   id: serial("id").primaryKey(),
   username: text("username").notNull(),
   success: boolean("success").notNull(),
+  failureReason: text("failure_reason"),
   ipAddress: text("ip_address"),
   userAgent: text("user_agent"),
   country: text("country"),
