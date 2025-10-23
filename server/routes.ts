@@ -713,8 +713,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const ipAddress = req.ip || req.headers['x-forwarded-for'] as string || 'unknown';
       const userAgent = req.headers['user-agent'] || 'unknown';
       
-      // Validate credentials (hardcoded for now)
-      const isValid = username === 'test@intropic.io' && password === 'egg';
+      // Validate credentials and determine failure reason (hardcoded for now)
+      const validUsername = 'test@intropic.io';
+      const validPassword = 'egg';
+      
+      let isValid = false;
+      let failureReason: string | null = null;
+      
+      if (username !== validUsername) {
+        failureReason = 'Invalid username';
+      } else if (password !== validPassword) {
+        failureReason = 'Invalid password';
+      } else {
+        isValid = true;
+        failureReason = null;
+      }
       
       // Fetch geolocation data for IP address with timeout
       let country = null;
@@ -762,6 +775,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await db.insert(loginAttempts).values({
         username,
         success: isValid,
+        failureReason,
         ipAddress,
         userAgent,
         country,
@@ -769,7 +783,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         city,
       });
       
-      console.log(`🔐 Login attempt: ${username} - ${isValid ? 'SUCCESS' : 'FAILED'} from ${ipAddress}`);
+      console.log(`🔐 Login attempt: ${username} - ${isValid ? 'SUCCESS' : 'FAILED'} ${failureReason ? `(${failureReason})` : ''} from ${ipAddress}`);
       
       if (isValid) {
         // Generate session token
