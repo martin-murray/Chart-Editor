@@ -3,6 +3,16 @@
 ## Overview
 A full-stack stock market tracking application built with React, Express.js, and PostgreSQL. The application provides real-time stock market data with filtering capabilities, Slack integration for alerts, and comprehensive market analytics. The system features both in-memory and database storage options for flexible deployment, aiming to provide comprehensive global market coverage and real-time insights for investors.
 
+## Recent Changes (October 23, 2025)
+- **Login Attempt Tracking System**: Implemented comprehensive login attempt tracking with:
+  - Database schema for storing all login attempts (username, success/failure, IP address, user agent, timestamp)
+  - Backend API endpoints: POST /api/login for authentication, GET /api/session for token validation, GET /api/login-attempts for viewing history
+  - Session-based authentication using secure bearer tokens (24-hour expiration, automatic cleanup)
+  - Protected API endpoints with authentication middleware
+  - Admin page at /login-history displaying login attempt history with statistics
+  - Global 401 error handler that automatically logs out users when tokens expire
+  - Token validation on protected routes to ensure session validity
+
 ## Recent Changes (October 17, 2025)
 - **Chart Data Coverage Fix**: Added 1-day buffer to daily resolution timeframes (3M, 1Y, 3Y, 5Y) to ensure the most recent trading day's data is included, even if the trading day hasn't completed yet. This ensures users always see the latest available data including the current day.
 - **Annotation Text Overflow Fix**: Added `overflow-hidden` and `break-words` styling to all annotation text boxes to prevent text from extending beyond box boundaries during display and export.
