@@ -60,6 +60,15 @@ export const visitorAnalytics = pgTable("visitor_analytics", {
   path: text("path").notNull().default("/"),
 });
 
+export const loginAttempts = pgTable("login_attempts", {
+  id: serial("id").primaryKey(),
+  username: text("username").notNull(),
+  success: boolean("success").notNull(),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  attemptedAt: timestamp("attempted_at").notNull().defaultNow(),
+});
+
 export const insertStockSchema = createInsertSchema(stocks).omit({
   id: true,
   lastUpdated: true,
@@ -80,6 +89,11 @@ export const insertVisitorAnalyticsSchema = createInsertSchema(visitorAnalytics)
   visitedAt: true,
 });
 
+export const insertLoginAttemptSchema = createInsertSchema(loginAttempts).omit({
+  id: true,
+  attemptedAt: true,
+});
+
 export type Stock = typeof stocks.$inferSelect;
 export type InsertStock = z.infer<typeof insertStockSchema>;
 export type SlackAlert = typeof slackAlerts.$inferSelect;
@@ -88,6 +102,8 @@ export type MarketSummary = typeof marketSummary.$inferSelect;
 export type InsertMarketSummary = z.infer<typeof insertMarketSummarySchema>;
 export type VisitorAnalytics = typeof visitorAnalytics.$inferSelect;
 export type InsertVisitorAnalytics = z.infer<typeof insertVisitorAnalyticsSchema>;
+export type LoginAttempt = typeof loginAttempts.$inferSelect;
+export type InsertLoginAttempt = z.infer<typeof insertLoginAttemptSchema>;
 
 // Filter schemas
 export const stockFilterSchema = z.object({

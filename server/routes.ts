@@ -1,13 +1,47 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { randomUUID } from "crypto";
 import { stockDataService } from "./services/stockData";
 import multer from "multer";
 import { sendFeedbackToSlack } from "./slack";
 import { db } from "./db";
-import { visitorAnalytics } from "@shared/schema";
+import { visitorAnalytics, loginAttempts, insertLoginAttemptSchema } from "@shared/schema";
 import { desc, count, sql, gte, lte, and } from "drizzle-orm";
 import { getExchangeInfoFromSuffix, applySuffixOverride } from "./utils/suffixMappings";
 import { indexService } from "./services/indexService";
+
+// Simple in-memory session store for authentication
+const authSessions = new Map<string, { createdAt: number }>();
+
+// Middleware to check authentication
+function requireAuth(req: any, res: any, next: any) {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  
+  if (!token || !authSessions.has(token)) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+  
+  // Check if token is expired (24 hours)
+  const session = authSessions.get(token);
+  if (session && Date.now() - session.createdAt > 24 * 60 * 60 * 1000) {
+    authSessions.delete(token);
+    return res.status(401).json({ message: 'Session expired' });
+  }
+  
+  next();
+}
+
+// Clean up expired sessions periodically
+setInterval(() => {
+  const now = Date.now();
+  const expiryTime = 24 * 60 * 60 * 1000; // 24 hours
+  
+  for (const [token, session] of Array.from(authSessions.entries())) {
+    if (now - session.createdAt > expiryTime) {
+      authSessions.delete(token);
+    }
+  }
+}, 60 * 60 * 1000); // Run every hour
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Global stock search endpoint using Finnhub symbol lookup
@@ -667,6 +701,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching visitor locations:", error);
       res.status(500).json({ message: "Failed to fetch visitor locations" });
+    }
+  });
+
+  // Login endpoint with attempt tracking
+  app.post("/api/login", async (req, res) => {
+    try {
+      const { username, password } = req.body;
+      
+      // Get IP address and user agent from request
+      const ipAddress = req.ip || req.headers['x-forwarded-for'] as string || 'unknown';
+      const userAgent = req.headers['user-agent'] || 'unknown';
+      
+      // Validate credentials (hardcoded for now)
+      const isValid = username === 'test@intropic.io' && password === 'egg';
+      
+      // Record the login attempt
+      await db.insert(loginAttempts).values({
+        username,
+        success: isValid,
+        ipAddress,
+        userAgent,
+      });
+      
+      console.log(`🔐 Login attempt: ${username} - ${isValid ? 'SUCCESS' : 'FAILED'} from ${ipAddress}`);
+      
+      if (isValid) {
+        // Generate session token
+        const token = randomUUID();
+        authSessions.set(token, { createdAt: Date.now() });
+        
+        res.json({ success: true, token });
+      } else {
+        res.status(401).json({ success: false, message: 'Invalid username or password' });
+      }
+    } catch (error) {
+      console.error("Error processing login:", error);
+      res.status(500).json({ success: false, message: "Login system error" });
+    }
+  });
+
+  // Validate session endpoint
+  app.get("/api/session", requireAuth, async (req, res) => {
+    res.json({ valid: true });
+  });
+
+  // Get login attempt history (requires authentication)
+  app.get("/api/login-attempts", requireAuth, async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 100;
+      
+      const attempts = await db
+        .select()
+        .from(loginAttempts)
+        .orderBy(desc(loginAttempts.attemptedAt))
+        .limit(limit);
+      
+      res.json(attempts);
+    } catch (error) {
+      console.error("Error fetching login attempts:", error);
+      res.status(500).json({ message: "Failed to fetch login attempts" });
     }
   });
 

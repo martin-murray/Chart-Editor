@@ -1,7 +1,18 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
+// Global logout handler for 401 responses
+let logoutHandler: (() => void) | null = null;
+
+export function setLogoutHandler(handler: () => void) {
+  logoutHandler = handler;
+}
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
+    // If 401, trigger logout to clear stale tokens
+    if (res.status === 401 && logoutHandler) {
+      logoutHandler();
+    }
     const text = (await res.text()) || res.statusText;
     throw new Error(`${res.status}: ${text}`);
   }
@@ -12,9 +23,21 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  const headers: Record<string, string> = {};
+  
+  if (data) {
+    headers["Content-Type"] = "application/json";
+  }
+  
+  // Add auth token if available
+  const authToken = localStorage.getItem('authToken');
+  if (authToken) {
+    headers["Authorization"] = `Bearer ${authToken}`;
+  }
+  
   const res = await fetch(url, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers,
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
@@ -29,8 +52,17 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
+    const headers: Record<string, string> = {};
+    
+    // Add auth token if available
+    const authToken = localStorage.getItem('authToken');
+    if (authToken) {
+      headers["Authorization"] = `Bearer ${authToken}`;
+    }
+    
     const res = await fetch(queryKey.join("/") as string, {
       credentials: "include",
+      headers,
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
