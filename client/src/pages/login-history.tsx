@@ -54,6 +54,7 @@ export default function LoginHistory() {
                     <TableRow>
                       <TableHead style={{ fontFamily: 'var(--font-sans)' }}>Status</TableHead>
                       <TableHead style={{ fontFamily: 'var(--font-sans)' }}>Username</TableHead>
+                      <TableHead style={{ fontFamily: 'var(--font-sans)' }}>Failure Reason</TableHead>
                       <TableHead style={{ fontFamily: 'var(--font-sans)' }}>IP Address</TableHead>
                       <TableHead style={{ fontFamily: 'var(--font-sans)' }}>Location</TableHead>
                       <TableHead style={{ fontFamily: 'var(--font-sans)' }}>User Agent</TableHead>
@@ -100,6 +101,16 @@ export default function LoginHistory() {
                             data-testid={`text-username-${attempt.id}`}
                           >
                             {attempt.username}
+                          </TableCell>
+                          <TableCell 
+                            className="text-sm"
+                            data-testid={`text-failure-reason-${attempt.id}`}
+                          >
+                            {attempt.success ? (
+                              <span className="text-muted-foreground">-</span>
+                            ) : (
+                              <span className="text-amber-400">{attempt.failureReason || 'Unknown'}</span>
+                            )}
                           </TableCell>
                           <TableCell 
                             className="font-mono text-sm text-muted-foreground"
