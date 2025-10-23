@@ -6,10 +6,15 @@ A full-stack stock market tracking application built with React, Express.js, and
 ## Recent Changes (October 23, 2025)
 - **Login Attempt Tracking System**: Implemented comprehensive login attempt tracking with:
   - Database schema for storing all login attempts (username, success/failure, IP address, user agent, timestamp)
+  - **Geographical Location Tracking**: Added IP geolocation integration using ipapi.co API
+    - Stores city, region, and country for each login attempt
+    - 3-second timeout with AbortController to prevent hanging
+    - Graceful degradation when geolocation unavailable (stores null, displays "Unknown")
+    - Location displayed with MapPin icon in login history table
   - Backend API endpoints: POST /api/login for authentication, GET /api/session for token validation, GET /api/login-attempts for viewing history
   - Session-based authentication using secure bearer tokens (24-hour expiration, automatic cleanup)
   - Protected API endpoints with authentication middleware
-  - Admin page at /login-history displaying login attempt history with statistics
+  - Admin page at /login-history displaying login attempt history with statistics including geographical location
   - Global 401 error handler that automatically logs out users when tokens expire
   - Token validation on protected routes to ensure session validity
 
