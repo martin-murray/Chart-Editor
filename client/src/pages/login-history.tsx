@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, CheckCircle2, XCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, XCircle, MapPin } from 'lucide-react';
 import type { LoginAttempt } from '@shared/schema';
 
 export default function LoginHistory() {
@@ -55,63 +55,86 @@ export default function LoginHistory() {
                       <TableHead style={{ fontFamily: 'var(--font-sans)' }}>Status</TableHead>
                       <TableHead style={{ fontFamily: 'var(--font-sans)' }}>Username</TableHead>
                       <TableHead style={{ fontFamily: 'var(--font-sans)' }}>IP Address</TableHead>
+                      <TableHead style={{ fontFamily: 'var(--font-sans)' }}>Location</TableHead>
                       <TableHead style={{ fontFamily: 'var(--font-sans)' }}>User Agent</TableHead>
                       <TableHead style={{ fontFamily: 'var(--font-sans)' }}>Date & Time</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {attempts.map((attempt) => (
-                      <TableRow key={attempt.id} data-testid={`row-attempt-${attempt.id}`}>
-                        <TableCell>
-                          {attempt.success ? (
-                            <Badge 
-                              variant="outline" 
-                              className="bg-green-500/10 text-green-400 border-green-500/20"
-                              data-testid="badge-success"
-                            >
-                              <CheckCircle2 className="h-3 w-3 mr-1" />
-                              Success
-                            </Badge>
-                          ) : (
-                            <Badge 
-                              variant="outline" 
-                              className="bg-red-500/10 text-red-400 border-red-500/20"
-                              data-testid="badge-failed"
-                            >
-                              <XCircle className="h-3 w-3 mr-1" />
-                              Failed
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell 
-                          className="font-mono text-sm" 
-                          style={{ fontFamily: 'var(--font-sans)' }}
-                          data-testid={`text-username-${attempt.id}`}
-                        >
-                          {attempt.username}
-                        </TableCell>
-                        <TableCell 
-                          className="font-mono text-sm text-muted-foreground"
-                          data-testid={`text-ip-${attempt.id}`}
-                        >
-                          {attempt.ipAddress || 'N/A'}
-                        </TableCell>
-                        <TableCell 
-                          className="text-sm text-muted-foreground max-w-md truncate" 
-                          title={attempt.userAgent || 'N/A'}
-                          data-testid={`text-useragent-${attempt.id}`}
-                        >
-                          {attempt.userAgent || 'N/A'}
-                        </TableCell>
-                        <TableCell 
-                          className="text-sm" 
-                          style={{ fontFamily: 'var(--font-sans)' }}
-                          data-testid={`text-date-${attempt.id}`}
-                        >
-                          {format(new Date(attempt.attemptedAt), 'MMM dd, yyyy HH:mm:ss')}
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {attempts.map((attempt) => {
+                      const locationParts = [
+                        attempt.city,
+                        attempt.region,
+                        attempt.country
+                      ].filter(Boolean);
+                      const locationText = locationParts.length > 0 
+                        ? locationParts.join(', ') 
+                        : 'Unknown';
+                      
+                      return (
+                        <TableRow key={attempt.id} data-testid={`row-attempt-${attempt.id}`}>
+                          <TableCell>
+                            {attempt.success ? (
+                              <Badge 
+                                variant="outline" 
+                                className="bg-green-500/10 text-green-400 border-green-500/20"
+                                data-testid="badge-success"
+                              >
+                                <CheckCircle2 className="h-3 w-3 mr-1" />
+                                Success
+                              </Badge>
+                            ) : (
+                              <Badge 
+                                variant="outline" 
+                                className="bg-red-500/10 text-red-400 border-red-500/20"
+                                data-testid="badge-failed"
+                              >
+                                <XCircle className="h-3 w-3 mr-1" />
+                                Failed
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell 
+                            className="font-mono text-sm" 
+                            style={{ fontFamily: 'var(--font-sans)' }}
+                            data-testid={`text-username-${attempt.id}`}
+                          >
+                            {attempt.username}
+                          </TableCell>
+                          <TableCell 
+                            className="font-mono text-sm text-muted-foreground"
+                            data-testid={`text-ip-${attempt.id}`}
+                          >
+                            {attempt.ipAddress || 'N/A'}
+                          </TableCell>
+                          <TableCell 
+                            className="text-sm"
+                            data-testid={`text-location-${attempt.id}`}
+                          >
+                            <div className="flex items-center gap-1.5">
+                              {locationParts.length > 0 && (
+                                <MapPin className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
+                              )}
+                              <span className="text-muted-foreground">{locationText}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell 
+                            className="text-sm text-muted-foreground max-w-md truncate" 
+                            title={attempt.userAgent || 'N/A'}
+                            data-testid={`text-useragent-${attempt.id}`}
+                          >
+                            {attempt.userAgent || 'N/A'}
+                          </TableCell>
+                          <TableCell 
+                            className="text-sm" 
+                            style={{ fontFamily: 'var(--font-sans)' }}
+                            data-testid={`text-date-${attempt.id}`}
+                          >
+                            {format(new Date(attempt.attemptedAt), 'MMM dd, yyyy HH:mm:ss')}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>

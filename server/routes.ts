@@ -716,27 +716,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validate credentials (hardcoded for now)
       const isValid = username === 'test@intropic.io' && password === 'egg';
       
-      // Fetch geolocation data for IP address
+      // Fetch geolocation data for IP address with timeout
       let country = null;
       let region = null;
       let city = null;
       
       try {
         if (ipAddress && ipAddress !== 'unknown' && ipAddress !== '::1' && !ipAddress.startsWith('127.')) {
-          const geoResponse = await fetch(`https://ipapi.co/${ipAddress}/json/`);
-          if (geoResponse.ok) {
-            const geoData = await geoResponse.json();
-            country = geoData.country_name || null;
-            region = geoData.region || null;
-            city = geoData.city || null;
-            console.log(`📍 Location for ${ipAddress}: ${city}, ${region}, ${country}`);
+          // Set timeout to prevent hanging the login process
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+          
+          try {
+            const geoResponse = await fetch(`https://ipapi.co/${ipAddress}/json/`, {
+              signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            
+            if (geoResponse.ok) {
+              const geoData = await geoResponse.json();
+              country = geoData.country_name || null;
+              region = geoData.region || null;
+              city = geoData.city || null;
+              console.log(`📍 Location for ${ipAddress}: ${city}, ${region}, ${country}`);
+            } else {
+              console.log(`📍 Geolocation API returned ${geoResponse.status} for ${ipAddress}`);
+            }
+          } catch (fetchError) {
+            clearTimeout(timeoutId);
+            throw fetchError;
           }
         } else {
           console.log(`📍 Skipping geolocation for local IP: ${ipAddress}`);
         }
       } catch (geoError) {
-        console.error("Geolocation lookup failed:", geoError);
-        // Continue without location data if geolocation fails
+        if (geoError instanceof Error && geoError.name === 'AbortError') {
+          console.error(`⏱️ Geolocation lookup timed out for ${ipAddress}`);
+        } else {
+          console.error("Geolocation lookup failed:", geoError);
+        }
+        // Continue without location data if geolocation fails - don't block login
       }
       
       // Record the login attempt
