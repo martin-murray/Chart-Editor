@@ -66,6 +66,9 @@ export const loginAttempts = pgTable("login_attempts", {
   success: boolean("success").notNull(),
   ipAddress: text("ip_address"),
   userAgent: text("user_agent"),
+  country: text("country"),
+  region: text("region"),
+  city: text("city"),
   attemptedAt: timestamp("attempted_at").notNull().defaultNow(),
 });
 

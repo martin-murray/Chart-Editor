@@ -716,12 +716,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validate credentials (hardcoded for now)
       const isValid = username === 'test@intropic.io' && password === 'egg';
       
+      // Fetch geolocation data for IP address
+      let country = null;
+      let region = null;
+      let city = null;
+      
+      try {
+        if (ipAddress && ipAddress !== 'unknown' && ipAddress !== '::1' && !ipAddress.startsWith('127.')) {
+          const geoResponse = await fetch(`https://ipapi.co/${ipAddress}/json/`);
+          if (geoResponse.ok) {
+            const geoData = await geoResponse.json();
+            country = geoData.country_name || null;
+            region = geoData.region || null;
+            city = geoData.city || null;
+            console.log(`📍 Location for ${ipAddress}: ${city}, ${region}, ${country}`);
+          }
+        } else {
+          console.log(`📍 Skipping geolocation for local IP: ${ipAddress}`);
+        }
+      } catch (geoError) {
+        console.error("Geolocation lookup failed:", geoError);
+        // Continue without location data if geolocation fails
+      }
+      
       // Record the login attempt
       await db.insert(loginAttempts).values({
         username,
         success: isValid,
         ipAddress,
         userAgent,
+        country,
+        region,
+        city,
       });
       
       console.log(`🔐 Login attempt: ${username} - ${isValid ? 'SUCCESS' : 'FAILED'} from ${ipAddress}`);
