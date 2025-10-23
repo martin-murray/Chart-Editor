@@ -11,10 +11,14 @@ A full-stack stock market tracking application built with React, Express.js, and
     - 3-second timeout with AbortController to prevent hanging
     - Graceful degradation when geolocation unavailable (stores null, displays "Unknown")
     - Location displayed with MapPin icon in login history table
+  - **Failure Reason Tracking**: Captures specific reasons for failed login attempts
+    - Distinguishes between "Invalid username" and "Invalid password" errors
+    - Displays failure reasons in amber color in login history table
+    - Shows "-" for successful logins, "Unknown" for legacy attempts without reason data
   - Backend API endpoints: POST /api/login for authentication, GET /api/session for token validation, GET /api/login-attempts for viewing history
   - Session-based authentication using secure bearer tokens (24-hour expiration, automatic cleanup)
   - Protected API endpoints with authentication middleware
-  - Admin page at /login-history displaying login attempt history with statistics including geographical location
+  - Admin page at /login-history displaying login attempt history with statistics including geographical location and failure reasons
   - Global 401 error handler that automatically logs out users when tokens expire
   - Token validation on protected routes to ensure session validity
 
