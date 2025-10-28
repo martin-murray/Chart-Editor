@@ -1360,6 +1360,8 @@ export function PriceChart({
           
         </div>
         
+      </div>
+
       {/* Tabs Wrapper - Encompasses entire chart section including controls and content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         {/* Chart Controls: Timeframe, Chart Type, and Tabs (Mobile) */}
@@ -1412,97 +1414,6 @@ export function PriceChart({
                 Compare
               </TabsTrigger>
             </TabsList>
-            
-            {/* Annotations Dropdown on Mobile */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-9 px-3 text-xs flex-shrink-0"
-                  data-testid="button-annotation-dropdown-mobile"
-                >
-                  {annotationMode === 'text' && (
-                    <>
-                      <div className="w-3 h-3 mr-1 flex items-center justify-center">
-                        <div className="w-0.5 h-3 bg-current" />
-                      </div>
-                      Vertical
-                    </>
-                  )}
-                  {annotationMode === 'percentage' && (
-                    <>
-                      <Ruler className="w-3 h-3 mr-1" />
-                      Measure
-                    </>
-                  )}
-                  {annotationMode === 'horizontal' && (
-                    <>
-                      <Minus className="w-3 h-3 mr-1" />
-                      Horizontal
-                    </>
-                  )}
-                  {!annotationMode && 'Select Tool'}
-                  <ChevronDown className="w-3 h-3 ml-1" style={{ color: '#5AF5FA' }} />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                <DropdownMenuItem
-                  onClick={() => {
-                    setAnnotationMode('text');
-                    setPendingPercentageStart(null);
-                  }}
-                  className="cursor-pointer"
-                  data-testid="menu-annotation-text-mobile"
-                >
-                  <div className="w-3 h-3 mr-2 flex items-center justify-center">
-                    <div className="w-0.5 h-3 bg-current" />
-                  </div>
-                  Vertical
-                </DropdownMenuItem>
-                <HoverTooltip>
-                  <HoverTooltipTrigger asChild>
-                    <DropdownMenuItem
-                      onClick={() => {
-                        if (activeTab !== 'comparison') {
-                          setAnnotationMode('percentage');
-                          setPendingPercentageStart(null);
-                        }
-                      }}
-                      onMouseEnter={() => {
-                        if (activeTab === 'comparison') {
-                          setShowMeasureTooltip(true);
-                        }
-                      }}
-                      disabled={activeTab === 'comparison'}
-                      className={`cursor-pointer ${
-                        activeTab === 'comparison' ? 'opacity-40 cursor-not-allowed' : ''
-                      }`}
-                      data-testid="menu-annotation-percentage-mobile"
-                    >
-                      <Ruler className="w-3 h-3 mr-2" />
-                      Measure
-                    </DropdownMenuItem>
-                  </HoverTooltipTrigger>
-                  {activeTab === 'comparison' && (
-                    <HoverTooltipContent>
-                      <p>Percentage measurement is deactivated on Compare</p>
-                    </HoverTooltipContent>
-                  )}
-                </HoverTooltip>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setAnnotationMode('horizontal');
-                    setPendingPercentageStart(null);
-                  }}
-                  className="cursor-pointer"
-                  data-testid="menu-annotation-horizontal-mobile"
-                >
-                  <Minus className="w-3 h-3 mr-2" />
-                  Horizontal
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
           
           {/* Desktop Buttons (760px+) */}
@@ -1848,6 +1759,7 @@ export function PriceChart({
             )}
           </div>
         )}
+      </div>
 
       {/* Chart Tabs Section with Export Button */}
       <div className="flex items-center justify-between mb-4">
@@ -1871,8 +1783,8 @@ export function PriceChart({
                 </TabsTrigger>
               </TabsList>
               
-              {/* Annotation Mode Controls - Hidden on mobile (< 760px) */}
-              <div className="hidden min-[760px]:flex items-center gap-2">
+              {/* Annotation Mode Controls */}
+              <div className="flex items-center gap-2">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
@@ -2028,10 +1940,9 @@ export function PriceChart({
                 )}
               </div>
             </div>
-          </div>
             
-          {/* Shared Export Dropdown */}
-          <DropdownMenu>
+            {/* Shared Export Dropdown */}
+            <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
