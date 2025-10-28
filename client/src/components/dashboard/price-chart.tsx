@@ -2351,7 +2351,7 @@ export function PriceChart({
                     <Tooltip 
                       active={!isDragging}
                       allowEscapeViewBox={{ x: false, y: false }}
-
+                      cursor={annotationMode ? false : { stroke: '#666', strokeWidth: 1, strokeDasharray: '5 5' }}
                       content={(props) => {
                         if (!props.active || !props.payload?.length) return null;
                         
@@ -2704,7 +2704,7 @@ export function PriceChart({
                     <Tooltip 
                       active={!isDragging}
                       allowEscapeViewBox={{ x: false, y: false }}
-
+                      cursor={annotationMode ? false : { stroke: '#666', strokeWidth: 1, strokeDasharray: '5 5' }}
                       content={(props) => {
                         if (!props.active || !props.payload?.length) return null;
                         
