@@ -1360,8 +1360,6 @@ export function PriceChart({
           
         </div>
         
-      </div>
-
       {/* Tabs Wrapper - Encompasses entire chart section including controls and content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         {/* Chart Controls: Timeframe, Chart Type, and Tabs (Mobile) */}
@@ -1759,7 +1757,6 @@ export function PriceChart({
             )}
           </div>
         )}
-      </div>
 
       {/* Chart Tabs Section with Export Button */}
       <div className="flex items-center justify-between mb-4">
@@ -1940,9 +1937,10 @@ export function PriceChart({
                 )}
               </div>
             </div>
+          </div>
             
-            {/* Shared Export Dropdown */}
-            <DropdownMenu>
+          {/* Shared Export Dropdown */}
+          <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
