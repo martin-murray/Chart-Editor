@@ -10,6 +10,7 @@ import ChartMaker from "@/pages/chartmaker";
 import PublishingAnalytics from "@/pages/publishing-analytics";
 import LoginHistory from "@/pages/login-history";
 import Login from "@/pages/login";
+import Walkthrough from "@/pages/walkthrough";
 
 function ProtectedRoute({ component: Component, path }: { component: () => JSX.Element; path: string }) {
   const { isAuthenticated, validateSession } = useAuth();
@@ -54,6 +55,9 @@ function Router() {
       </Route>
       <Route path="/login-history">
         <ProtectedRoute component={LoginHistory} path="/login-history" />
+      </Route>
+      <Route path="/walkthrough">
+        <ProtectedRoute component={Walkthrough} path="/walkthrough" />
       </Route>
       <Route>
         <ProtectedRoute component={ChartMaker} path="/" />
