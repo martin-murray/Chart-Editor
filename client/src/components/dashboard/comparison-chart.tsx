@@ -1598,8 +1598,8 @@ export function ComparisonChart({
     const formattedDate = label;
 
     return (
-      <div className="bg-background border border-border rounded-lg p-3 shadow-lg">
-        <div className="font-medium mb-2 pb-2 border-b border-border/50" style={{ lineHeight: '1.4' }}>{formattedDate}</div>
+      <div className="bg-background border border-border rounded-lg shadow-lg" style={{ padding: '6px 10px', fontSize: '11px', opacity: 0.8 }}>
+        <div className="font-medium border-b border-border/50" style={{ marginBottom: '6px', paddingBottom: '3px', lineHeight: '1.4' }}>{formattedDate}</div>
         {payload.map((entry: any, index: number) => {
           const ticker = tickers.find(t => `${t.symbol}_percentage` === entry.dataKey);
           if (!ticker || !ticker.visible) return null;

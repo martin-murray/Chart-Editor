@@ -1794,7 +1794,7 @@ export function PriceChart({
                     >
                       {annotationMode === 'text' && (
                         <>
-                          <div className="w-3 h-3 mr-1 flex items-center justify-center">
+                          <div className="w-3 h-3 mr-1 flex items-center justify-center" style={{ color: '#FAFF50' }}>
                             <div className="w-0.5 h-3 bg-current" />
                           </div>
                           Vertical
@@ -1802,13 +1802,13 @@ export function PriceChart({
                       )}
                       {annotationMode === 'percentage' && (
                         <>
-                          <Ruler className="w-3 h-3 mr-1" />
+                          <Ruler className="w-3 h-3 mr-1" style={{ color: '#22C55E' }} />
                           Measure
                         </>
                       )}
                       {annotationMode === 'horizontal' && (
                         <>
-                          <Minus className="w-3 h-3 mr-1" />
+                          <Minus className="w-3 h-3 mr-1" style={{ color: '#AA99FF' }} />
                           Horizontal
                         </>
                       )}
@@ -1825,7 +1825,7 @@ export function PriceChart({
                       className="cursor-pointer"
                       data-testid="menu-annotation-text"
                     >
-                      <div className="w-3 h-3 mr-2 flex items-center justify-center">
+                      <div className="w-3 h-3 mr-2 flex items-center justify-center" style={{ color: '#FAFF50' }}>
                         <div className="w-0.5 h-3 bg-current" />
                       </div>
                       Vertical
@@ -1850,7 +1850,7 @@ export function PriceChart({
                           }`}
                           data-testid="menu-annotation-percentage"
                         >
-                          <Ruler className="w-3 h-3 mr-2" />
+                          <Ruler className="w-3 h-3 mr-2" style={{ color: '#22C55E' }} />
                           Measure
                         </DropdownMenuItem>
                       </HoverTooltipTrigger>
@@ -1868,7 +1868,7 @@ export function PriceChart({
                       className="cursor-pointer"
                       data-testid="menu-annotation-horizontal"
                     >
-                      <Minus className="w-3 h-3 mr-2" />
+                      <Minus className="w-3 h-3 mr-2" style={{ color: '#AA99FF' }} />
                       Horizontal
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -2050,7 +2050,18 @@ export function PriceChart({
           <div 
             ref={chartRef} 
             className="w-full rounded-lg relative pt-20" 
-            style={{ backgroundColor: '#121212', cursor: isDragging ? 'grabbing' : 'default' }}
+            style={{ 
+              backgroundColor: '#121212', 
+              cursor: isDragging 
+                ? 'grabbing' 
+                : annotationMode === 'percentage'
+                  ? 'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'20\' height=\'20\' viewBox=\'0 0 20 20\'><path d=\'M10 4L10 16M4 10L16 10\' stroke=\'%2322C55E\' stroke-width=\'2\'/></svg>") 10 10, crosshair'
+                  : annotationMode === 'text'
+                    ? 'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'20\' height=\'20\' viewBox=\'0 0 20 20\'><path d=\'M10 4L10 16M4 10L16 10\' stroke=\'%23FAFF50\' stroke-width=\'2\'/></svg>") 10 10, crosshair'
+                    : annotationMode === 'horizontal'
+                      ? 'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'20\' height=\'20\' viewBox=\'0 0 20 20\'><path d=\'M10 4L10 16M4 10L16 10\' stroke=\'%23AA99FF\' stroke-width=\'2\'/></svg>") 10 10, crosshair'
+                      : 'default'
+            }}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
@@ -2358,17 +2369,19 @@ export function PriceChart({
                         
                         return (
                           <div style={{
-                            backgroundColor: '#121212',
-                            border: '1px solid #333333',
+                            backgroundColor: 'rgba(18, 18, 18, 0.7)',
+                            border: '1px solid rgba(51, 51, 51, 0.5)',
                             borderRadius: '6px',
                             color: '#F7F7F7',
-                            padding: '8px 12px'
+                            padding: '6px 10px',
+                            fontSize: '11px',
+                            opacity: 0.8
                           }}>
                             <div style={{ 
-                              marginBottom: '8px', 
+                              marginBottom: '6px', 
                               lineHeight: '1.4',
-                              paddingBottom: '4px',
-                              borderBottom: '1px solid #333333'
+                              paddingBottom: '3px',
+                              borderBottom: '1px solid rgba(51, 51, 51, 0.5)'
                             }}>{`${dateStr} ${timeStr}`}</div>
                             {chartType === 'candlestick' && data.open && data.high && data.low && data.close ? (
                               <>
@@ -2709,17 +2722,19 @@ export function PriceChart({
                         
                         return (
                           <div style={{
-                            backgroundColor: '#121212',
-                            border: '1px solid #333333',
+                            backgroundColor: 'rgba(18, 18, 18, 0.7)',
+                            border: '1px solid rgba(51, 51, 51, 0.5)',
                             borderRadius: '6px',
                             color: '#F7F7F7',
-                            padding: '8px 12px'
+                            padding: '6px 10px',
+                            fontSize: '11px',
+                            opacity: 0.8
                           }}>
                             <div style={{ 
-                              marginBottom: '8px', 
+                              marginBottom: '6px', 
                               lineHeight: '1.4',
-                              paddingBottom: '4px',
-                              borderBottom: '1px solid #333333'
+                              paddingBottom: '3px',
+                              borderBottom: '1px solid rgba(51, 51, 51, 0.5)'
                             }}>{`${dateStr} ${timeStr}`}</div>
                             {chartType === 'candlestick' && data.open && data.high && data.low && data.close ? (
                               <>
