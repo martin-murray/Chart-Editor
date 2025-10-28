@@ -4,10 +4,13 @@
 A full-stack stock market tracking application built with React, Express.js, and PostgreSQL. The application provides real-time stock market data with filtering capabilities, Slack integration for alerts, and comprehensive market analytics. The system features both in-memory and database storage options for flexible deployment, aiming to provide comprehensive global market coverage and real-time insights for investors.
 
 ## Recent Changes (October 28, 2025)
-- **Mobile Responsive Timeframe Selector**: Updated price chart to use dropdown UI for timeframes on narrow screens
-  - Displays dropdown selector on screens 360px-760px wide for better mobile experience
-  - Maintains button layout on larger screens (760px+)
-  - Both implementations share the same state for consistent functionality
+- **Mobile Responsive Chart Controls**: Enhanced mobile layout for price chart controls
+  - **Timeframe Selector**: Displays dropdown on screens < 760px, button layout on 760px+
+  - **Price/Compare Tabs**: Positioned next to timeframe dropdown on mobile for better space utilization
+  - On mobile (< 760px): Timeframe dropdown and Price/Compare tabs appear side-by-side in a single row
+  - On desktop (760px+): Timeframe buttons appear in their row, tabs appear in separate section below
+  - Both mobile and desktop tab controls share the same state within a unified Tabs provider
+  - Prevents tabs from being crushed or unusable on narrow screens
   - Includes all timeframes: 1D, 5D, 2W, 1M, 3M, 1Y, 3Y, 5Y, Custom
 
 ## Recent Changes (October 23, 2025)
