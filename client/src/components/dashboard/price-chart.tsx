@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip as HoverTooltip, TooltipContent as HoverTooltipContent, TooltipProvider, TooltipTrigger as HoverTooltipTrigger } from '@/components/ui/tooltip';
 import { Loader2, TrendingUp, TrendingDown, Plus, Calendar as CalendarIcon, X, Download, ChevronDown, MessageSquare, Ruler, Minus, RotateCcw, Code } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
@@ -1361,8 +1362,42 @@ export function PriceChart({
         
         {/* Chart Controls: Timeframe and Chart Type */}
         <div className="flex gap-4 items-center flex-wrap max-[900px]:gap-2 w-full">
-          {/* Timeframe selector */}
-          <div className="flex gap-1 items-center flex-wrap max-[600px]:w-full max-[600px]:justify-start">
+          {/* Timeframe selector - Dropdown on mobile (360px-760px), Buttons on larger screens */}
+          
+          {/* Mobile Dropdown (360px-760px) */}
+          <div className="min-[760px]:hidden w-full">
+            <Select 
+              value={selectedTimeframe} 
+              onValueChange={(value) => {
+                setSelectedTimeframe(value);
+                if (value !== 'Custom') {
+                  setStartDate(undefined);
+                  setEndDate(undefined);
+                  setShowDatePicker(false);
+                } else {
+                  setShowDatePicker(true);
+                }
+              }}
+            >
+              <SelectTrigger className="w-full h-9 text-sm" data-testid="select-timeframe-mobile">
+                <SelectValue placeholder="Select timeframe" />
+              </SelectTrigger>
+              <SelectContent style={{ backgroundColor: '#1a1a1a' }}>
+                {timeframes.map((timeframe) => (
+                  <SelectItem 
+                    key={timeframe.value} 
+                    value={timeframe.value}
+                    className="cursor-pointer"
+                  >
+                    {timeframe.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
+          {/* Desktop Buttons (760px+) */}
+          <div className="hidden min-[760px]:flex gap-1 items-center flex-wrap">
             {timeframes.map((timeframe) => (
               <Button
                 key={timeframe.value}
