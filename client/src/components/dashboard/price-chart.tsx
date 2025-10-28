@@ -1759,6 +1759,7 @@ export function PriceChart({
             )}
           </div>
         )}
+      </div>
 
       {/* Chart Tabs Section with Export Button */}
       <div className="flex items-center justify-between mb-4">
@@ -3352,8 +3353,8 @@ export function PriceChart({
             onFitToData={(fn) => { if (fn && typeof fn === 'function') comparisonFitToDataRef.current = fn; }}
           />
         </TabsContent>
-      </div>
         </Tabs>
+      </div>
 
       {/* Stats Grid - 4 Columns */}
       {stockDetails && stockDetails.quote && (
