@@ -10,6 +10,11 @@ A full-stack stock market tracking application built with React, Express.js, and
   - Tabs appear in their original location below on desktop (760px+)
   - Both mobile and desktop tab controls share the same state through a unified Tabs component wrapper
   - All timeframes included: 1D, 5D, 2W, 1M, 3M, 1Y, 3Y, 5Y, Custom
+- **Annotation Cursor Enhancements**: Improved visual feedback for annotation tools
+  - **Color-Coded Cursors**: Green X for Measure tool, Yellow X (#FAFF50) for Vertical, Purple X (#AA99FF) for Horizontal
+  - **Icon Colors**: Annotation dropdown icons match tool colors (Vertical #FAFF50, Measure green, Horizontal #AA99FF)
+  - **Reduced Hover Tooltip Dominance**: Tooltip now has 80% opacity, smaller size (11px font, reduced padding), semi-transparent background
+  - **Cursor Priority**: Recharts tooltip cursor disabled in annotation mode to ensure custom cursors remain visible during annotation placement
 
 ## Recent Changes (October 23, 2025)
 - **Login Attempt Tracking System**: Implemented comprehensive login attempt tracking with:
