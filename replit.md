@@ -3,6 +3,13 @@
 ## Overview
 A full-stack stock market tracking application built with React, Express.js, and PostgreSQL. The application provides real-time stock market data with filtering capabilities, Slack integration for alerts, and comprehensive market analytics. The system features both in-memory and database storage options for flexible deployment, aiming to provide comprehensive global market coverage and real-time insights for investors.
 
+## Recent Changes (October 28, 2025)
+- **Mobile Responsive Timeframe Selector**: Updated price chart to use dropdown UI for timeframes on narrow screens
+  - Displays dropdown selector on screens 360px-760px wide for better mobile experience
+  - Maintains button layout on larger screens (760px+)
+  - Both implementations share the same state for consistent functionality
+  - Includes all timeframes: 1D, 5D, 2W, 1M, 3M, 1Y, 3Y, 5Y, Custom
+
 ## Recent Changes (October 23, 2025)
 - **Login Attempt Tracking System**: Implemented comprehensive login attempt tracking with:
   - Database schema for storing all login attempts (username, success/failure, IP address, user agent, timestamp)
