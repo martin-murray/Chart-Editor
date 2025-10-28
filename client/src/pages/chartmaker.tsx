@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Search, TrendingUp, TrendingDown, BarChart3, Trash2, RotateCcw, BarChart2, Cookie, X, Globe, LogOut, MessageSquare } from "lucide-react";
+import { Search, TrendingUp, TrendingDown, BarChart3, Trash2, RotateCcw, BarChart2, Cookie, X, Globe, LogOut, MessageSquare, BookOpen } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { PriceChart } from "@/components/dashboard/price-chart";
@@ -537,6 +537,16 @@ function ChartMaker() {
                   <span className="min-[601px]:hidden">Guide</span>
                 </button>
               </SuffixSearchModal>
+              <Link 
+                href="/walkthrough"
+                className="flex items-center gap-2 hover:opacity-80 transition-opacity max-[600px]:text-xs" 
+                style={{ fontSize: '16px', color: '#f7f7f7' }}
+                data-testid="button-walkthrough"
+              >
+                <BookOpen className="h-5 w-5 text-[#5AF5FA]" />
+                <span className="max-[600px]:hidden">How to Use</span>
+                <span className="min-[601px]:hidden">Guide</span>
+              </Link>
               <FeedbackButton />
               <LogoutButton />
             </div>
