@@ -1759,7 +1759,6 @@ export function PriceChart({
             )}
           </div>
         )}
-      </div>
 
       {/* Chart Tabs Section with Export Button */}
       <div className="flex items-center justify-between mb-4">
@@ -2001,6 +2000,7 @@ export function PriceChart({
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
+        </div>
           
         <TabsContent value="price-volume" className="bg-background relative z-10" data-testid="tabpanel-price-volume">
         {isLoading ? (
@@ -3353,8 +3353,7 @@ export function PriceChart({
             onFitToData={(fn) => { if (fn && typeof fn === 'function') comparisonFitToDataRef.current = fn; }}
           />
         </TabsContent>
-        </Tabs>
-      </div>
+      </Tabs>
 
       {/* Stats Grid - 4 Columns */}
       {stockDetails && stockDetails.quote && (
