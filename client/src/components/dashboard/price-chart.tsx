@@ -1360,12 +1360,14 @@ export function PriceChart({
           
         </div>
         
-        {/* Chart Controls: Timeframe and Chart Type */}
-        <div className="flex gap-4 items-center flex-wrap max-[900px]:gap-2 w-full">
-          {/* Timeframe selector - Dropdown on mobile (360px-760px), Buttons on larger screens */}
-          
-          {/* Mobile Dropdown (360px-760px) */}
-          <div className="min-[760px]:hidden w-full">
+      </div>
+
+      {/* Tabs Wrapper - Encompasses entire chart section including controls and content */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        {/* Chart Controls: Timeframe, Chart Type, and Tabs (Mobile) */}
+        <div className="flex gap-4 items-center flex-wrap max-[900px]:gap-2 w-full mb-4">
+          {/* Mobile View (< 760px): Timeframe Dropdown + Price/Compare Tabs */}
+          <div className="min-[760px]:hidden w-full flex gap-2 items-center">
             <Select 
               value={selectedTimeframe} 
               onValueChange={(value) => {
@@ -1379,7 +1381,7 @@ export function PriceChart({
                 }
               }}
             >
-              <SelectTrigger className="w-full h-9 text-sm" data-testid="select-timeframe-mobile">
+              <SelectTrigger className="flex-1 h-9 text-sm" data-testid="select-timeframe-mobile">
                 <SelectValue placeholder="Select timeframe" />
               </SelectTrigger>
               <SelectContent style={{ backgroundColor: '#1a1a1a' }}>
@@ -1394,6 +1396,24 @@ export function PriceChart({
                 ))}
               </SelectContent>
             </Select>
+            
+            {/* Price/Compare Tabs on Mobile */}
+            <TabsList className="grid grid-cols-2 h-9 p-0 flex-shrink-0">
+              <TabsTrigger 
+                value="price-volume" 
+                className="data-[state=active]:bg-[#5AF5FA] data-[state=active]:text-black h-9 text-xs py-0 px-3"
+                data-testid="trigger-price-volume-mobile"
+              >
+                Price
+              </TabsTrigger>
+              <TabsTrigger 
+                value="comparison" 
+                className="data-[state=active]:bg-[#5AF5FA] data-[state=active]:text-black h-9 text-xs py-0 px-3"
+                data-testid="trigger-comparison-mobile"
+              >
+                Compare
+              </TabsTrigger>
+            </TabsList>
           </div>
           
           {/* Desktop Buttons (760px+) */}
@@ -1743,10 +1763,10 @@ export function PriceChart({
 
       {/* Chart Tabs Section with Export Button */}
       <div className="flex items-center justify-between mb-4">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <TabsList className="grid grid-cols-2 h-8 p-0">
+              {/* Desktop Tabs (760px+) - Hidden on mobile since tabs are now next to timeframe dropdown */}
+              <TabsList className="hidden min-[760px]:grid grid-cols-2 h-8 p-0">
                 <TabsTrigger 
                   value="price-volume" 
                   className="data-[state=active]:bg-[#5AF5FA] data-[state=active]:text-black h-8 text-xs py-0"
