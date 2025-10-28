@@ -2049,18 +2049,20 @@ export function PriceChart({
         ) : (
           <div 
             ref={chartRef} 
-            className="w-full rounded-lg relative pt-20" 
-            style={{ 
-              backgroundColor: '#121212', 
-              cursor: isDragging 
-                ? 'grabbing' 
+            className={`w-full rounded-lg relative pt-20 ${
+              isDragging 
+                ? '' 
                 : annotationMode === 'percentage'
-                  ? 'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'20\' height=\'20\' viewBox=\'0 0 20 20\'><path d=\'M10 4L10 16M4 10L16 10\' stroke=\'%2322C55E\' stroke-width=\'2\'/></svg>") 10 10, crosshair'
+                  ? 'annotation-measure-mode'
                   : annotationMode === 'text'
-                    ? 'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'20\' height=\'20\' viewBox=\'0 0 20 20\'><path d=\'M10 4L10 16M4 10L16 10\' stroke=\'%23FAFF50\' stroke-width=\'2\'/></svg>") 10 10, crosshair'
+                    ? 'annotation-vertical-mode'
                     : annotationMode === 'horizontal'
-                      ? 'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'20\' height=\'20\' viewBox=\'0 0 20 20\'><path d=\'M10 4L10 16M4 10L16 10\' stroke=\'%23AA99FF\' stroke-width=\'2\'/></svg>") 10 10, crosshair'
-                      : 'default'
+                      ? 'annotation-horizontal-mode'
+                      : ''
+            }`}
+            style={{ 
+              backgroundColor: '#121212',
+              cursor: isDragging ? 'grabbing' : undefined
             }}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}

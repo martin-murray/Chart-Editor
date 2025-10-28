@@ -308,4 +308,20 @@
   .index-tag:hover {
     background-color: rgba(250, 255, 80, 0.4) !important; /* Slightly more opaque on hover */
   }
+
+  /* Annotation mode cursors - override Recharts default cursor behavior */
+  .annotation-vertical-mode,
+  .annotation-vertical-mode * {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Cpath d='M10 4L10 16M4 10L16 10' stroke='%23FAFF50' stroke-width='2'/%3E%3C/svg%3E") 10 10, crosshair !important;
+  }
+
+  .annotation-measure-mode,
+  .annotation-measure-mode * {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Cpath d='M10 4L10 16M4 10L16 10' stroke='%2322C55E' stroke-width='2'/%3E%3C/svg%3E") 10 10, crosshair !important;
+  }
+
+  .annotation-horizontal-mode,
+  .annotation-horizontal-mode * {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Cpath d='M10 4L10 16M4 10L16 10' stroke='%23AA99FF' stroke-width='2'/%3E%3C/svg%3E") 10 10, crosshair !important;
+  }
 }

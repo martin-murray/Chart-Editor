@@ -1873,7 +1873,18 @@ export function ComparisonChart({
       )}
 
       {/* Chart */}
-      <div className="h-[600px] w-full rounded-lg relative pt-20 bg-background" data-testid="comparison-chart-container"> {/* Increased from h-80 (320px) to h-[600px] for much larger chart */}
+      <div 
+        className={`h-[600px] w-full rounded-lg relative pt-20 bg-background ${
+          annotationMode === 'percentage'
+            ? 'annotation-measure-mode'
+            : annotationMode === 'text'
+              ? 'annotation-vertical-mode'
+              : annotationMode === 'horizontal'
+                ? 'annotation-horizontal-mode'
+                : ''
+        }`}
+        data-testid="comparison-chart-container"
+      > {/* Increased from h-80 (320px) to h-[600px] for much larger chart */}
         {/* Annotation Labels - positioned in reserved padding space above charts */}
         {annotations.length > 0 && (
           <div className="absolute top-0 left-0 w-full h-20 pointer-events-none" style={{ zIndex: 1000 }}>
