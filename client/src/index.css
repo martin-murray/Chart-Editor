@@ -329,13 +329,23 @@
   .walkthrough-card {
     border: 1px solid hsl(var(--border));
     position: relative;
-    transition: all 0.3s ease;
+    isolation: isolate;
   }
 
-  /* 2px gradient border on hover */
-  .walkthrough-card:hover {
-    border: 2px solid;
-    border-image-source: linear-gradient(to right, #5af5fa, #ffa5ff);
-    border-image-slice: 1;
+  /* Gradient border on hover using pseudo-element to maintain border-radius */
+  .walkthrough-card::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    background: linear-gradient(to right, #5af5fa, #ffa5ff);
+    border-radius: calc(var(--radius) + 1px);
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .walkthrough-card:hover::after {
+    opacity: 1;
+    inset: -2px;
   }
 }
