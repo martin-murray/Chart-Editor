@@ -17,6 +17,7 @@ import {
   Minus
 } from "lucide-react";
 import logoImage from "@assets/IPO Intelligence@2x_1758060026530.png";
+import { SuffixSearchModal } from "@/components/suffix-search-modal";
 
 export default function Walkthrough() {
   const [, setLocation] = useLocation();
@@ -94,37 +95,38 @@ export default function Walkthrough() {
             </Card>
 
             {/* Suffix Guide */}
-            <Card 
-              className="p-6 walkthrough-card cursor-pointer transition-all" 
-              onClick={() => setLocation('/?action=suffix-guide')}
-              data-testid="card-suffix-guide"
-            >
-              <div className="flex items-start gap-4">
-                <div className="p-3 rounded-lg bg-primary/10">
-                  <Globe className="h-6 w-6 text-[#FAFF50]" />
+            <SuffixSearchModal>
+              <Card 
+                className="p-6 walkthrough-card cursor-pointer transition-all" 
+                data-testid="card-suffix-guide"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="p-3 rounded-lg bg-primary/10">
+                    <Globe className="h-6 w-6 text-[#FAFF50]" />
+                  </div>
+                  <div className="flex-1 space-y-3">
+                    <h2 className="text-2xl font-semibold">Ticker Suffix Guide</h2>
+                    <p className="text-muted-foreground">
+                      Access a comprehensive guide to Bloomberg-style ticker suffixes for global exchanges.
+                    </p>
+                    <ul className="space-y-2 text-sm text-muted-foreground ml-4">
+                      <li className="flex items-start gap-2">
+                        <span className="text-[#5AF5FA] mt-1">•</span>
+                        <span>Click this card to open the Suffix Guide</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-[#5AF5FA] mt-1">•</span>
+                        <span>Search by country, exchange name, or suffix code</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-[#5AF5FA] mt-1">•</span>
+                        <span>View market hours and holiday information for each exchange</span>
+                      </li>
+                    </ul>
+                  </div>
                 </div>
-                <div className="flex-1 space-y-3">
-                  <h2 className="text-2xl font-semibold">Ticker Suffix Guide</h2>
-                  <p className="text-muted-foreground">
-                    Access a comprehensive guide to Bloomberg-style ticker suffixes for global exchanges.
-                  </p>
-                  <ul className="space-y-2 text-sm text-muted-foreground ml-4">
-                    <li className="flex items-start gap-2">
-                      <span className="text-[#5AF5FA] mt-1">•</span>
-                      <span>Click "Suffix Guide" in the top navigation</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-[#5AF5FA] mt-1">•</span>
-                      <span>Search by country, exchange name, or suffix code</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-[#5AF5FA] mt-1">•</span>
-                      <span>View market hours and holiday information for each exchange</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </Card>
+              </Card>
+            </SuffixSearchModal>
 
             {/* Price Charts */}
             <Card 

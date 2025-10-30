@@ -327,14 +327,16 @@
 
   /* Walkthrough card hover effect with gradient border */
   .walkthrough-card {
-    border: 2px solid transparent;
-    background-origin: border-box;
-    background-clip: padding-box, border-box;
+    border: 1px solid hsl(var(--border));
+    position: relative;
   }
 
   .walkthrough-card:hover {
+    border: 2px solid transparent;
     background-image: 
-      linear-gradient(to bottom, hsl(var(--card)), hsl(var(--card))),
+      linear-gradient(hsl(var(--card)), hsl(var(--card))),
       linear-gradient(to right, #5af5fa, #ffa5ff);
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
   }
 }
