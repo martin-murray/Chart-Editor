@@ -62,7 +62,7 @@ export default function Walkthrough() {
           {/* Feature Sections */}
           <div className="space-y-6">
             {/* Global Search */}
-            <Card className="p-6">
+            <Card className="p-6 border">
               <div className="flex items-start gap-4">
                 <div className="p-3 rounded-lg bg-primary/10">
                   <Search className="h-6 w-6 text-[#5AF5FA]" />
@@ -97,7 +97,7 @@ export default function Walkthrough() {
             {/* Suffix Guide */}
             <SuffixSearchModal>
               <Card 
-                className="p-6 walkthrough-card cursor-pointer transition-all" 
+                className="p-6 walkthrough-card cursor-pointer transition-all border" 
                 data-testid="card-suffix-guide"
               >
                 <div className="flex items-start gap-4">
@@ -130,7 +130,7 @@ export default function Walkthrough() {
 
             {/* Price Charts */}
             <Card 
-              className="p-6 walkthrough-card cursor-pointer transition-all" 
+              className="p-6 walkthrough-card cursor-pointer transition-all border" 
               onClick={() => setLocation('/')}
               data-testid="card-price-charts"
             >
@@ -163,7 +163,7 @@ export default function Walkthrough() {
 
             {/* Comparison Charts */}
             <Card 
-              className="p-6 walkthrough-card cursor-pointer transition-all" 
+              className="p-6 walkthrough-card cursor-pointer transition-all border" 
               onClick={() => setLocation('/?action=compare')}
               data-testid="card-comparison"
             >
@@ -200,7 +200,7 @@ export default function Walkthrough() {
 
             {/* Annotation Tools */}
             <Card 
-              className="p-6 walkthrough-card cursor-pointer transition-all" 
+              className="p-6 walkthrough-card cursor-pointer transition-all border" 
               onClick={() => setLocation('/')}
               data-testid="card-annotations"
             >
@@ -265,7 +265,7 @@ export default function Walkthrough() {
             </Card>
 
             {/* Export Features */}
-            <Card className="p-6">
+            <Card className="p-6 border">
               <div className="flex items-start gap-4">
                 <div className="p-3 rounded-lg bg-primary/10">
                   <Download className="h-6 w-6 text-[#5AF5FA]" />
