@@ -462,6 +462,35 @@ function ChartMaker() {
   const [annotationsBySymbol, setAnnotationsBySymbol] = useState<Record<string, Annotation[]>>(() => getStoredAnnotations());
   const [rememberPerTicker, setRememberPerTicker] = useState(() => getRememberSetting());
   
+  // Refs and state for programmatic actions from walkthrough
+  const suffixButtonRef = useRef<HTMLButtonElement>(null);
+  const [initialTab, setInitialTab] = useState<'price-volume' | 'comparison'>('price-volume');
+  const [triggerSuffixModal, setTriggerSuffixModal] = useState(false);
+  
+  // Handle query parameter actions from walkthrough on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const action = params.get('action');
+    
+    if (action === 'suffix-guide') {
+      setTriggerSuffixModal(true);
+      window.history.replaceState({}, '', '/');
+    } else if (action === 'compare') {
+      setInitialTab('comparison');
+      window.history.replaceState({}, '', '/');
+    }
+  }, []);
+  
+  // Trigger suffix modal after component mounts
+  useEffect(() => {
+    if (triggerSuffixModal && suffixButtonRef.current) {
+      setTimeout(() => {
+        suffixButtonRef.current?.click();
+        setTriggerSuffixModal(false);
+      }, 100);
+    }
+  }, [triggerSuffixModal]);
+  
   // Current annotations for selected stock
   const currentAnnotations = chartMakerSelectedStock && rememberPerTicker 
     ? annotationsBySymbol[chartMakerSelectedStock.displaySymbol] || []
@@ -528,6 +557,7 @@ function ChartMaker() {
             <div className="flex items-center max-[900px]:w-full max-[900px]:justify-center max-[600px]:flex-wrap" style={{ gap: '40px' }}>
               <SuffixSearchModal>
                 <button 
+                  ref={suffixButtonRef}
                   className="flex items-center gap-2 hover:opacity-80 transition-opacity max-[600px]:text-xs"
                   data-testid="button-suffix-search"
                   style={{ fontSize: '16px', color: '#f7f7f7' }}
@@ -584,12 +614,13 @@ function ChartMaker() {
                 onAnnotationsChange={handleAnnotationsChange}
                 rememberPerTicker={rememberPerTicker}
                 onClearAll={Object.keys(annotationsBySymbol).length > 0 ? clearAllAnnotations : undefined}
+                initialTab={initialTab}
               />
             </div>
           )}
 
           {/* Combined Info Section */}
-          <Card className="p-6">
+          <Card className="p-6 mt-8">
             <h3 className="text-lg font-semibold mb-4">Global Market Coverage & Index Coverage</h3>
             
             {/* Global Market Coverage */}

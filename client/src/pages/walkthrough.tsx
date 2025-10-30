@@ -1,4 +1,4 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { 
@@ -19,6 +19,8 @@ import {
 import logoImage from "@assets/IPO Intelligence@2x_1758060026530.png";
 
 export default function Walkthrough() {
+  const [, setLocation] = useLocation();
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -92,7 +94,11 @@ export default function Walkthrough() {
             </Card>
 
             {/* Suffix Guide */}
-            <Card className="p-6">
+            <Card 
+              className="p-6 walkthrough-card cursor-pointer transition-all" 
+              onClick={() => setLocation('/?action=suffix-guide')}
+              data-testid="card-suffix-guide"
+            >
               <div className="flex items-start gap-4">
                 <div className="p-3 rounded-lg bg-primary/10">
                   <Globe className="h-6 w-6 text-[#FAFF50]" />
@@ -121,7 +127,11 @@ export default function Walkthrough() {
             </Card>
 
             {/* Price Charts */}
-            <Card className="p-6">
+            <Card 
+              className="p-6 walkthrough-card cursor-pointer transition-all" 
+              onClick={() => setLocation('/')}
+              data-testid="card-price-charts"
+            >
               <div className="flex items-start gap-4">
                 <div className="p-3 rounded-lg bg-primary/10">
                   <TrendingUp className="h-6 w-6 text-[#5AF5FA]" />
@@ -150,7 +160,11 @@ export default function Walkthrough() {
             </Card>
 
             {/* Comparison Charts */}
-            <Card className="p-6">
+            <Card 
+              className="p-6 walkthrough-card cursor-pointer transition-all" 
+              onClick={() => setLocation('/?action=compare')}
+              data-testid="card-comparison"
+            >
               <div className="flex items-start gap-4">
                 <div className="p-3 rounded-lg bg-primary/10">
                   <BarChart3 className="h-6 w-6 text-[#5AF5FA]" />
@@ -183,7 +197,11 @@ export default function Walkthrough() {
             </Card>
 
             {/* Annotation Tools */}
-            <Card className="p-6">
+            <Card 
+              className="p-6 walkthrough-card cursor-pointer transition-all" 
+              onClick={() => setLocation('/')}
+              data-testid="card-annotations"
+            >
               <div className="flex items-start gap-4">
                 <div className="p-3 rounded-lg bg-primary/10">
                   <PenTool className="h-6 w-6 text-[#5AF5FA]" />
@@ -270,38 +288,6 @@ export default function Walkthrough() {
                     </li>
                   </ul>
                 </div>
-              </div>
-            </Card>
-
-            {/* Tips & Shortcuts */}
-            <Card className="p-6 bg-[#5AF5FA]/5 border-[#5AF5FA]/20">
-              <div className="space-y-4">
-                <h2 className="text-2xl font-semibold flex items-center gap-2">
-                  <MousePointer2 className="h-6 w-6 text-[#5AF5FA]" />
-                  Pro Tips
-                </h2>
-                <ul className="space-y-2 text-sm text-muted-foreground ml-4">
-                  <li className="flex items-start gap-2">
-                    <span className="text-[#5AF5FA] mt-1">•</span>
-                    <span>Use the custom date range to analyze specific time periods</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-[#5AF5FA] mt-1">•</span>
-                    <span>Toggle "Remember per ticker" off to share annotations across all charts</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-[#5AF5FA] mt-1">•</span>
-                    <span>Check market holidays in the Suffix Guide to understand data gaps</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-[#5AF5FA] mt-1">•</span>
-                    <span>On mobile, use the dropdown menu for timeframe selection</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-[#5AF5FA] mt-1">•</span>
-                    <span>Recent searches are saved automatically for quick access</span>
-                  </li>
-                </ul>
               </div>
             </Card>
           </div>

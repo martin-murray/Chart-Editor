@@ -93,6 +93,7 @@ interface PriceChartProps {
   onAnnotationsChange?: (annotations: Annotation[]) => void;
   rememberPerTicker?: boolean;
   onClearAll?: () => void;
+  initialTab?: 'price-volume' | 'comparison';
 }
 
 const timeframes = [
@@ -110,7 +111,8 @@ const timeframes = [
 export function PriceChart({ 
   symbol, 
   name, 
-  currentPrice, 
+  currentPrice,
+  initialTab = 'price-volume', 
   percentChange, 
   marketCap,
   annotations: controlledAnnotations,
@@ -125,10 +127,15 @@ export function PriceChart({
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [singleTradingDay, setSingleTradingDay] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState<Date>(new Date());
-  const [activeTab, setActiveTab] = useState('price-volume');
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [chartType, setChartType] = useState<'line' | 'mountain' | 'candlestick'>('mountain');
   const chartRef = useRef<HTMLDivElement>(null);
   const comparisonRef = useRef<HTMLDivElement>(null);
+  
+  // Sync activeTab with initialTab prop changes (e.g., from walkthrough navigation)
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
   
   // Refs to store comparison chart zoom functions
   const comparisonZoomInRef = useRef<(() => void) | null>(null);
@@ -1363,7 +1370,7 @@ export function PriceChart({
       </div>
 
       {/* Tabs Wrapper - Encompasses entire chart section including controls and content */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'price-volume' | 'comparison')} className="w-full">
         {/* Chart Controls: Timeframe, Chart Type, and Tabs (Mobile) */}
         <div className="flex gap-4 items-center flex-wrap max-[900px]:gap-2 w-full mb-4">
           {/* Mobile View (< 760px): Timeframe Dropdown + Price/Compare Tabs */}
