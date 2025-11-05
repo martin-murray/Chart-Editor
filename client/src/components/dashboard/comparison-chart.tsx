@@ -2178,12 +2178,12 @@ export function ComparisonChart({
                 
                 {/* Text Annotation Reference Lines - yellow vertical lines */}
                 {annotations.filter(annotation => annotation.type === 'text').map((annotation) => {
-                  // Find the actual date value from chart data that matches this annotation
+                  // Find the actual time value from chart data that matches this annotation
                   const dataPoint = chartData?.find((d: any) => d.timestamp === annotation.timestamp);
                   return dataPoint ? (
                     <ReferenceLine 
                       key={annotation.id}
-                      x={dataPoint.date}
+                      x={dataPoint.time}
                       stroke="#FAFF50"
                       strokeWidth={1}
                       vectorEffect="non-scaling-stroke"
