@@ -462,7 +462,10 @@ export function ComparisonChart({
       }
     });
 
-    // Build aligned chart data with smart timestamp matching
+    // Track last known prices for forward-fill (handles global market closures)
+    const lastKnownPrices: Record<string, number> = {};
+    
+    // Build aligned chart data with smart timestamp matching and forward-fill
     const alignedData: ChartDataPoint[] = [];
     
     for (const timestamp of sortedTimestamps) {
@@ -480,10 +483,21 @@ export function ComparisonChart({
         const basePrice = basePrices[ticker.symbol];
         
         if (nearestPoint && basePrice > 0) {
+          // New data available - update last known price
+          const currentPrice = nearestPoint.close;
+          lastKnownPrices[ticker.symbol] = currentPrice;
+          
           // Calculate percentage change from base price
-          const percentageChange = ((nearestPoint.close - basePrice) / basePrice) * 100;
+          const percentageChange = ((currentPrice - basePrice) / basePrice) * 100;
           dataPoint[`${ticker.symbol}_percentage`] = parseFloat(percentageChange.toFixed(2));
-          dataPoint[`${ticker.symbol}_price`] = nearestPoint.close;
+          dataPoint[`${ticker.symbol}_price`] = currentPrice;
+          hasAnyData = true;
+        } else if (lastKnownPrices[ticker.symbol] !== undefined && basePrice > 0) {
+          // No new data - use forward-fill with last known price (market is closed)
+          const lastPrice = lastKnownPrices[ticker.symbol];
+          const percentageChange = ((lastPrice - basePrice) / basePrice) * 100;
+          dataPoint[`${ticker.symbol}_percentage`] = parseFloat(percentageChange.toFixed(2));
+          dataPoint[`${ticker.symbol}_price`] = lastPrice;
           hasAnyData = true;
         }
       });
