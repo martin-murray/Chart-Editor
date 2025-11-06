@@ -45,8 +45,8 @@ export default function Home() {
       icon: BarChart3,
       destination: '/price-chart',
       buttonText: 'Open Price Chart',
-      color: '#5AF5FA', // Cyan/Blue
-      bgGradient: 'from-cyan-500/10 to-cyan-500/5',
+      iconColor: '#5AF5FA', // Cyan/Blue
+      titleColor: '#5AF5FA', // Cyan/Blue
     },
     {
       id: 'comparison-chart',
@@ -55,8 +55,8 @@ export default function Home() {
       icon: TrendingUp,
       destination: '/comparison-chart',
       buttonText: 'Open Comparison Chart',
-      color: '#FAFF50', // Yellow
-      bgGradient: 'from-yellow-400/10 to-yellow-400/5',
+      iconColor: '#FAFF50', // Yellow
+      titleColor: '#FAFF50', // Yellow
     },
     {
       id: 'ai-copilot',
@@ -65,8 +65,8 @@ export default function Home() {
       icon: Sparkles,
       destination: '/ai-copilot',
       buttonText: 'Open AI Co-Pilot',
-      color: '#50FFA5', // Green
-      bgGradient: 'from-green-400/10 to-green-400/5',
+      iconColor: '#FFA5FF', // Pink
+      titleColor: '#50FFA5', // Green
     },
   ];
 
@@ -147,7 +147,9 @@ export default function Home() {
             return (
               <Card
                 key={card.id}
-                className={`relative overflow-hidden border-border bg-gradient-to-br ${card.bgGradient} hover:shadow-xl transition-all duration-300 hover:scale-105`}
+                className="relative overflow-hidden border-border hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer"
+                style={{ backgroundColor: '#1C1C1C' }}
+                onClick={() => setLocation(card.destination)}
                 data-testid={`card-${card.id}`}
               >
                 <div className="p-8 flex flex-col h-full min-h-[320px]">
@@ -155,11 +157,11 @@ export default function Home() {
                   <div className="mb-6">
                     <div 
                       className="w-16 h-16 rounded-lg flex items-center justify-center"
-                      style={{ backgroundColor: `${card.color}20` }}
+                      style={{ backgroundColor: `${card.iconColor}20` }}
                     >
                       <IconComponent 
                         className="h-8 w-8" 
-                        style={{ color: card.color }}
+                        style={{ color: card.iconColor }}
                       />
                     </div>
                   </div>
@@ -169,7 +171,7 @@ export default function Home() {
                     className="text-2xl font-semibold mb-4"
                     style={{ 
                       fontFamily: 'Mulish, sans-serif',
-                      color: card.color
+                      color: card.titleColor
                     }}
                   >
                     {card.title}
@@ -177,11 +179,12 @@ export default function Home() {
 
                   {/* Description */}
                   <p 
-                    className="text-muted-foreground mb-6 flex-grow"
+                    className="mb-6 flex-grow"
                     style={{ 
                       fontFamily: 'Mulish, sans-serif',
                       fontSize: '15px',
-                      lineHeight: '1.6'
+                      lineHeight: '1.6',
+                      color: '#F7F7F7'
                     }}
                   >
                     {card.description}
@@ -191,11 +194,14 @@ export default function Home() {
                   <Button
                     className="w-full font-medium"
                     style={{
-                      backgroundColor: card.color,
+                      backgroundColor: '#5AF5FA',
                       color: '#000000',
                       fontFamily: 'Mulish, sans-serif',
                     }}
-                    onClick={() => setLocation(card.destination)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setLocation(card.destination);
+                    }}
                     data-testid={`button-${card.id}`}
                   >
                     {card.buttonText}
