@@ -1,0 +1,68 @@
+🔧 Implementation Brief — New Chart Pathway Cards & Nav Update
+🎯 Overview
+
+We are replacing the current Global Stock and ETF Search unit with three interactive cards.
+These will serve as clear entry points for users into the three main pathways of the app’s functionality.
+
+Each card should:
+
+Be clickable and link directly to its respective page.
+
+Include a title and description copy.
+
+Be visually balanced, using our standard card layout, iconography, and motion where appropriate.
+
+We’ll also add a new “Chart Type” dropdown in the top navigation to help users switch easily between chart modes when on any of the respective pages.
+
+🧭 Navigation Update: Chart Type Dropdown
+
+Add a Chart Type dropdown in the top nav with the following options:
+
+Price Chart
+
+Comparison Chart
+
+AI Co-Pilot
+
+When a user selects a chart type, it should route them to the appropriate view.
+
+🗂️ Cards Setup
+🟦 Card One — Price Chart
+
+Description:
+Single-ticker charts — look up almost any global stock and add your own editable annotations to bring your data to life. Perfect for quick visual analysis and storytelling.
+
+Destination: /price-chart
+Primary Action: “Open Price Chart”
+
+🟨 Card Two — Comparison Chart
+
+Description:
+Compare multiple tickers or ETFs side-by-side to uncover performance trends, correlations, and outliers. Create dynamic visuals that highlight relative strength and movement across markets.
+
+Destination: /comparison-chart
+Primary Action: “Open Comparison Chart”
+
+🟩 Card Three — AI Co-Pilot
+
+Description:
+Upload a CSV or simply prompt the AI Co-Pilot to create bespoke charts using your data. Automatically styled in Intropic brand colours, ready to export in high-resolution or embed directly into reports.
+
+Destination: /ai-copilot
+Primary Action: “Open AI Co-Pilot”
+
+🧱 Design Notes
+
+Maintain consistent card height, layout, and spacing.
+
+Each card should have:
+
+Icon or illustration representing its function.
+
+Short headline + 1–2 lines of descriptive text.
+
+Clear CTA button.
+
+Responsive design: stack vertically on mobile, 3-column layout on desktop.
+
+Use brand colours: Blue (Price Chart), Yellow (Comparison), Green (AI Co-Pilot).

@@ -6,7 +6,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import Home from "@/pages/home";
 import ChartMaker from "@/pages/chartmaker";
+import ComparisonChart from "@/pages/comparison-chart";
+import AICopilot from "@/pages/ai-copilot";
 import PublishingAnalytics from "@/pages/publishing-analytics";
 import LoginHistory from "@/pages/login-history";
 import Login from "@/pages/login";
@@ -48,7 +51,16 @@ function Router() {
         {isAuthenticated ? <Redirect to="/" /> : <Login />}
       </Route>
       <Route path="/">
-        <ProtectedRoute component={ChartMaker} path="/" />
+        <ProtectedRoute component={Home} path="/" />
+      </Route>
+      <Route path="/price-chart">
+        <ProtectedRoute component={ChartMaker} path="/price-chart" />
+      </Route>
+      <Route path="/comparison-chart">
+        <ProtectedRoute component={ComparisonChart} path="/comparison-chart" />
+      </Route>
+      <Route path="/ai-copilot">
+        <ProtectedRoute component={AICopilot} path="/ai-copilot" />
       </Route>
       <Route path="/publishing/analytics">
         <ProtectedRoute component={PublishingAnalytics} path="/publishing/analytics" />
@@ -60,7 +72,7 @@ function Router() {
         <ProtectedRoute component={Walkthrough} path="/walkthrough" />
       </Route>
       <Route>
-        <ProtectedRoute component={ChartMaker} path="/" />
+        <ProtectedRoute component={Home} path="/" />
       </Route>
     </Switch>
   );

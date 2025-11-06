@@ -13,6 +13,13 @@ import { FeedbackForm } from "@/components/feedback-form";
 import { SuffixSearchModal } from "@/components/suffix-search-modal";
 import { useAuth } from "@/contexts/AuthContext";
 import logoImage from "@assets/IPO Intelligence@2x_1758060026530.png";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface GlobalSearchResult {
   symbol: string;
@@ -554,7 +561,23 @@ function ChartMaker() {
                 data-testid="header-logo"
               />
             </div>
-            <div className="flex items-center max-[900px]:w-full max-[900px]:justify-center max-[600px]:flex-wrap" style={{ gap: '40px' }}>
+            <div className="flex items-center max-[900px]:w-full max-[900px]:justify-center max-[600px]:flex-wrap" style={{ gap: '24px' }}>
+              {/* Chart Type Dropdown */}
+              <Select value="/price-chart" onValueChange={(value) => setLocation(value)}>
+                <SelectTrigger 
+                  className="w-[180px] bg-card border-border max-[600px]:w-[140px]"
+                  data-testid="select-chart-type"
+                  style={{ fontFamily: 'var(--font-sans)' }}
+                >
+                  <SelectValue placeholder="Chart Type" />
+                </SelectTrigger>
+                <SelectContent style={{ backgroundColor: '#3A3A3A' }}>
+                  <SelectItem value="/price-chart">Price Chart</SelectItem>
+                  <SelectItem value="/comparison-chart">Comparison Chart</SelectItem>
+                  <SelectItem value="/ai-copilot">AI Co-Pilot</SelectItem>
+                </SelectContent>
+              </Select>
+              
               <SuffixSearchModal>
                 <button 
                   ref={suffixButtonRef}
