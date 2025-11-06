@@ -14,33 +14,94 @@ import {
   Layers,
   Type,
   Ruler,
-  Minus
+  Minus,
+  LogOut,
+  BookOpen
 } from "lucide-react";
 import logoImage from "@assets/IPO Intelligence@2x_1758060026530.png";
 import { SuffixSearchModal } from "@/components/suffix-search-modal";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+function LogoutButton() {
+  const { logout } = useAuth();
+  const [, setLocation] = useLocation();
+
+  const handleLogout = () => {
+    logout();
+    setLocation('/login');
+  };
+
+  return (
+    <button
+      onClick={handleLogout}
+      className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+      data-testid="button-logout"
+      style={{ fontFamily: 'var(--font-sans)', fontSize: '16px', color: '#f7f7f7' }}
+    >
+      <LogOut className="h-5 w-5 text-[#5AF5FA]" />
+      <span>Sign Out</span>
+    </button>
+  );
+}
 
 export default function Walkthrough() {
   const [, setLocation] = useLocation();
 
+  const handleChartTypeChange = (value: string) => {
+    setLocation(value);
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-card border-b shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center min-h-16 py-2">
-            <div className="flex items-center">
-              <img 
-                src={logoImage} 
-                alt="Intropic Chart Studio" 
-                className="w-[240px] h-auto max-[600px]:w-[180px]"
-              />
-            </div>
+      {/* Navigation Header */}
+      <header className="border-b border-border sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            {/* Logo */}
             <Link href="/">
-              <Button variant="outline" className="flex items-center gap-2" data-testid="button-back-to-app">
-                <ArrowLeft className="h-4 w-4" />
-                Back to App
-              </Button>
+              <img src={logoImage} alt="Logo" className="w-[240px] h-auto max-[600px]:w-[180px] hover:opacity-80 transition-opacity cursor-pointer" data-testid="link-home" />
             </Link>
+
+            {/* Navigation Items */}
+            <nav className="flex items-center gap-6">
+              {/* Chart Type Dropdown */}
+              <Select onValueChange={handleChartTypeChange}>
+                <SelectTrigger 
+                  className="w-[200px] bg-card border-border"
+                  data-testid="select-chart-type"
+                  style={{ fontFamily: 'var(--font-sans)' }}
+                >
+                  <SelectValue placeholder="Chart Type" />
+                </SelectTrigger>
+                <SelectContent style={{ backgroundColor: '#3A3A3A' }}>
+                  <SelectItem value="/price-chart">Price Chart</SelectItem>
+                  <SelectItem value="/comparison-chart">Comparison Chart</SelectItem>
+                  <SelectItem value="/ai-copilot">AI Co-Pilot</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Walkthrough Link */}
+              <Link href="/walkthrough">
+                <span 
+                  className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
+                  data-testid="link-walkthrough"
+                  style={{ fontFamily: 'var(--font-sans)', fontSize: '16px', color: '#f7f7f7' }}
+                >
+                  <BookOpen className="h-5 w-5 text-[#5AF5FA]" />
+                  <span>Walkthrough</span>
+                </span>
+              </Link>
+
+              {/* Logout Button */}
+              <LogoutButton />
+            </nav>
           </div>
         </div>
       </header>

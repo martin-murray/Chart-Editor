@@ -105,14 +105,14 @@ export default function Home() {
 
               {/* Walkthrough Link */}
               <Link href="/walkthrough">
-                <a 
-                  className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                <span 
+                  className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
                   data-testid="link-walkthrough"
                   style={{ fontFamily: 'var(--font-sans)', fontSize: '16px', color: '#f7f7f7' }}
                 >
                   <BookOpen className="h-5 w-5 text-[#5AF5FA]" />
                   <span>Walkthrough</span>
-                </a>
+                </span>
               </Link>
 
               {/* Logout Button */}
@@ -210,13 +210,13 @@ export default function Home() {
         <div className="mt-16 text-center">
           <div className="inline-flex items-center gap-8">
             <Link href="/walkthrough">
-              <a 
-                className="flex items-center gap-2 text-[#5AF5FA] hover:opacity-80 transition-opacity"
+              <span 
+                className="flex items-center gap-2 text-[#5AF5FA] hover:opacity-80 transition-opacity cursor-pointer"
                 data-testid="link-walkthrough-bottom"
               >
                 <BookOpen className="h-5 w-5" />
                 <span style={{ fontFamily: 'Mulish, sans-serif' }}>View Product Walkthrough</span>
-              </a>
+              </span>
             </Link>
           </div>
         </div>

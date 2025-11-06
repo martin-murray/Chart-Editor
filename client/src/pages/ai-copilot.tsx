@@ -72,14 +72,14 @@ export default function AICopilot() {
 
               {/* Walkthrough Link */}
               <Link href="/walkthrough">
-                <a 
-                  className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                <span 
+                  className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
                   data-testid="link-walkthrough"
                   style={{ fontFamily: 'var(--font-sans)', fontSize: '16px', color: '#f7f7f7' }}
                 >
                   <BookOpen className="h-5 w-5 text-[#5AF5FA]" />
                   <span>Walkthrough</span>
-                </a>
+                </span>
               </Link>
 
               {/* Logout Button */}
