@@ -206,11 +206,12 @@ export default function AICopilot() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-6 max-w-[1600px]">
+      <main className="container mx-auto px-4 py-6 max-w-[1800px]">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[calc(100vh-120px)]">
-          {/* Left Column: Chart History */}
-          <div className="lg:col-span-1 flex flex-col">
-            <Card className="h-full flex flex-col" style={{ backgroundColor: '#1C1C1C' }}>
+          {/* Left Sidebar: Chart History + AI Co-Pilot Tools */}
+          <div className="lg:col-span-1 flex flex-col gap-4">
+            {/* Chart History Section */}
+            <Card className="flex flex-col" style={{ backgroundColor: '#1C1C1C', maxHeight: '40%' }}>
               <div className="p-4 border-b border-border">
                 <div className="flex items-center justify-between mb-2">
                   <h3 
@@ -243,8 +244,8 @@ export default function AICopilot() {
 
               <div className="flex-1 overflow-y-auto p-3 space-y-2">
                 {chartMessages.length === 0 ? (
-                  <div className="text-center py-12">
-                    <BarChart3 className="h-12 w-12 mx-auto mb-3" style={{ color: '#5AF5FA', opacity: 0.3 }} />
+                  <div className="text-center py-8">
+                    <BarChart3 className="h-10 w-10 mx-auto mb-2" style={{ color: '#5AF5FA', opacity: 0.3 }} />
                     <p 
                       className="text-sm"
                       style={{ fontFamily: 'Mulish, sans-serif', color: '#A0A0A0' }}
@@ -257,7 +258,7 @@ export default function AICopilot() {
                     <button
                       key={msg.id}
                       onClick={() => setSelectedChartId(msg.id)}
-                      className={`w-full text-left p-3 rounded-lg border transition-all ${
+                      className={`w-full text-left p-2 rounded-lg border transition-all ${
                         selectedChartId === msg.id 
                           ? 'border-[#5AF5FA] bg-[#5AF5FA]/10' 
                           : 'border-border hover:border-[#5AF5FA]/50 hover:bg-[#2A2A2A]'
@@ -280,7 +281,7 @@ export default function AICopilot() {
                             {msg.chartConfig?.title || 'Untitled Chart'}
                           </p>
                           <p 
-                            className="text-xs mt-1 capitalize"
+                            className="text-xs mt-0.5 capitalize"
                             style={{ 
                               fontFamily: 'Mulish, sans-serif', 
                               color: '#A0A0A0'
@@ -295,35 +296,33 @@ export default function AICopilot() {
                 )}
               </div>
             </Card>
-          </div>
 
-          {/* Middle Column: Chat Interface */}
-          <div className="lg:col-span-2 flex flex-col">
+            {/* AI Co-Pilot Tools Section */}
             <Card className="flex-1 flex flex-col" style={{ backgroundColor: '#1C1C1C' }}>
               {/* Header */}
               <div className="p-4 border-b border-border">
-                <h2 
-                  className="text-2xl font-semibold flex items-center gap-2"
+                <h3 
+                  className="text-lg font-semibold flex items-center gap-2"
                   style={{ fontFamily: 'Mulish, sans-serif', color: '#F7F7F7' }}
                 >
-                  <Sparkles className="h-6 w-6" style={{ color: '#FFA5FF' }} />
+                  <Sparkles className="h-5 w-5" style={{ color: '#FFA5FF' }} />
                   AI Co-Pilot
-                </h2>
+                </h3>
                 <p 
-                  className="text-sm mt-1"
+                  className="text-xs mt-1"
                   style={{ fontFamily: 'Mulish, sans-serif', color: '#A0A0A0' }}
                 >
-                  Upload a CSV and describe the chart you want to create
+                  Upload CSV & describe your chart
                 </p>
               </div>
 
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              <div className="flex-1 overflow-y-auto p-3 space-y-3">
                 {messages.length === 0 && (
-                  <div className="text-center py-12">
-                    <Sparkles className="h-16 w-16 mx-auto mb-4" style={{ color: '#FFA5FF' }} />
-                    <p style={{ fontFamily: 'Mulish, sans-serif', color: '#A0A0A0' }}>
-                      Start by uploading a CSV file or asking a question
+                  <div className="text-center py-8">
+                    <Sparkles className="h-12 w-12 mx-auto mb-3" style={{ color: '#FFA5FF' }} />
+                    <p className="text-sm" style={{ fontFamily: 'Mulish, sans-serif', color: '#A0A0A0' }}>
+                      Upload a CSV or ask a question
                     </p>
                   </div>
                 )}
@@ -334,7 +333,7 @@ export default function AICopilot() {
                     className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
                     <div 
-                      className={`max-w-[80%] rounded-lg p-3 ${
+                      className={`max-w-[85%] rounded-lg p-2.5 text-sm ${
                         msg.role === 'user' 
                           ? 'bg-[#5AF5FA] text-black' 
                           : 'bg-[#2A2A2A] text-[#F7F7F7]'
@@ -344,8 +343,8 @@ export default function AICopilot() {
                       <p className="whitespace-pre-wrap">{msg.content.replace(/```json[\s\S]*?```/g, '')}</p>
                       
                       {msg.chartConfig && (
-                        <div className="mt-3 p-2 bg-black/20 rounded text-xs">
-                          <p className="font-semibold mb-1">Chart generated:</p>
+                        <div className="mt-2 p-2 bg-black/20 rounded text-xs">
+                          <p className="font-semibold mb-0.5">Chart generated:</p>
                           <p>{msg.chartConfig.title}</p>
                         </div>
                       )}
@@ -355,8 +354,8 @@ export default function AICopilot() {
 
                 {sendMessageMutation.isPending && (
                   <div className="flex justify-start">
-                    <div className="bg-[#2A2A2A] rounded-lg p-3">
-                      <Loader2 className="h-5 w-5 animate-spin" style={{ color: '#5AF5FA' }} />
+                    <div className="bg-[#2A2A2A] rounded-lg p-2.5">
+                      <Loader2 className="h-4 w-4 animate-spin" style={{ color: '#5AF5FA' }} />
                     </div>
                   </div>
                 )}
@@ -365,18 +364,18 @@ export default function AICopilot() {
               </div>
 
               {/* Input Area */}
-              <div className="p-4 border-t border-border">
+              <div className="p-3 border-t border-border">
                 {uploadedFile && (
-                  <div className="mb-3 flex items-center gap-2 p-2 bg-[#2A2A2A] rounded">
+                  <div className="mb-2 flex items-center gap-2 p-2 bg-[#2A2A2A] rounded">
                     <FileText className="h-4 w-4 text-[#5AF5FA]" />
-                    <span className="flex-1 text-sm" style={{ color: '#F7F7F7' }}>{uploadedFile.name}</span>
+                    <span className="flex-1 text-xs truncate" style={{ color: '#F7F7F7' }}>{uploadedFile.name}</span>
                     <Button
                       size="sm"
                       onClick={handleUpload}
                       disabled={uploadMutation.isPending}
                       style={{ backgroundColor: '#5AF5FA', color: '#000' }}
                     >
-                      {uploadMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                      {uploadMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
                     </Button>
                   </div>
                 )}
@@ -395,6 +394,7 @@ export default function AICopilot() {
                     size="icon"
                     onClick={() => fileInputRef.current?.click()}
                     data-testid="button-upload-csv"
+                    className="h-9 w-9"
                   >
                     <Upload className="h-4 w-4" />
                   </Button>
@@ -403,7 +403,7 @@ export default function AICopilot() {
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="Ask me to create a chart..."
-                    className="flex-1 resize-none bg-[#2A2A2A] border-border text-[#F7F7F7]"
+                    className="flex-1 resize-none bg-[#2A2A2A] border-border text-[#F7F7F7] text-sm"
                     rows={2}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
@@ -419,6 +419,7 @@ export default function AICopilot() {
                     disabled={!message.trim() || sendMessageMutation.isPending || !chatId}
                     style={{ backgroundColor: '#5AF5FA', color: '#000' }}
                     data-testid="button-send-message"
+                    className="h-9 w-9 p-0"
                   >
                     {sendMessageMutation.isPending ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -431,31 +432,40 @@ export default function AICopilot() {
             </Card>
           </div>
 
-          {/* Right Column: Chart Display */}
-          <div className="lg:col-span-1">
+          {/* Main Chart Display - Takes up 3/4 of the screen */}
+          <div className="lg:col-span-3">
             <Card className="h-full flex flex-col" style={{ backgroundColor: '#1C1C1C' }}>
               <div className="p-4 border-b border-border">
-                <h3 
-                  className="text-lg font-semibold"
+                <h2 
+                  className="text-2xl font-semibold"
                   style={{ fontFamily: 'Mulish, sans-serif', color: '#F7F7F7' }}
                 >
                   Generated Chart
-                </h3>
+                </h2>
               </div>
 
-              <div className="flex-1 p-4 overflow-auto">
+              <div className="flex-1 p-6 overflow-auto">
                 {selectedChart?.chartConfig ? (
                   <AICopilotChart 
                     config={selectedChart.chartConfig} 
                   />
                 ) : (
                   <div className="h-full flex items-center justify-center">
-                    <p 
-                      className="text-center"
-                      style={{ fontFamily: 'Mulish, sans-serif', color: '#A0A0A0' }}
-                    >
-                      Your chart will appear here
-                    </p>
+                    <div className="text-center">
+                      <BarChart3 className="h-20 w-20 mx-auto mb-4" style={{ color: '#5AF5FA', opacity: 0.2 }} />
+                      <p 
+                        className="text-lg"
+                        style={{ fontFamily: 'Mulish, sans-serif', color: '#A0A0A0' }}
+                      >
+                        Your chart will appear here
+                      </p>
+                      <p 
+                        className="text-sm mt-2"
+                        style={{ fontFamily: 'Mulish, sans-serif', color: '#707070' }}
+                      >
+                        Upload a CSV and describe the chart you want to create
+                      </p>
+                    </div>
                   </div>
                 )}
               </div>
