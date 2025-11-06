@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Sparkles, Upload, LogOut, BookOpen, Send, Loader2, FileText, Download, BarChart3 } from "lucide-react";
+import { Sparkles, Upload, LogOut, BookOpen, Send, Loader2, FileText, Download, BarChart3, Plus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import logoImage from "@assets/IPO Intelligence@2x_1758060026530.png";
 import {
@@ -151,6 +151,12 @@ export default function AICopilot() {
     ? messages.find(m => m.id === selectedChartId)
     : chartMessages[chartMessages.length - 1];
 
+  // Handle new chat
+  const handleNewChat = () => {
+    setSelectedChartId(null);
+    createSessionMutation.mutate();
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Navigation Header */}
@@ -206,14 +212,29 @@ export default function AICopilot() {
           <div className="lg:col-span-1 flex flex-col">
             <Card className="h-full flex flex-col" style={{ backgroundColor: '#1C1C1C' }}>
               <div className="p-4 border-b border-border">
-                <h3 
-                  className="text-lg font-semibold"
-                  style={{ fontFamily: 'Mulish, sans-serif', color: '#F7F7F7' }}
-                >
-                  Chart History
-                </h3>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 
+                    className="text-lg font-semibold"
+                    style={{ fontFamily: 'Mulish, sans-serif', color: '#F7F7F7' }}
+                  >
+                    Chart History
+                  </h3>
+                  <button
+                    onClick={handleNewChat}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-md hover:opacity-80 transition-opacity text-sm font-medium"
+                    style={{ 
+                      fontFamily: 'Mulish, sans-serif', 
+                      backgroundColor: '#5AF5FA',
+                      color: '#000000'
+                    }}
+                    data-testid="button-new-chat"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>New Chat</span>
+                  </button>
+                </div>
                 <p 
-                  className="text-xs mt-1"
+                  className="text-xs"
                   style={{ fontFamily: 'Mulish, sans-serif', color: '#A0A0A0' }}
                 >
                   {chartMessages.length} chart{chartMessages.length !== 1 ? 's' : ''} generated
