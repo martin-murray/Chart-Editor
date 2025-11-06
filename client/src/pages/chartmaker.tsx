@@ -549,24 +549,22 @@ function ChartMaker() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-card border-b shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center min-h-16 py-2 max-[900px]:flex-wrap max-[900px]:gap-3">
-            <div className="flex items-center max-[900px]:w-full max-[900px]:justify-center">
-              <img 
-                src={logoImage} 
-                alt="Intropic Chart Studio" 
-                className="w-[240px] h-auto max-[600px]:w-[180px]"
-                data-testid="header-logo"
-              />
-            </div>
-            <div className="flex items-center max-[900px]:w-full max-[900px]:justify-center max-[600px]:flex-wrap" style={{ gap: '24px' }}>
+    <div className="min-h-screen bg-background text-foreground">
+      {/* Navigation Header */}
+      <header className="border-b border-border sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            {/* Logo */}
+            <Link href="/">
+              <img src={logoImage} alt="Logo" className="w-[240px] h-auto max-[600px]:w-[180px] hover:opacity-80 transition-opacity cursor-pointer" data-testid="link-home" />
+            </Link>
+
+            {/* Navigation Items */}
+            <nav className="flex items-center gap-6">
               {/* Chart Type Dropdown */}
               <Select value="/price-chart" onValueChange={(value) => setLocation(value)}>
                 <SelectTrigger 
-                  className="w-[180px] bg-card border-border max-[600px]:w-[140px]"
+                  className="w-[200px] bg-card border-border"
                   data-testid="select-chart-type"
                   style={{ fontFamily: 'var(--font-sans)' }}
                 >
@@ -578,50 +576,46 @@ function ChartMaker() {
                   <SelectItem value="/ai-copilot">AI Co-Pilot</SelectItem>
                 </SelectContent>
               </Select>
-              
-              <SuffixSearchModal>
-                <button 
-                  ref={suffixButtonRef}
-                  className="flex items-center gap-2 hover:opacity-80 transition-opacity max-[600px]:text-xs"
-                  data-testid="button-suffix-search"
-                  style={{ fontSize: '16px', color: '#f7f7f7' }}
+
+              {/* Walkthrough Link */}
+              <Link href="/walkthrough">
+                <span 
+                  className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
+                  data-testid="link-walkthrough"
+                  style={{ fontFamily: 'var(--font-sans)', fontSize: '16px', color: '#f7f7f7' }}
                 >
-                  <Globe className="h-5 w-5 text-[#FAFF50]" />
-                  <span className="max-[600px]:hidden">Suffix Guide</span>
-                  <span className="min-[601px]:hidden">Guide</span>
-                </button>
-              </SuffixSearchModal>
-              <Link 
-                href="/walkthrough"
-                className="flex items-center gap-2 hover:opacity-80 transition-opacity max-[600px]:text-xs" 
-                style={{ fontSize: '16px', color: '#f7f7f7' }}
-                data-testid="button-walkthrough"
-              >
-                <BookOpen className="h-5 w-5 text-[#5AF5FA]" />
-                <span className="max-[600px]:hidden">How to Use</span>
-                <span className="min-[601px]:hidden">Guide</span>
+                  <BookOpen className="h-5 w-5 text-[#5AF5FA]" />
+                  <span>Walkthrough</span>
+                </span>
               </Link>
-              <FeedbackButton />
+
+              {/* Logout Button */}
               <LogoutButton />
-            </div>
+            </nav>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 max-[900px]:px-3 max-[900px]:py-4 overflow-x-hidden">
-        <div className="mx-auto w-full" style={{ maxWidth: '1200px' }}>
+      {/* Main Content */}
+      <main className="container mx-auto px-4 py-6">
+        {/* Page Title */}
+        <div className="mb-6">
+          <h1 
+            className="text-4xl font-light mb-2"
+            style={{ fontFamily: 'Space Grotesk, sans-serif', color: '#f7f7f7' }}
+          >
+            Price Chart
+          </h1>
+          <p 
+            className="text-muted-foreground"
+            style={{ fontFamily: 'Mulish, sans-serif' }}
+          >
+            Search and visualise price charts for stocks, ETFs, and securities globally
+          </p>
+        </div>
+
           {/* Search Section */}
           <Card className="p-6 mb-8 max-[900px]:p-4 max-[600px]:p-3" style={{ backgroundColor: '#121212' }}>
-            <div className="mb-6">
-              <div className="flex items-center gap-3 mb-4">
-                <BarChart3 className="w-6 h-6 text-[#5AF5FA]" />
-                <h2 className="text-xl font-semibold">Global Stock & ETF Search</h2>
-              </div>
-              <p className="text-muted-foreground">
-                Search and visualise price charts for stocks, ETFs, and securities globally
-              </p>
-            </div>
-            
             <GlobalTickerSearch onSelectStock={setChartMakerSelectedStock} />
           </Card>
 
@@ -765,7 +759,6 @@ function ChartMaker() {
               </p>
             </div>
           </Card>
-        </div>
       </main>
       
       {/* Cookie Policy Banner */}

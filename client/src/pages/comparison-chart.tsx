@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { LogOut, ArrowLeft, BookOpen } from "lucide-react";
+import { LogOut, BookOpen } from "lucide-react";
 import { ComparisonChart as ComparisonChartComponent } from "@/components/dashboard/comparison-chart";
 import { useAuth } from "@/contexts/AuthContext";
 import logoImage from "@assets/IPO Intelligence@2x_1758060026530.png";
@@ -93,23 +93,11 @@ export default function ComparisonChart() {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6">
-        {/* Back Button */}
-        <Link href="/">
-          <Button
-            variant="ghost"
-            className="mb-4"
-            data-testid="button-back-home"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Home
-          </Button>
-        </Link>
-
         {/* Page Title */}
         <div className="mb-6">
           <h1 
             className="text-4xl font-light mb-2"
-            style={{ fontFamily: 'Space Grotesk, sans-serif', color: '#FAFF50' }}
+            style={{ fontFamily: 'Space Grotesk, sans-serif', color: '#f7f7f7' }}
           >
             Comparison Chart
           </h1>
