@@ -109,6 +109,60 @@ export type InsertVisitorAnalytics = z.infer<typeof insertVisitorAnalyticsSchema
 export type LoginAttempt = typeof loginAttempts.$inferSelect;
 export type InsertLoginAttempt = z.infer<typeof insertLoginAttemptSchema>;
 
+// AI Co-Pilot tables
+export const aiCopilotChats = pgTable("ai_copilot_chats", {
+  id: serial("id").primaryKey(),
+  sessionId: text("session_id").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const aiCopilotMessages = pgTable("ai_copilot_messages", {
+  id: serial("id").primaryKey(),
+  chatId: integer("chat_id").notNull().references(() => aiCopilotChats.id),
+  role: text("role").notNull(), // 'user' or 'assistant'
+  content: text("content").notNull(),
+  chartConfig: jsonb("chart_config").$type<{
+    type: 'bar' | 'line' | 'pie' | 'area';
+    data: any[];
+    xKey: string;
+    yKeys: string[];
+    title: string;
+    colors: string[];
+  }>(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const aiCopilotUploads = pgTable("ai_copilot_uploads", {
+  id: serial("id").primaryKey(),
+  chatId: integer("chat_id").notNull().references(() => aiCopilotChats.id),
+  filename: text("filename").notNull(),
+  csvData: text("csv_data").notNull(), // Store raw CSV as text
+  parsedData: jsonb("parsed_data").$type<any[]>(),
+  uploadedAt: timestamp("uploaded_at").notNull().defaultNow(),
+});
+
+export const insertAiCopilotChatSchema = createInsertSchema(aiCopilotChats).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertAiCopilotMessageSchema = createInsertSchema(aiCopilotMessages).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertAiCopilotUploadSchema = createInsertSchema(aiCopilotUploads).omit({
+  id: true,
+  uploadedAt: true,
+});
+
+export type AiCopilotChat = typeof aiCopilotChats.$inferSelect;
+export type InsertAiCopilotChat = z.infer<typeof insertAiCopilotChatSchema>;
+export type AiCopilotMessage = typeof aiCopilotMessages.$inferSelect;
+export type InsertAiCopilotMessage = z.infer<typeof insertAiCopilotMessageSchema>;
+export type AiCopilotUpload = typeof aiCopilotUploads.$inferSelect;
+export type InsertAiCopilotUpload = z.infer<typeof insertAiCopilotUploadSchema>;
+
 // Filter schemas
 export const stockFilterSchema = z.object({
   changeThreshold: z.number().min(0).default(2),
