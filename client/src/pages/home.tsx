@@ -171,7 +171,7 @@ export default function Home() {
                     className="text-2xl font-semibold mb-4"
                     style={{ 
                       fontFamily: 'Mulish, sans-serif',
-                      color: card.titleColor
+                      color: '#F7F7F7'
                     }}
                   >
                     {card.title}
