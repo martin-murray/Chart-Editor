@@ -130,7 +130,7 @@ export default function Home() {
             className="text-5xl font-light mb-4 text-foreground"
             style={{ fontFamily: 'Space Grotesk, sans-serif' }}
           >
-            Welcome to Chart Maker
+            Welcome to Chart Editor
           </h1>
           <p 
             className="text-xl text-muted-foreground max-w-2xl mx-auto"

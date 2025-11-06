@@ -1403,24 +1403,6 @@ export function PriceChart({
                 ))}
               </SelectContent>
             </Select>
-            
-            {/* Price/Compare Tabs on Mobile */}
-            <TabsList className="grid grid-cols-2 h-9 p-0 flex-shrink-0">
-              <TabsTrigger 
-                value="price-volume" 
-                className="data-[state=active]:bg-[#5AF5FA] data-[state=active]:text-black h-9 text-xs py-0 px-3"
-                data-testid="trigger-price-volume-mobile"
-              >
-                Price
-              </TabsTrigger>
-              <TabsTrigger 
-                value="comparison" 
-                className="data-[state=active]:bg-[#5AF5FA] data-[state=active]:text-black h-9 text-xs py-0 px-3"
-                data-testid="trigger-comparison-mobile"
-              >
-                Compare
-              </TabsTrigger>
-            </TabsList>
           </div>
           
           {/* Desktop Buttons (760px+) */}
@@ -1767,28 +1749,10 @@ export function PriceChart({
           </div>
         )}
 
-      {/* Chart Tabs Section with Export Button */}
+      {/* Chart Controls Section with Export Button */}
       <div className="flex items-center justify-between mb-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              {/* Desktop Tabs (760px+) - Hidden on mobile since tabs are now next to timeframe dropdown */}
-              <TabsList className="hidden min-[760px]:grid grid-cols-2 h-8 p-0">
-                <TabsTrigger 
-                  value="price-volume" 
-                  className="data-[state=active]:bg-[#5AF5FA] data-[state=active]:text-black h-8 text-xs py-0"
-                  data-testid="trigger-price-volume"
-                >
-                  Price
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="comparison" 
-                  className="data-[state=active]:bg-[#5AF5FA] data-[state=active]:text-black h-8 text-xs py-0"
-                  data-testid="trigger-comparison"
-                >
-                  Compare
-                </TabsTrigger>
-              </TabsList>
-              
               {/* Annotation Mode Controls */}
               <div className="flex items-center gap-2">
                 <DropdownMenu>

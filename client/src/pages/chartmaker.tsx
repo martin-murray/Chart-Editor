@@ -463,6 +463,7 @@ function CookiePolicyBanner() {
 }
 
 function ChartMaker() {
+  const [, setLocation] = useLocation();
   const [chartMakerSelectedStock, setChartMakerSelectedStock] = useState<GlobalSearchResult | null>(null);
   
   // Annotation state management - moved from GlobalTickerSearch
