@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Sparkles, Upload, LogOut, BookOpen, Send, Loader2, FileText, Download } from "lucide-react";
+import { Sparkles, Upload, LogOut, BookOpen, Send, Loader2, FileText, Download, BarChart3 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import logoImage from "@assets/IPO Intelligence@2x_1758060026530.png";
 import {
@@ -45,6 +45,7 @@ export default function AICopilot() {
   const [chatId, setChatId] = useState<number | null>(null);
   const [message, setMessage] = useState("");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [selectedChartId, setSelectedChartId] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -134,6 +135,22 @@ export default function AICopilot() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Auto-select latest chart when new one is generated
+  useEffect(() => {
+    const latestChart = messages.slice().reverse().find(m => m.chartConfig);
+    if (latestChart && !selectedChartId) {
+      setSelectedChartId(latestChart.id);
+    }
+  }, [messages, selectedChartId]);
+
+  // Get all messages with charts
+  const chartMessages = messages.filter(m => m.chartConfig);
+  
+  // Get selected chart
+  const selectedChart = selectedChartId 
+    ? messages.find(m => m.id === selectedChartId)
+    : chartMessages[chartMessages.length - 1];
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Navigation Header */}
@@ -183,9 +200,83 @@ export default function AICopilot() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-6 max-w-7xl">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-120px)]">
-          {/* Left Column: Chat Interface */}
+      <main className="container mx-auto px-4 py-6 max-w-[1600px]">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[calc(100vh-120px)]">
+          {/* Left Column: Chart History */}
+          <div className="lg:col-span-1 flex flex-col">
+            <Card className="h-full flex flex-col" style={{ backgroundColor: '#1C1C1C' }}>
+              <div className="p-4 border-b border-border">
+                <h3 
+                  className="text-lg font-semibold"
+                  style={{ fontFamily: 'Mulish, sans-serif', color: '#F7F7F7' }}
+                >
+                  Chart History
+                </h3>
+                <p 
+                  className="text-xs mt-1"
+                  style={{ fontFamily: 'Mulish, sans-serif', color: '#A0A0A0' }}
+                >
+                  {chartMessages.length} chart{chartMessages.length !== 1 ? 's' : ''} generated
+                </p>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                {chartMessages.length === 0 ? (
+                  <div className="text-center py-12">
+                    <BarChart3 className="h-12 w-12 mx-auto mb-3" style={{ color: '#5AF5FA', opacity: 0.3 }} />
+                    <p 
+                      className="text-sm"
+                      style={{ fontFamily: 'Mulish, sans-serif', color: '#A0A0A0' }}
+                    >
+                      No charts yet
+                    </p>
+                  </div>
+                ) : (
+                  chartMessages.slice().reverse().map((msg) => (
+                    <button
+                      key={msg.id}
+                      onClick={() => setSelectedChartId(msg.id)}
+                      className={`w-full text-left p-3 rounded-lg border transition-all ${
+                        selectedChartId === msg.id 
+                          ? 'border-[#5AF5FA] bg-[#5AF5FA]/10' 
+                          : 'border-border hover:border-[#5AF5FA]/50 hover:bg-[#2A2A2A]'
+                      }`}
+                      data-testid={`button-chart-history-${msg.id}`}
+                    >
+                      <div className="flex items-start gap-2">
+                        <BarChart3 
+                          className="h-4 w-4 mt-0.5 flex-shrink-0" 
+                          style={{ color: selectedChartId === msg.id ? '#5AF5FA' : '#A0A0A0' }} 
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p 
+                            className="text-sm font-medium truncate"
+                            style={{ 
+                              fontFamily: 'Mulish, sans-serif', 
+                              color: selectedChartId === msg.id ? '#5AF5FA' : '#F7F7F7'
+                            }}
+                          >
+                            {msg.chartConfig?.title || 'Untitled Chart'}
+                          </p>
+                          <p 
+                            className="text-xs mt-1 capitalize"
+                            style={{ 
+                              fontFamily: 'Mulish, sans-serif', 
+                              color: '#A0A0A0'
+                            }}
+                          >
+                            {msg.chartConfig?.type} chart
+                          </p>
+                        </div>
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+            </Card>
+          </div>
+
+          {/* Middle Column: Chat Interface */}
           <div className="lg:col-span-2 flex flex-col">
             <Card className="flex-1 flex flex-col" style={{ backgroundColor: '#1C1C1C' }}>
               {/* Header */}
@@ -332,9 +423,9 @@ export default function AICopilot() {
               </div>
 
               <div className="flex-1 p-4 overflow-auto">
-                {messages.length > 0 && messages.slice().reverse().find(m => m.chartConfig)?.chartConfig ? (
+                {selectedChart?.chartConfig ? (
                   <AICopilotChart 
-                    config={messages.slice().reverse().find(m => m.chartConfig)!.chartConfig!} 
+                    config={selectedChart.chartConfig} 
                   />
                 ) : (
                   <div className="h-full flex items-center justify-center">
