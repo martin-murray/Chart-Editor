@@ -3,6 +3,23 @@
 ## Overview
 A full-stack stock market tracking application built with React, Express.js, and PostgreSQL. The application provides real-time stock market data with filtering capabilities, Slack integration for alerts, and comprehensive market analytics. The system features both in-memory and database storage options for flexible deployment, aiming to provide comprehensive global market coverage and real-time insights for investors.
 
+## Recent Changes (November 6, 2025)
+- **New Homepage & Navigation Architecture**: Redesigned application structure with dedicated pathway cards
+  - **Homepage**: Three interactive pathway cards for Price Chart (cyan #5AF5FA), Comparison Chart (yellow #FAFF50), and AI Co-Pilot (green #50FFA5)
+  - **Navigation Routing**: 
+    - `/` - Homepage with pathway cards
+    - `/price-chart` - Single-ticker price chart with annotations
+    - `/comparison-chart` - Multi-ticker comparison chart
+    - `/ai-copilot` - AI Co-Pilot (coming soon page)
+  - **Chart Type Dropdown**: Global navigation dropdown on all pages for quick chart type switching
+  - **Responsive Card Layout**: 3-column grid on desktop, stacked layout on mobile with gradient hover effects
+  - **Consistent Logo Sizing**: 240px wide across all pages (180px on mobile < 600px)
+- **Comparison Chart Enhancement**: Forward-fill logic for global market comparisons
+  - Carries forward last known price when markets are closed (e.g., European stocks when US market is open)
+  - Creates continuous, unbroken lines for cross-timezone stock comparisons
+  - Industry-standard approach for financial charting across different market hours
+- **Bug Fix**: Vertical annotation line now renders correctly on comparison chart (was showing text box but missing line)
+
 ## Recent Changes (October 28, 2025)
 - **Mobile Responsive Chart UI**: Enhanced price chart for better mobile experience
   - **Timeframe Selector**: Dropdown on screens < 760px, button layout on larger screens

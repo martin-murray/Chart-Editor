@@ -82,9 +82,7 @@ export default function Home() {
           <div className="flex items-center justify-between">
             {/* Logo */}
             <Link href="/">
-              <a className="flex items-center gap-3 hover:opacity-80 transition-opacity" data-testid="link-home">
-                <img src={logoImage} alt="Logo" className="w-[240px] h-auto max-[600px]:w-[180px]" />
-              </a>
+              <img src={logoImage} alt="Logo" className="w-[240px] h-auto max-[600px]:w-[180px] hover:opacity-80 transition-opacity cursor-pointer" data-testid="link-home" />
             </Link>
 
             {/* Navigation Items */}
