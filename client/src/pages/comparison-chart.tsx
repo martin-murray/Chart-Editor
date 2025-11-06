@@ -52,7 +52,7 @@ export default function ComparisonChart() {
             {/* Logo */}
             <Link href="/">
               <a className="flex items-center gap-3 hover:opacity-80 transition-opacity" data-testid="link-home">
-                <img src={logoImage} alt="Logo" className="h-10" />
+                <img src={logoImage} alt="Logo" className="w-[240px] h-auto max-[600px]:w-[180px]" />
               </a>
             </Link>
 
