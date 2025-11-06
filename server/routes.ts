@@ -5,10 +5,11 @@ import { stockDataService } from "./services/stockData";
 import multer from "multer";
 import { sendFeedbackToSlack } from "./slack";
 import { db } from "./db";
-import { visitorAnalytics, loginAttempts, insertLoginAttemptSchema } from "@shared/schema";
-import { desc, count, sql, gte, lte, and } from "drizzle-orm";
+import { visitorAnalytics, loginAttempts, insertLoginAttemptSchema, aiCopilotChats, aiCopilotMessages, aiCopilotUploads } from "@shared/schema";
+import { desc, count, sql, gte, lte, and, eq } from "drizzle-orm";
 import { getExchangeInfoFromSuffix, applySuffixOverride } from "./utils/suffixMappings";
 import { indexService } from "./services/indexService";
+import OpenAI from "openai";
 
 // Simple in-memory session store for authentication
 const authSessions = new Map<string, { createdAt: number }>();
@@ -820,6 +821,165 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching login attempts:", error);
       res.status(500).json({ message: "Failed to fetch login attempts" });
+    }
+  });
+
+  // AI Co-Pilot Routes
+
+  // Initialize OpenAI client with Replit AI Integrations
+  const openai = new OpenAI({
+    apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+    baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+  });
+
+  // Create or get chat session
+  app.post("/api/ai-copilot/session", requireAuth, async (req, res) => {
+    try {
+      const sessionId = randomUUID();
+      const [chat] = await db.insert(aiCopilotChats).values({ sessionId }).returning();
+      res.json(chat);
+    } catch (error) {
+      console.error("Error creating AI chat session:", error);
+      res.status(500).json({ message: "Failed to create chat session" });
+    }
+  });
+
+  // Upload CSV
+  app.post("/api/ai-copilot/upload", requireAuth, multer({ storage: multer.memoryStorage() }).single('file'), async (req, res) => {
+    try {
+      const chatId = parseInt(req.body.chatId);
+      const file = req.file;
+
+      if (!file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const csvData = file.buffer.toString('utf-8');
+      
+      // Parse CSV into array of objects
+      const lines = csvData.split('\n').filter(line => line.trim());
+      const headers = lines[0].split(',').map(h => h.trim());
+      
+      const parsedData = lines.slice(1).map(line => {
+        const values = line.split(',');
+        const obj: any = {};
+        headers.forEach((header, i) => {
+          obj[header] = values[i]?.trim() || '';
+        });
+        return obj;
+      });
+
+      const [upload] = await db.insert(aiCopilotUploads).values({
+        chatId,
+        filename: file.originalname,
+        csvData,
+        parsedData,
+      }).returning();
+
+      res.json(upload);
+    } catch (error) {
+      console.error("Error uploading CSV:", error);
+      res.status(500).json({ message: "Failed to upload CSV" });
+    }
+  });
+
+  // Send message and get AI response
+  app.post("/api/ai-copilot/chat", requireAuth, async (req, res) => {
+    try {
+      const { chatId, message } = req.body;
+
+      // Save user message
+      await db.insert(aiCopilotMessages).values({
+        chatId,
+        role: 'user',
+        content: message,
+      });
+
+      // Get uploaded CSV data for context
+      const uploads = await db.select().from(aiCopilotUploads).where(eq(aiCopilotUploads.chatId, chatId));
+      
+      let systemPrompt = `You are an AI chart-making assistant. Help users create beautiful, professional charts from their data.
+
+When the user asks you to create a chart, respond with a JSON object wrapped in \`\`\`json code blocks containing:
+{
+  "type": "bar" | "line" | "pie" | "area",
+  "title": "Chart title",
+  "data": [array of data objects],
+  "xKey": "key for x-axis",
+  "yKeys": ["keys for y-axis values"],
+  "colors": ["#5AF5FA", "#FAFF50", "#50FFA5", "#FFA5FF", ...]  // Use Intropic brand colors
+}
+
+Use these Intropic brand colors: #5AF5FA (cyan), #FAFF50 (yellow), #50FFA5 (green), #FFA5FF (pink).
+
+If the user uploads a CSV and asks for a chart, analyze the data structure and suggest appropriate chart types.`;
+
+      if (uploads.length > 0) {
+        const latestUpload = uploads[uploads.length - 1];
+        systemPrompt += `\n\nThe user has uploaded a CSV file: ${latestUpload.filename}\nData preview:\n${JSON.stringify(latestUpload.parsedData?.slice(0, 5), null, 2)}`;
+      }
+
+      // Get chat history
+      const history = await db.select().from(aiCopilotMessages)
+        .where(eq(aiCopilotMessages.chatId, chatId))
+        .orderBy(aiCopilotMessages.createdAt)
+        .limit(20);
+
+      const messages = [
+        { role: 'system' as const, content: systemPrompt },
+        ...history.slice(0, -1).map(m => ({ 
+          role: m.role as 'user' | 'assistant', 
+          content: m.content 
+        })),
+        { role: 'user' as const, content: message }
+      ];
+
+      // Call OpenAI
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages,
+      });
+
+      const assistantMessage = completion.choices[0].message.content || '';
+
+      // Parse chart config if present
+      let chartConfig = null;
+      const jsonMatch = assistantMessage.match(/```json\s*([\s\S]*?)\s*```/);
+      if (jsonMatch) {
+        try {
+          chartConfig = JSON.parse(jsonMatch[1]);
+        } catch (e) {
+          console.error("Failed to parse chart config:", e);
+        }
+      }
+
+      // Save assistant message
+      const [savedMessage] = await db.insert(aiCopilotMessages).values({
+        chatId,
+        role: 'assistant',
+        content: assistantMessage,
+        chartConfig,
+      }).returning();
+
+      res.json(savedMessage);
+    } catch (error) {
+      console.error("Error in AI chat:", error);
+      res.status(500).json({ message: "Failed to process chat message" });
+    }
+  });
+
+  // Get chat history
+  app.get("/api/ai-copilot/messages/:chatId", requireAuth, async (req, res) => {
+    try {
+      const chatId = parseInt(req.params.chatId);
+      const messages = await db.select().from(aiCopilotMessages)
+        .where(eq(aiCopilotMessages.chatId, chatId))
+        .orderBy(aiCopilotMessages.createdAt);
+      
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      res.status(500).json({ message: "Failed to fetch messages" });
     }
   });
 
