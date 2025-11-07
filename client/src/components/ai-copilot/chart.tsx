@@ -62,6 +62,7 @@ export function AICopilotChart({ config }: Props) {
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/recharts@2.10.3/dist/Recharts.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>
     body {
       margin: 0;
@@ -101,7 +102,6 @@ export function AICopilotChart({ config }: Props) {
     
     ReactDOM.render(<Chart />, document.getElementById('root'));
   </script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </body>
 </html>`;
   };
