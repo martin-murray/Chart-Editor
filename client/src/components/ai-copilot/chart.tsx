@@ -1,7 +1,7 @@
 import { BarChart, Bar, LineChart, Line, AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
-import html2canvas from 'html2canvas';
+import { toPng } from 'html-to-image';
 import { useRef } from 'react';
 
 interface ChartConfig {
@@ -21,19 +21,22 @@ export function AICopilotChart({ config }: Props) {
   const chartRef = useRef<HTMLDivElement>(null);
 
   const handleExport = async () => {
-    if (!chartRef.current) return;
+    if (!chartRef.current) {
+      console.error('Chart ref not found');
+      alert('Chart not ready for export. Please try again.');
+      return;
+    }
 
     try {
-      const canvas = await html2canvas(chartRef.current, {
+      const dataUrl = await toPng(chartRef.current, {
         backgroundColor: '#121212',
-        scale: 2,
-        logging: false,
-        useCORS: true,
+        pixelRatio: 2,
+        cacheBust: true,
       });
 
       const link = document.createElement('a');
       link.download = `${config.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.png`;
-      link.href = canvas.toDataURL('image/png');
+      link.href = dataUrl;
       link.click();
     } catch (error) {
       console.error('Export failed:', error);
