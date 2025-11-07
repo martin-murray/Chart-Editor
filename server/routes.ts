@@ -907,10 +907,20 @@ When the user asks you to create a chart, respond with a JSON object wrapped in 
   "data": [array of data objects],
   "xKey": "key for x-axis",
   "yKeys": ["keys for y-axis values"],
-  "colors": ["#5AF5FA", "#FAFF50", "#50FFA5", "#FFA5FF", ...]  // Use Intropic brand colors
+  "colors": ["#5AF5FA", "#FFA5FF", "#AA99FF", "#FAFF50", ...]  // Use brand colors in order
 }
 
-Use these Intropic brand colors: #5AF5FA (cyan), #FAFF50 (yellow), #50FFA5 (green), #FFA5FF (pink).
+IMPORTANT: Use these brand colors in this exact order:
+Primary colors (use first): #5AF5FA (cyan), #FFA5FF (pink), #AA99FF (purple), #FAFF50 (yellow)
+Secondary colors (if needed): #0CB800 (green), #5294FF (violet), #FFA200 (tangerine), #9AFF75 (pea), #FF9999 (rose)
+
+Chart styling rules:
+- Background: #121212
+- All text: #f7f7f7
+- Grid lines (axes): #474747
+- Use consistent text size (12px) across all chart elements
+- Ensure labels don't overlap - angle x-axis labels if needed
+- Keep data labels clear and readable
 
 If the user uploads a CSV and asks for a chart, analyze the data structure and suggest appropriate chart types.`;
 

@@ -25,23 +25,32 @@ export function AICopilotChart({ config }: Props) {
 
     try {
       const canvas = await html2canvas(chartRef.current, {
-        backgroundColor: '#1C1C1C',
+        backgroundColor: '#121212',
         scale: 2,
+        logging: false,
+        useCORS: true,
       });
 
       const link = document.createElement('a');
       link.download = `${config.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.png`;
-      link.href = canvas.toDataURL();
+      link.href = canvas.toDataURL('image/png');
       link.click();
     } catch (error) {
       console.error('Export failed:', error);
+      alert('Failed to export chart. Please try again.');
     }
   };
 
   const renderChart = () => {
     const commonProps = {
       data: config.data,
-      margin: { top: 20, right: 30, left: 20, bottom: 5 }
+      margin: { top: 20, right: 30, left: 20, bottom: 20 }
+    };
+
+    const textStyle = { 
+      fontFamily: 'Mulish, sans-serif', 
+      fontSize: 12,
+      fill: '#f7f7f7'
     };
 
     switch (config.type) {
@@ -49,14 +58,33 @@ export function AICopilotChart({ config }: Props) {
         return (
           <ResponsiveContainer width="100%" height={400}>
             <BarChart {...commonProps}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#3A3A3A" />
-              <XAxis dataKey={config.xKey} stroke="#F7F7F7" style={{ fontFamily: 'Mulish, sans-serif' }} />
-              <YAxis stroke="#F7F7F7" style={{ fontFamily: 'Mulish, sans-serif' }} />
-              <Tooltip 
-                contentStyle={{ backgroundColor: '#2A2A2A', border: '1px solid #3A3A3A', color: '#F7F7F7' }}
-                labelStyle={{ fontFamily: 'Mulish, sans-serif' }}
+              <CartesianGrid strokeDasharray="3 3" stroke="#474747" />
+              <XAxis 
+                dataKey={config.xKey} 
+                stroke="#474747" 
+                tick={textStyle}
+                angle={-45}
+                textAnchor="end"
+                height={60}
               />
-              <Legend wrapperStyle={{ fontFamily: 'Mulish, sans-serif', color: '#F7F7F7' }} />
+              <YAxis 
+                stroke="#474747" 
+                tick={textStyle}
+              />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: '#121212', 
+                  border: '1px solid #474747', 
+                  color: '#f7f7f7',
+                  fontFamily: 'Mulish, sans-serif',
+                  fontSize: 12
+                }}
+                labelStyle={{ fontFamily: 'Mulish, sans-serif', fontSize: 12 }}
+              />
+              <Legend 
+                wrapperStyle={{ fontFamily: 'Mulish, sans-serif', color: '#f7f7f7', fontSize: 12 }}
+                iconSize={12}
+              />
               {config.yKeys.map((key, index) => (
                 <Bar 
                   key={key} 
@@ -72,14 +100,33 @@ export function AICopilotChart({ config }: Props) {
         return (
           <ResponsiveContainer width="100%" height={400}>
             <LineChart {...commonProps}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#3A3A3A" />
-              <XAxis dataKey={config.xKey} stroke="#F7F7F7" style={{ fontFamily: 'Mulish, sans-serif' }} />
-              <YAxis stroke="#F7F7F7" style={{ fontFamily: 'Mulish, sans-serif' }} />
-              <Tooltip 
-                contentStyle={{ backgroundColor: '#2A2A2A', border: '1px solid #3A3A3A', color: '#F7F7F7' }}
-                labelStyle={{ fontFamily: 'Mulish, sans-serif' }}
+              <CartesianGrid strokeDasharray="3 3" stroke="#474747" />
+              <XAxis 
+                dataKey={config.xKey} 
+                stroke="#474747" 
+                tick={textStyle}
+                angle={-45}
+                textAnchor="end"
+                height={60}
               />
-              <Legend wrapperStyle={{ fontFamily: 'Mulish, sans-serif', color: '#F7F7F7' }} />
+              <YAxis 
+                stroke="#474747" 
+                tick={textStyle}
+              />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: '#121212', 
+                  border: '1px solid #474747', 
+                  color: '#f7f7f7',
+                  fontFamily: 'Mulish, sans-serif',
+                  fontSize: 12
+                }}
+                labelStyle={{ fontFamily: 'Mulish, sans-serif', fontSize: 12 }}
+              />
+              <Legend 
+                wrapperStyle={{ fontFamily: 'Mulish, sans-serif', color: '#f7f7f7', fontSize: 12 }}
+                iconSize={12}
+              />
               {config.yKeys.map((key, index) => (
                 <Line 
                   key={key} 
@@ -97,14 +144,33 @@ export function AICopilotChart({ config }: Props) {
         return (
           <ResponsiveContainer width="100%" height={400}>
             <AreaChart {...commonProps}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#3A3A3A" />
-              <XAxis dataKey={config.xKey} stroke="#F7F7F7" style={{ fontFamily: 'Mulish, sans-serif' }} />
-              <YAxis stroke="#F7F7F7" style={{ fontFamily: 'Mulish, sans-serif' }} />
-              <Tooltip 
-                contentStyle={{ backgroundColor: '#2A2A2A', border: '1px solid #3A3A3A', color: '#F7F7F7' }}
-                labelStyle={{ fontFamily: 'Mulish, sans-serif' }}
+              <CartesianGrid strokeDasharray="3 3" stroke="#474747" />
+              <XAxis 
+                dataKey={config.xKey} 
+                stroke="#474747" 
+                tick={textStyle}
+                angle={-45}
+                textAnchor="end"
+                height={60}
               />
-              <Legend wrapperStyle={{ fontFamily: 'Mulish, sans-serif', color: '#F7F7F7' }} />
+              <YAxis 
+                stroke="#474747" 
+                tick={textStyle}
+              />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: '#121212', 
+                  border: '1px solid #474747', 
+                  color: '#f7f7f7',
+                  fontFamily: 'Mulish, sans-serif',
+                  fontSize: 12
+                }}
+                labelStyle={{ fontFamily: 'Mulish, sans-serif', fontSize: 12 }}
+              />
+              <Legend 
+                wrapperStyle={{ fontFamily: 'Mulish, sans-serif', color: '#f7f7f7', fontSize: 12 }}
+                iconSize={12}
+              />
               {config.yKeys.map((key, index) => (
                 <Area 
                   key={key} 
@@ -130,17 +196,30 @@ export function AICopilotChart({ config }: Props) {
                 cx="50%"
                 cy="50%"
                 outerRadius={120}
-                label
+                label={{
+                  fill: '#f7f7f7',
+                  fontSize: 12,
+                  fontFamily: 'Mulish, sans-serif'
+                }}
               >
                 {config.data.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={config.colors[index % config.colors.length]} />
                 ))}
               </Pie>
               <Tooltip 
-                contentStyle={{ backgroundColor: '#2A2A2A', border: '1px solid #3A3A3A', color: '#F7F7F7' }}
-                labelStyle={{ fontFamily: 'Mulish, sans-serif' }}
+                contentStyle={{ 
+                  backgroundColor: '#121212', 
+                  border: '1px solid #474747', 
+                  color: '#f7f7f7',
+                  fontFamily: 'Mulish, sans-serif',
+                  fontSize: 12
+                }}
+                labelStyle={{ fontFamily: 'Mulish, sans-serif', fontSize: 12 }}
               />
-              <Legend wrapperStyle={{ fontFamily: 'Mulish, sans-serif', color: '#F7F7F7' }} />
+              <Legend 
+                wrapperStyle={{ fontFamily: 'Mulish, sans-serif', color: '#f7f7f7', fontSize: 12 }}
+                iconSize={12}
+              />
             </PieChart>
           </ResponsiveContainer>
         );
@@ -167,7 +246,7 @@ export function AICopilotChart({ config }: Props) {
         </Button>
       </div>
 
-      <div className="bg-[#0A0A0A] rounded-lg p-4">
+      <div className="rounded-lg p-4" style={{ backgroundColor: '#121212' }}>
         {renderChart()}
       </div>
     </div>
