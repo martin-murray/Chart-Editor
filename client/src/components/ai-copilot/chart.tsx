@@ -77,10 +77,28 @@ export function AICopilotChart({ config }: Props) {
       padding: 20px;
       border-radius: 8px;
     }
+    .error {
+      color: #ff6b6b;
+      padding: 20px;
+      font-family: monospace;
+    }
   </style>
 </head>
 <body>
   <div id="root"></div>
+  
+  <script>
+    // Error handling
+    window.onerror = function(msg, url, line, col, error) {
+      document.getElementById('root').innerHTML = '<div class="error">Error loading chart: ' + msg + '</div>';
+      return false;
+    };
+    
+    // Check if dependencies loaded
+    if (typeof React === 'undefined' || typeof ReactDOM === 'undefined' || typeof Recharts === 'undefined') {
+      document.getElementById('root').innerHTML = '<div class="error">Failed to load required libraries. Please check your internet connection.</div>';
+    }
+  </script>
   
   <script type="text/babel">
     const { ${config.type === 'bar' ? 'BarChart, Bar' : config.type === 'line' ? 'LineChart, Line' : config.type === 'area' ? 'AreaChart, Area' : 'PieChart, Pie, Cell'}, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } = Recharts;
@@ -186,9 +204,16 @@ export function Chart() {
   const generateIframeCode = () => {
     const htmlContent = generateHtmlCode();
     
-    // Use base64 data URI to avoid HTML escaping issues
-    // This works more reliably across different platforms (CMS, WYSIWYG editors, etc.)
-    const base64Html = btoa(unescape(encodeURIComponent(htmlContent)));
+    // UTF-8 safe base64 encoding for data URI
+    // Split into chunks to avoid call stack size limits
+    const utf8Bytes = new TextEncoder().encode(htmlContent);
+    let binaryString = '';
+    const chunkSize = 8192;
+    for (let i = 0; i < utf8Bytes.length; i += chunkSize) {
+      const chunk = utf8Bytes.slice(i, i + chunkSize);
+      binaryString += String.fromCharCode.apply(null, Array.from(chunk));
+    }
+    const base64Html = btoa(binaryString);
     
     // Escape title attribute
     const escapedTitle = config.title
