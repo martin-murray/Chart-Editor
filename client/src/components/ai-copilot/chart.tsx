@@ -24,6 +24,7 @@ export function AICopilotChart({ config }: Props) {
   const [showCodeDialog, setShowCodeDialog] = useState(false);
   const [copiedHtml, setCopiedHtml] = useState(false);
   const [copiedReact, setCopiedReact] = useState(false);
+  const [copiedIframe, setCopiedIframe] = useState(false);
 
   const handleExport = async () => {
     if (!chartRef.current) {
@@ -182,15 +183,39 @@ export function Chart() {
 }`;
   };
 
-  const copyToClipboard = async (text: string, type: 'html' | 'react') => {
+  const generateIframeCode = () => {
+    const htmlContent = generateHtmlCode();
+    // Escape HTML entities for the srcdoc attribute
+    const escapedHtml = htmlContent
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;');
+    
+    // Escape title attribute
+    const escapedTitle = config.title
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+    
+    return `<iframe 
+  srcdoc="${escapedHtml}"
+  style="width: 100%; height: 500px; border: none;"
+  title="${escapedTitle}"
+></iframe>`;
+  };
+
+  const copyToClipboard = async (text: string, type: 'html' | 'react' | 'iframe') => {
     try {
       await navigator.clipboard.writeText(text);
       if (type === 'html') {
         setCopiedHtml(true);
         setTimeout(() => setCopiedHtml(false), 2000);
-      } else {
+      } else if (type === 'react') {
         setCopiedReact(true);
         setTimeout(() => setCopiedReact(false), 2000);
+      } else {
+        setCopiedIframe(true);
+        setTimeout(() => setCopiedIframe(false), 2000);
       }
     } catch (error) {
       console.error('Copy failed:', error);
@@ -429,11 +454,41 @@ export function Chart() {
             </DialogDescription>
           </DialogHeader>
           
-          <Tabs defaultValue="html" className="flex-1 overflow-hidden flex flex-col">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="html">HTML Embed</TabsTrigger>
+          <Tabs defaultValue="iframe" className="flex-1 overflow-hidden flex flex-col">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="iframe">iframe Embed</TabsTrigger>
+              <TabsTrigger value="html">HTML File</TabsTrigger>
               <TabsTrigger value="react">React Component</TabsTrigger>
             </TabsList>
+            
+            <TabsContent value="iframe" className="flex-1 overflow-hidden flex flex-col mt-4">
+              <div className="flex justify-between items-center mb-2">
+                <p className="text-sm text-muted-foreground">
+                  Paste this iframe code directly into any website
+                </p>
+                <Button
+                  size="sm"
+                  onClick={() => copyToClipboard(generateIframeCode(), 'iframe')}
+                  variant="outline"
+                  data-testid="button-copy-iframe"
+                >
+                  {copiedIframe ? (
+                    <>
+                      <Check className="h-4 w-4 mr-2" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-4 w-4 mr-2" />
+                      Copy Code
+                    </>
+                  )}
+                </Button>
+              </div>
+              <pre className="flex-1 overflow-auto rounded-lg border bg-[#1e1e1e] p-4 text-xs">
+                <code>{generateIframeCode()}</code>
+              </pre>
+            </TabsContent>
             
             <TabsContent value="html" className="flex-1 overflow-hidden flex flex-col mt-4">
               <div className="flex justify-between items-center mb-2">
