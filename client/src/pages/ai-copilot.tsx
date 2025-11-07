@@ -209,9 +209,9 @@ export default function AICopilot() {
       <main className="container mx-auto px-4 py-6 max-w-[1800px]">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[calc(100vh-120px)]">
           {/* Left Sidebar: Chart History + AI Co-Pilot Tools */}
-          <div className="lg:col-span-1 flex flex-col gap-4">
+          <div className="lg:col-span-1 flex flex-col gap-4 h-full overflow-hidden">
             {/* Chart History Section */}
-            <Card className="flex flex-col" style={{ backgroundColor: '#1C1C1C', maxHeight: '40%' }}>
+            <Card className="flex flex-col overflow-hidden" style={{ backgroundColor: '#1C1C1C', maxHeight: '40%' }}>
               <div className="p-4 border-b border-border">
                 <div className="flex items-center justify-between mb-2">
                   <h3 
@@ -298,7 +298,7 @@ export default function AICopilot() {
             </Card>
 
             {/* AI Co-Pilot Tools Section */}
-            <Card className="flex-1 flex flex-col" style={{ backgroundColor: '#1C1C1C' }}>
+            <Card className="flex-1 flex flex-col overflow-hidden" style={{ backgroundColor: '#1C1C1C' }}>
               {/* Header */}
               <div className="p-4 border-b border-border">
                 <h3 

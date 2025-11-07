@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Download, Code2, Copy, Check } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { useRef, useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface ChartConfig {
@@ -59,9 +59,9 @@ export function AICopilotChart({ config }: Props) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${config.title}</title>
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/recharts@2.10.3/dist/Recharts.js"></script>
+  <script crossorigin src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/recharts@2.5.0/dist/Recharts.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>
     body {
@@ -424,6 +424,9 @@ export function Chart() {
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>Export Code</DialogTitle>
+            <DialogDescription>
+              Copy the code below to embed this chart in your own website or CodePen.
+            </DialogDescription>
           </DialogHeader>
           
           <Tabs defaultValue="html" className="flex-1 overflow-hidden flex flex-col">
