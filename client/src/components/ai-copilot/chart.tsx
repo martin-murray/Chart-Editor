@@ -185,10 +185,10 @@ export function Chart() {
 
   const generateIframeCode = () => {
     const htmlContent = generateHtmlCode();
-    // Escape HTML entities for the srcdoc attribute
-    const escapedHtml = htmlContent
-      .replace(/&/g, '&amp;')
-      .replace(/"/g, '&quot;');
+    
+    // Use base64 data URI to avoid HTML escaping issues
+    // This works more reliably across different platforms (CMS, WYSIWYG editors, etc.)
+    const base64Html = btoa(unescape(encodeURIComponent(htmlContent)));
     
     // Escape title attribute
     const escapedTitle = config.title
@@ -198,7 +198,7 @@ export function Chart() {
       .replace(/>/g, '&gt;');
     
     return `<iframe 
-  srcdoc="${escapedHtml}"
+  src="data:text/html;base64,${base64Html}"
   style="width: 100%; height: 500px; border: none;"
   title="${escapedTitle}"
 ></iframe>`;
@@ -464,7 +464,7 @@ export function Chart() {
             <TabsContent value="iframe" className="flex-1 overflow-hidden flex flex-col mt-4">
               <div className="flex justify-between items-center mb-2">
                 <p className="text-sm text-muted-foreground">
-                  Paste this iframe code directly into any website
+                  Paste this iframe code directly into any website. Note: Some platforms may block data URIs due to CSP restrictions. If the chart doesn't display, use the HTML File option instead.
                 </p>
                 <Button
                   size="sm"
