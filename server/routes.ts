@@ -910,6 +910,12 @@ When the user asks you to create a chart, respond with a JSON object wrapped in 
   "colors": ["#5AF5FA", "#FFA5FF", "#AA99FF", "#FAFF50", ...]  // Use brand colors in order
 }
 
+CRITICAL JSON FORMATTING RULES:
+- All numbers MUST have a leading digit (use 0.85, never .85)
+- Use valid JSON syntax - no trailing commas, no comments in the JSON itself
+- All strings must use double quotes, not single quotes
+- Ensure the JSON is properly formatted and parseable
+
 IMPORTANT: Use these brand colors in this exact order:
 Primary colors (use first): #5AF5FA (cyan), #FFA5FF (pink), #AA99FF (purple), #FAFF50 (yellow)
 Secondary colors (if needed): #0CB800 (green), #5294FF (violet), #FFA200 (tangerine), #9AFF75 (pea), #FF9999 (rose)
@@ -956,10 +962,20 @@ If the user uploads a CSV and asks for a chart, analyze the data structure and s
       let chartConfig = null;
       const jsonMatch = assistantMessage.match(/```json\s*([\s\S]*?)\s*```/);
       if (jsonMatch) {
+        let jsonString = jsonMatch[1];
         try {
-          chartConfig = JSON.parse(jsonMatch[1]);
+          // Fix common JSON formatting issues
+          // Fix numbers with leading decimal point (both .85 and -.85 -> 0.85 and -0.85)
+          jsonString = jsonString.replace(/([:\[\s,])(-?)\.(\d+)/g, '$1$20.$3');
+          
+          // Remove trailing commas before } or ] (only outside quoted strings)
+          // This is a simplified approach - removes commas followed by optional whitespace and closing bracket
+          jsonString = jsonString.replace(/,(\s*[\]}])/g, '$1');
+          
+          chartConfig = JSON.parse(jsonString);
         } catch (e) {
           console.error("Failed to parse chart config:", e);
+          console.error("Sanitized JSON that failed to parse:", jsonString.substring(0, 300));
         }
       }
 
