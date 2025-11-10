@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Sparkles, Upload, LogOut, BookOpen, Send, Loader2, FileText, Download, BarChart3, Plus } from "lucide-react";
+import { Sparkles, LogOut, BookOpen, Send, Loader2, Download, BarChart3, Plus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import logoImage from "@assets/IPO Intelligence@2x_1758060026530.png";
 import {
@@ -44,9 +44,7 @@ export default function AICopilot() {
   const [, setLocation] = useLocation();
   const [chatId, setChatId] = useState<number | null>(null);
   const [message, setMessage] = useState("");
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [selectedChartId, setSelectedChartId] = useState<number | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const handleChartTypeChange = (value: string) => {
@@ -74,32 +72,6 @@ export default function AICopilot() {
     enabled: !!chatId,
   });
 
-  // Upload CSV
-  const uploadMutation = useMutation({
-    mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('chatId', chatId!.toString());
-
-      const response = await fetch('/api/ai-copilot/upload', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-        },
-        body: formData,
-      });
-
-      if (!response.ok) throw new Error('Upload failed');
-      return response.json();
-    },
-    onSuccess: () => {
-      setUploadedFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    },
-  });
-
   // Send message
   const sendMessageMutation = useMutation({
     mutationFn: async (msg: string) => {
@@ -115,19 +87,6 @@ export default function AICopilot() {
   const handleSend = () => {
     if (!message.trim() || !chatId) return;
     sendMessageMutation.mutate(message);
-  };
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && file.type === 'text/csv') {
-      setUploadedFile(file);
-    }
-  };
-
-  const handleUpload = () => {
-    if (uploadedFile && chatId) {
-      uploadMutation.mutate(uploadedFile);
-    }
   };
 
   // Auto-scroll to bottom
@@ -312,7 +271,7 @@ export default function AICopilot() {
                   className="text-xs mt-1"
                   style={{ fontFamily: 'Mulish, sans-serif', color: '#A0A0A0' }}
                 >
-                  Upload CSV & describe your chart
+                  Describe your chart and paste your data
                 </p>
               </div>
 
@@ -322,7 +281,7 @@ export default function AICopilot() {
                   <div className="text-center py-8">
                     <Sparkles className="h-12 w-12 mx-auto mb-3" style={{ color: '#FFA5FF' }} />
                     <p className="text-sm" style={{ fontFamily: 'Mulish, sans-serif', color: '#A0A0A0' }}>
-                      Upload a CSV or ask a question
+                      Describe your chart and paste data
                     </p>
                   </div>
                 )}
@@ -365,44 +324,11 @@ export default function AICopilot() {
 
               {/* Input Area */}
               <div className="p-3 border-t border-border">
-                {uploadedFile && (
-                  <div className="mb-2 flex items-center gap-2 p-2 bg-[#2A2A2A] rounded">
-                    <FileText className="h-4 w-4 text-[#5AF5FA]" />
-                    <span className="flex-1 text-xs truncate" style={{ color: '#F7F7F7' }}>{uploadedFile.name}</span>
-                    <Button
-                      size="sm"
-                      onClick={handleUpload}
-                      disabled={uploadMutation.isPending}
-                      style={{ backgroundColor: '#5AF5FA', color: '#000' }}
-                    >
-                      {uploadMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
-                    </Button>
-                  </div>
-                )}
-
                 <div className="flex gap-2">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".csv"
-                    onChange={handleFileSelect}
-                    className="hidden"
-                    data-testid="input-csv-file"
-                  />
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => fileInputRef.current?.click()}
-                    data-testid="button-upload-csv"
-                    className="h-9 w-9"
-                  >
-                    <Upload className="h-4 w-4" />
-                  </Button>
-
                   <Textarea
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Ask me to create a chart..."
+                    placeholder="Describe your chart and paste your data..."
                     className="flex-1 resize-none bg-[#2A2A2A] border-border text-[#F7F7F7] text-sm"
                     rows={2}
                     onKeyDown={(e) => {
