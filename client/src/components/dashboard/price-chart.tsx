@@ -590,12 +590,20 @@ export function PriceChart({
     const firstTimestamp = chartData.data[0].timestamp;
     const lastTimestamp = chartData.data[chartData.data.length - 1].timestamp;
     
+    // Check if timestamps are in seconds or milliseconds
+    const isSeconds = firstTimestamp < 10000000000;
+    
     // Add some buffer for dividends (30 days before to ensure we capture all relevant dividends)
     const bufferSeconds = 30 * 24 * 60 * 60; // 30 days in seconds
-    const from = firstTimestamp - bufferSeconds;
+    const bufferAmount = isSeconds ? bufferSeconds : bufferSeconds * 1000; // Adjust for milliseconds
+    const from = firstTimestamp - bufferAmount;
     const to = lastTimestamp;
     
-    return { from, to };
+    // Convert to seconds for API if timestamps are in milliseconds
+    const apiFrom = isSeconds ? from : Math.floor(from / 1000);
+    const apiTo = isSeconds ? to : Math.floor(to / 1000);
+    
+    return { from: apiFrom, to: apiTo };
   }, [chartData]);
 
   // Dividend data query - only fetch when overlay is enabled and we have chart data
@@ -823,7 +831,9 @@ export function PriceChart({
 
     // Process each data point and add cumulative dividends
     return chartDataWithMA.map(dataPoint => {
-      const dataDate = new Date(dataPoint.time);
+      // Use timestamp field which is always present, convert to milliseconds if needed
+      const timestampMs = dataPoint.timestamp * (dataPoint.timestamp < 10000000000 ? 1000 : 1);
+      const dataDate = new Date(timestampMs);
       
       // Calculate cumulative dividends up to this date
       // Dividends are added to prices that occur on or after the ex-dividend date
