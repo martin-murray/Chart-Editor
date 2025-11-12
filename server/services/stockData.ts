@@ -1,5 +1,6 @@
 import type { InsertStock, InsertMarketSummary } from "@shared/schema";
 import { finnhubService } from "./finnhubService";
+import { alphaVantageService } from "./alphaVantageService";
 
 /**
  * Stock Data Service - Powered by Finnhub Premium API
@@ -27,11 +28,32 @@ export class StockDataService {
   }
 
   /**
-   * Get stock chart data using Finnhub API
+   * Get stock chart data using Finnhub API with Alpha Vantage fallback
    */
   async getStockChart(symbol: string, from: number, to: number, resolution: string): Promise<any> {
     try {
-      return await finnhubService.getStockCandles(symbol, from, to, resolution);
+      // Try Finnhub first
+      const finnhubData = await finnhubService.getStockCandles(symbol, from, to, resolution);
+      
+      // If Finnhub returns data, use it
+      if (finnhubData && finnhubData.s === 'ok' && finnhubData.t && finnhubData.t.length > 0) {
+        return finnhubData;
+      }
+      
+      // If Finnhub has no data and resolution is daily, try Alpha Vantage
+      // Alpha Vantage only provides daily data, not intraday
+      if (resolution === 'D') {
+        console.log(`⚠️  Finnhub has no data for ${symbol}, trying Alpha Vantage fallback...`);
+        const alphaVantageData = await alphaVantageService.getStockCandles(symbol, from, to);
+        
+        if (alphaVantageData && alphaVantageData.s === 'ok' && alphaVantageData.t && alphaVantageData.t.length > 0) {
+          console.log(`✅ Alpha Vantage fallback successful for ${symbol}`);
+          return alphaVantageData;
+        }
+      }
+      
+      // No data from either source
+      return finnhubData;
     } catch (error) {
       console.error("Error getting stock chart:", error);
       return null;
