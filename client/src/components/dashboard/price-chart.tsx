@@ -1739,6 +1739,9 @@ export function PriceChart({
                   onSelect={setStartDate}
                   defaultMonth={calendarMonth}
                   onMonthChange={setCalendarMonth}
+                  enableYearDropdown
+                  fromYear={new Date().getFullYear() - 10}
+                  toYear={new Date().getFullYear()}
                   fromDate={(() => {
                     const tenYearsAgo = new Date();
                     tenYearsAgo.setFullYear(tenYearsAgo.getFullYear() - 10);
@@ -1783,6 +1786,9 @@ export function PriceChart({
                     onSelect={setEndDate}
                     defaultMonth={calendarMonth}
                     onMonthChange={setCalendarMonth}
+                    enableYearDropdown
+                    fromYear={new Date().getFullYear() - 10}
+                    toYear={new Date().getFullYear()}
                     fromDate={(() => {
                       const tenYearsAgo = new Date();
                       tenYearsAgo.setFullYear(tenYearsAgo.getFullYear() - 10);
