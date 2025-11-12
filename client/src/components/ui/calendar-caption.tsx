@@ -76,9 +76,7 @@ export function CalendarCaption({
           onValueChange={handleMonthSelect}
         >
           <SelectTrigger className="h-7 w-auto min-w-[100px] text-sm font-medium border-0 bg-transparent hover:bg-accent focus:ring-0 focus:ring-offset-0 px-2">
-            <SelectValue>
-              {format(displayMonth, "MMMM")}
-            </SelectValue>
+            <SelectValue />
           </SelectTrigger>
           <SelectContent className="max-h-[200px]" style={{ backgroundColor: '#3A3A3A' }}>
             {Array.from({ length: 12 }, (_, i) => {
@@ -98,9 +96,7 @@ export function CalendarCaption({
           onValueChange={handleYearSelect}
         >
           <SelectTrigger className="h-7 w-auto min-w-[70px] text-sm font-medium border-0 bg-transparent hover:bg-accent focus:ring-0 focus:ring-offset-0 px-2">
-            <SelectValue>
-              {displayMonth.getFullYear()}
-            </SelectValue>
+            <SelectValue />
           </SelectTrigger>
           <SelectContent className="max-h-[200px]" style={{ backgroundColor: '#3A3A3A' }}>
             {years.map((year) => (
