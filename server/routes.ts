@@ -283,10 +283,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           resolution = '5'; // 5-minute intervals for 1 day or less
         } else if (daysDiff <= 7) {
           resolution = '15'; // 15-minute intervals for up to 1 week
-        } else if (daysDiff <= 30) {
-          resolution = '60'; // 1-hour intervals for up to 1 month
         } else {
-          resolution = 'D'; // Daily intervals for longer periods (enables Alpha Vantage fallback)
+          resolution = 'D'; // Daily intervals for >7 days (Finnhub hourly candles limited to ~7-10 days)
           // Don't add buffer for custom date ranges - use exactly what user requested
         }
       } else {
