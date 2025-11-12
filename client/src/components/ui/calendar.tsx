@@ -28,9 +28,9 @@ function Calendar({
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
-        caption: "flex justify-center pt-1 relative items-center",
-        caption_label: "text-sm font-medium",
-        nav: "space-x-1 flex items-center",
+        caption: enableYearDropdown ? "p-0" : "flex justify-center pt-1 relative items-center",
+        caption_label: enableYearDropdown ? "sr-only" : "text-sm font-medium",
+        nav: enableYearDropdown ? "hidden" : "space-x-1 flex items-center",
         nav_button: cn(
           buttonVariants({ variant: "outline" }),
           "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
