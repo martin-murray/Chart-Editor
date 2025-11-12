@@ -111,6 +111,34 @@ export class FinnhubService {
   }
 
   /**
+   * Get dividend data for a symbol
+   */
+  async getDividends(symbol: string, from?: number, to?: number): Promise<any[]> {
+    try {
+      const now = Math.floor(Date.now() / 1000);
+      const fromDate = from || now - (365 * 10 * 24 * 60 * 60); // Default to 10 years ago
+      const toDate = to || now;
+      
+      const fromStr = new Date(fromDate * 1000).toISOString().split('T')[0];
+      const toStr = new Date(toDate * 1000).toISOString().split('T')[0];
+      
+      console.log(`📊 Fetching dividends for ${symbol} from ${fromStr} to ${toStr}`);
+      const dividends = await this.makeRequest(`/stock/dividend?symbol=${symbol}&from=${fromStr}&to=${toStr}`);
+      
+      if (!dividends || !Array.isArray(dividends)) {
+        console.log(`No dividend data for ${symbol}`);
+        return [];
+      }
+      
+      console.log(`✅ Found ${dividends.length} dividends for ${symbol}`);
+      return dividends;
+    } catch (error) {
+      console.error(`Error fetching dividends for ${symbol}:`, error);
+      return [];
+    }
+  }
+
+  /**
    * Get quote for a single symbol
    */
   async getQuote(symbol: string): Promise<FinnhubQuote | null> {

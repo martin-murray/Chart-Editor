@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { randomUUID } from "crypto";
 import { stockDataService } from "./services/stockData";
+import { finnhubService } from "./services/finnhubService";
 import multer from "multer";
 import { sendFeedbackToSlack } from "./slack";
 import { db } from "./db";
@@ -257,6 +258,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Index constituents error:", error);
       res.status(500).json({ error: "Failed to fetch index constituents" });
+    }
+  });
+
+  // Dividend data endpoint
+  app.get("/api/stocks/:symbol/dividends", async (req, res) => {
+    const symbol = req.params.symbol;
+    const from = req.query.from ? parseInt(req.query.from as string) : undefined;
+    const to = req.query.to ? parseInt(req.query.to as string) : undefined;
+
+    try {
+      console.log(`💰 Dividend request for ${symbol}, from: ${from}, to: ${to}`);
+      const dividends = await finnhubService.getDividends(symbol, from, to);
+      
+      res.json({
+        symbol,
+        dividends,
+        count: dividends.length
+      });
+    } catch (error) {
+      console.error(`Error fetching dividends for ${symbol}:`, error);
+      res.status(500).json({ 
+        error: 'Failed to fetch dividend data', 
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
