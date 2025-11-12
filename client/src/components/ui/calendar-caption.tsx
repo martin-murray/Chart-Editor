@@ -1,6 +1,6 @@
 import * as React from "react"
 import { format } from "date-fns"
-import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-react"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 import { useNavigation } from "react-day-picker"
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
@@ -75,8 +75,10 @@ export function CalendarCaption({
           value={displayMonth.getMonth().toString()}
           onValueChange={handleMonthSelect}
         >
-          <SelectTrigger className="h-7 min-w-[100px] text-sm font-medium border-0 bg-transparent hover:bg-accent focus:ring-0 focus:ring-offset-0 px-2" aria-label="Select month">
-            <span>{format(displayMonth, "MMMM")}</span>
+          <SelectTrigger className="h-7 w-auto min-w-[100px] text-sm font-medium border-0 bg-transparent hover:bg-accent focus:ring-0 focus:ring-offset-0 px-2">
+            <SelectValue>
+              {format(displayMonth, "MMMM")}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent className="max-h-[200px]" style={{ backgroundColor: '#3A3A3A' }}>
             {Array.from({ length: 12 }, (_, i) => {
@@ -95,9 +97,10 @@ export function CalendarCaption({
           value={displayMonth.getFullYear().toString()}
           onValueChange={handleYearSelect}
         >
-          <SelectTrigger className="h-7 min-w-[70px] text-sm font-medium border-0 bg-transparent hover:bg-accent focus:ring-0 focus:ring-offset-0 px-2 flex items-center gap-1" aria-label="Select year">
-            <span>{displayMonth.getFullYear()}</span>
-            <ChevronDown className="h-3 w-3 opacity-50" />
+          <SelectTrigger className="h-7 w-auto min-w-[70px] text-sm font-medium border-0 bg-transparent hover:bg-accent focus:ring-0 focus:ring-offset-0 px-2">
+            <SelectValue>
+              {displayMonth.getFullYear()}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent className="max-h-[200px]" style={{ backgroundColor: '#3A3A3A' }}>
             {years.map((year) => (
