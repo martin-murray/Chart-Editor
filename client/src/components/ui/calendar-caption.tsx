@@ -75,10 +75,8 @@ export function CalendarCaption({
           value={displayMonth.getMonth().toString()}
           onValueChange={handleMonthSelect}
         >
-          <SelectTrigger className="h-7 min-w-[100px] text-sm font-medium border-0 bg-transparent hover:bg-accent focus:ring-0 focus:ring-offset-0 px-2">
-            <SelectValue />
-            <span className="sr-only">Change month</span>
-            {format(displayMonth, "MMMM")}
+          <SelectTrigger className="h-7 min-w-[100px] text-sm font-medium border-0 bg-transparent hover:bg-accent focus:ring-0 focus:ring-offset-0 px-2" aria-label="Select month">
+            <span>{format(displayMonth, "MMMM")}</span>
           </SelectTrigger>
           <SelectContent className="max-h-[200px]" style={{ backgroundColor: '#3A3A3A' }}>
             {Array.from({ length: 12 }, (_, i) => {
@@ -97,11 +95,9 @@ export function CalendarCaption({
           value={displayMonth.getFullYear().toString()}
           onValueChange={handleYearSelect}
         >
-          <SelectTrigger className="h-7 min-w-[70px] text-sm font-medium border-0 bg-transparent hover:bg-accent focus:ring-0 focus:ring-offset-0 px-2">
-            <SelectValue />
-            <span className="sr-only">Change year</span>
-            {displayMonth.getFullYear()}
-            <ChevronDown className="h-3 w-3 ml-1 opacity-50" />
+          <SelectTrigger className="h-7 min-w-[70px] text-sm font-medium border-0 bg-transparent hover:bg-accent focus:ring-0 focus:ring-offset-0 px-2 flex items-center gap-1" aria-label="Select year">
+            <span>{displayMonth.getFullYear()}</span>
+            <ChevronDown className="h-3 w-3 opacity-50" />
           </SelectTrigger>
           <SelectContent className="max-h-[200px]" style={{ backgroundColor: '#3A3A3A' }}>
             {years.map((year) => (
