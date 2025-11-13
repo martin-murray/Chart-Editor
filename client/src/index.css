@@ -356,9 +356,23 @@
     align-items: center;
   }
 
-  /* Hide the "Month:" and "Year:" labels */
-  .rdp-dropdown_root label {
-    display: none;
+  /* Hide all labels inside dropdown containers */
+  .rdp-dropdown_root label,
+  .rdp-dropdown_root > label,
+  .rdp-caption_dropdowns label,
+  [class*="rdp"] label {
+    display: none !important;
+  }
+
+  /* Hide the month/year text labels that appear before dropdowns */
+  .rdp-dropdown_root {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Only show the select element */
+  .rdp-dropdown_root > :not(select) {
+    display: none !important;
   }
 
   /* Style the dropdown selects */
