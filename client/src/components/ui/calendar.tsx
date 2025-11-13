@@ -4,6 +4,7 @@ import { DayPicker } from "react-day-picker"
 
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
+import { CalendarCaption } from "./calendar-caption"
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker> & {
   enableYearDropdown?: boolean
@@ -24,9 +25,6 @@ function Calendar({
     <DayPicker
       showOutsideDays={showOutsideDays}
       className={cn("p-3", className)}
-      captionLayout={enableYearDropdown ? "dropdown" : undefined}
-      fromYear={fromYear}
-      toYear={toYear}
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
@@ -68,6 +66,15 @@ function Calendar({
         IconRight: ({ className, ...props }) => (
           <ChevronRight className={cn("h-4 w-4", className)} {...props} />
         ),
+        ...(enableYearDropdown && {
+          Caption: ({ displayMonth }) => (
+            <CalendarCaption
+              displayMonth={displayMonth}
+              fromYear={fromYear}
+              toYear={toYear}
+            />
+          ),
+        }),
       }}
       {...props}
     />
