@@ -130,7 +130,8 @@ export function PriceChart({
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [singleTradingDay, setSingleTradingDay] = useState(false);
-  const [calendarMonth, setCalendarMonth] = useState<Date>(new Date());
+  const [startCalendarMonth, setStartCalendarMonth] = useState<Date>(new Date());
+  const [endCalendarMonth, setEndCalendarMonth] = useState<Date>(new Date());
   const [activeTab, setActiveTab] = useState(initialTab);
   const [chartType, setChartType] = useState<'line' | 'mountain' | 'candlestick'>('mountain');
   const [showDividendOverlay, setShowDividendOverlay] = useState(false);
@@ -1832,8 +1833,8 @@ export function PriceChart({
                   mode="single"
                   selected={startDate}
                   onSelect={setStartDate}
-                  month={calendarMonth}
-                  onMonthChange={setCalendarMonth}
+                  month={startCalendarMonth}
+                  onMonthChange={setStartCalendarMonth}
                   enableYearDropdown
                   fromYear={new Date().getFullYear() - 10}
                   toYear={new Date().getFullYear()}
@@ -1879,8 +1880,8 @@ export function PriceChart({
                     mode="single"
                     selected={endDate}
                     onSelect={setEndDate}
-                    month={calendarMonth}
-                    onMonthChange={setCalendarMonth}
+                    month={endCalendarMonth}
+                    onMonthChange={setEndCalendarMonth}
                     enableYearDropdown
                     fromYear={new Date().getFullYear() - 10}
                     toYear={new Date().getFullYear()}
