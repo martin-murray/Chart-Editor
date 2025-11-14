@@ -39,9 +39,14 @@ export function CalendarCaption({ displayMonth, fromYear = 2014, toYear = 2024 }
         value={currentMonth}
         onChange={handleMonthChange}
         className="bg-[#2A2A2A] text-[#f7f7f7] border border-[#474747] rounded px-2 py-1 text-sm cursor-pointer hover:bg-[#333333] focus:outline-none focus:ring-1 focus:ring-[#5AF5FA]"
+        style={{ backgroundColor: '#2A2A2A', color: '#f7f7f7' }}
       >
         {months.map((month, index) => (
-          <option key={month} value={index}>
+          <option 
+            key={month} 
+            value={index}
+            style={{ backgroundColor: '#3A3A3A', color: '#f7f7f7' }}
+          >
             {month}
           </option>
         ))}
@@ -51,9 +56,14 @@ export function CalendarCaption({ displayMonth, fromYear = 2014, toYear = 2024 }
         value={currentYear}
         onChange={handleYearChange}
         className="bg-[#2A2A2A] text-[#f7f7f7] border border-[#474747] rounded px-2 py-1 text-sm cursor-pointer hover:bg-[#333333] focus:outline-none focus:ring-1 focus:ring-[#5AF5FA]"
+        style={{ backgroundColor: '#2A2A2A', color: '#f7f7f7' }}
       >
         {years.map((year) => (
-          <option key={year} value={year}>
+          <option 
+            key={year} 
+            value={year}
+            style={{ backgroundColor: '#3A3A3A', color: '#f7f7f7' }}
+          >
             {year}
           </option>
         ))}
