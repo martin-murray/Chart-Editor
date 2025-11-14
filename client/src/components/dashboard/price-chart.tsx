@@ -10,7 +10,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip as HoverTooltip, TooltipContent as HoverTooltipContent, TooltipProvider, TooltipTrigger as HoverTooltipTrigger } from '@/components/ui/tooltip';
-import { Loader2, TrendingUp, TrendingDown, Plus, Calendar as CalendarIcon, X, Download, ChevronDown, MessageSquare, Ruler, Minus, RotateCcw, Code } from 'lucide-react';
+import { Loader2, TrendingUp, TrendingDown, Plus, Calendar as CalendarIcon, X, Download, ChevronDown, MessageSquare, Ruler, Minus, RotateCcw, Code, Bot } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { format, subDays, subMonths, subYears } from 'date-fns';
 import * as htmlToImage from 'html-to-image';
@@ -18,6 +18,9 @@ import jsPDF from 'jspdf';
 import { saveAs } from 'file-saver';
 import { useToast } from '@/hooks/use-toast';
 import { ComparisonChart } from './comparison-chart';
+import { CopilotPanel } from '../ai-copilot/copilot-panel';
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface ChartData {
   timestamp: number;
@@ -121,6 +124,7 @@ export function PriceChart({
   onClearAll
 }: PriceChartProps) {
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [selectedTimeframe, setSelectedTimeframe] = useState('1D');
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
@@ -178,6 +182,11 @@ export function PriceChart({
       return () => clearTimeout(timer);
     }
   }, [showMeasureTooltip]);
+
+  // AI Copilot state
+  const [showAICopilot, setShowAICopilot] = useState(false);
+  const [customOverlays, setCustomOverlays] = useState<any[]>([]);
+  const [copilotSeries, setCopilotSeries] = useState<Record<string, any[]>>({});
 
   // Price Y-axis zoom state
   const [priceAxisMode, setPriceAxisMode] = useState<'auto' | 'fixed'>('auto');
@@ -620,7 +629,7 @@ export function PriceChart({
     },
     enabled: !!symbol && showDividendOverlay && !!dividendTimeRange.from && !!dividendTimeRange.to,
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-    cacheTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
+    gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
   });
 
   // Chart data query moved above to fix initialization order
@@ -687,6 +696,91 @@ export function PriceChart({
     if (marketCapInMillions >= 1000000) return `${currencySymbol}${(marketCapInMillions / 1000000).toFixed(1)}T`;
     if (marketCapInMillions >= 1000) return `${currencySymbol}${(marketCapInMillions / 1000).toFixed(1)}B`;
     return `${currencySymbol}${marketCapInMillions.toFixed(1)}M`;
+  };
+
+  // Handle AI Copilot actions
+  const handleCopilotAction = (action: any) => {
+    try {
+      switch (action.type) {
+        case 'overlay:add':
+          if (action.payload.indicatorId === 'dividend') {
+            setShowDividendOverlay(true);
+          } else {
+            // Add to custom overlays
+            setCustomOverlays(prev => [...prev, action.payload]);
+          }
+          toast({
+            title: "Overlay Added",
+            description: `Added ${action.payload.label || action.payload.indicatorId}`,
+          });
+          break;
+          
+        case 'overlay:remove':
+          if (action.payload.indicatorId === 'dividend') {
+            setShowDividendOverlay(false);
+          } else {
+            setCustomOverlays(prev => prev.filter(o => o.indicatorId !== action.payload.indicatorId));
+          }
+          break;
+          
+        case 'timeframe:set':
+          setSelectedTimeframe(action.payload.value);
+          toast({
+            title: "Timeframe Updated",
+            description: `Changed to ${action.payload.value}`,
+          });
+          break;
+          
+        case 'annotation:add':
+          const newAnnotation: Annotation = {
+            id: crypto.randomUUID(),
+            type: action.payload.type || 'text',
+            text: action.payload.text || '',
+            timestamp: action.payload.timestamp || Date.now(),
+            price: action.payload.price || 0,
+            x: 0,
+            y: 0,
+            time: new Date(action.payload.timestamp || Date.now()).toISOString(),
+          };
+          updateAnnotations(prev => [...prev, newAnnotation]);
+          toast({
+            title: "Annotation Added",
+            description: action.payload.text || "New annotation",
+          });
+          break;
+          
+        case 'timeseries:replace':
+          setCopilotSeries(prev => ({
+            ...prev,
+            [action.payload.seriesId]: action.payload.points
+          }));
+          toast({
+            title: "Data Applied",
+            description: `Added ${action.payload.label || 'custom series'}`,
+          });
+          break;
+          
+        case 'timeseries:append':
+          setCopilotSeries(prev => ({
+            ...prev,
+            [action.payload.seriesId]: [
+              ...(prev[action.payload.seriesId] || []),
+              ...action.payload.points
+            ]
+          }));
+          break;
+          
+        default:
+          console.warn('Unknown copilot action:', action);
+      }
+    } catch (error) {
+      console.error('Error handling copilot action:', error);
+      toast({
+        title: "Error",
+        description: "Failed to apply the suggested change",
+        variant: "destructive"
+      });
+    }
   };
 
   const formatRevenue = (revenueInMillions: number) => {
@@ -1412,7 +1506,8 @@ export function PriceChart({
 
   // Handle chart click for annotations - implementation is in the main handleChartClick function above
 
-  return (
+  // Main chart content
+  const chartContent = (
     <div className="w-full space-y-6 overflow-x-hidden max-[900px]:space-y-4">
       {/* Header Section */}
       <div className="space-y-4">
@@ -2025,6 +2120,18 @@ export function PriceChart({
               </div>
             </div>
             
+            {/* AI Copilot Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 px-3 text-xs border-[#5AF5FA]/30 text-[#5AF5FA] hover:bg-[#5AF5FA]/10 ml-4"
+              onClick={() => setShowAICopilot(!showAICopilot)}
+              data-testid="button-ai-copilot"
+            >
+              <Bot className="w-3 h-3 mr-1" />
+              AI Copilot
+            </Button>
+
             {/* Shared Export Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -3596,5 +3703,53 @@ export function PriceChart({
         </div>
       )}
     </div>
+  );
+
+  // Desktop: Use ResizablePanelGroup for side-by-side layout
+  if (!isMobile) {
+    return (
+      <ResizablePanelGroup direction="horizontal" className="w-full">
+        {/* Main Chart Panel */}
+        <ResizablePanel defaultSize={showAICopilot ? 70 : 100} minSize={55}>
+          {chartContent}
+        </ResizablePanel>
+        
+        {/* AI Copilot Panel (Desktop) */}
+        {showAICopilot && (
+          <>
+            <ResizableHandle withHandle />
+            <CopilotPanel
+              symbol={symbol}
+              timeframe={selectedTimeframe}
+              isOpen={showAICopilot}
+              onClose={() => setShowAICopilot(false)}
+              onApplyOverlay={(overlay) => handleCopilotAction({ type: 'overlay:add', payload: overlay })}
+              onApplyTimeSeries={(data) => handleCopilotAction({ type: 'timeseries:replace', payload: { seriesId: 'custom', points: data } })}
+              onChangeTimeframe={(tf) => handleCopilotAction({ type: 'timeframe:set', payload: { value: tf } })}
+              onAddAnnotation={(annotation) => handleCopilotAction({ type: 'annotation:add', payload: annotation })}
+              isMobile={false}
+            />
+          </>
+        )}
+      </ResizablePanelGroup>
+    );
+  }
+
+  // Mobile: Use regular layout with Sheet for copilot
+  return (
+    <>
+      {chartContent}
+      <CopilotPanel
+        symbol={symbol}
+        timeframe={selectedTimeframe}
+        isOpen={showAICopilot}
+        onClose={() => setShowAICopilot(false)}
+        onApplyOverlay={(overlay) => handleCopilotAction({ type: 'overlay:add', payload: overlay })}
+        onApplyTimeSeries={(data) => handleCopilotAction({ type: 'timeseries:replace', payload: { seriesId: 'custom', points: data } })}
+        onChangeTimeframe={(tf) => handleCopilotAction({ type: 'timeframe:set', payload: { value: tf } })}
+        onAddAnnotation={(annotation) => handleCopilotAction({ type: 'annotation:add', payload: annotation })}
+        isMobile={true}
+      />
+    </>
   );
 }
