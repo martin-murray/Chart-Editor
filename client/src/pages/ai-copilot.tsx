@@ -299,12 +299,19 @@ export default function AICopilot() {
                       }`}
                       style={{ fontFamily: 'Mulish, sans-serif' }}
                     >
-                      <p className="whitespace-pre-wrap">{msg.content.replace(/```json[\s\S]*?```/g, '')}</p>
+                      <p className="whitespace-pre-wrap">{msg.content}</p>
                       
                       {msg.chartConfig && (
                         <div className="mt-2 p-2 bg-black/20 rounded text-xs">
-                          <p className="font-semibold mb-0.5">Chart generated:</p>
+                          <p className="font-semibold mb-0.5">✓ Chart generated:</p>
                           <p>{msg.chartConfig.title}</p>
+                        </div>
+                      )}
+                      
+                      {msg.role === 'assistant' && !msg.chartConfig && msg.content.includes('unable to generate') && (
+                        <div className="mt-2 p-2 bg-red-900/20 rounded text-xs border border-red-500/30">
+                          <p className="text-red-400">⚠ Chart generation failed</p>
+                          <p className="text-red-300 mt-1">Try providing more specific details or check your data format.</p>
                         </div>
                       )}
                     </div>

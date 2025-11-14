@@ -920,52 +920,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get uploaded CSV data for context
       const uploads = await db.select().from(aiCopilotUploads).where(eq(aiCopilotUploads.chatId, chatId));
       
-      let systemPrompt = `You are an AI chart-making assistant. Your job is to generate charts directly as JSON configurations that can be rendered immediately.
+      let systemPrompt = `You are an AI chart-making assistant that responds ONLY with valid JSON.
 
-CRITICAL: You MUST respond with actual chart JSON, not explanations about what you would do. Generate the chart data directly.
-
-When asked to create a chart, respond ONLY with:
-1. A brief description (1-2 sentences max)
-2. The chart JSON wrapped in \`\`\`json code blocks
-
-Example response format:
-"Here's a bar chart showing sales by month:"
-\`\`\`json
+Your response must be a valid JSON object with this structure:
 {
-  "type": "bar",
-  "title": "Monthly Sales",
-  "data": [
-    {"month": "Jan", "sales": 1200},
-    {"month": "Feb", "sales": 1500}
-  ],
-  "xKey": "month",
-  "yKeys": ["sales"],
-  "colors": ["#5AF5FA"]
-}
-\`\`\`
-
-JSON Structure Required:
-{
-  "type": "bar" | "line" | "pie" | "area",
-  "title": "Chart title",
-  "data": [array of data objects],
-  "xKey": "key for x-axis" (not needed for pie charts),
-  "yKeys": ["keys for y-axis values"] (not needed for pie charts),
-  "colors": ["#5AF5FA", "#FFA5FF", "#AA99FF", "#FAFF50", ...]
+  "description": "Brief description of the chart (1-2 sentences)",
+  "chartConfig": {
+    "type": "bar" | "line" | "pie" | "area",
+    "title": "Chart title",
+    "data": [array of data objects],
+    "xKey": "key for x-axis" (omit for pie charts),
+    "yKeys": ["keys for y-axis values"] (omit for pie charts),
+    "colors": ["#5AF5FA", "#FFA5FF", "#AA99FF", "#FAFF50", ...]
+  }
 }
 
 CRITICAL JSON RULES:
-- Generate actual data, don't use placeholder values
+- Your ENTIRE response must be valid JSON
+- Generate actual data based on the request
 - All numbers MUST have a leading digit (use 0.85, never .85)
-- NO comments in JSON (no // or /* */ comments)
+- NO comments in JSON
 - NO trailing commas
 - Use double quotes for all strings
+- For pie charts: omit xKey and yKeys, data should have name and value properties
 
 Brand Colors (use in order):
 Primary: #5AF5FA (cyan), #FFA5FF (pink), #AA99FF (purple), #FAFF50 (yellow)
 Secondary: #0CB800 (green), #5294FF (violet), #FFA200 (tangerine), #9AFF75 (pea), #FF9999 (rose)
 
-NEVER say "I cannot generate visual charts" or provide instructions for other tools. You ARE generating the chart by providing the JSON configuration that will be rendered.`;
+Generate the chart data directly. Do not explain what you would do, just provide the JSON response.`;
 
       if (uploads.length > 0) {
         const latestUpload = uploads[uploads.length - 1];
@@ -987,40 +970,61 @@ NEVER say "I cannot generate visual charts" or provide instructions for other to
         { role: 'user' as const, content: message }
       ];
 
-      // Call OpenAI
+      // Call OpenAI with JSON mode and increased token limit
       const completion = await openai.chat.completions.create({
         model: 'gpt-4o',
         messages,
+        response_format: { type: 'json_object' },
+        max_tokens: 4096,
       });
 
       const assistantMessage = completion.choices[0].message.content || '';
 
-      // Parse chart config if present
+      // Parse the JSON response
       let chartConfig = null;
-      const jsonMatch = assistantMessage.match(/```json\s*([\s\S]*?)\s*```/);
-      if (jsonMatch) {
-        let jsonString = jsonMatch[1];
-        try {
-          // Fix common JSON formatting issues
-          // Fix numbers with leading decimal point (both .85 and -.85 -> 0.85 and -0.85)
-          jsonString = jsonString.replace(/([:\[\s,])(-?)\.(\d+)/g, '$1$20.$3');
+      let description = '';
+      
+      try {
+        const parsedResponse = JSON.parse(assistantMessage);
+        
+        if (parsedResponse.chartConfig) {
+          chartConfig = parsedResponse.chartConfig;
+          description = parsedResponse.description || '';
           
-          // Remove trailing commas before } or ] (only outside quoted strings)
-          // This is a simplified approach - removes commas followed by optional whitespace and closing bracket
-          jsonString = jsonString.replace(/,(\s*[\]}])/g, '$1');
-          
-          chartConfig = JSON.parse(jsonString);
-        } catch (e) {
-          console.error("Failed to parse chart config:", e);
-          console.error("Sanitized JSON that failed to parse:", jsonString.substring(0, 300));
+          // Validate required fields
+          if (!chartConfig.type || !chartConfig.title || !chartConfig.data || !Array.isArray(chartConfig.data)) {
+            console.error("Invalid chart config - missing required fields");
+            chartConfig = null;
+          }
+        }
+      } catch (e) {
+        console.error("Failed to parse AI response as JSON:", e);
+        console.error("Raw response:", assistantMessage.substring(0, 500));
+        
+        // Fallback: try to extract JSON from code blocks (for backward compatibility)
+        const jsonMatch = assistantMessage.match(/```json\s*([\s\S]*?)\s*```/);
+        if (jsonMatch) {
+          try {
+            let jsonString = jsonMatch[1];
+            // Fix common JSON formatting issues
+            jsonString = jsonString.replace(/([:\[\s,])(-?)\.(\d+)/g, '$1$20.$3');
+            jsonString = jsonString.replace(/,(\s*[\]}])/g, '$1');
+            chartConfig = JSON.parse(jsonString);
+          } catch (fallbackError) {
+            console.error("Fallback JSON parsing also failed:", fallbackError);
+          }
         }
       }
 
-      // Save assistant message
+      // Save assistant message with formatted content
+      const displayContent = description || 
+        (chartConfig ? `I've created a ${chartConfig.type} chart: "${chartConfig.title}"` : 
+         'I was unable to generate a valid chart. Please try rephrasing your request.');
+      
       const [savedMessage] = await db.insert(aiCopilotMessages).values({
         chatId,
         role: 'assistant',
-        content: assistantMessage,
+        content: displayContent,
         chartConfig,
       }).returning();
 
