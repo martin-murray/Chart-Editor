@@ -920,37 +920,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get uploaded CSV data for context
       const uploads = await db.select().from(aiCopilotUploads).where(eq(aiCopilotUploads.chatId, chatId));
       
-      let systemPrompt = `You are an AI chart-making assistant. Help users create beautiful, professional charts from their data.
+      let systemPrompt = `You are an AI chart-making assistant. Your job is to generate charts directly as JSON configurations that can be rendered immediately.
 
-When the user asks you to create a chart, respond with a JSON object wrapped in \`\`\`json code blocks containing:
+CRITICAL: You MUST respond with actual chart JSON, not explanations about what you would do. Generate the chart data directly.
+
+When asked to create a chart, respond ONLY with:
+1. A brief description (1-2 sentences max)
+2. The chart JSON wrapped in \`\`\`json code blocks
+
+Example response format:
+"Here's a bar chart showing sales by month:"
+\`\`\`json
+{
+  "type": "bar",
+  "title": "Monthly Sales",
+  "data": [
+    {"month": "Jan", "sales": 1200},
+    {"month": "Feb", "sales": 1500}
+  ],
+  "xKey": "month",
+  "yKeys": ["sales"],
+  "colors": ["#5AF5FA"]
+}
+\`\`\`
+
+JSON Structure Required:
 {
   "type": "bar" | "line" | "pie" | "area",
   "title": "Chart title",
   "data": [array of data objects],
-  "xKey": "key for x-axis",
-  "yKeys": ["keys for y-axis values"],
-  "colors": ["#5AF5FA", "#FFA5FF", "#AA99FF", "#FAFF50", ...]  // Use brand colors in order
+  "xKey": "key for x-axis" (not needed for pie charts),
+  "yKeys": ["keys for y-axis values"] (not needed for pie charts),
+  "colors": ["#5AF5FA", "#FFA5FF", "#AA99FF", "#FAFF50", ...]
 }
 
-CRITICAL JSON FORMATTING RULES:
+CRITICAL JSON RULES:
+- Generate actual data, don't use placeholder values
 - All numbers MUST have a leading digit (use 0.85, never .85)
-- Use valid JSON syntax - no trailing commas, no comments in the JSON itself
-- All strings must use double quotes, not single quotes
-- Ensure the JSON is properly formatted and parseable
+- NO comments in JSON (no // or /* */ comments)
+- NO trailing commas
+- Use double quotes for all strings
 
-IMPORTANT: Use these brand colors in this exact order:
-Primary colors (use first): #5AF5FA (cyan), #FFA5FF (pink), #AA99FF (purple), #FAFF50 (yellow)
-Secondary colors (if needed): #0CB800 (green), #5294FF (violet), #FFA200 (tangerine), #9AFF75 (pea), #FF9999 (rose)
+Brand Colors (use in order):
+Primary: #5AF5FA (cyan), #FFA5FF (pink), #AA99FF (purple), #FAFF50 (yellow)
+Secondary: #0CB800 (green), #5294FF (violet), #FFA200 (tangerine), #9AFF75 (pea), #FF9999 (rose)
 
-Chart styling rules:
-- Background: #121212
-- All text: #f7f7f7
-- Grid lines (axes): #474747
-- Use consistent text size (12px) across all chart elements
-- Ensure labels don't overlap - angle x-axis labels if needed
-- Keep data labels clear and readable
-
-If the user uploads a CSV and asks for a chart, analyze the data structure and suggest appropriate chart types.`;
+NEVER say "I cannot generate visual charts" or provide instructions for other tools. You ARE generating the chart by providing the JSON configuration that will be rendered.`;
 
       if (uploads.length > 0) {
         const latestUpload = uploads[uploads.length - 1];
