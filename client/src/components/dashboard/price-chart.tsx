@@ -1832,7 +1832,7 @@ export function PriceChart({
                   mode="single"
                   selected={startDate}
                   onSelect={setStartDate}
-                  defaultMonth={calendarMonth}
+                  month={calendarMonth}
                   onMonthChange={setCalendarMonth}
                   enableYearDropdown
                   fromYear={new Date().getFullYear() - 10}
@@ -1879,7 +1879,7 @@ export function PriceChart({
                     mode="single"
                     selected={endDate}
                     onSelect={setEndDate}
-                    defaultMonth={calendarMonth}
+                    month={calendarMonth}
                     onMonthChange={setCalendarMonth}
                     enableYearDropdown
                     fromYear={new Date().getFullYear() - 10}

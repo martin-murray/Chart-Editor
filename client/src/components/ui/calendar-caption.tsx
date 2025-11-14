@@ -1,4 +1,4 @@
-import { useDayPicker } from "react-day-picker";
+import { useNavigation } from "react-day-picker";
 
 interface CalendarCaptionProps {
   displayMonth: Date;
@@ -7,7 +7,7 @@ interface CalendarCaptionProps {
 }
 
 export function CalendarCaption({ displayMonth, fromYear = 2014, toYear = 2024 }: CalendarCaptionProps) {
-  const { onMonthChange } = useDayPicker();
+  const { goToMonth } = useNavigation();
   const currentMonth = displayMonth.getMonth();
   const currentYear = displayMonth.getFullYear();
 
@@ -24,13 +24,13 @@ export function CalendarCaption({ displayMonth, fromYear = 2014, toYear = 2024 }
   const handleMonthChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newMonth = parseInt(e.target.value);
     const newDate = new Date(currentYear, newMonth);
-    onMonthChange?.(newDate);
+    goToMonth(newDate);
   };
 
   const handleYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newYear = parseInt(e.target.value);
     const newDate = new Date(newYear, currentMonth);
-    onMonthChange?.(newDate);
+    goToMonth(newDate);
   };
 
   return (
