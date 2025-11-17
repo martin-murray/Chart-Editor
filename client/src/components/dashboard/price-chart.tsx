@@ -10,7 +10,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip as HoverTooltip, TooltipContent as HoverTooltipContent, TooltipProvider, TooltipTrigger as HoverTooltipTrigger } from '@/components/ui/tooltip';
-import { Loader2, TrendingUp, TrendingDown, Plus, Calendar as CalendarIcon, X, Download, ChevronDown, MessageSquare, Ruler, Minus, RotateCcw, Code } from 'lucide-react';
+import { Loader2, TrendingUp, TrendingDown, Plus, Calendar as CalendarIcon, X, Download, ChevronDown, MessageSquare, Ruler, Minus, RotateCcw, Code, Type } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { format, subDays, subMonths, subYears } from 'date-fns';
 import * as htmlToImage from 'html-to-image';
@@ -66,12 +66,12 @@ interface StockDetails {
 
 interface Annotation {
   id: string;
-  type: 'text' | 'percentage' | 'horizontal';
+  type: 'text' | 'percentage' | 'horizontal' | 'note';
   x: number; // X coordinate on chart
   y: number; // Y coordinate on chart
   timestamp: number; // Data point timestamp
   price: number; // Price at this point
-  text?: string; // User annotation text (for text and horizontal types)
+  text?: string; // User annotation text (for text, horizontal, and note types)
   time: string; // Formatted time string
   horizontalOffset?: number; // Custom horizontal position offset in pixels for dragging
   verticalOffset?: number; // Custom vertical position offset in pixels for dragging
@@ -164,7 +164,7 @@ export function PriceChart({
   const [isEditMode, setIsEditMode] = useState(false);
   
   // Percentage measurement state
-  const [annotationMode, setAnnotationMode] = useState<'text' | 'percentage' | 'horizontal'>('text');
+  const [annotationMode, setAnnotationMode] = useState<'text' | 'percentage' | 'horizontal' | 'note'>('text');
   const [pendingPercentageStart, setPendingPercentageStart] = useState<{
     timestamp: number;
     price: number;
@@ -1083,9 +1083,9 @@ export function PriceChart({
   const handleChartClick = (event: any) => {
     if (!event || !chartDataWithMA) return;
     
-    // For horizontal annotations, we handle ANY click on the chart (even without activePayload)
-    if (annotationMode === 'horizontal') {
-      // Freehand horizontal line placement
+    // For horizontal and note annotations, we handle ANY click on the chart (even without activePayload)
+    if (annotationMode === 'horizontal' || annotationMode === 'note') {
+      // Freehand placement
       if (event.chartY !== undefined && event.chartX !== undefined) {
         // We'll calculate the price from the click Y position
         // For timestamp, we'll use the current time or middle of the chart data
@@ -1094,7 +1094,7 @@ export function PriceChart({
         const time = chartDataWithMA[middleIndex]?.time || new Date().toISOString();
         
         // Calculate price from Y coordinate
-        let horizontalPrice = 0;
+        let calculatedPrice = 0;
         
         // Get price range from chart data
         if (chartDataWithMA.length > 0) {
@@ -1120,20 +1120,20 @@ export function PriceChart({
           const relativeY = Math.max(0, Math.min(1, event.chartY / assumedChartHeight));
           
           // Convert to price (Y axis is inverted - top is max price, bottom is min price)
-          horizontalPrice = yAxisMax - (relativeY * (yAxisMax - yAxisMin));
+          calculatedPrice = yAxisMax - (relativeY * (yAxisMax - yAxisMin));
           
           // Ensure price is within reasonable bounds
-          horizontalPrice = Math.max(yAxisMin, Math.min(yAxisMax, horizontalPrice));
+          calculatedPrice = Math.max(yAxisMin, Math.min(yAxisMax, calculatedPrice));
           
         }
         
-        // Create horizontal annotation
+        // Create annotation
         const newAnnotation: Omit<Annotation, 'id' | 'text'> = {
-          type: 'horizontal',
+          type: annotationMode === 'horizontal' ? 'horizontal' : 'note',
           x: 0,
           y: 0,  
           timestamp,
-          price: horizontalPrice,
+          price: calculatedPrice,
           time
         };
         
@@ -1143,7 +1143,7 @@ export function PriceChart({
         setAnnotationInput('');
         setPendingAnnotation(newAnnotation);
         setShowAnnotationInput(true);
-        return; // Exit early for horizontal annotations
+        return; // Exit early for horizontal and note annotations
       }
     }
     
@@ -1218,7 +1218,7 @@ export function PriceChart({
 
   // Handle annotation double-click for editing or deletion
   const handleAnnotationDoubleClick = (annotation: Annotation) => {
-    if (annotation.type === 'text' || annotation.type === 'horizontal') {
+    if (annotation.type === 'text' || annotation.type === 'horizontal' || annotation.type === 'note') {
       setEditingAnnotation(annotation);
       setIsEditMode(true);
       setAnnotationInput(annotation.text || '');
@@ -2095,6 +2095,14 @@ export function PriceChart({
                       <Plus className="w-4 h-4 mr-2" />
                       Add % Overlay (CSV)
                     </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => setAnnotationMode('note')}
+                      className="cursor-pointer"
+                      data-testid="menu-note"
+                    >
+                      <Type className="w-3 h-3 mr-2" style={{ color: '#FFFFFF' }} />
+                      Add Text Note
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
 
@@ -2285,7 +2293,9 @@ export function PriceChart({
                     ? 'annotation-vertical-mode'
                     : annotationMode === 'horizontal'
                       ? 'annotation-horizontal-mode'
-                      : ''
+                      : annotationMode === 'note'
+                        ? 'annotation-note-mode'
+                        : ''
             }`}
             style={{ 
               backgroundColor: '#121212',
@@ -2355,6 +2365,43 @@ export function PriceChart({
                           style={{ 
                             backgroundColor: '#121212', 
                             border: '1px solid #AA99FF',
+                            minWidth: '40px',
+                            fontSize: '10px',
+                            wordBreak: 'break-word',
+                            overflowWrap: 'break-word',
+                            whiteSpace: 'pre-wrap'
+                          }}
+                          onMouseDown={(e) => handleTextMouseDown(e, annotation)}
+                          onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
+                          title="Click and drag to move in any direction, double-click to delete"
+                        >
+                          <div className="text-foreground">{annotation.text || ''}</div>
+                        </div>
+                      </div>
+                    );
+                  } else if (annotation.type === 'note') {
+                    // Note annotations - floating text box (no line)
+                    const dataIndex = chartData?.data?.findIndex(d => d.timestamp === annotation.timestamp) ?? -1;
+                    if (dataIndex === -1) return null;
+                    
+                    const totalDataPoints = (chartData?.data?.length ?? 1) - 1;
+                    const xPercent = totalDataPoints > 0 ? (dataIndex / totalDataPoints) * 100 : 0;
+                    
+                    return (
+                      <div
+                        key={annotation.id}
+                        className="absolute"
+                        style={{ 
+                          left: `${xPercent}%`, 
+                          top: `${20 + (annotation.verticalOffset || 0)}px`, 
+                          transform: `translateX(calc(-50% + ${annotation.horizontalOffset || 0}px))`
+                        }}
+                      >
+                        <div 
+                          className="rounded px-1.5 py-0.5 max-w-32 pointer-events-auto cursor-grab hover:opacity-80 shadow-lg select-none"
+                          style={{ 
+                            backgroundColor: '#121212', 
+                            border: '1px solid #FFFFFF',
                             minWidth: '40px',
                             fontSize: '10px',
                             wordBreak: 'break-word',

@@ -47,12 +47,12 @@ interface SearchResult {
 
 interface Annotation {
   id: string;
-  type: 'text' | 'percentage' | 'horizontal';
+  type: 'text' | 'percentage' | 'horizontal' | 'note';
   x: number; // X coordinate on chart
   y: number; // Y coordinate on chart
   timestamp: number; // Data point timestamp
   price: number; // Price at this point
-  text?: string; // User annotation text (for text and horizontal types)
+  text?: string; // User annotation text (for text, horizontal, and note types)
   time: string; // Formatted time string
   horizontalOffset?: number; // Custom horizontal position offset in pixels for dragging
   verticalOffset?: number; // Custom vertical position offset in pixels for dragging
@@ -73,7 +73,7 @@ interface ComparisonChartProps {
   singleTradingDay?: boolean;
   annotations?: Annotation[];
   onAnnotationsChange?: (annotations: Annotation[]) => void;
-  annotationMode?: 'text' | 'percentage' | 'horizontal';
+  annotationMode?: 'text' | 'percentage' | 'horizontal' | 'note';
   pendingPercentageStart?: { timestamp: number; price: number; time: string } | null;
   setPendingPercentageStart?: (start: { timestamp: number; price: number; time: string } | null) => void;
   updateAnnotations?: (newAnnotations: Annotation[] | ((prev: Annotation[]) => Annotation[])) => void;

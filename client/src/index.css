@@ -325,6 +325,11 @@
     cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Cpath d='M10 4L10 16M4 10L16 10' stroke='%23AA99FF' stroke-width='2'/%3E%3C/svg%3E") 10 10, crosshair !important;
   }
 
+  .annotation-note-mode,
+  .annotation-note-mode * {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Cpath d='M10 4L10 16M4 10L16 10' stroke='%23FFFFFF' stroke-width='2'/%3E%3C/svg%3E") 10 10, crosshair !important;
+  }
+
   /* Walkthrough card hover effect with gradient border */
   .walkthrough-card {
     position: relative;
