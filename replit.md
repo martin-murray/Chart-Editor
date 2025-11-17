@@ -4,15 +4,20 @@
 A full-stack stock market tracking application built with React, Express.js, and PostgreSQL. The application provides real-time stock market data with filtering capabilities, Slack integration for alerts, and comprehensive market analytics. The system features both in-memory and database storage options for flexible deployment, aiming to provide comprehensive global market coverage and real-time insights for investors.
 
 ## Recent Changes (November 17, 2025)
-- **AI Copilot Integration in Price Chart Editor**: Embedded AI assistant for real-time chart overlays and data analysis
-  - **Dual System Prompts**: Backend detects context and uses appropriate prompt (price chart overlay vs. standalone chart creation)
-  - **Timeseries Overlay Format**: AI returns overlay data as `{type: "timeseries", data: [{timestamp, value}, ...]}` for chart integration
-  - **Resizable Panel Layout**: Desktop uses ResizablePanelGroup (70/30 split), mobile uses Sheet component
-  - **Context-Aware Requests**: Frontend enriches messages with stock symbol and current timeframe
-  - **Visual Rendering**: Copilot overlays appear as dashed colored lines (yellow, purple, green, pink, orange) merged with chart data by timestamp matching (1-minute tolerance)
-  - **Action Handlers**: Supports overlay application, timeseries data addition, timeframe changes, and annotation creation
-  - **Data Validation**: Frontend validates and converts timestamps to milliseconds, extracts numeric values from data
-  - **CSV Upload Support**: Users can upload CSV files with overlay data for seamless chart integration
+- **CSV Overlay Feature in Price Chart**: Simple, reliable CSV upload for percentage overlays
+  - **Upload/Paste Interface**: Modal dialog accepts CSV file upload or direct text paste
+  - **Flexible Format Support**: Handles headerless CSVs and CSVs with headers (date, time, timestamp)
+  - **UTF-8 BOM Handling**: Automatically strips UTF-8 BOM for Excel-exported CSVs
+  - **Strict Validation**: 
+    - Date format: YYYY-MM-DD (required)
+    - Value range: 0-1 decimal (0% to 100%)
+    - At least one data point required
+    - Clear error messages with line numbers
+  - **Visual Rendering**: White line overlay on chart with fixed 0-100% y-axis (left side)
+  - **Data Merging**: Aligns CSV data with chart timeline using 1-minute timestamp tolerance
+  - **Access**: Available via "Add % Overlay (CSV)" button in annotation dropdown
+  - **Clear All**: CSV overlay cleared when "Clear All" is clicked
+- **Removed AI Copilot from Price Chart**: Eliminated AI-driven overlay feature in favor of deterministic CSV upload for reliability and predictability
 
 ## Recent Changes (November 6, 2025)
 - **AI Co-Pilot Chart Maker**: Complete AI-powered chart generation system
