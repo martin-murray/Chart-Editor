@@ -913,10 +913,37 @@ export function PriceChart({
     volumeMA: volumeMovingAverages[index] || 0
   }));
 
+  // Merge copilot series data into chart data
+  const chartDataWithCopilot = useMemo(() => {
+    if (!chartDataWithMA || Object.keys(copilotSeries).length === 0) {
+      return chartDataWithMA;
+    }
+
+    return chartDataWithMA.map(dataPoint => {
+      const merged: any = { ...dataPoint };
+      
+      // For each copilot series, find matching data point by timestamp
+      Object.entries(copilotSeries).forEach(([seriesId, points]) => {
+        // Find point with matching timestamp (with tolerance for rounding)
+        const match = points.find((p: any) => {
+          const pointTimestamp = p.timestamp * (p.timestamp < 10000000000 ? 1000 : 1);
+          const dataTimestamp = dataPoint.timestamp * (dataPoint.timestamp < 10000000000 ? 1000 : 1);
+          return Math.abs(pointTimestamp - dataTimestamp) < 60000; // 1 minute tolerance
+        });
+        
+        if (match) {
+          merged[`copilot_${seriesId}`] = match.value;
+        }
+      });
+      
+      return merged;
+    });
+  }, [chartDataWithMA, copilotSeries]);
+
   // Calculate non-dividend adjusted prices (add back dividends)
   const chartDataWithDividendOverlay = useMemo(() => {
-    if (!chartDataWithMA || !dividendData?.dividends || dividendData.dividends.length === 0) {
-      return chartDataWithMA;
+    if (!chartDataWithCopilot || !dividendData?.dividends || dividendData.dividends.length === 0) {
+      return chartDataWithCopilot;
     }
 
     // Sort dividends by date
@@ -925,7 +952,7 @@ export function PriceChart({
     );
 
     // Process each data point and add cumulative dividends
-    return chartDataWithMA.map(dataPoint => {
+    return chartDataWithCopilot.map(dataPoint => {
       // Use timestamp field which is always present, convert to milliseconds if needed
       const timestampMs = dataPoint.timestamp * (dataPoint.timestamp < 10000000000 ? 1000 : 1);
       const dataDate = new Date(timestampMs);
@@ -2702,6 +2729,28 @@ export function PriceChart({
                       activeDot={{ r: 4, fill: lineColor, stroke: '#121212', strokeWidth: 2 }}
                     />
                   )}
+                  
+                  {/* Render copilot series as additional lines */}
+                  {Object.keys(copilotSeries).map((seriesId, index) => {
+                    const colors = ['#FAFF50', '#AA99FF', '#50FFA5', '#FF6B9D', '#FFA500'];
+                    const color = colors[index % colors.length];
+                    
+                    return (
+                      <Line
+                        key={`copilot-${seriesId}`}
+                        yAxisId="price"
+                        type="linear"
+                        dataKey={`copilot_${seriesId}`}
+                        stroke={color}
+                        strokeWidth={2}
+                        strokeDasharray="5 5"
+                        dot={false}
+                        connectNulls
+                        name={seriesId}
+                        activeDot={{ r: 4, fill: color, stroke: '#121212', strokeWidth: 2 }}
+                      />
+                    );
+                  })}
                   
                   {/* Invisible overlay line for candlestick tooltip data */}
                   {chartType === 'candlestick' && (
