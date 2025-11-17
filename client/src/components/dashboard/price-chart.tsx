@@ -10,7 +10,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip as HoverTooltip, TooltipContent as HoverTooltipContent, TooltipProvider, TooltipTrigger as HoverTooltipTrigger } from '@/components/ui/tooltip';
-import { Loader2, TrendingUp, TrendingDown, Plus, Calendar as CalendarIcon, X, Download, ChevronDown, MessageSquare, Ruler, Minus, RotateCcw, Code, Bot } from 'lucide-react';
+import { Loader2, TrendingUp, TrendingDown, Plus, Calendar as CalendarIcon, X, Download, ChevronDown, MessageSquare, Ruler, Minus, RotateCcw, Code } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { format, subDays, subMonths, subYears } from 'date-fns';
 import * as htmlToImage from 'html-to-image';
@@ -18,9 +18,8 @@ import jsPDF from 'jspdf';
 import { saveAs } from 'file-saver';
 import { useToast } from '@/hooks/use-toast';
 import { ComparisonChart } from './comparison-chart';
-import { CopilotPanel } from '../ai-copilot/copilot-panel';
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 
 interface ChartData {
   timestamp: number;
@@ -124,7 +123,6 @@ export function PriceChart({
   onClearAll
 }: PriceChartProps) {
   const { toast } = useToast();
-  const isMobile = useIsMobile();
   const [selectedTimeframe, setSelectedTimeframe] = useState('1D');
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
@@ -184,10 +182,9 @@ export function PriceChart({
     }
   }, [showMeasureTooltip]);
 
-  // AI Copilot state
-  const [showAICopilot, setShowAICopilot] = useState(false);
-  const [customOverlays, setCustomOverlays] = useState<any[]>([]);
-  const [copilotSeries, setCopilotSeries] = useState<Record<string, any[]>>({});
+  // CSV Overlay state
+  const [csvOverlay, setCsvOverlay] = useState<{timestamp: number, value: number}[]>([]);
+  const [showCsvModal, setShowCsvModal] = useState(false);
 
   // Price Y-axis zoom state
   const [priceAxisMode, setPriceAxisMode] = useState<'auto' | 'fixed'>('auto');
@@ -304,23 +301,23 @@ export function PriceChart({
     
     // Prioritize the closest annotation (horizontal or vertical)
     if (closestHorizontalAnnotation && (!closestVerticalAnnotation || closestHorizontalDistance < closestVerticalDistance * 0.5)) {
-      if (closestHorizontalAnnotation.type === 'horizontal') {
-        setIsDragging(true);
-        setDragAnnotationId(closestHorizontalAnnotation.id);
-        setDragStartY(mouseY);
-        setDragStartPrice(closestHorizontalAnnotation.price);
-        event.preventDefault();
-        event.stopPropagation();
-      }
+      // Type assertion safe because we filtered for type='horizontal' and checked 'price' in annotation
+      const horizontalAnnotation = closestHorizontalAnnotation as Annotation & { price: number };
+      setIsDragging(true);
+      setDragAnnotationId(horizontalAnnotation.id);
+      setDragStartY(mouseY);
+      setDragStartPrice(horizontalAnnotation.price);
+      event.preventDefault();
+      event.stopPropagation();
     } else if (closestVerticalAnnotation) {
-      if (closestVerticalAnnotation.type === 'text' && closestVerticalAnnotation.id && closestVerticalAnnotation.timestamp) {
-        setIsDraggingVertical(true);
-        setDragVerticalAnnotationId(closestVerticalAnnotation.id);
-        setDragVerticalStartX(event.clientX);
-        setDragVerticalStartTimestamp(closestVerticalAnnotation.timestamp);
-        event.preventDefault();
-        event.stopPropagation();
-      }
+      // Type assertion safe because we filtered for type='text' and checked 'timestamp' in annotation
+      const verticalAnnotation = closestVerticalAnnotation as Annotation & { timestamp: number };
+      setIsDraggingVertical(true);
+      setDragVerticalAnnotationId(verticalAnnotation.id);
+      setDragVerticalStartX(event.clientX);
+      setDragVerticalStartTimestamp(verticalAnnotation.timestamp);
+      event.preventDefault();
+      event.stopPropagation();
     }
   };
 
@@ -699,90 +696,76 @@ export function PriceChart({
     return `${currencySymbol}${marketCapInMillions.toFixed(1)}M`;
   };
 
-  // Handle AI Copilot actions
-  const handleCopilotAction = (action: any) => {
+  // Handle CSV submit
+  const handleCsvSubmit = () => {
     try {
-      switch (action.type) {
-        case 'overlay:add':
-          if (action.payload.indicatorId === 'dividend') {
-            setShowDividendOverlay(true);
-          } else {
-            // Add to custom overlays
-            setCustomOverlays(prev => [...prev, action.payload]);
-          }
-          toast({
-            title: "Overlay Added",
-            description: `Added ${action.payload.label || action.payload.indicatorId}`,
-          });
-          break;
-          
-        case 'overlay:remove':
-          if (action.payload.indicatorId === 'dividend') {
-            setShowDividendOverlay(false);
-          } else {
-            setCustomOverlays(prev => prev.filter(o => o.indicatorId !== action.payload.indicatorId));
-          }
-          break;
-          
-        case 'timeframe:set':
-          setSelectedTimeframe(action.payload.value);
-          toast({
-            title: "Timeframe Updated",
-            description: `Changed to ${action.payload.value}`,
-          });
-          break;
-          
-        case 'annotation:add':
-          const newAnnotation: Annotation = {
-            id: crypto.randomUUID(),
-            type: action.payload.type || 'text',
-            text: action.payload.text || '',
-            timestamp: action.payload.timestamp || Date.now(),
-            price: action.payload.price || 0,
-            x: 0,
-            y: 0,
-            time: new Date(action.payload.timestamp || Date.now()).toISOString(),
-          };
-          updateAnnotations(prev => [...prev, newAnnotation]);
-          toast({
-            title: "Annotation Added",
-            description: action.payload.text || "New annotation",
-          });
-          break;
-          
-        case 'timeseries:replace':
-          setCopilotSeries(prev => ({
-            ...prev,
-            [action.payload.seriesId]: action.payload.points
-          }));
-          toast({
-            title: "Data Applied",
-            description: `Added ${action.payload.label || 'custom series'}`,
-          });
-          break;
-          
-        case 'timeseries:append':
-          setCopilotSeries(prev => ({
-            ...prev,
-            [action.payload.seriesId]: [
-              ...(prev[action.payload.seriesId] || []),
-              ...action.payload.points
-            ]
-          }));
-          break;
-          
-        default:
-          console.warn('Unknown copilot action:', action);
+      const textarea = document.getElementById('csv-textarea') as HTMLTextAreaElement;
+      const csvText = textarea?.value || '';
+      
+      if (!csvText.trim()) {
+        toast({ title: "Error", description: "Please paste CSV data", variant: "destructive" });
+        return;
       }
+      
+      const lines = csvText.trim().split('\n');
+      const parsed: {timestamp: number, value: number}[] = [];
+      
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        
+        const [dateStr, valueStr] = line.split(',');
+        
+        // Validate date format (YYYY-MM-DD)
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr?.trim())) {
+          toast({ 
+            title: "Error", 
+            description: `Invalid date format on line ${i+1}. Expected YYYY-MM-DD`,
+            variant: "destructive" 
+          });
+          return;
+        }
+        
+        const value = parseFloat(valueStr?.trim());
+        if (isNaN(value) || value < 0 || value > 1) {
+          toast({ 
+            title: "Error", 
+            description: `Invalid value on line ${i+1}. Must be between 0 and 1`,
+            variant: "destructive" 
+          });
+          return;
+        }
+        
+        const timestamp = new Date(dateStr.trim()).getTime();
+        parsed.push({ timestamp, value });
+      }
+      
+      setCsvOverlay(parsed);
+      setShowCsvModal(false);
+      toast({ title: "Success", description: `Added overlay with ${parsed.length} data points` });
     } catch (error) {
-      console.error('Error handling copilot action:', error);
-      toast({
-        title: "Error",
-        description: "Failed to apply the suggested change",
-        variant: "destructive"
-      });
+      toast({ title: "Error", description: "Failed to parse CSV", variant: "destructive" });
     }
   };
+
+  // Handle CSV file upload
+  useEffect(() => {
+    const input = document.getElementById('csv-upload');
+    const handleFileChange = (e: Event) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const textarea = document.getElementById('csv-textarea') as HTMLTextAreaElement;
+        if (textarea) textarea.value = event.target?.result as string || '';
+      };
+      reader.readAsText(file);
+    };
+    
+    input?.addEventListener('change', handleFileChange);
+    return () => input?.removeEventListener('change', handleFileChange);
+  }, [showCsvModal]);
 
   const formatRevenue = (revenueInMillions: number) => {
     // Format revenue in millions with correct currency
@@ -913,37 +896,29 @@ export function PriceChart({
     volumeMA: volumeMovingAverages[index] || 0
   }));
 
-  // Merge copilot series data into chart data
-  const chartDataWithCopilot = useMemo(() => {
-    if (!chartDataWithMA || Object.keys(copilotSeries).length === 0) {
+  // Merge CSV overlay data into chart data
+  const chartDataWithOverlay = useMemo(() => {
+    if (!chartDataWithMA || csvOverlay.length === 0) {
       return chartDataWithMA;
     }
-
-    return chartDataWithMA.map(dataPoint => {
-      const merged: any = { ...dataPoint };
+    
+    return chartDataWithMA.map(point => {
+      // Find matching CSV overlay point (within 1 day tolerance for daily data)
+      const match = csvOverlay.find(overlay => 
+        Math.abs(overlay.timestamp - point.timestamp) < 86400000 // 1 day in milliseconds
+      );
       
-      // For each copilot series, find matching data point by timestamp
-      Object.entries(copilotSeries).forEach(([seriesId, points]) => {
-        // Find point with matching timestamp (with tolerance for rounding)
-        const match = points.find((p: any) => {
-          const pointTimestamp = p.timestamp * (p.timestamp < 10000000000 ? 1000 : 1);
-          const dataTimestamp = dataPoint.timestamp * (dataPoint.timestamp < 10000000000 ? 1000 : 1);
-          return Math.abs(pointTimestamp - dataTimestamp) < 60000; // 1 minute tolerance
-        });
-        
-        if (match) {
-          merged[`copilot_${seriesId}`] = match.value;
-        }
-      });
-      
-      return merged;
+      return {
+        ...point,
+        csvOverlay: match ? match.value * 100 : null // Convert 0-1 to 0-100%
+      };
     });
-  }, [chartDataWithMA, copilotSeries]);
+  }, [chartDataWithMA, csvOverlay]);
 
   // Calculate non-dividend adjusted prices (add back dividends)
   const chartDataWithDividendOverlay = useMemo(() => {
-    if (!chartDataWithCopilot || !dividendData?.dividends || dividendData.dividends.length === 0) {
-      return chartDataWithCopilot;
+    if (!chartDataWithOverlay || !dividendData?.dividends || dividendData.dividends.length === 0) {
+      return chartDataWithOverlay;
     }
 
     // Sort dividends by date
@@ -952,7 +927,7 @@ export function PriceChart({
     );
 
     // Process each data point and add cumulative dividends
-    return chartDataWithCopilot.map(dataPoint => {
+    return chartDataWithOverlay.map(dataPoint => {
       // Use timestamp field which is always present, convert to milliseconds if needed
       const timestampMs = dataPoint.timestamp * (dataPoint.timestamp < 10000000000 ? 1000 : 1);
       const dataDate = new Date(timestampMs);
@@ -2079,6 +2054,14 @@ export function PriceChart({
                       <Minus className="w-3 h-3 mr-2" style={{ color: '#AA99FF' }} />
                       Horizontal
                     </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => setShowCsvModal(true)}
+                      className="cursor-pointer"
+                      data-testid="menu-csv-overlay"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add % Overlay (CSV)
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
 
@@ -2137,7 +2120,10 @@ export function PriceChart({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={onClearAll}
+                    onClick={() => {
+                      setCsvOverlay([]);
+                      onClearAll();
+                    }}
                     className="h-8 px-3 text-xs text-destructive hover:text-black hover:bg-[#5AF5FA]"
                     data-testid="button-clear-all"
                   >
@@ -2147,18 +2133,6 @@ export function PriceChart({
                 )}
               </div>
             </div>
-            
-            {/* AI Copilot Button */}
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 px-3 text-xs border-[#5AF5FA]/30 text-[#5AF5FA] hover:bg-[#5AF5FA]/10 ml-4"
-              onClick={() => setShowAICopilot(!showAICopilot)}
-              data-testid="button-ai-copilot"
-            >
-              <Bot className="w-3 h-3 mr-1" />
-              AI Copilot
-            </Button>
 
             {/* Shared Export Dropdown */}
             <DropdownMenu>
@@ -2569,6 +2543,21 @@ export function PriceChart({
                     width={60}
                   />
                   
+                  {/* CSV Overlay Y-axis (left side) */}
+                  {csvOverlay.length > 0 && (
+                    <YAxis
+                      yAxisId="overlay"
+                      orientation="left"
+                      domain={[0, 100]}
+                      tickFormatter={(value) => `${value}%`}
+                      stroke="#b0b0b0"
+                      tick={{ fill: '#b0b0b0', fontSize: 11 }}
+                      width={50}
+                      axisLine={{ stroke: '#b0b0b0' }}
+                      tickLine={{ stroke: '#b0b0b0' }}
+                    />
+                  )}
+                  
                   {showHoverTooltip && (
                     <Tooltip 
                       active={!isDragging}
@@ -2638,27 +2627,16 @@ export function PriceChart({
                                 </div>
                               </>
                             )}
-                            {/* Show copilot series information */}
-                            {Object.keys(copilotSeries).length > 0 && (
+                            {/* Show CSV overlay information */}
+                            {csvOverlay.length > 0 && (data as any).csvOverlay !== undefined && (data as any).csvOverlay !== null && (
                               <div style={{ 
                                 marginTop: '6px',
                                 paddingTop: '4px',
                                 borderTop: '1px solid rgba(51, 51, 51, 0.5)'
                               }}>
-                                {Object.keys(copilotSeries).map((seriesId, index) => {
-                                  const colors = ['#FAFF50', '#AA99FF', '#50FFA5', '#FF6B9D', '#FFA500'];
-                                  const color = colors[index % colors.length];
-                                  const value = (data as any)[`copilot_${seriesId}`];
-                                  
-                                  if (value !== undefined) {
-                                    return (
-                                      <div key={seriesId} style={{ color, fontSize: '10px' }}>
-                                        {seriesId}: {formatPrice(value)}
-                                      </div>
-                                    );
-                                  }
-                                  return null;
-                                })}
+                                <div style={{ color: '#FFFFFF', fontSize: '10px' }}>
+                                  CSV Overlay: {(data as any).csvOverlay.toFixed(2)}%
+                                </div>
                               </div>
                             )}
                           </div>
@@ -2753,28 +2731,6 @@ export function PriceChart({
                     />
                   )}
                   
-                  {/* Render copilot series as additional lines */}
-                  {Object.keys(copilotSeries).map((seriesId, index) => {
-                    const colors = ['#FAFF50', '#AA99FF', '#50FFA5', '#FF6B9D', '#FFA500'];
-                    const color = colors[index % colors.length];
-                    
-                    return (
-                      <Line
-                        key={`copilot-${seriesId}`}
-                        yAxisId="price"
-                        type="linear"
-                        dataKey={`copilot_${seriesId}`}
-                        stroke={color}
-                        strokeWidth={2}
-                        strokeDasharray="5 5"
-                        dot={false}
-                        connectNulls
-                        name={seriesId}
-                        activeDot={{ r: 4, fill: color, stroke: '#121212', strokeWidth: 2 }}
-                      />
-                    );
-                  })}
-                  
                   {/* Invisible overlay line for candlestick tooltip data */}
                   {chartType === 'candlestick' && (
                     <Line 
@@ -2802,6 +2758,21 @@ export function PriceChart({
                       activeDot={{ r: 4, fill: '#808080', stroke: '#121212', strokeWidth: 2 }}
                       name="Non-Adjusted Price"
                       isAnimationActive={false}
+                    />
+                  )}
+                  
+                  {/* CSV Overlay Line - shows percentage overlay data */}
+                  {csvOverlay.length > 0 && (
+                    <Line
+                      yAxisId="overlay"
+                      type="monotone"
+                      dataKey="csvOverlay"
+                      stroke="#FFFFFF"
+                      strokeWidth={2}
+                      dot={false}
+                      name="CSV Overlay"
+                      connectNulls
+                      activeDot={{ r: 4, fill: '#FFFFFF', stroke: '#121212', strokeWidth: 2 }}
                     />
                   )}
                   
@@ -2999,6 +2970,21 @@ export function PriceChart({
                     width={60}
                   />
                   
+                  {/* CSV Overlay Y-axis (left side) */}
+                  {csvOverlay.length > 0 && (
+                    <YAxis
+                      yAxisId="overlay"
+                      orientation="left"
+                      domain={[0, 100]}
+                      tickFormatter={(value) => `${value}%`}
+                      stroke="#b0b0b0"
+                      tick={{ fill: '#b0b0b0', fontSize: 11 }}
+                      width={50}
+                      axisLine={{ stroke: '#b0b0b0' }}
+                      tickLine={{ stroke: '#b0b0b0' }}
+                    />
+                  )}
+                  
                   {showHoverTooltip && (
                     <Tooltip 
                       active={!isDragging}
@@ -3068,27 +3054,16 @@ export function PriceChart({
                                 </div>
                               </>
                             )}
-                            {/* Show copilot series information */}
-                            {Object.keys(copilotSeries).length > 0 && (
+                            {/* Show CSV overlay information */}
+                            {csvOverlay.length > 0 && (data as any).csvOverlay !== undefined && (data as any).csvOverlay !== null && (
                               <div style={{ 
                                 marginTop: '6px',
                                 paddingTop: '4px',
                                 borderTop: '1px solid rgba(51, 51, 51, 0.5)'
                               }}>
-                                {Object.keys(copilotSeries).map((seriesId, index) => {
-                                  const colors = ['#FAFF50', '#AA99FF', '#50FFA5', '#FF6B9D', '#FFA500'];
-                                  const color = colors[index % colors.length];
-                                  const value = (data as any)[`copilot_${seriesId}`];
-                                  
-                                  if (value !== undefined) {
-                                    return (
-                                      <div key={seriesId} style={{ color, fontSize: '10px' }}>
-                                        {seriesId}: {formatPrice(value)}
-                                      </div>
-                                    );
-                                  }
-                                  return null;
-                                })}
+                                <div style={{ color: '#FFFFFF', fontSize: '10px' }}>
+                                  CSV Overlay: {(data as any).csvOverlay.toFixed(2)}%
+                                </div>
                               </div>
                             )}
                           </div>
@@ -3597,6 +3572,65 @@ export function PriceChart({
         </div>
       )}
 
+      {/* CSV Overlay Modal */}
+      {showCsvModal && (
+        <Dialog open={showCsvModal} onOpenChange={setShowCsvModal}>
+          <DialogContent className="bg-[#1E1E1E] border-[#474747]">
+            <DialogHeader>
+              <DialogTitle className="text-[#f7f7f7]">Add % Overlay (CSV)</DialogTitle>
+              <DialogDescription className="text-[#b0b0b0]">
+                Upload or paste CSV data to add a percentage overlay to the chart.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="bg-[#2A2A2A] p-4 rounded-md text-sm">
+                <p className="font-semibold text-[#f7f7f7] mb-2">CSV Format Requirements</p>
+                <ul className="list-disc list-inside space-y-1 text-[#b0b0b0]">
+                  <li>Two columns only: date, value</li>
+                  <li>date must be in YYYY-MM-DD format</li>
+                  <li>value must be a decimal between 0 and 1 (0% to 100%)</li>
+                  <li>No header row (first line is data)</li>
+                </ul>
+                <p className="mt-3 text-[#b0b0b0]">Example:</p>
+                <pre className="mt-1 text-xs bg-[#1E1E1E] p-2 rounded">
+2025-06-06,0.0255
+2025-06-09,0.0325
+2025-09-19,1
+                </pre>
+              </div>
+              
+              <Textarea
+                placeholder="Paste CSV data here..."
+                className="min-h-[200px] bg-[#2A2A2A] border-[#474747] text-[#f7f7f7]"
+                id="csv-textarea"
+              />
+              
+              <div className="flex gap-2">
+                <input
+                  type="file"
+                  accept=".csv"
+                  className="hidden"
+                  id="csv-upload"
+                />
+                <Button
+                  variant="outline"
+                  onClick={() => document.getElementById('csv-upload')?.click()}
+                  className="flex-1"
+                >
+                  Upload CSV File
+                </Button>
+                <Button
+                  onClick={handleCsvSubmit}
+                  className="flex-1"
+                >
+                  Apply Overlay
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
       {/* Earnings Modal Lightbox */}
       {earningsModal.visible && earningsModal.data && (
         <div
@@ -3801,51 +3835,5 @@ export function PriceChart({
     </div>
   );
 
-  // Desktop: Use ResizablePanelGroup for side-by-side layout
-  if (!isMobile) {
-    return (
-      <ResizablePanelGroup direction="horizontal" className="w-full">
-        {/* Main Chart Panel */}
-        <ResizablePanel defaultSize={showAICopilot ? 70 : 100} minSize={55}>
-          {chartContent}
-        </ResizablePanel>
-        
-        {/* AI Copilot Panel (Desktop) */}
-        {showAICopilot && (
-          <>
-            <ResizableHandle withHandle />
-            <CopilotPanel
-              symbol={symbol}
-              timeframe={selectedTimeframe}
-              isOpen={showAICopilot}
-              onClose={() => setShowAICopilot(false)}
-              onApplyOverlay={(overlay) => handleCopilotAction({ type: 'overlay:add', payload: overlay })}
-              onApplyTimeSeries={(data) => handleCopilotAction({ type: 'timeseries:replace', payload: { seriesId: 'custom', points: data } })}
-              onChangeTimeframe={(tf) => handleCopilotAction({ type: 'timeframe:set', payload: { value: tf } })}
-              onAddAnnotation={(annotation) => handleCopilotAction({ type: 'annotation:add', payload: annotation })}
-              isMobile={false}
-            />
-          </>
-        )}
-      </ResizablePanelGroup>
-    );
-  }
-
-  // Mobile: Use regular layout with Sheet for copilot
-  return (
-    <>
-      {chartContent}
-      <CopilotPanel
-        symbol={symbol}
-        timeframe={selectedTimeframe}
-        isOpen={showAICopilot}
-        onClose={() => setShowAICopilot(false)}
-        onApplyOverlay={(overlay) => handleCopilotAction({ type: 'overlay:add', payload: overlay })}
-        onApplyTimeSeries={(data) => handleCopilotAction({ type: 'timeseries:replace', payload: { seriesId: 'custom', points: data } })}
-        onChangeTimeframe={(tf) => handleCopilotAction({ type: 'timeframe:set', payload: { value: tf } })}
-        onAddAnnotation={(annotation) => handleCopilotAction({ type: 'annotation:add', payload: annotation })}
-        isMobile={true}
-      />
-    </>
-  );
+  return chartContent;
 }
