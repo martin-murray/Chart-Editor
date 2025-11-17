@@ -911,23 +911,10 @@ export function PriceChart({
       return chartDataWithMA;
     }
     
-    // Debug logging
-    if (csvOverlay.length > 0 && chartDataWithMA.length > 0) {
-      console.log('📊 CSV Overlay Debug:');
-      console.log('  CSV overlay count:', csvOverlay.length);
-      console.log('  First CSV timestamp:', csvOverlay[0].timestamp, new Date(csvOverlay[0].timestamp));
-      console.log('  Chart data count:', chartDataWithMA.length);
-      console.log('  First chart timestamp:', chartDataWithMA[0].timestamp, new Date(chartDataWithMA[0].timestamp * 1000));
-      console.log('  Last chart timestamp:', chartDataWithMA[chartDataWithMA.length - 1].timestamp, new Date(chartDataWithMA[chartDataWithMA.length - 1].timestamp * 1000));
-    }
-    
     return chartDataWithMA.map(point => {
-      // Chart timestamps are in Unix seconds, CSV timestamps are in milliseconds
-      const pointTimestampMs = point.timestamp * 1000;
-      
-      // Find matching CSV overlay point (within 1 day tolerance for daily data)
+      // Both chart and CSV timestamps are in milliseconds
       const match = csvOverlay.find(overlay => 
-        Math.abs(overlay.timestamp - pointTimestampMs) < 86400000 // 1 day in milliseconds
+        Math.abs(overlay.timestamp - point.timestamp) < 86400000 // 1 day in milliseconds
       );
       
       return {
