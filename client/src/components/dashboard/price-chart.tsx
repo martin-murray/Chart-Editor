@@ -2638,6 +2638,29 @@ export function PriceChart({
                                 </div>
                               </>
                             )}
+                            {/* Show copilot series information */}
+                            {Object.keys(copilotSeries).length > 0 && (
+                              <div style={{ 
+                                marginTop: '6px',
+                                paddingTop: '4px',
+                                borderTop: '1px solid rgba(51, 51, 51, 0.5)'
+                              }}>
+                                {Object.keys(copilotSeries).map((seriesId, index) => {
+                                  const colors = ['#FAFF50', '#AA99FF', '#50FFA5', '#FF6B9D', '#FFA500'];
+                                  const color = colors[index % colors.length];
+                                  const value = (data as any)[`copilot_${seriesId}`];
+                                  
+                                  if (value !== undefined) {
+                                    return (
+                                      <div key={seriesId} style={{ color, fontSize: '10px' }}>
+                                        {seriesId}: {formatPrice(value)}
+                                      </div>
+                                    );
+                                  }
+                                  return null;
+                                })}
+                              </div>
+                            )}
                           </div>
                         );
                       }}
@@ -3044,6 +3067,29 @@ export function PriceChart({
                                   )}
                                 </div>
                               </>
+                            )}
+                            {/* Show copilot series information */}
+                            {Object.keys(copilotSeries).length > 0 && (
+                              <div style={{ 
+                                marginTop: '6px',
+                                paddingTop: '4px',
+                                borderTop: '1px solid rgba(51, 51, 51, 0.5)'
+                              }}>
+                                {Object.keys(copilotSeries).map((seriesId, index) => {
+                                  const colors = ['#FAFF50', '#AA99FF', '#50FFA5', '#FF6B9D', '#FFA500'];
+                                  const color = colors[index % colors.length];
+                                  const value = (data as any)[`copilot_${seriesId}`];
+                                  
+                                  if (value !== undefined) {
+                                    return (
+                                      <div key={seriesId} style={{ color, fontSize: '10px' }}>
+                                        {seriesId}: {formatPrice(value)}
+                                      </div>
+                                    );
+                                  }
+                                  return null;
+                                })}
+                              </div>
                             )}
                           </div>
                         );
