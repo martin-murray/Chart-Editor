@@ -1,0 +1,110 @@
+✅ Clean Prompt / Explanation for Replit
+
+The current AI Copilot approach is too open-ended, and ambiguity causes it to fail.
+Instead of relying on the AI to interpret free-text and unstructured data, let’s simplify the system.
+
+The easiest, most reliable solution:
+→ Allow the user to upload or paste a clean CSV file containing only date,value data
+→ The system (not the AI) parses it
+→ The AI only needs to confirm or describe the overlay, NOT interpret the data
+
+This makes it:
+
+Consistent
+
+Predictable
+
+Impossible for AI to misread
+
+Much easier to implement
+
+🟦 The new, simple feature to add to the Price Chart
+Feature: “Upload Overlay Data (CSV or Paste)”
+
+Users can:
+
+Upload a .csv
+
+Or paste text (date,value pairs)
+
+Example:
+
+2025-06-06,0.0255
+2025-06-09,0.0325
+2025-07-01,0.1165
+2025-09-19,1
+
+System behaviour (NO ambiguity):
+
+Parse the CSV → list of {date, value}
+
+Convert each value to % (value × 100)
+
+Plot the overlay as a line between 0% (bottom) and 100% (top)
+
+The line overlays the stock price
+
+The overlay uses the same x-axis dates → aligns with the timeframe
+
+The y-axis is fixed for overlay:
+
+bottom = 0%
+
+top = 100%
+
+Why this works
+
+No free-form instructions
+
+No complex interpretation
+
+No “AI guesswork”
+
+100% deterministic behaviour
+
+Users already know how to paste / upload simple data
+
+🟩 Optional: the AI still helps, but only lightly
+
+All the AI needs to do now:
+
+Confirm it received the file or pasted data
+
+Say “Overlay uploaded successfully”
+
+Maybe describe what the curve looks like (optional)
+
+But it does NOT interpret, does NOT parse, and does NOT decide line colour, does NOT guess anything.
+
+AI becomes a helper instead of a parser.
+
+🟧 Use this as the Replit AI Prompt (short, ready to paste):
+
+This tool allows the user to upload or paste a CSV containing date/value pairs (percentage data).
+Your job is NOT to interpret or transform data — the system does that.
+You only confirm the overlay was loaded and optionally describe what the user should expect to see.
+The price chart automatically:
+– Parses the CSV
+– Converts values to percentages
+– Plots the series as a 0–100% overlay line
+– Aligns the line with the stock price timeline.
+If the user asks for help, explain how to upload or paste data, but never guess or modify the numbers.
+
+🟪 If you want the simplest possible workflow for users:
+✔ Add a button: “Add % Overlay”
+
+When clicked:
+
+User chooses:
+
+Upload CSV
+
+Paste data
+
+System parses automatically
+
+Overlay appears
+
+No AI needed for the core function
+
+This is the lowest-risk, fastest, and most user-friendly approach.
