@@ -3,6 +3,17 @@
 ## Overview
 A full-stack stock market tracking application built with React, Express.js, and PostgreSQL. The application provides real-time stock market data with filtering capabilities, Slack integration for alerts, and comprehensive market analytics. The system features both in-memory and database storage options for flexible deployment, aiming to provide comprehensive global market coverage and real-time insights for investors.
 
+## Recent Changes (November 17, 2025)
+- **AI Copilot Integration in Price Chart Editor**: Embedded AI assistant for real-time chart overlays and data analysis
+  - **Dual System Prompts**: Backend detects context and uses appropriate prompt (price chart overlay vs. standalone chart creation)
+  - **Timeseries Overlay Format**: AI returns overlay data as `{type: "timeseries", data: [{timestamp, value}, ...]}` for chart integration
+  - **Resizable Panel Layout**: Desktop uses ResizablePanelGroup (70/30 split), mobile uses Sheet component
+  - **Context-Aware Requests**: Frontend enriches messages with stock symbol and current timeframe
+  - **Visual Rendering**: Copilot overlays appear as dashed colored lines (yellow, purple, green, pink, orange) merged with chart data by timestamp matching (1-minute tolerance)
+  - **Action Handlers**: Supports overlay application, timeseries data addition, timeframe changes, and annotation creation
+  - **Data Validation**: Frontend validates and converts timestamps to milliseconds, extracts numeric values from data
+  - **CSV Upload Support**: Users can upload CSV files with overlay data for seamless chart integration
+
 ## Recent Changes (November 6, 2025)
 - **AI Co-Pilot Chart Maker**: Complete AI-powered chart generation system
   - **4-Column Layout**: Chart history (1 col), chat interface (2 cols), current chart display (1 col)
