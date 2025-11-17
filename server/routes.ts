@@ -920,7 +920,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get uploaded CSV data for context
       const uploads = await db.select().from(aiCopilotUploads).where(eq(aiCopilotUploads.chatId, chatId));
       
-      let systemPrompt = `You are an AI chart-making assistant that responds ONLY with valid JSON.
+      // Detect if this is a price chart overlay request
+      const isPriceChartOverlay = message.includes('Stock:') && message.includes('editing a price chart');
+      
+      let systemPrompt = '';
+      
+      if (isPriceChartOverlay) {
+        // System prompt for price chart overlays
+        systemPrompt = `You are an AI Copilot embedded inside a price chart editing tool. Your output must directly control the chart, not just describe it.
+
+Your response must be a valid JSON object with this structure:
+{
+  "description": "Brief description of what you're adding (1-2 sentences)",
+  "chartConfig": {
+    "type": "timeseries",
+    "title": "Overlay name (e.g., 'Conviction Score', 'Custom Indicator')",
+    "data": [
+      {"timestamp": "2025-06-06", "value": 2.55},
+      {"timestamp": "2025-06-09", "value": 3.25},
+      ...
+    ],
+    "style": {
+      "color": "#FFFFFF",
+      "strokeWidth": 2,
+      "dashArray": "5 5"
+    }
+  }
+}
+
+CRITICAL RULES:
+- Your ENTIRE response must be valid JSON
+- NEVER describe or summarize the chart - return explicit data points
+- If user provides data, return ALL data points exactly as given (do not summarize or skip)
+- Timestamps can be in ISO format ("2025-06-06") or Unix milliseconds
+- Values should be numbers (percentages like "2.55%" should be returned as 2.55)
+- All numbers MUST have a leading digit (use 0.85, never .85)
+- NO comments in JSON, NO trailing commas, use double quotes for all strings
+- The data array should contain all data points the user provided or requested
+
+Brand Colors (use in order):
+White: #FFFFFF, Cyan: #5AF5FA, Yellow: #FAFF50, Purple: #AA99FF, Green: #50FFA5, Pink: #FF6B9D, Orange: #FFA500
+
+When user asks to add an overlay or provides date/value data:
+1. Parse ALL the data points
+2. Return them in the exact format shown above
+3. Do NOT summarize, skip, or describe - return the actual data`;
+      } else {
+        // System prompt for standalone chart creation
+        systemPrompt = `You are an AI chart-making assistant that responds ONLY with valid JSON.
 
 Your response must be a valid JSON object with this structure:
 {
@@ -949,10 +996,11 @@ Primary: #5AF5FA (cyan), #FFA5FF (pink), #AA99FF (purple), #FAFF50 (yellow)
 Secondary: #0CB800 (green), #5294FF (violet), #FFA200 (tangerine), #9AFF75 (pea), #FF9999 (rose)
 
 Generate the chart data directly. Do not explain what you would do, just provide the JSON response.`;
+      }
 
       if (uploads.length > 0) {
         const latestUpload = uploads[uploads.length - 1];
-        systemPrompt += `\n\nThe user has uploaded a CSV file: ${latestUpload.filename}\nData preview:\n${JSON.stringify(latestUpload.parsedData?.slice(0, 5), null, 2)}`;
+        systemPrompt += `\n\nThe user has uploaded a CSV file: ${latestUpload.filename}\nAll data from the CSV:\n${JSON.stringify(latestUpload.parsedData, null, 2)}`;
       }
 
       // Get chat history
