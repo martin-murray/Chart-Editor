@@ -927,6 +927,10 @@ export function PriceChart({
   // Calculate non-dividend adjusted prices (add back dividends)
   const chartDataWithDividendOverlay = useMemo(() => {
     if (!chartDataWithOverlay || !dividendData?.dividends || dividendData.dividends.length === 0) {
+      if (chartDataWithOverlay && csvOverlay.length > 0) {
+        console.log('📊 Returning chartDataWithOverlay (no dividends)');
+        console.log('  Sample point with CSV:', chartDataWithOverlay.find(p => p.csvOverlay));
+      }
       return chartDataWithOverlay;
     }
 
