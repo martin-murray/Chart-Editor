@@ -700,17 +700,40 @@ export function PriceChart({
   const handleCsvSubmit = () => {
     try {
       const textarea = document.getElementById('csv-textarea') as HTMLTextAreaElement;
-      const csvText = textarea?.value || '';
+      let csvText = textarea?.value || '';
       
       if (!csvText.trim()) {
         toast({ title: "Error", description: "Please paste CSV data", variant: "destructive" });
         return;
       }
       
+      // Remove UTF-8 BOM if present
+      if (csvText.charCodeAt(0) === 0xFEFF) {
+        csvText = csvText.slice(1);
+      }
+      
       const lines = csvText.trim().split('\n');
       const parsed: {timestamp: number, value: number}[] = [];
       
-      for (let i = 0; i < lines.length; i++) {
+      // Check if first line is a header by looking for common header patterns
+      let startIndex = 0;
+      if (lines.length > 0) {
+        const firstLine = lines[0].trim();
+        const [firstCol] = firstLine.split(',');
+        const normalizedFirstCol = firstCol?.trim().toLowerCase();
+        
+        // Treat as header if it matches common header names (not a date)
+        if (normalizedFirstCol && 
+            (normalizedFirstCol === 'date' || 
+             normalizedFirstCol === 'time' || 
+             normalizedFirstCol === 'timestamp' ||
+             normalizedFirstCol.startsWith('date') ||
+             normalizedFirstCol.startsWith('time'))) {
+          startIndex = 1;
+        }
+      }
+      
+      for (let i = startIndex; i < lines.length; i++) {
         const line = lines[i].trim();
         if (!line) continue;
         
@@ -738,6 +761,16 @@ export function PriceChart({
         
         const timestamp = new Date(dateStr.trim()).getTime();
         parsed.push({ timestamp, value });
+      }
+      
+      // Validate that we have at least one data point
+      if (parsed.length === 0) {
+        toast({ 
+          title: "Error", 
+          description: "No valid data points found. Please check your CSV format.",
+          variant: "destructive" 
+        });
+        return;
       }
       
       setCsvOverlay(parsed);
