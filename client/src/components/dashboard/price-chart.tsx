@@ -2160,6 +2160,12 @@ export function PriceChart({
                           Horizontal
                         </>
                       )}
+                      {annotationMode === 'note' && (
+                        <>
+                          <Type className="w-3 h-3 mr-1" style={{ color: '#FFFFFF' }} />
+                          Text Note
+                        </>
+                      )}
                       {!annotationMode && 'Select Tool'}
                       <ChevronDown className="w-3 h-3 ml-1" style={{ color: '#5AF5FA' }} />
                     </Button>

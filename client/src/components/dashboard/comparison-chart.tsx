@@ -47,7 +47,7 @@ interface SearchResult {
 
 interface Annotation {
   id: string;
-  type: 'text' | 'percentage' | 'horizontal' | 'note';
+  type: 'text' | 'percentage' | 'horizontal' | 'note' | 'measure';
   x: number; // X coordinate on chart
   y: number; // Y coordinate on chart
   timestamp: number; // Data point timestamp
@@ -64,6 +64,9 @@ interface Annotation {
   endPrice?: number;
   endTime?: string;
   percentage?: number;
+  // For freehand measure tool
+  measureStart?: { pxFromLeft: number; pxFromTop: number; percentX: number; percentY: number };
+  measureEnd?: { pxFromLeft: number; pxFromTop: number; percentX: number; percentY: number };
 }
 
 interface ComparisonChartProps {
@@ -73,7 +76,7 @@ interface ComparisonChartProps {
   singleTradingDay?: boolean;
   annotations?: Annotation[];
   onAnnotationsChange?: (annotations: Annotation[]) => void;
-  annotationMode?: 'text' | 'percentage' | 'horizontal' | 'note';
+  annotationMode?: 'text' | 'percentage' | 'horizontal' | 'note' | 'measure';
   pendingPercentageStart?: { timestamp: number; price: number; time: string } | null;
   setPendingPercentageStart?: (start: { timestamp: number; price: number; time: string } | null) => void;
   updateAnnotations?: (newAnnotations: Annotation[] | ((prev: Annotation[]) => Annotation[])) => void;
