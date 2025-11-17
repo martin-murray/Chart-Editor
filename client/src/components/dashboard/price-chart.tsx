@@ -967,7 +967,7 @@ export function PriceChart({
         cumulativeDividends // Store for tooltip display
       };
     });
-  }, [chartDataWithMA, dividendData, showDividendOverlay]);
+  }, [chartDataWithOverlay, dividendData, showDividendOverlay]);
 
   // Calculate current price data extremes for zoom functionality
   const priceExtremes = useMemo(() => {
@@ -2257,7 +2257,7 @@ export function PriceChart({
             className={`w-full rounded-lg relative pt-20 ${
               isDragging 
                 ? '' 
-                : annotationMode === 'measure'
+                : annotationMode === 'percentage'
                   ? 'annotation-measure-mode'
                   : annotationMode === 'text'
                     ? 'annotation-vertical-mode'
