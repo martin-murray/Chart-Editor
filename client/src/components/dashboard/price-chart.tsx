@@ -66,7 +66,7 @@ interface StockDetails {
 
 interface Annotation {
   id: string;
-  type: 'text' | 'percentage' | 'horizontal' | 'note' | 'measure';
+  type: 'text' | 'percentage' | 'horizontal' | 'note';
   x: number; // X coordinate on chart
   y: number; // Y coordinate on chart
   timestamp: number; // Data point timestamp
@@ -83,19 +83,6 @@ interface Annotation {
   endPrice?: number;
   endTime?: string;
   percentage?: number;
-  // For freehand measure tool - using percentage-based coordinates for persistence
-  measureStart?: {
-    pxFromLeft: number;
-    pxFromTop: number;
-    percentX: number;
-    percentY: number;
-  };
-  measureEnd?: {
-    pxFromLeft: number;
-    pxFromTop: number;
-    percentX: number;
-    percentY: number;
-  };
 }
 
 interface PriceChartProps {
@@ -177,36 +164,12 @@ export function PriceChart({
   const [isEditMode, setIsEditMode] = useState(false);
   
   // Percentage measurement state
-  const [annotationMode, setAnnotationMode] = useState<'text' | 'percentage' | 'horizontal' | 'note' | 'measure'>('text');
+  const [annotationMode, setAnnotationMode] = useState<'text' | 'percentage' | 'horizontal' | 'note'>('text');
   const [pendingPercentageStart, setPendingPercentageStart] = useState<{
     timestamp: number;
     price: number;
     time: string;
   } | null>(null);
-  const [showMeasureTooltip, setShowMeasureTooltip] = useState(false);
-
-  const [measureDragState, setMeasureDragState] = useState<{
-    isActive: boolean;
-    pxFromLeft: number;
-    pxFromTop: number;
-    percentX: number;
-    percentY: number;
-  } | null>(null);
-  const [editingMeasureId, setEditingMeasureId] = useState<string | null>(null);
-  const [draggingEndpoint, setDraggingEndpoint] = useState<{
-    measureId: string;
-    endpoint: 'start' | 'end';
-  } | null>(null);
-
-  // Flash tooltip timeout management
-  useEffect(() => {
-    if (showMeasureTooltip) {
-      const timer = setTimeout(() => {
-        setShowMeasureTooltip(false);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [showMeasureTooltip]);
 
   // CSV Overlay state
   const [csvOverlay, setCsvOverlay] = useState<{timestamp: number, value: number}[]>([]);
@@ -264,23 +227,6 @@ export function PriceChart({
 
   const handleMouseDown = (event: React.MouseEvent) => {
     if (!chartRef.current) return;
-    
-    if (annotationMode === 'measure') {
-      const coords = getChartCoordinates(event, chartRef.current);
-      if (coords) {
-        setMeasureDragState({
-          isActive: true,
-          pxFromLeft: coords.pxFromLeft,
-          pxFromTop: coords.pxFromTop,
-          percentX: coords.percentX,
-          percentY: coords.percentY
-        });
-        event.preventDefault();
-        event.stopPropagation();
-      }
-      return;
-    }
-    
     if (!chartData?.data) return;
     
     const rect = chartRef.current.getBoundingClientRect();
@@ -377,38 +323,7 @@ export function PriceChart({
     ));
   };
 
-  const handleMouseUp = (event?: React.MouseEvent) => {
-    if (measureDragState?.isActive && event && chartRef.current) {
-      const coords = getChartCoordinates(event, chartRef.current);
-      if (coords) {
-        const newMeasure: Annotation = {
-          id: `measure-${Date.now()}`,
-          type: 'measure',
-          x: 0,
-          y: 0,
-          timestamp: 0, // Not used for measure type
-          price: 0, // Not used for measure type
-          time: '', // Not used for measure type
-          measureStart: {
-            pxFromLeft: measureDragState.pxFromLeft,
-            pxFromTop: measureDragState.pxFromTop,
-            percentX: measureDragState.percentX,
-            percentY: measureDragState.percentY
-          },
-          measureEnd: {
-            pxFromLeft: coords.pxFromLeft,
-            pxFromTop: coords.pxFromTop,
-            percentX: coords.percentX,
-            percentY: coords.percentY
-          }
-        };
-        
-        updateAnnotations(prev => [...prev, newMeasure]);
-      }
-      setMeasureDragState(null);
-      return;
-    }
-    
+  const handleMouseUp = () => {
     if (isDragging) {
       setIsDragging(false);
       setDragAnnotationId(null);
@@ -449,29 +364,6 @@ export function PriceChart({
     }
   };
 
-  const getChartCoordinates = (event: React.MouseEvent, chartElement: HTMLDivElement | null) => {
-    if (!chartElement) return null;
-    
-    const rect = chartElement.getBoundingClientRect();
-    
-    // Define chart plotting area (same as rendering)
-    const chartLeft = 60;
-    const chartTop = 60;
-    const chartRight = rect.width - 60;
-    const chartBottom = rect.height - 180;
-    const chartWidth = chartRight - chartLeft;
-    const chartHeight = chartBottom - chartTop;
-    
-    // Get mouse position relative to chart plotting area
-    const pxFromLeft = event.clientX - rect.left - chartLeft;
-    const pxFromTop = event.clientY - rect.top - chartTop;
-    
-    // Calculate percentage position (0-1)
-    const percentX = Math.max(0, Math.min(1, pxFromLeft / chartWidth));
-    const percentY = Math.max(0, Math.min(1, pxFromTop / chartHeight));
-    
-    return { pxFromLeft, pxFromTop, percentX, percentY };
-  };
 
 
   // Chart data query - must be declared before useEffect that depends on it
@@ -567,62 +459,14 @@ export function PriceChart({
   });
 
   React.useEffect(() => {
-    if (isDragging || isDraggingText || isDraggingVertical || draggingEndpoint) {
+    if (isDragging || isDraggingText || isDraggingVertical) {
       const handleGlobalMouseUp = () => {
         handleMouseUp();
         handleTextMouseUp();
         handleVerticalMouseUp();
-        setDraggingEndpoint(null);
       };
       
       const handleGlobalMouseMove = (event: MouseEvent) => {
-        if (draggingEndpoint && chartRef.current) {
-          const rect = chartRef.current.getBoundingClientRect();
-          
-          // Define chart plotting area
-          const chartLeft = 60;
-          const chartTop = 60;
-          const chartRight = rect.width - 60;
-          const chartBottom = rect.height - 180;
-          const chartWidth = chartRight - chartLeft;
-          const chartHeight = chartBottom - chartTop;
-          
-          // Get mouse position relative to chart plotting area
-          const pxFromLeft = event.clientX - rect.left - chartLeft;
-          const pxFromTop = event.clientY - rect.top - chartTop;
-          
-          // Calculate percentage position (0-1)
-          const percentX = Math.max(0, Math.min(1, pxFromLeft / chartWidth));
-          const percentY = Math.max(0, Math.min(1, pxFromTop / chartHeight));
-          
-          updateAnnotations(prev => prev.map(ann => {
-            if (ann.id === draggingEndpoint.measureId && ann.type === 'measure') {
-              if (draggingEndpoint.endpoint === 'start' && ann.measureStart) {
-                return { 
-                  ...ann, 
-                  measureStart: {
-                    pxFromLeft,
-                    pxFromTop,
-                    percentX,
-                    percentY
-                  }
-                };
-              } else if (draggingEndpoint.endpoint === 'end' && ann.measureEnd) {
-                return { 
-                  ...ann, 
-                  measureEnd: {
-                    pxFromLeft,
-                    pxFromTop,
-                    percentX,
-                    percentY
-                  }
-                };
-              }
-            }
-            return ann;
-          }));
-        }
-        
         if (isDragging && dragAnnotationId && chartData?.data) {
           const deltaY = event.clientY - dragStartY;
           const prices = chartData.data.flatMap(d => [d.high, d.low, d.open, d.close]);
@@ -700,7 +544,7 @@ export function PriceChart({
         document.removeEventListener('mousemove', handleGlobalMouseMove);
       };
     }
-  }, [isDragging, dragAnnotationId, dragStartY, dragStartPrice, isDraggingText, dragTextAnnotationId, dragTextStartX, dragTextStartY, dragStartOffset, dragStartVerticalOffset, isDraggingVertical, dragVerticalAnnotationId, dragVerticalStartX, dragVerticalStartTimestamp, draggingEndpoint, updateAnnotations, chartData]);
+  }, [isDragging, dragAnnotationId, dragStartY, dragStartPrice, isDraggingText, dragTextAnnotationId, dragTextStartX, dragTextStartY, dragStartOffset, dragStartVerticalOffset, isDraggingVertical, dragVerticalAnnotationId, dragVerticalStartX, dragVerticalStartTimestamp, updateAnnotations, chartData]);
   
   // Earnings modal state
   const [earningsModal, setEarningsModal] = useState<{
@@ -2148,7 +1992,7 @@ export function PriceChart({
                           Vertical
                         </>
                       )}
-                      {annotationMode === 'measure' && (
+                      {annotationMode === 'percentage' && (
                         <>
                           <Ruler className="w-3 h-3 mr-1" style={{ color: '#22C55E' }} />
                           Measure
@@ -2189,13 +2033,8 @@ export function PriceChart({
                         <DropdownMenuItem
                           onClick={() => {
                             if (activeTab !== 'comparison') {
-                              setAnnotationMode('measure');
+                              setAnnotationMode('percentage');
                               setPendingPercentageStart(null);
-                            }
-                          }}
-                          onMouseEnter={() => {
-                            if (activeTab === 'comparison') {
-                              setShowMeasureTooltip(true);
                             }
                           }}
                           disabled={activeTab === 'comparison'}
@@ -2243,13 +2082,6 @@ export function PriceChart({
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-
-                {/* Flash Tooltip for Measure Tool */}
-                {showMeasureTooltip && (
-                  <div className="absolute top-16 left-1/2 transform -translate-x-1/2 z-50 bg-red-600 text-white px-3 py-2 rounded-md text-xs font-medium shadow-lg animate-in fade-in-0 zoom-in-95">
-                    Measure tool deactivated
-                  </div>
-                )}
                 
                 {/* Price Y-axis Zoom Controls */}
                 <div className="flex border border-border rounded-md overflow-hidden bg-background">
@@ -3536,168 +3368,6 @@ export function PriceChart({
                                 />
                                 
                                 {/* Percentage text box - COMPLETELY REMOVED per user request to eliminate duplicate */}
-                              </g>
-                            );
-                          })}
-                        </g>
-                      );
-                    }}
-                  />
-
-                  <Customized
-                    component={(props: any) => {
-                      if (!chartRef.current || !chartData?.data) return null;
-                      
-                      return (
-                        <g>
-                          {/* Preview line during measure drag */}
-                          {measureDragState?.isActive && (() => {
-                            const rect = chartRef.current!.getBoundingClientRect();
-                            const chartLeft = 60;
-                            const chartTop = 60;
-                            const chartWidth = rect.width - 120;
-                            const chartHeight = rect.height - 240;
-                            
-                            const x1 = chartLeft + (measureDragState.percentX * chartWidth);
-                            const y1 = chartTop + (measureDragState.percentY * chartHeight);
-                            
-                            return (
-                              <g>
-                                <circle
-                                  cx={x1}
-                                  cy={y1}
-                                  r={4}
-                                  fill="#5AF5FA"
-                                  stroke="#121212"
-                                  strokeWidth={1}
-                                />
-                              </g>
-                            );
-                          })()}
-                          
-                          {annotations.filter(annotation => annotation.type === 'measure' && annotation.measureStart && annotation.measureEnd).map((annotation) => {
-                            const start = annotation.measureStart!;
-                            const end = annotation.measureEnd!;
-                            
-                            const rect = chartRef.current!.getBoundingClientRect();
-                            
-                            // Calculate actual pixel positions from percentages
-                            const chartLeft = 60;
-                            const chartTop = 60;
-                            const chartWidth = rect.width - 120; // 60px on each side
-                            const chartHeight = rect.height - 240; // 60px top, 180px bottom
-                            
-                            const x1 = chartLeft + (start.percentX * chartWidth);
-                            const y1 = chartTop + (start.percentY * chartHeight);
-                            const x2 = chartLeft + (end.percentX * chartWidth);
-                            const y2 = chartTop + (end.percentY * chartHeight);
-                            
-                            // Calculate price/percentage display values at render time
-                            const prices = chartData.data.flatMap(d => [d.high, d.low]);
-                            const minPrice = Math.min(...prices);
-                            const maxPrice = Math.max(...prices);
-                            const priceRange = maxPrice - minPrice;
-                            
-                            // percentY of 0 = top = maxPrice, percentY of 1 = bottom = minPrice
-                            const startPrice = maxPrice - (start.percentY * priceRange);
-                            const endPrice = maxPrice - (end.percentY * priceRange);
-                            const priceDiff = endPrice - startPrice;
-                            const percentage = (priceDiff / startPrice) * 100;
-                            
-                            const isPositive = percentage >= 0;
-                            const lineColor = isPositive ? '#22C55E' : '#EF4444';
-                            
-                            const arrowSize = 12;
-                            const angle = Math.atan2(y2 - y1, x2 - x1);
-                            
-                            const arrowX1 = x2 - arrowSize * Math.cos(angle - Math.PI / 6);
-                            const arrowY1 = y2 - arrowSize * Math.sin(angle - Math.PI / 6);
-                            const arrowX2 = x2 - arrowSize * Math.cos(angle + Math.PI / 6);
-                            const arrowY2 = y2 - arrowSize * Math.sin(angle + Math.PI / 6);
-                            
-                            const isInEditMode = editingMeasureId === annotation.id;
-                            
-                            return (
-                              <g key={annotation.id}>
-                                <line
-                                  x1={x1}
-                                  y1={y1}
-                                  x2={x2}
-                                  y2={y2}
-                                  stroke={lineColor}
-                                  strokeWidth={isInEditMode ? 3 : 2}
-                                  vectorEffect="non-scaling-stroke"
-                                  onDoubleClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    if (isInEditMode) {
-                                      setEditingMeasureId(null);
-                                    } else {
-                                      setEditingMeasureId(annotation.id);
-                                    }
-                                  }}
-                                  style={{ cursor: 'pointer' }}
-                                />
-                                <polygon
-                                  points={`${x2},${y2} ${arrowX1},${arrowY1} ${arrowX2},${arrowY2}`}
-                                  fill="none"
-                                  stroke={lineColor}
-                                  strokeWidth={2}
-                                  strokeLinejoin="round"
-                                />
-                                
-                                <circle
-                                  cx={x1}
-                                  cy={y1}
-                                  r={isInEditMode ? 6 : 3}
-                                  fill={lineColor}
-                                  stroke="#121212"
-                                  strokeWidth={isInEditMode ? 2 : 1}
-                                  style={{ cursor: isInEditMode ? 'move' : 'pointer' }}
-                                  onMouseDown={(e) => {
-                                    if (isInEditMode) {
-                                      e.preventDefault();
-                                      e.stopPropagation();
-                                      setDraggingEndpoint({ measureId: annotation.id, endpoint: 'start' });
-                                    }
-                                  }}
-                                  onDoubleClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    if (isInEditMode) {
-                                      setEditingMeasureId(null);
-                                    } else {
-                                      setEditingMeasureId(annotation.id);
-                                    }
-                                  }}
-                                />
-                                
-                                <circle
-                                  cx={x2}
-                                  cy={y2}
-                                  r={isInEditMode ? 6 : 3}
-                                  fill={lineColor}
-                                  stroke="#121212"
-                                  strokeWidth={isInEditMode ? 2 : 1}
-                                  style={{ cursor: isInEditMode ? 'move' : 'pointer' }}
-                                  onMouseDown={(e) => {
-                                    if (isInEditMode) {
-                                      e.preventDefault();
-                                      e.stopPropagation();
-                                      setDraggingEndpoint({ measureId: annotation.id, endpoint: 'end' });
-                                    }
-                                  }}
-                                  onDoubleClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    if (isInEditMode) {
-                                      setEditingMeasureId(null);
-                                    } else {
-                                      setEditingMeasureId(annotation.id);
-                                    }
-                                  }}
-                                />
-                                
                               </g>
                             );
                           })}
