@@ -943,6 +943,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete individual chart history entry
+  app.delete("/api/chart-history/:id", requireAuth, async (req: any, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const userId = req.userId;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid chart history ID" });
+      }
+      
+      // Delete only if it belongs to the authenticated user
+      await db
+        .delete(chartHistory)
+        .where(and(
+          eq(chartHistory.id, id),
+          eq(chartHistory.userId, userId)
+        ));
+      
+      res.json({ success: true, message: "Chart history entry deleted" });
+    } catch (error) {
+      console.error("Error deleting chart history entry:", error);
+      res.status(500).json({ message: "Failed to delete chart history entry" });
+    }
+  });
+
+  // Delete all chart history entries for authenticated user
+  app.delete("/api/chart-history", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.userId;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+      
+      // Delete all entries for this user
+      await db
+        .delete(chartHistory)
+        .where(eq(chartHistory.userId, userId));
+      
+      res.json({ success: true, message: "All chart history entries deleted" });
+    } catch (error) {
+      console.error("Error deleting all chart history:", error);
+      res.status(500).json({ message: "Failed to delete chart history" });
+    }
+  });
+
   // AI Co-Pilot Routes
 
   // Initialize OpenAI client with Replit AI Integrations

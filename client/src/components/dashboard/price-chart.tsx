@@ -11,7 +11,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip as HoverTooltip, TooltipContent as HoverTooltipContent, TooltipProvider, TooltipTrigger as HoverTooltipTrigger } from '@/components/ui/tooltip';
-import { Loader2, TrendingUp, TrendingDown, Plus, Calendar as CalendarIcon, X, Download, ChevronDown, MessageSquare, Ruler, Minus, RotateCcw, Code, Type } from 'lucide-react';
+import { Loader2, TrendingUp, TrendingDown, Plus, Calendar as CalendarIcon, X, Download, ChevronDown, MessageSquare, Ruler, Minus, RotateCcw, Code, Type, Trash2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { format, subDays, subMonths, subYears } from 'date-fns';
 import * as htmlToImage from 'html-to-image';
@@ -279,6 +279,50 @@ export function PriceChart({
     onError: (error) => {
       // Handle errors gracefully - log to console only, don't show toast
       console.error('Failed to save chart history:', error);
+    },
+  });
+
+  // Delete individual chart history entry
+  const deleteChartHistoryMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest('DELETE', `/api/chart-history/${id}`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/chart-history'] });
+      toast({
+        title: "Chart Deleted",
+        description: "Chart history entry removed successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Delete Failed",
+        description: "Failed to delete chart history entry",
+        variant: "destructive",
+      });
+      console.error('Failed to delete chart history:', error);
+    },
+  });
+
+  // Delete all chart history entries
+  const deleteAllChartHistoryMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest('DELETE', '/api/chart-history', {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/chart-history'] });
+      toast({
+        title: "All Charts Deleted",
+        description: "All chart history entries have been removed",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Delete Failed",
+        description: "Failed to delete chart history",
+        variant: "destructive",
+      });
+      console.error('Failed to delete all chart history:', error);
     },
   });
 
@@ -4100,7 +4144,33 @@ export function PriceChart({
 
       {/* Chart History Log */}
       <Card className="p-6 mt-8" style={{ backgroundColor: '#121212' }}>
-        <h3 className="text-lg font-semibold mb-4">Chart History Log</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold">Chart History Log</h3>
+          {chartHistory.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => deleteAllChartHistoryMutation.mutate()}
+              className="flex items-center gap-2 hover:bg-transparent"
+              data-testid="button-delete-all-history"
+            >
+              <Trash2 
+                className="h-4 w-4 transition-colors" 
+                style={{ color: '#F7F7F7' }}
+                onMouseEnter={(e) => e.currentTarget.style.color = '#5AF5FA'}
+                onMouseLeave={(e) => e.currentTarget.style.color = '#F7F7F7'}
+              />
+              <span 
+                className="text-sm transition-colors"
+                style={{ color: '#F7F7F7' }}
+                onMouseEnter={(e) => e.currentTarget.style.color = '#5AF5FA'}
+                onMouseLeave={(e) => e.currentTarget.style.color = '#F7F7F7'}
+              >
+                Delete All
+              </span>
+            </Button>
+          )}
+        </div>
         <div className="h-[350px] overflow-y-scroll">
           {chartHistory.length > 0 ? (
             <div className="space-y-3">
@@ -4156,6 +4226,24 @@ export function PriceChart({
                           {annotationSummary || 'No annotations'}
                         </div>
                       </div>
+                      {/* Delete button */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteChartHistoryMutation.mutate(entry.id);
+                        }}
+                        className="ml-2 p-1 h-auto hover:bg-transparent"
+                        data-testid={`button-delete-history-${entry.id}`}
+                      >
+                        <Trash2 
+                          className="h-4 w-4 transition-colors" 
+                          style={{ color: '#F7F7F7' }}
+                          onMouseEnter={(e) => e.currentTarget.style.color = '#5AF5FA'}
+                          onMouseLeave={(e) => e.currentTarget.style.color = '#F7F7F7'}
+                        />
+                      </Button>
                     </div>
                   </Card>
                 );
