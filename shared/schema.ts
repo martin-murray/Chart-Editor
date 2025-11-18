@@ -101,7 +101,16 @@ export const insertLoginAttemptSchema = createInsertSchema(loginAttempts).omit({
 export const chartHistory = pgTable("chart_history", {
   id: serial("id").primaryKey(),
   userId: text("user_id").notNull(), // User identifier (email/username)
+  sessionId: text("session_id").notNull(), // Unique session identifier for this chart
   symbol: text("symbol").notNull(),
+  timeframe: text("timeframe").notNull(), // '1D', '5D', '2W', '1M', '3M', '1Y', '3Y', '5Y', 'custom'
+  customStartDate: text("custom_start_date"), // For custom timeframe
+  customEndDate: text("custom_end_date"), // For custom timeframe
+  dividendAdjusted: boolean("dividend_adjusted").notNull().default(false),
+  csvOverlay: jsonb("csv_overlay").$type<Array<{
+    timestamp: number;
+    value: number;
+  }>>(),
   annotations: jsonb("annotations").$type<Array<{
     id: string;
     type: string;
@@ -115,11 +124,13 @@ export const chartHistory = pgTable("chart_history", {
     endPrice?: number;
   }>>().notNull(),
   savedAt: timestamp("saved_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 export const insertChartHistorySchema = createInsertSchema(chartHistory).omit({
   id: true,
   savedAt: true,
+  updatedAt: true,
 });
 
 export type Stock = typeof stocks.$inferSelect;

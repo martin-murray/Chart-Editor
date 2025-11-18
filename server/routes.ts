@@ -851,25 +851,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Chart History Routes
 
-  // Save chart with annotations to history
+  // Save chart with annotations to history (upsert by sessionId)
   app.post("/api/chart-history", requireAuth, async (req: any, res) => {
     try {
-      const { symbol, annotations } = req.body;
+      const { sessionId, symbol, timeframe, customStartDate, customEndDate, dividendAdjusted, csvOverlay, annotations } = req.body;
       const userId = req.userId;
       
-      if (!symbol || !annotations || !Array.isArray(annotations) || annotations.length === 0) {
-        return res.status(400).json({ message: "Symbol and annotations are required" });
+      if (!sessionId || !symbol || !timeframe || !annotations || !Array.isArray(annotations) || annotations.length === 0) {
+        return res.status(400).json({ message: "SessionId, symbol, timeframe, and annotations are required" });
       }
       
       if (!userId) {
         return res.status(401).json({ message: "User not authenticated" });
       }
       
-      const [history] = await db.insert(chartHistory).values({
-        userId,
-        symbol,
-        annotations
-      }).returning();
+      // Check if entry exists for this userId + sessionId
+      const existing = await db
+        .select()
+        .from(chartHistory)
+        .where(and(
+          eq(chartHistory.userId, userId),
+          eq(chartHistory.sessionId, sessionId)
+        ))
+        .limit(1);
+      
+      let history;
+      if (existing.length > 0) {
+        // Update existing entry
+        const [updated] = await db
+          .update(chartHistory)
+          .set({
+            symbol,
+            timeframe,
+            customStartDate,
+            customEndDate,
+            dividendAdjusted: dividendAdjusted || false,
+            csvOverlay: csvOverlay || null,
+            annotations,
+            updatedAt: new Date()
+          })
+          .where(and(
+            eq(chartHistory.userId, userId),
+            eq(chartHistory.sessionId, sessionId)
+          ))
+          .returning();
+        history = updated;
+      } else {
+        // Insert new entry
+        const [inserted] = await db.insert(chartHistory).values({
+          userId,
+          sessionId,
+          symbol,
+          timeframe,
+          customStartDate,
+          customEndDate,
+          dividendAdjusted: dividendAdjusted || false,
+          csvOverlay: csvOverlay || null,
+          annotations
+        }).returning();
+        history = inserted;
+      }
       
       res.json(history);
     } catch (error) {
