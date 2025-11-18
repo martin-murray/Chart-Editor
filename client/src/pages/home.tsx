@@ -147,12 +147,30 @@ export default function Home() {
             return (
               <Card
                 key={card.id}
-                className="relative overflow-hidden border-border hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer"
+                className="group relative overflow-hidden border-border hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer"
                 style={{ backgroundColor: '#1C1C1C' }}
                 onClick={() => setLocation(card.destination)}
                 data-testid={`card-${card.id}`}
               >
-                <div className="p-8 flex flex-col h-full min-h-[320px]">
+                {/* Gradient border on hover */}
+                <div
+                  className="absolute inset-0 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"
+                  style={{
+                    background: 'linear-gradient(90deg, #5AF5FA 0%, #FFA5FF 100%)',
+                    padding: '1px',
+                    borderRadius: '4px',
+                  }}
+                >
+                  <div 
+                    className="w-full h-full rounded" 
+                    style={{ 
+                      backgroundColor: '#1C1C1C',
+                      borderRadius: '4px'
+                    }} 
+                  />
+                </div>
+
+                <div className="relative p-8 flex flex-col h-full min-h-[320px]">
                   {/* Icon */}
                   <div className="mb-6">
                     <div 
