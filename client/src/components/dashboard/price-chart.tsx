@@ -98,6 +98,9 @@ interface PriceChartProps {
   rememberPerTicker?: boolean;
   onClearAll?: () => void;
   initialTab?: 'price-volume' | 'comparison';
+  onHistorySelect?: (entry: ChartHistory) => void;
+  pendingHistoryRestore?: ChartHistory | null;
+  onHistoryRestoreComplete?: () => void;
 }
 
 const timeframes = [
@@ -122,7 +125,10 @@ export function PriceChart({
   annotations: controlledAnnotations,
   onAnnotationsChange,
   rememberPerTicker = true,
-  onClearAll
+  onClearAll,
+  onHistorySelect,
+  pendingHistoryRestore,
+  onHistoryRestoreComplete
 }: PriceChartProps) {
   const { toast } = useToast();
   const [selectedTimeframe, setSelectedTimeframe] = useState('1D');
@@ -214,7 +220,7 @@ export function PriceChart({
   const [showHoverTooltip, setShowHoverTooltip] = useState(true);
   
   // Session ID tracking - regenerates when symbol changes
-  const [chartSessionId, setChartSessionId] = useState(() => crypto.randomUUID());
+  const [chartSessionId, setChartSessionId] = useState<string>(() => crypto.randomUUID());
   
   // Helper function to update annotations in both controlled and uncontrolled modes
   const updateAnnotations = (newAnnotations: Annotation[] | ((prev: Annotation[]) => Annotation[])) => {
@@ -744,13 +750,9 @@ export function PriceChart({
 
   // Function to restore chart state from history
   const restoreFromHistory = (entry: ChartHistory) => {
-    // Check if the entry's symbol matches the current symbol
-    if (entry.symbol !== symbol) {
-      toast({
-        title: "Different Ticker",
-        description: `This chart is for ${entry.symbol}. Please search for "${entry.symbol}" first to restore this state.`,
-        variant: "destructive",
-      });
+    // If ticker is different and parent provided a callback, let parent handle ticker switching
+    if (entry.symbol !== symbol && onHistorySelect) {
+      onHistorySelect(entry);
       return;
     }
     
@@ -781,6 +783,42 @@ export function PriceChart({
       description: `Loaded chart state from ${format(new Date(entry.savedAt), 'MMM dd, yyyy HH:mm')}`,
     });
   };
+  
+  // Effect to handle pending history restoration after ticker change
+  useEffect(() => {
+    if (pendingHistoryRestore && 
+        pendingHistoryRestore.symbol === symbol && 
+        chartData?.data && 
+        chartData.data.length > 0 &&
+        !isLoading) {
+      // Data is ready, restore the chart state
+      setSelectedTimeframe(pendingHistoryRestore.timeframe);
+      
+      if (pendingHistoryRestore.timeframe === 'Custom' && 
+          pendingHistoryRestore.customStartDate && 
+          pendingHistoryRestore.customEndDate) {
+        setStartDate(new Date(pendingHistoryRestore.customStartDate));
+        setEndDate(new Date(pendingHistoryRestore.customEndDate));
+      } else {
+        setStartDate(undefined);
+        setEndDate(undefined);
+      }
+      
+      setShowDividendOverlay(pendingHistoryRestore.dividendAdjusted || false);
+      setCsvOverlay(pendingHistoryRestore.csvOverlay || []);
+      updateAnnotations(pendingHistoryRestore.annotations as Annotation[] || []);
+      
+      toast({
+        title: "Chart Restored",
+        description: `Loaded ${pendingHistoryRestore.symbol} from ${format(new Date(pendingHistoryRestore.savedAt), 'MMM dd, yyyy HH:mm')}`,
+      });
+      
+      // Notify parent that restoration is complete
+      if (onHistoryRestoreComplete) {
+        onHistoryRestoreComplete();
+      }
+    }
+  }, [pendingHistoryRestore, symbol, chartData, isLoading, onHistoryRestoreComplete, toast, updateAnnotations]);
 
   // Currency mapping for different markets
   const getCurrencySymbol = (currencyCode: string | undefined): string => {

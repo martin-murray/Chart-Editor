@@ -34,13 +34,15 @@ interface GlobalSearchResult {
 
 interface Annotation {
   id: string;
-  type: 'text' | 'percentage' | 'horizontal';
+  type: 'text' | 'percentage' | 'horizontal' | 'note';
   x: number;
   y: number;
   timestamp: number;
   price: number;
   text?: string;
   time: string;
+  horizontalOffset?: number;
+  verticalOffset?: number;
   // For percentage measurements
   startTimestamp?: number;
   startPrice?: number;
@@ -468,6 +470,9 @@ function ChartMaker() {
   const [, setLocation] = useLocation();
   const [chartMakerSelectedStock, setChartMakerSelectedStock] = useState<GlobalSearchResult | null>(null);
   
+  // Chart history restoration state
+  const [pendingHistoryRestore, setPendingHistoryRestore] = useState<ChartHistory | null>(null);
+  
   // Annotation state management - moved from GlobalTickerSearch
   const [annotationsBySymbol, setAnnotationsBySymbol] = useState<Record<string, Annotation[]>>(() => getStoredAnnotations());
   const [rememberPerTicker, setRememberPerTicker] = useState(() => getRememberSetting());
@@ -548,6 +553,29 @@ function ChartMaker() {
     };
     
     setChartMakerSelectedStock(indexResult);
+  };
+  
+  // Handler for when a chart history card is clicked
+  const handleHistorySelect = (entry: ChartHistory) => {
+    // Store the pending restore entry
+    setPendingHistoryRestore(entry);
+    
+    // Create a GlobalSearchResult from the history entry and switch to that ticker
+    const stockResult: GlobalSearchResult = {
+      symbol: entry.symbol,
+      description: entry.symbol, // We don't have full description in history, use symbol
+      displaySymbol: entry.symbol,
+      type: 'Stock',
+      exchange: '',
+      currency: 'USD'
+    };
+    
+    setChartMakerSelectedStock(stockResult);
+  };
+  
+  // Handler for when restoration is complete
+  const handleHistoryRestoreComplete = () => {
+    setPendingHistoryRestore(null);
   };
 
   // Fetch chart history
@@ -640,6 +668,9 @@ function ChartMaker() {
                 rememberPerTicker={rememberPerTicker}
                 onClearAll={Object.keys(annotationsBySymbol).length > 0 ? clearAllAnnotations : undefined}
                 initialTab={initialTab}
+                onHistorySelect={handleHistorySelect}
+                pendingHistoryRestore={pendingHistoryRestore}
+                onHistoryRestoreComplete={handleHistoryRestoreComplete}
               />
             </div>
           )}
