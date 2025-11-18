@@ -4220,21 +4220,45 @@ export function PriceChart({
               variant="ghost"
               size="sm"
               onClick={handleDeleteAllClick}
-              className="flex items-center gap-2 hover:bg-transparent overflow-hidden"
+              className="hover:bg-transparent relative"
+              style={{ width: confirmDeleteAll ? '95px' : '90px', transition: 'width 300ms' }}
               data-testid="button-delete-all-history"
             >
-              <div className="flex items-center gap-2">
+              <div className="relative w-full h-full flex items-center overflow-hidden">
                 <Trash2 
-                  className={`h-4 w-4 transition-all duration-300 ${confirmDeleteAll ? '-translate-x-12' : ''}`}
-                  style={{ color: confirmDeleteAll ? '#5AF5FA' : '#F7F7F7' }}
+                  className={`h-4 w-4 absolute transition-all duration-300 ${
+                    confirmDeleteAll ? 'opacity-0 -translate-x-8' : 'opacity-100 translate-x-0'
+                  }`}
+                  style={{ 
+                    color: confirmDeleteAll ? '#5AF5FA' : '#F7F7F7',
+                    left: '0'
+                  }}
                   onMouseEnter={(e) => !confirmDeleteAll && (e.currentTarget.style.color = '#5AF5FA')}
                   onMouseLeave={(e) => !confirmDeleteAll && (e.currentTarget.style.color = '#F7F7F7')}
                 />
                 <span 
-                  className={`text-sm transition-all duration-300 whitespace-nowrap ${confirmDeleteAll ? '-translate-x-12' : 'translate-x-0'}`}
-                  style={{ color: '#5AF5FA' }}
+                  className={`text-sm whitespace-nowrap font-medium absolute transition-all duration-300 ${
+                    confirmDeleteAll ? 'opacity-0 -translate-x-8' : 'opacity-100 translate-x-0'
+                  }`}
+                  style={{ 
+                    color: '#F7F7F7',
+                    left: '24px'
+                  }}
+                  onMouseEnter={(e) => !confirmDeleteAll && (e.currentTarget.style.color = '#5AF5FA')}
+                  onMouseLeave={(e) => !confirmDeleteAll && (e.currentTarget.style.color = '#F7F7F7')}
                 >
-                  {confirmDeleteAll ? 'Delete Now' : 'Delete All'}
+                  Delete All
+                </span>
+                <span 
+                  className={`text-sm whitespace-nowrap font-medium absolute transition-all duration-300 ${
+                    confirmDeleteAll ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'
+                  }`}
+                  style={{ 
+                    color: '#5AF5FA',
+                    left: '4px'
+                  }}
+                >
+                  Delete Now
                 </span>
               </div>
             </Button>
@@ -4305,26 +4329,33 @@ export function PriceChart({
                           e.stopPropagation();
                           handleDeleteClick(entry.id);
                         }}
-                        className="ml-2 px-2 py-1 h-auto hover:bg-transparent relative overflow-hidden"
+                        className="ml-2 h-auto hover:bg-transparent relative"
+                        style={{ width: confirmDeleteId === entry.id ? '80px' : '32px', transition: 'width 300ms' }}
                         data-testid={`button-delete-history-${entry.id}`}
                       >
-                        <div className="flex items-center gap-2 relative">
+                        <div className="relative w-full h-full flex items-center overflow-hidden">
                           <Trash2 
-                            className={`h-4 w-4 transition-all duration-300 ${
-                              confirmDeleteId === entry.id ? '-translate-x-16' : ''
+                            className={`h-4 w-4 absolute transition-all duration-300 ${
+                              confirmDeleteId === entry.id ? 'opacity-0 -translate-x-8' : 'opacity-100 translate-x-0'
                             }`}
-                            style={{ color: confirmDeleteId === entry.id ? '#5AF5FA' : '#F7F7F7' }}
+                            style={{ 
+                              color: confirmDeleteId === entry.id ? '#5AF5FA' : '#F7F7F7',
+                              left: confirmDeleteId === entry.id ? '0' : '8px'
+                            }}
                             onMouseEnter={(e) => confirmDeleteId !== entry.id && (e.currentTarget.style.color = '#5AF5FA')}
                             onMouseLeave={(e) => confirmDeleteId !== entry.id && (e.currentTarget.style.color = '#F7F7F7')}
                           />
-                          {confirmDeleteId === entry.id && (
-                            <span 
-                              className="absolute left-0 text-xs whitespace-nowrap transition-all duration-300 -translate-x-16 font-medium"
-                              style={{ color: '#5AF5FA' }}
-                            >
-                              Delete Now
-                            </span>
-                          )}
+                          <span 
+                            className={`text-xs whitespace-nowrap font-medium absolute transition-all duration-300 ${
+                              confirmDeleteId === entry.id ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'
+                            }`}
+                            style={{ 
+                              color: '#5AF5FA',
+                              left: '4px'
+                            }}
+                          >
+                            Delete Now
+                          </span>
                         </div>
                       </Button>
                     </div>
