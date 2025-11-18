@@ -911,17 +911,37 @@ export function PriceChart({
       return chartDataWithMA;
     }
     
-    return chartDataWithMA.map(point => {
+    console.log('🔍 CSV Overlay Merging Debug:');
+    console.log('  Chart data points:', chartDataWithMA.length);
+    console.log('  CSV overlay points:', csvOverlay.length);
+    console.log('  Sample chart timestamps (first 3):', chartDataWithMA.slice(0, 3).map(p => ({
+      timestamp: p.timestamp,
+      date: new Date(p.timestamp).toISOString()
+    })));
+    console.log('  Sample CSV timestamps (first 3):', csvOverlay.slice(0, 3).map(o => ({
+      timestamp: o.timestamp,
+      date: new Date(o.timestamp).toISOString(),
+      value: o.value
+    })));
+    
+    const merged = chartDataWithMA.map(point => {
       // Both chart and CSV timestamps are in milliseconds
-      const match = csvOverlay.find(overlay => 
-        Math.abs(overlay.timestamp - point.timestamp) < 86400000 // 1 day in milliseconds
-      );
+      const match = csvOverlay.find(overlay => {
+        const diff = Math.abs(overlay.timestamp - point.timestamp);
+        const oneDayMs = 86400000; // 1 day in milliseconds
+        return diff < oneDayMs;
+      });
       
       return {
         ...point,
         csvOverlay: match ? match.value * 100 : null // Convert 0-1 to 0-100%
       };
     });
+    
+    const matchCount = merged.filter(p => p.csvOverlay != null).length;
+    console.log('  Merged points with overlay:', matchCount);
+    
+    return merged;
   }, [chartDataWithMA, csvOverlay]);
 
   // Calculate non-dividend adjusted prices (add back dividends)
