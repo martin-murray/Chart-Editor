@@ -340,9 +340,9 @@ export function PriceChart({
     lastSavedStateRef.current = null;
   }, [symbol]);
 
-  // Regenerate sessionId when symbol changes
+  // Use symbol as sessionId to prevent duplicates when switching back to the same ticker
   useEffect(() => {
-    setChartSessionId(crypto.randomUUID());
+    setChartSessionId(symbol);
   }, [symbol]);
 
   const handleMouseDown = (event: React.MouseEvent) => {
