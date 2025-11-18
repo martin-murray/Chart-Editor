@@ -98,10 +98,10 @@ Testing preference: User prefers to handle testing themselves rather than intern
 
 ### Delete Confirmation UX Pattern
 Standard two-click confirmation for all delete actions across the app:
-- **First click**: Icon animates (pulse + scale), changes color to cyan (#5AF5FA), text changes to "Confirm?"
-- **Second click**: Actually performs deletion with fade-out animation
-- **Auto-reset**: Returns to normal state after 2 seconds if not confirmed
-- **Benefits**: Prevents accidental deletion, no modals/pop-ups, fast and modern
+- **First click**: Bin icon slides left to reveal "Delete Now" text in cyan (#5AF5FA)
+- **Second click**: Card slides left and fades out (300ms animation), then deletion occurs
+- **Auto-reset**: Returns to normal state after 4 seconds if not confirmed
+- **Benefits**: Prevents accidental deletion, no modals/pop-ups, fast and modern, clear visual feedback
 - **Implementation**: Applied to Chart History Log delete buttons (individual cards and "Delete All")
 
 ## System Architecture

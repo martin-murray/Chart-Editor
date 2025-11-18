@@ -207,6 +207,7 @@ export function PriceChart({
   // Delete confirmation states
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const confirmTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [dragTextStartY, setDragTextStartY] = useState(0);
   const [dragStartOffset, setDragStartOffset] = useState(0);
@@ -332,27 +333,33 @@ export function PriceChart({
     },
   });
   
-  // Handle delete confirmation with 2-second timeout
+  // Handle delete confirmation with 4-second timeout and slide animation
   const handleDeleteClick = (id: number) => {
     if (confirmDeleteId === id) {
-      // Second click - actually delete
-      deleteChartHistoryMutation.mutate(id);
+      // Second click - trigger slide-out animation then delete
+      setDeletingId(id);
       setConfirmDeleteId(null);
       if (confirmTimeoutRef.current) {
         clearTimeout(confirmTimeoutRef.current);
       }
+      
+      // Wait for animation to complete before actually deleting
+      setTimeout(() => {
+        deleteChartHistoryMutation.mutate(id);
+        setDeletingId(null);
+      }, 300); // 300ms for slide animation
     } else {
-      // First click - enter confirm mode
+      // First click - enter confirm mode (slide bin left to reveal "Delete Now")
       setConfirmDeleteId(id);
       setConfirmDeleteAll(false);
       
-      // Reset after 2 seconds
+      // Reset after 4 seconds
       if (confirmTimeoutRef.current) {
         clearTimeout(confirmTimeoutRef.current);
       }
       confirmTimeoutRef.current = setTimeout(() => {
         setConfirmDeleteId(null);
-      }, 2000);
+      }, 4000);
     }
   };
   
@@ -369,13 +376,13 @@ export function PriceChart({
       setConfirmDeleteAll(true);
       setConfirmDeleteId(null);
       
-      // Reset after 2 seconds
+      // Reset after 4 seconds
       if (confirmTimeoutRef.current) {
         clearTimeout(confirmTimeoutRef.current);
       }
       confirmTimeoutRef.current = setTimeout(() => {
         setConfirmDeleteAll(false);
-      }, 2000);
+      }, 4000);
     }
   };
   
@@ -4213,23 +4220,23 @@ export function PriceChart({
               variant="ghost"
               size="sm"
               onClick={handleDeleteAllClick}
-              className="flex items-center gap-2 hover:bg-transparent"
+              className="flex items-center gap-2 hover:bg-transparent overflow-hidden"
               data-testid="button-delete-all-history"
             >
-              <Trash2 
-                className={`h-4 w-4 transition-all ${confirmDeleteAll ? 'animate-pulse scale-110' : ''}`}
-                style={{ color: confirmDeleteAll ? '#5AF5FA' : '#F7F7F7' }}
-                onMouseEnter={(e) => !confirmDeleteAll && (e.currentTarget.style.color = '#5AF5FA')}
-                onMouseLeave={(e) => !confirmDeleteAll && (e.currentTarget.style.color = '#F7F7F7')}
-              />
-              <span 
-                className={`text-sm transition-all ${confirmDeleteAll ? 'animate-pulse' : ''}`}
-                style={{ color: confirmDeleteAll ? '#5AF5FA' : '#F7F7F7' }}
-                onMouseEnter={(e) => !confirmDeleteAll && (e.currentTarget.style.color = '#5AF5FA')}
-                onMouseLeave={(e) => !confirmDeleteAll && (e.currentTarget.style.color = '#F7F7F7')}
-              >
-                {confirmDeleteAll ? 'Confirm?' : 'Delete All'}
-              </span>
+              <div className="flex items-center gap-2">
+                <Trash2 
+                  className={`h-4 w-4 transition-all duration-300 ${confirmDeleteAll ? '-translate-x-12' : ''}`}
+                  style={{ color: confirmDeleteAll ? '#5AF5FA' : '#F7F7F7' }}
+                  onMouseEnter={(e) => !confirmDeleteAll && (e.currentTarget.style.color = '#5AF5FA')}
+                  onMouseLeave={(e) => !confirmDeleteAll && (e.currentTarget.style.color = '#F7F7F7')}
+                />
+                <span 
+                  className={`text-sm transition-all duration-300 whitespace-nowrap ${confirmDeleteAll ? '-translate-x-12' : 'translate-x-0'}`}
+                  style={{ color: '#5AF5FA' }}
+                >
+                  {confirmDeleteAll ? 'Delete Now' : 'Delete All'}
+                </span>
+              </div>
             </Button>
           )}
         </div>
@@ -4252,7 +4259,9 @@ export function PriceChart({
                 return (
                   <Card 
                     key={entry.id} 
-                    className="p-4 bg-muted/50 cursor-pointer transition-all duration-200 hover:bg-muted/70 relative group" 
+                    className={`p-4 bg-muted/50 cursor-pointer transition-all duration-300 hover:bg-muted/70 relative group ${
+                      deletingId === entry.id ? 'opacity-0 -translate-x-full' : ''
+                    }`}
                     data-testid={`chart-history-${entry.id}`}
                     onClick={() => restoreFromHistory(entry)}
                     style={{
@@ -4296,20 +4305,27 @@ export function PriceChart({
                           e.stopPropagation();
                           handleDeleteClick(entry.id);
                         }}
-                        className="ml-2 p-1 h-auto hover:bg-transparent relative"
+                        className="ml-2 px-2 py-1 h-auto hover:bg-transparent relative overflow-hidden"
                         data-testid={`button-delete-history-${entry.id}`}
                       >
-                        <Trash2 
-                          className={`h-4 w-4 transition-all ${confirmDeleteId === entry.id ? 'animate-pulse scale-125' : ''}`}
-                          style={{ color: confirmDeleteId === entry.id ? '#5AF5FA' : '#F7F7F7' }}
-                          onMouseEnter={(e) => confirmDeleteId !== entry.id && (e.currentTarget.style.color = '#5AF5FA')}
-                          onMouseLeave={(e) => confirmDeleteId !== entry.id && (e.currentTarget.style.color = '#F7F7F7')}
-                        />
-                        {confirmDeleteId === entry.id && (
-                          <span className="absolute -top-6 -right-2 text-xs whitespace-nowrap px-2 py-1 rounded animate-pulse" style={{ backgroundColor: '#5AF5FA', color: '#000' }}>
-                            Confirm?
-                          </span>
-                        )}
+                        <div className="flex items-center gap-2 relative">
+                          <Trash2 
+                            className={`h-4 w-4 transition-all duration-300 ${
+                              confirmDeleteId === entry.id ? '-translate-x-16' : ''
+                            }`}
+                            style={{ color: confirmDeleteId === entry.id ? '#5AF5FA' : '#F7F7F7' }}
+                            onMouseEnter={(e) => confirmDeleteId !== entry.id && (e.currentTarget.style.color = '#5AF5FA')}
+                            onMouseLeave={(e) => confirmDeleteId !== entry.id && (e.currentTarget.style.color = '#F7F7F7')}
+                          />
+                          {confirmDeleteId === entry.id && (
+                            <span 
+                              className="absolute left-0 text-xs whitespace-nowrap transition-all duration-300 -translate-x-16 font-medium"
+                              style={{ color: '#5AF5FA' }}
+                            >
+                              Delete Now
+                            </span>
+                          )}
+                        </div>
                       </Button>
                     </div>
                   </Card>
