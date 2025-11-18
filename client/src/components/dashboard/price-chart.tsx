@@ -267,8 +267,8 @@ export function PriceChart({
       });
     },
     onSuccess: () => {
-      // Invalidate chart history query to refresh the list
-      queryClient.invalidateQueries({ queryKey: ['/api/chart-history'] });
+      // Invalidate chart history query to refresh the list (scoped to current symbol)
+      queryClient.invalidateQueries({ queryKey: ['/api/chart-history', symbol] });
     },
     onError: (error) => {
       // Handle errors gracefully - log to console only, don't show toast
@@ -728,9 +728,9 @@ export function PriceChart({
 
   // Chart data query moved above to fix initialization order
 
-  // Fetch chart history (all tickers, not filtered)
+  // Fetch chart history (filtered to current symbol only to prevent header/data mismatch)
   const { data: chartHistory = [] } = useQuery<ChartHistory[]>({
-    queryKey: ['/api/chart-history'],
+    queryKey: ['/api/chart-history', symbol],
     queryFn: async () => {
       const response = await fetch('/api/chart-history', {
         headers: {
@@ -738,8 +738,11 @@ export function PriceChart({
         }
       });
       if (!response.ok) throw new Error('Failed to fetch chart history');
-      return await response.json();
+      const allHistory = await response.json();
+      // Filter to current symbol only - prevents confusion when clicking cards
+      return allHistory.filter((entry: ChartHistory) => entry.symbol === symbol);
     },
+    enabled: !!symbol,
   });
 
   // Function to restore chart state from history

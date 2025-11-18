@@ -644,52 +644,6 @@ function ChartMaker() {
             </div>
           )}
 
-          {/* Chart History Log */}
-          <Card className="p-6 mt-8">
-            <h3 className="text-lg font-semibold mb-4">Chart History Log</h3>
-            <div className="h-[350px] overflow-y-scroll">
-              {chartHistory.length > 0 ? (
-                <div className="space-y-3">
-                  {chartHistory.map((entry) => {
-                    const annotationCounts = entry.annotations.reduce((acc, ann) => {
-                      const type = ann.type === 'text' ? 'Text' : 
-                                   ann.type === 'percentage' ? 'Measure' : 
-                                   'Horizontal';
-                      acc[type] = (acc[type] || 0) + 1;
-                      return acc;
-                    }, {} as Record<string, number>);
-
-                    const annotationSummary = Object.entries(annotationCounts)
-                      .map(([type, count]) => `${count} ${type}`)
-                      .join(', ');
-
-                    return (
-                      <Card key={entry.id} className="p-4 bg-muted/50" data-testid={`chart-history-${entry.id}`}>
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="font-bold text-[#5AF5FA] mb-1">
-                              {entry.symbol}
-                            </div>
-                            <div className="text-sm text-muted-foreground mb-2">
-                              {format(new Date(entry.savedAt), 'MMM dd, yyyy HH:mm:ss')}
-                            </div>
-                            <div className="text-sm text-foreground">
-                              {annotationSummary}
-                            </div>
-                          </div>
-                        </div>
-                      </Card>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="flex items-center justify-center h-full text-muted-foreground text-center">
-                  <p data-testid="text-no-history">No chart history yet. Annotate a chart to see it here.</p>
-                </div>
-              )}
-            </div>
-          </Card>
-
           {/* Combined Info Section */}
           <Card className="p-6 mt-8">
             <h3 className="text-lg font-semibold mb-4">Global Market Coverage & Index Coverage</h3>
