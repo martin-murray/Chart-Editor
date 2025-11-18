@@ -98,6 +98,29 @@ export const insertLoginAttemptSchema = createInsertSchema(loginAttempts).omit({
   attemptedAt: true,
 });
 
+export const chartHistory = pgTable("chart_history", {
+  id: serial("id").primaryKey(),
+  symbol: text("symbol").notNull(),
+  annotations: jsonb("annotations").$type<Array<{
+    id: string;
+    type: string;
+    text?: string;
+    price?: number;
+    timestamp?: number;
+    time?: string;
+    startTimestamp?: number;
+    endTimestamp?: number;
+    startPrice?: number;
+    endPrice?: number;
+  }>>().notNull(),
+  savedAt: timestamp("saved_at").notNull().defaultNow(),
+});
+
+export const insertChartHistorySchema = createInsertSchema(chartHistory).omit({
+  id: true,
+  savedAt: true,
+});
+
 export type Stock = typeof stocks.$inferSelect;
 export type InsertStock = z.infer<typeof insertStockSchema>;
 export type SlackAlert = typeof slackAlerts.$inferSelect;
@@ -108,6 +131,8 @@ export type VisitorAnalytics = typeof visitorAnalytics.$inferSelect;
 export type InsertVisitorAnalytics = z.infer<typeof insertVisitorAnalyticsSchema>;
 export type LoginAttempt = typeof loginAttempts.$inferSelect;
 export type InsertLoginAttempt = z.infer<typeof insertLoginAttemptSchema>;
+export type ChartHistory = typeof chartHistory.$inferSelect;
+export type InsertChartHistory = z.infer<typeof insertChartHistorySchema>;
 
 // AI Co-Pilot tables
 export const aiCopilotChats = pgTable("ai_copilot_chats", {

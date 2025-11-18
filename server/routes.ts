@@ -6,7 +6,7 @@ import { finnhubService } from "./services/finnhubService";
 import multer from "multer";
 import { sendFeedbackToSlack } from "./slack";
 import { db } from "./db";
-import { visitorAnalytics, loginAttempts, insertLoginAttemptSchema, aiCopilotChats, aiCopilotMessages, aiCopilotUploads } from "@shared/schema";
+import { visitorAnalytics, loginAttempts, insertLoginAttemptSchema, aiCopilotChats, aiCopilotMessages, aiCopilotUploads, chartHistory, insertChartHistorySchema } from "@shared/schema";
 import { desc, count, sql, gte, lte, and, eq } from "drizzle-orm";
 import { getExchangeInfoFromSuffix, applySuffixOverride } from "./utils/suffixMappings";
 import { indexService } from "./services/indexService";
@@ -843,6 +843,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching login attempts:", error);
       res.status(500).json({ message: "Failed to fetch login attempts" });
+    }
+  });
+
+  // Chart History Routes
+
+  // Save chart with annotations to history
+  app.post("/api/chart-history", requireAuth, async (req, res) => {
+    try {
+      const { symbol, annotations } = req.body;
+      
+      if (!symbol || !annotations || !Array.isArray(annotations) || annotations.length === 0) {
+        return res.status(400).json({ message: "Symbol and annotations are required" });
+      }
+      
+      const [history] = await db.insert(chartHistory).values({
+        symbol,
+        annotations
+      }).returning();
+      
+      res.json(history);
+    } catch (error) {
+      console.error("Error saving chart history:", error);
+      res.status(500).json({ message: "Failed to save chart history" });
+    }
+  });
+
+  // Get recent chart history (limit 50, ordered by most recent)
+  app.get("/api/chart-history", requireAuth, async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 50;
+      
+      const history = await db
+        .select()
+        .from(chartHistory)
+        .orderBy(desc(chartHistory.savedAt))
+        .limit(limit);
+      
+      res.json(history);
+    } catch (error) {
+      console.error("Error fetching chart history:", error);
+      res.status(500).json({ message: "Failed to fetch chart history" });
     }
   });
 
