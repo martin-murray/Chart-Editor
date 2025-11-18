@@ -2816,19 +2816,27 @@ export function PriceChart({
                   )}
                   
                   {/* CSV Overlay Line - shows percentage overlay data */}
-                  {csvOverlay.length > 0 && (
-                    <Line
-                      yAxisId="overlay"
-                      type="monotone"
-                      dataKey="csvOverlay"
-                      stroke="#FFFFFF"
-                      strokeWidth={2}
-                      dot={false}
-                      name="CSV Overlay"
-                      connectNulls
-                      activeDot={{ r: 4, fill: '#FFFFFF', stroke: '#121212', strokeWidth: 2 }}
-                    />
-                  )}
+                  {csvOverlay.length > 0 && (() => {
+                    const dataWithOverlay = (chartDataWithDividendOverlay || chartDataWithMA || []).filter(d => d.csvOverlay != null);
+                    console.log('🎨 Rendering CSV Overlay Line');
+                    console.log('  CSV overlay state length:', csvOverlay.length);
+                    console.log('  Chart data points with overlay:', dataWithOverlay.length);
+                    console.log('  Sample overlay values:', dataWithOverlay.slice(0, 5).map(d => d.csvOverlay));
+                    return (
+                      <Line
+                        yAxisId="overlay"
+                        type="monotone"
+                        dataKey="csvOverlay"
+                        stroke="#FFFFFF"
+                        strokeWidth={3}
+                        dot={false}
+                        name="CSV Overlay"
+                        connectNulls
+                        activeDot={{ r: 4, fill: '#FFFFFF', stroke: '#121212', strokeWidth: 2 }}
+                        isAnimationActive={false}
+                      />
+                    );
+                  })()}
                   
                   {/* Custom annotation markers and percentage lines */}
                   <Customized 
