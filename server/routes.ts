@@ -13,7 +13,7 @@ import { indexService } from "./services/indexService";
 import OpenAI from "openai";
 
 // Simple in-memory session store for authentication
-const authSessions = new Map<string, { createdAt: number }>();
+const authSessions = new Map<string, { createdAt: number; userId: string }>();
 
 // Middleware to check authentication
 function requireAuth(req: any, res: any, next: any) {
@@ -29,6 +29,9 @@ function requireAuth(req: any, res: any, next: any) {
     authSessions.delete(token);
     return res.status(401).json({ message: 'Session expired' });
   }
+  
+  // Attach userId to request for downstream use
+  req.userId = session?.userId;
   
   next();
 }
@@ -811,7 +814,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (isValid) {
         // Generate session token
         const token = randomUUID();
-        authSessions.set(token, { createdAt: Date.now() });
+        authSessions.set(token, { createdAt: Date.now(), userId: username });
         
         res.json({ success: true, token });
       } else {
@@ -849,15 +852,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Chart History Routes
 
   // Save chart with annotations to history
-  app.post("/api/chart-history", requireAuth, async (req, res) => {
+  app.post("/api/chart-history", requireAuth, async (req: any, res) => {
     try {
       const { symbol, annotations } = req.body;
+      const userId = req.userId;
       
       if (!symbol || !annotations || !Array.isArray(annotations) || annotations.length === 0) {
         return res.status(400).json({ message: "Symbol and annotations are required" });
       }
       
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+      
       const [history] = await db.insert(chartHistory).values({
+        userId,
         symbol,
         annotations
       }).returning();
@@ -869,14 +878,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get recent chart history (limit 50, ordered by most recent)
-  app.get("/api/chart-history", requireAuth, async (req, res) => {
+  // Get recent chart history (limit 50, ordered by most recent, filtered by user)
+  app.get("/api/chart-history", requireAuth, async (req: any, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 50;
+      const userId = req.userId;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
       
       const history = await db
         .select()
         .from(chartHistory)
+        .where(eq(chartHistory.userId, userId))
         .orderBy(desc(chartHistory.savedAt))
         .limit(limit);
       

@@ -100,6 +100,7 @@ export const insertLoginAttemptSchema = createInsertSchema(loginAttempts).omit({
 
 export const chartHistory = pgTable("chart_history", {
   id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(), // User identifier (email/username)
   symbol: text("symbol").notNull(),
   annotations: jsonb("annotations").$type<Array<{
     id: string;
