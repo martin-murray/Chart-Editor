@@ -21,6 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ComparisonChart } from './comparison-chart';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
+import type { ChartHistory } from '@shared/schema';
 
 interface ChartData {
   timestamp: number;
@@ -212,6 +213,9 @@ export function PriceChart({
   // Hover tool toggle state
   const [showHoverTooltip, setShowHoverTooltip] = useState(true);
   
+  // Session ID tracking - regenerates when symbol changes
+  const [chartSessionId, setChartSessionId] = useState(() => crypto.randomUUID());
+  
   // Helper function to update annotations in both controlled and uncontrolled modes
   const updateAnnotations = (newAnnotations: Annotation[] | ((prev: Annotation[]) => Annotation[])) => {
     if (onAnnotationsChange) {
@@ -226,18 +230,45 @@ export function PriceChart({
     }
   };
 
-  // Track last saved annotations to prevent duplicate saves
-  const lastSavedAnnotationsRef = useRef<string | null>(null);
+  // Track last saved state (all fields, not just annotations) to prevent duplicate saves
+  const lastSavedStateRef = useRef<string | null>(null);
   const isInitialMountRef = useRef(true);
 
   // Mutation to save chart history
   const saveChartHistoryMutation = useMutation({
-    mutationFn: async ({ symbol, annotations }: { symbol: string; annotations: Annotation[] }) => {
-      await apiRequest('POST', '/api/chart-history', { symbol, annotations });
+    mutationFn: async ({ 
+      sessionId, 
+      symbol, 
+      timeframe, 
+      customStartDate, 
+      customEndDate, 
+      dividendAdjusted, 
+      csvOverlay, 
+      annotations 
+    }: { 
+      sessionId: string;
+      symbol: string; 
+      timeframe: string;
+      customStartDate?: string;
+      customEndDate?: string;
+      dividendAdjusted: boolean;
+      csvOverlay: { timestamp: number; value: number }[];
+      annotations: Annotation[] 
+    }) => {
+      await apiRequest('POST', '/api/chart-history', { 
+        sessionId,
+        symbol, 
+        timeframe,
+        customStartDate,
+        customEndDate,
+        dividendAdjusted,
+        csvOverlay,
+        annotations 
+      });
     },
     onSuccess: () => {
-      // Invalidate chart history query to refresh the list
-      queryClient.invalidateQueries({ queryKey: ['/api/chart-history'] });
+      // Invalidate chart history query to refresh the list (scoped to current symbol)
+      queryClient.invalidateQueries({ queryKey: ['/api/chart-history', symbol] });
     },
     onError: (error) => {
       // Handle errors gracefully - log to console only, don't show toast
@@ -245,43 +276,73 @@ export function PriceChart({
     },
   });
 
-  // Auto-save annotations with debouncing
+  // Auto-save full chart state with debouncing
   useEffect(() => {
-    // Skip on initial mount (don't save pre-loaded annotations)
+    // Skip on initial mount (don't save pre-loaded state)
     if (isInitialMountRef.current) {
       isInitialMountRef.current = false;
-      lastSavedAnnotationsRef.current = JSON.stringify(annotations);
+      const initialState = JSON.stringify({
+        timeframe: selectedTimeframe,
+        customStartDate: startDate?.toISOString(),
+        customEndDate: endDate?.toISOString(),
+        dividendAdjusted: showDividendOverlay,
+        csvOverlay,
+        annotations
+      });
+      lastSavedStateRef.current = initialState;
       return;
     }
 
     // Only save when annotations exist
     if (annotations.length === 0) {
-      lastSavedAnnotationsRef.current = null;
+      lastSavedStateRef.current = null;
       return;
     }
 
-    // Check if annotations actually changed since last save
-    const currentAnnotationsJson = JSON.stringify(annotations);
-    if (currentAnnotationsJson === lastSavedAnnotationsRef.current) {
+    // Check if any state actually changed since last save
+    const currentState = JSON.stringify({
+      timeframe: selectedTimeframe,
+      customStartDate: startDate?.toISOString(),
+      customEndDate: endDate?.toISOString(),
+      dividendAdjusted: showDividendOverlay,
+      csvOverlay,
+      annotations
+    });
+    
+    if (currentState === lastSavedStateRef.current) {
       return; // No changes, skip save
     }
 
     // Debounce the save operation (2000ms delay)
     const timeoutId = setTimeout(() => {
-      saveChartHistoryMutation.mutate({ symbol, annotations });
-      lastSavedAnnotationsRef.current = currentAnnotationsJson;
+      saveChartHistoryMutation.mutate({ 
+        sessionId: chartSessionId,
+        symbol, 
+        timeframe: selectedTimeframe,
+        customStartDate: selectedTimeframe === 'Custom' && startDate ? startDate.toISOString() : undefined,
+        customEndDate: selectedTimeframe === 'Custom' && endDate ? endDate.toISOString() : undefined,
+        dividendAdjusted: showDividendOverlay,
+        csvOverlay,
+        annotations 
+      });
+      lastSavedStateRef.current = currentState;
     }, 2000);
 
     // Clear timeout on new changes to avoid multiple saves
     return () => {
       clearTimeout(timeoutId);
     };
-  }, [annotations, symbol]);
+  }, [annotations, selectedTimeframe, startDate, endDate, showDividendOverlay, csvOverlay, symbol, chartSessionId, saveChartHistoryMutation]);
 
   // Reset initial mount flag when symbol changes
   useEffect(() => {
     isInitialMountRef.current = true;
-    lastSavedAnnotationsRef.current = null;
+    lastSavedStateRef.current = null;
+  }, [symbol]);
+
+  // Regenerate sessionId when symbol changes
+  useEffect(() => {
+    setChartSessionId(crypto.randomUUID());
   }, [symbol]);
 
   const handleMouseDown = (event: React.MouseEvent) => {
@@ -666,6 +727,53 @@ export function PriceChart({
   });
 
   // Chart data query moved above to fix initialization order
+
+  // Fetch chart history (scoped to current symbol in query key for proper cache invalidation)
+  const { data: chartHistory = [] } = useQuery<ChartHistory[]>({
+    queryKey: ['/api/chart-history', symbol],
+    queryFn: async () => {
+      const response = await fetch('/api/chart-history', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        }
+      });
+      if (!response.ok) throw new Error('Failed to fetch chart history');
+      const allHistory = await response.json();
+      // Filter server-side response to current symbol only
+      return allHistory.filter((entry: ChartHistory) => entry.symbol === symbol);
+    },
+    enabled: !!symbol,
+  });
+
+  // Function to restore chart state from history
+  const restoreFromHistory = (entry: ChartHistory) => {
+    // Set timeframe
+    setSelectedTimeframe(entry.timeframe);
+    
+    // Set custom dates if applicable
+    if (entry.timeframe === 'Custom' && entry.customStartDate && entry.customEndDate) {
+      setStartDate(new Date(entry.customStartDate));
+      setEndDate(new Date(entry.customEndDate));
+    } else {
+      setStartDate(undefined);
+      setEndDate(undefined);
+    }
+    
+    // Set dividend adjusted toggle
+    setShowDividendOverlay(entry.dividendAdjusted || false);
+    
+    // Set CSV overlay
+    setCsvOverlay(entry.csvOverlay || []);
+    
+    // Set annotations
+    updateAnnotations(entry.annotations as Annotation[] || []);
+    
+    // Show toast to confirm restoration
+    toast({
+      title: "Chart Restored",
+      description: `Loaded chart state for ${entry.symbol} from ${format(new Date(entry.savedAt), 'MMM dd, yyyy HH:mm')}`,
+    });
+  };
 
   // Currency mapping for different markets
   const getCurrencySymbol = (currencyCode: string | undefined): string => {
@@ -3944,6 +4052,77 @@ export function PriceChart({
           </div>
         </div>
       )}
+
+      {/* Chart History Log */}
+      <Card className="p-6 mt-8" style={{ backgroundColor: '#121212' }}>
+        <h3 className="text-lg font-semibold mb-4">Chart History Log</h3>
+        <div className="h-[350px] overflow-y-scroll">
+          {chartHistory.length > 0 ? (
+            <div className="space-y-3">
+              {chartHistory.map((entry) => {
+                const annotationCounts = entry.annotations.reduce((acc, ann) => {
+                  const type = ann.type === 'text' ? 'Text' : 
+                               ann.type === 'percentage' ? 'Measure' : 
+                               'Horizontal';
+                  acc[type] = (acc[type] || 0) + 1;
+                  return acc;
+                }, {} as Record<string, number>);
+
+                const annotationSummary = Object.entries(annotationCounts)
+                  .map(([type, count]) => `${count} ${type}`)
+                  .join(', ');
+
+                return (
+                  <Card 
+                    key={entry.id} 
+                    className="p-4 bg-muted/50 cursor-pointer transition-all duration-200 hover:bg-muted/70 relative group" 
+                    data-testid={`chart-history-${entry.id}`}
+                    onClick={() => restoreFromHistory(entry)}
+                    style={{
+                      borderRadius: '4px',
+                    }}
+                  >
+                    {/* Hover gradient border */}
+                    <div 
+                      className="absolute inset-0 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"
+                      style={{
+                        background: 'linear-gradient(90deg, #5AF5FA 0%, #FFA5FF 100%)',
+                        padding: '1px',
+                        borderRadius: '4px',
+                        WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                        WebkitMaskComposite: 'xor',
+                        maskComposite: 'exclude',
+                      }}
+                    />
+                    <div className="flex items-start justify-between relative z-10">
+                      <div className="flex-1">
+                        <div className="font-bold text-[#5AF5FA] mb-1">
+                          {entry.symbol}
+                        </div>
+                        <div className="text-sm text-muted-foreground mb-2">
+                          {format(new Date(entry.savedAt), 'MMM dd, yyyy HH:mm:ss')}
+                        </div>
+                        <div className="text-xs text-muted-foreground mb-1">
+                          Timeframe: {entry.timeframe}
+                          {entry.dividendAdjusted && ' • Dividend Adjusted'}
+                          {entry.csvOverlay && entry.csvOverlay.length > 0 && ` • CSV Overlay (${entry.csvOverlay.length} points)`}
+                        </div>
+                        <div className="text-sm text-foreground">
+                          {annotationSummary || 'No annotations'}
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-full text-muted-foreground text-center">
+              <p data-testid="text-no-history">No chart history yet. Annotate a chart to see it here.</p>
+            </div>
+          )}
+        </div>
+      </Card>
     </div>
   );
 
