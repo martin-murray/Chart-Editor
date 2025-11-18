@@ -4220,47 +4220,50 @@ export function PriceChart({
               variant="ghost"
               size="sm"
               onClick={handleDeleteAllClick}
-              className="hover:bg-transparent relative"
-              style={{ width: confirmDeleteAll ? '95px' : '90px', transition: 'width 300ms' }}
+              className="hover:bg-transparent relative flex items-center justify-center"
+              style={{ 
+                width: confirmDeleteAll ? '95px' : '90px',
+                height: '32px',
+                transition: 'width 300ms',
+                overflow: 'hidden'
+              }}
               data-testid="button-delete-all-history"
             >
-              <div className="relative w-full h-full flex items-center overflow-hidden">
-                <Trash2 
-                  className={`h-4 w-4 absolute transition-all duration-300 ${
-                    confirmDeleteAll ? 'opacity-0 -translate-x-8' : 'opacity-100 translate-x-0'
-                  }`}
-                  style={{ 
-                    color: confirmDeleteAll ? '#5AF5FA' : '#F7F7F7',
-                    left: '0'
-                  }}
-                  onMouseEnter={(e) => !confirmDeleteAll && (e.currentTarget.style.color = '#5AF5FA')}
-                  onMouseLeave={(e) => !confirmDeleteAll && (e.currentTarget.style.color = '#F7F7F7')}
-                />
-                <span 
-                  className={`text-sm whitespace-nowrap font-medium absolute transition-all duration-300 ${
-                    confirmDeleteAll ? 'opacity-0 -translate-x-8' : 'opacity-100 translate-x-0'
-                  }`}
-                  style={{ 
-                    color: '#F7F7F7',
-                    left: '24px'
-                  }}
-                  onMouseEnter={(e) => !confirmDeleteAll && (e.currentTarget.style.color = '#5AF5FA')}
-                  onMouseLeave={(e) => !confirmDeleteAll && (e.currentTarget.style.color = '#F7F7F7')}
-                >
-                  Delete All
-                </span>
-                <span 
-                  className={`text-sm whitespace-nowrap font-medium absolute transition-all duration-300 ${
-                    confirmDeleteAll ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'
-                  }`}
-                  style={{ 
-                    color: '#5AF5FA',
-                    left: '4px'
-                  }}
-                >
-                  Delete Now
-                </span>
-              </div>
+              <Trash2 
+                className={`h-4 w-4 absolute transition-all duration-300 ${
+                  confirmDeleteAll ? 'opacity-0 -translate-x-12' : 'opacity-100 translate-x-0'
+                }`}
+                style={{ 
+                  color: confirmDeleteAll ? '#5AF5FA' : '#F7F7F7',
+                  left: '4px'
+                }}
+                onMouseEnter={(e) => !confirmDeleteAll && (e.currentTarget.style.color = '#5AF5FA')}
+                onMouseLeave={(e) => !confirmDeleteAll && (e.currentTarget.style.color = '#F7F7F7')}
+              />
+              <span 
+                className={`text-sm whitespace-nowrap font-medium absolute transition-all duration-300 ${
+                  confirmDeleteAll ? 'opacity-0 -translate-x-12' : 'opacity-100 translate-x-0'
+                }`}
+                style={{ 
+                  color: '#F7F7F7',
+                  left: '28px'
+                }}
+                onMouseEnter={(e) => !confirmDeleteAll && (e.currentTarget.style.color = '#5AF5FA')}
+                onMouseLeave={(e) => !confirmDeleteAll && (e.currentTarget.style.color = '#F7F7F7')}
+              >
+                Delete All
+              </span>
+              <span 
+                className={`text-sm whitespace-nowrap font-medium absolute transition-all duration-300 ${
+                  confirmDeleteAll ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'
+                }`}
+                style={{ 
+                  color: '#5AF5FA',
+                  left: '8px'
+                }}
+              >
+                Delete Now
+              </span>
             </Button>
           )}
         </div>
@@ -4329,34 +4332,33 @@ export function PriceChart({
                           e.stopPropagation();
                           handleDeleteClick(entry.id);
                         }}
-                        className="ml-2 h-auto hover:bg-transparent relative"
-                        style={{ width: confirmDeleteId === entry.id ? '80px' : '32px', transition: 'width 300ms' }}
+                        className="ml-2 hover:bg-transparent relative flex items-center justify-center"
+                        style={{ 
+                          width: confirmDeleteId === entry.id ? '85px' : '36px',
+                          height: '32px',
+                          transition: 'width 300ms',
+                          overflow: 'hidden'
+                        }}
                         data-testid={`button-delete-history-${entry.id}`}
                       >
-                        <div className="relative w-full h-full flex items-center overflow-hidden">
-                          <Trash2 
-                            className={`h-4 w-4 absolute transition-all duration-300 ${
-                              confirmDeleteId === entry.id ? 'opacity-0 -translate-x-8' : 'opacity-100 translate-x-0'
-                            }`}
-                            style={{ 
-                              color: confirmDeleteId === entry.id ? '#5AF5FA' : '#F7F7F7',
-                              left: confirmDeleteId === entry.id ? '0' : '8px'
-                            }}
-                            onMouseEnter={(e) => confirmDeleteId !== entry.id && (e.currentTarget.style.color = '#5AF5FA')}
-                            onMouseLeave={(e) => confirmDeleteId !== entry.id && (e.currentTarget.style.color = '#F7F7F7')}
-                          />
-                          <span 
-                            className={`text-xs whitespace-nowrap font-medium absolute transition-all duration-300 ${
-                              confirmDeleteId === entry.id ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'
-                            }`}
-                            style={{ 
-                              color: '#5AF5FA',
-                              left: '4px'
-                            }}
-                          >
-                            Delete Now
-                          </span>
-                        </div>
+                        <Trash2 
+                          className={`h-4 w-4 absolute transition-all duration-300 ${
+                            confirmDeleteId === entry.id ? 'opacity-0 -translate-x-12' : 'opacity-100 translate-x-0'
+                          }`}
+                          style={{ 
+                            color: confirmDeleteId === entry.id ? '#5AF5FA' : '#F7F7F7'
+                          }}
+                          onMouseEnter={(e) => confirmDeleteId !== entry.id && (e.currentTarget.style.color = '#5AF5FA')}
+                          onMouseLeave={(e) => confirmDeleteId !== entry.id && (e.currentTarget.style.color = '#F7F7F7')}
+                        />
+                        <span 
+                          className={`text-xs whitespace-nowrap font-medium absolute transition-all duration-300 ${
+                            confirmDeleteId === entry.id ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'
+                          }`}
+                          style={{ color: '#5AF5FA' }}
+                        >
+                          Delete Now
+                        </span>
                       </Button>
                     </div>
                   </Card>
