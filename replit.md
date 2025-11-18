@@ -96,6 +96,14 @@ A full-stack stock market tracking application built with React, Express.js, and
 Preferred communication style: Simple, everyday language.
 Testing preference: User prefers to handle testing themselves rather than internal automated testing. Skip QA testing for speed - user will test the app directly.
 
+### Delete Confirmation UX Pattern
+Standard two-click confirmation for all delete actions across the app:
+- **First click**: Icon animates (pulse + scale), changes color to cyan (#5AF5FA), text changes to "Confirm?"
+- **Second click**: Actually performs deletion with fade-out animation
+- **Auto-reset**: Returns to normal state after 2 seconds if not confirmed
+- **Benefits**: Prevents accidental deletion, no modals/pop-ups, fast and modern
+- **Implementation**: Applied to Chart History Log delete buttons (individual cards and "Delete All")
+
 ## System Architecture
 
 ### Frontend Architecture
