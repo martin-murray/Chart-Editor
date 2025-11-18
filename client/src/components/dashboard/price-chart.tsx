@@ -970,20 +970,7 @@ export function PriceChart({
       return chartDataWithMA;
     }
     
-    console.log('🔍 CSV Overlay Merging Debug:');
-    console.log('  Chart data points:', chartDataWithMA.length);
-    console.log('  CSV overlay points:', csvOverlay.length);
-    console.log('  Sample chart timestamps (first 3):', chartDataWithMA.slice(0, 3).map(p => ({
-      timestamp: p.timestamp,
-      date: new Date(p.timestamp).toISOString()
-    })));
-    console.log('  Sample CSV timestamps (first 3):', csvOverlay.slice(0, 3).map(o => ({
-      timestamp: o.timestamp,
-      date: new Date(o.timestamp).toISOString(),
-      value: o.value
-    })));
-    
-    const merged = chartDataWithMA.map(point => {
+    return chartDataWithMA.map(point => {
       // Both chart and CSV timestamps are in milliseconds
       const match = csvOverlay.find(overlay => {
         const diff = Math.abs(overlay.timestamp - point.timestamp);
@@ -996,20 +983,11 @@ export function PriceChart({
         csvOverlay: match ? match.value * 100 : null // Convert 0-1 to 0-100%
       };
     });
-    
-    const matchCount = merged.filter(p => p.csvOverlay != null).length;
-    console.log('  Merged points with overlay:', matchCount);
-    
-    return merged;
   }, [chartDataWithMA, csvOverlay]);
 
   // Calculate non-dividend adjusted prices (add back dividends)
   const chartDataWithDividendOverlay = useMemo(() => {
     if (!chartDataWithOverlay || !dividendData?.dividends || dividendData.dividends.length === 0) {
-      if (chartDataWithOverlay && csvOverlay.length > 0) {
-        console.log('📊 Returning chartDataWithOverlay (no dividends)');
-        console.log('  Sample point with CSV:', chartDataWithOverlay.find(p => p.csvOverlay));
-      }
       return chartDataWithOverlay;
     }
 
@@ -2895,27 +2873,20 @@ export function PriceChart({
                   )}
                   
                   {/* CSV Overlay Line - shows percentage overlay data */}
-                  {csvOverlay.length > 0 && (() => {
-                    const dataWithOverlay = (chartDataWithDividendOverlay || chartDataWithMA || []).filter(d => d.csvOverlay != null);
-                    console.log('🎨 Rendering CSV Overlay Line');
-                    console.log('  CSV overlay state length:', csvOverlay.length);
-                    console.log('  Chart data points with overlay:', dataWithOverlay.length);
-                    console.log('  Sample overlay values:', dataWithOverlay.slice(0, 5).map(d => d.csvOverlay));
-                    return (
-                      <Line
-                        yAxisId="overlay"
-                        type="monotone"
-                        dataKey="csvOverlay"
-                        stroke="#FFFFFF"
-                        strokeWidth={3}
-                        dot={false}
-                        name="CSV Overlay"
-                        connectNulls
-                        activeDot={{ r: 4, fill: '#FFFFFF', stroke: '#121212', strokeWidth: 2 }}
-                        isAnimationActive={false}
-                      />
-                    );
-                  })()}
+                  {csvOverlay.length > 0 && (
+                    <Line
+                      yAxisId="overlay"
+                      type="monotone"
+                      dataKey="csvOverlay"
+                      stroke="#FFFFFF"
+                      strokeWidth={2}
+                      dot={false}
+                      name="CSV Overlay"
+                      connectNulls
+                      activeDot={{ r: 4, fill: '#FFFFFF', stroke: '#121212', strokeWidth: 2 }}
+                      isAnimationActive={false}
+                    />
+                  )}
                   
                   {/* Custom annotation markers and percentage lines */}
                   <Customized 
