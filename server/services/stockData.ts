@@ -31,12 +31,14 @@ export class StockDataService {
    * Get stock chart data using Finnhub API with Alpha Vantage fallback
    */
   async getStockChart(symbol: string, from: number, to: number, resolution: string): Promise<any> {
+    console.log(`📈 Chart request - Symbol: ${symbol}, Resolution: ${resolution}`);
+    
+    let finnhubData = null;
+    let finnhubError = false;
+    
+    // Try Finnhub first
     try {
-      console.log(`📈 Chart request - Symbol: ${symbol}, Resolution: ${resolution}`);
-      
-      // Try Finnhub first
-      const finnhubData = await finnhubService.getStockCandles(symbol, from, to, resolution);
-      
+      finnhubData = await finnhubService.getStockCandles(symbol, from, to, resolution);
       console.log(`📈 Finnhub response - Has data: ${!!finnhubData}, Status: ${finnhubData?.s}, Points: ${finnhubData?.t?.length || 0}`);
       
       // If Finnhub returns data, use it
@@ -44,11 +46,17 @@ export class StockDataService {
         console.log(`✅ Using Finnhub data for ${symbol}: ${finnhubData.t.length} points`);
         return finnhubData;
       }
+    } catch (error) {
+      console.error(`❌ Finnhub error for ${symbol}:`, error);
+      finnhubError = true;
+    }
+    
+    // If Finnhub failed or has no data, and resolution is daily, try Alpha Vantage
+    // Alpha Vantage only provides daily data, not intraday
+    if (resolution === 'D') {
+      console.log(`⚠️  Finnhub ${finnhubError ? 'failed' : 'has no data'} for ${symbol}, trying Alpha Vantage fallback...`);
       
-      // If Finnhub has no data and resolution is daily, try Alpha Vantage
-      // Alpha Vantage only provides daily data, not intraday
-      if (resolution === 'D') {
-        console.log(`⚠️  Finnhub has no data for ${symbol}, trying Alpha Vantage fallback...`);
+      try {
         const alphaVantageData = await alphaVantageService.getStockCandles(symbol, from, to);
         
         if (alphaVantageData && alphaVantageData.s === 'ok' && alphaVantageData.t && alphaVantageData.t.length > 0) {
@@ -57,16 +65,15 @@ export class StockDataService {
         } else {
           console.log(`❌ Alpha Vantage also has no data for ${symbol}`);
         }
-      } else {
-        console.log(`⏭️  Skipping Alpha Vantage fallback - resolution is ${resolution}, not daily (D)`);
+      } catch (alphaError) {
+        console.error(`❌ Alpha Vantage error for ${symbol}:`, alphaError);
       }
-      
-      // No data from either source
-      return finnhubData;
-    } catch (error) {
-      console.error("Error getting stock chart:", error);
-      return null;
+    } else {
+      console.log(`⏭️  Skipping Alpha Vantage fallback - resolution is ${resolution}, not daily (D)`);
     }
+    
+    // No data from either source
+    return finnhubData;
   }
 
   /**
