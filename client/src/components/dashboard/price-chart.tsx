@@ -1,5 +1,6 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 import { AreaChart, Area, LineChart, Line, BarChart, Bar, ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine, Customized } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -224,6 +225,64 @@ export function PriceChart({
       setInternalAnnotations(newAnnotations);
     }
   };
+
+  // Track last saved annotations to prevent duplicate saves
+  const lastSavedAnnotationsRef = useRef<string | null>(null);
+  const isInitialMountRef = useRef(true);
+
+  // Mutation to save chart history
+  const saveChartHistoryMutation = useMutation({
+    mutationFn: async ({ symbol, annotations }: { symbol: string; annotations: Annotation[] }) => {
+      await apiRequest('POST', '/api/chart-history', { symbol, annotations });
+    },
+    onSuccess: () => {
+      // Invalidate chart history query to refresh the list
+      queryClient.invalidateQueries({ queryKey: ['/api/chart-history'] });
+    },
+    onError: (error) => {
+      // Handle errors gracefully - log to console only, don't show toast
+      console.error('Failed to save chart history:', error);
+    },
+  });
+
+  // Auto-save annotations with debouncing
+  useEffect(() => {
+    // Skip on initial mount (don't save pre-loaded annotations)
+    if (isInitialMountRef.current) {
+      isInitialMountRef.current = false;
+      lastSavedAnnotationsRef.current = JSON.stringify(annotations);
+      return;
+    }
+
+    // Only save when annotations exist
+    if (annotations.length === 0) {
+      lastSavedAnnotationsRef.current = null;
+      return;
+    }
+
+    // Check if annotations actually changed since last save
+    const currentAnnotationsJson = JSON.stringify(annotations);
+    if (currentAnnotationsJson === lastSavedAnnotationsRef.current) {
+      return; // No changes, skip save
+    }
+
+    // Debounce the save operation (2000ms delay)
+    const timeoutId = setTimeout(() => {
+      saveChartHistoryMutation.mutate({ symbol, annotations });
+      lastSavedAnnotationsRef.current = currentAnnotationsJson;
+    }, 2000);
+
+    // Clear timeout on new changes to avoid multiple saves
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [annotations, symbol]);
+
+  // Reset initial mount flag when symbol changes
+  useEffect(() => {
+    isInitialMountRef.current = true;
+    lastSavedAnnotationsRef.current = null;
+  }, [symbol]);
 
   const handleMouseDown = (event: React.MouseEvent) => {
     if (!chartRef.current) return;
