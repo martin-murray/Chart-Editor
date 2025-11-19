@@ -4270,7 +4270,7 @@ export function PriceChart({
         </div>
         <div className="h-[350px] overflow-y-scroll">
           {chartHistory.length > 0 ? (
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {chartHistory.map((entry) => {
                 const annotationCounts = entry.annotations.reduce((acc, ann) => {
                   const type = ann.type === 'text' ? 'Text' : 
