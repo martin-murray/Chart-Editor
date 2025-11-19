@@ -3228,6 +3228,21 @@ export function PriceChart({
                     />
                   )}
                   
+                  {/* Comparison Tickers Y-axis (left side) - percentage scale */}
+                  {comparisonTickers.length > 0 && csvOverlay.length === 0 && (
+                    <YAxis
+                      yAxisId="comparison"
+                      orientation="left"
+                      domain={['dataMin', 'dataMax']}
+                      tickFormatter={(value) => `${value.toFixed(1)}%`}
+                      stroke="#b0b0b0"
+                      tick={{ fill: '#b0b0b0', fontSize: 11 }}
+                      width={50}
+                      axisLine={{ stroke: '#b0b0b0' }}
+                      tickLine={{ stroke: '#b0b0b0' }}
+                    />
+                  )}
+                  
                   {showHoverTooltip && (
                     <Tooltip 
                       active={!isDragging}
@@ -3307,6 +3322,24 @@ export function PriceChart({
                                 <div style={{ color: '#FFFFFF', fontSize: '10px' }}>
                                   CSV Overlay: {(data as any).csvOverlay.toFixed(2)}%
                                 </div>
+                              </div>
+                            )}
+                            {/* Show comparison ticker information */}
+                            {comparisonTickers.length > 0 && comparisonTickers.some(t => (data as any)[`comparison_${t.symbol}`] !== undefined) && (
+                              <div style={{ 
+                                marginTop: '6px',
+                                paddingTop: '4px',
+                                borderTop: '1px solid rgba(51, 51, 51, 0.5)'
+                              }}>
+                                {comparisonTickers.map(ticker => {
+                                  const value = (data as any)[`comparison_${ticker.symbol}`];
+                                  if (value === undefined || value === null) return null;
+                                  return (
+                                    <div key={ticker.symbol} style={{ color: ticker.color, fontSize: '10px' }}>
+                                      {ticker.symbol}: {value >= 0 ? '+' : ''}{value.toFixed(2)}%
+                                    </div>
+                                  );
+                                })}
                               </div>
                             )}
                           </div>
@@ -3451,7 +3484,7 @@ export function PriceChart({
                   {comparisonTickers.map((ticker) => (
                     <Line
                       key={ticker.symbol}
-                      yAxisId="price"
+                      yAxisId="comparison"
                       type="monotone"
                       dataKey={`comparison_${ticker.symbol}`}
                       stroke={ticker.color}
@@ -3673,6 +3706,21 @@ export function PriceChart({
                     />
                   )}
                   
+                  {/* Comparison Tickers Y-axis (left side) - percentage scale */}
+                  {comparisonTickers.length > 0 && csvOverlay.length === 0 && (
+                    <YAxis
+                      yAxisId="comparison"
+                      orientation="left"
+                      domain={['dataMin', 'dataMax']}
+                      tickFormatter={(value) => `${value.toFixed(1)}%`}
+                      stroke="#b0b0b0"
+                      tick={{ fill: '#b0b0b0', fontSize: 11 }}
+                      width={50}
+                      axisLine={{ stroke: '#b0b0b0' }}
+                      tickLine={{ stroke: '#b0b0b0' }}
+                    />
+                  )}
+                  
                   {showHoverTooltip && (
                     <Tooltip 
                       active={!isDragging}
@@ -3752,6 +3800,24 @@ export function PriceChart({
                                 <div style={{ color: '#FFFFFF', fontSize: '10px' }}>
                                   CSV Overlay: {(data as any).csvOverlay.toFixed(2)}%
                                 </div>
+                              </div>
+                            )}
+                            {/* Show comparison ticker information */}
+                            {comparisonTickers.length > 0 && comparisonTickers.some(t => (data as any)[`comparison_${t.symbol}`] !== undefined) && (
+                              <div style={{ 
+                                marginTop: '6px',
+                                paddingTop: '4px',
+                                borderTop: '1px solid rgba(51, 51, 51, 0.5)'
+                              }}>
+                                {comparisonTickers.map(ticker => {
+                                  const value = (data as any)[`comparison_${ticker.symbol}`];
+                                  if (value === undefined || value === null) return null;
+                                  return (
+                                    <div key={ticker.symbol} style={{ color: ticker.color, fontSize: '10px' }}>
+                                      {ticker.symbol}: {value >= 0 ? '+' : ''}{value.toFixed(2)}%
+                                    </div>
+                                  );
+                                })}
                               </div>
                             )}
                           </div>
