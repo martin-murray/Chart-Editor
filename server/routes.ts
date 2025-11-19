@@ -338,6 +338,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             resolution = 'D'; // Daily intervals
             to = now + (24 * 60 * 60); // Add 1 day buffer to ensure we get today's data
             break;
+          case '6M':
+            from = now - (180 * 24 * 60 * 60); // 6 months
+            resolution = 'D'; // Daily intervals
+            to = now + (24 * 60 * 60); // Add 1 day buffer to ensure we get today's data
+            break;
           case '1Y':
             from = now - (365 * 24 * 60 * 60); // 1 year
             resolution = 'D'; // Daily intervals
