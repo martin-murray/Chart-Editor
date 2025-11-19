@@ -1,5 +1,5 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueries } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { AreaChart, Area, LineChart, Line, BarChart, Bar, ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine, Customized } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -184,13 +184,19 @@ export function PriceChart({
   const [csvOverlay, setCsvOverlay] = useState<{timestamp: number, value: number}[]>([]);
   const [showCsvModal, setShowCsvModal] = useState(false);
 
-  // Comparison ticker state
-  const [comparisonTickers, setComparisonTickers] = useState<string[]>([]);
+  // Comparison ticker state - structured objects for metadata and deduplication
+  const [comparisonTickers, setComparisonTickers] = useState<Array<{
+    symbol: string;
+    name: string;
+    color: string;
+  }>>([]);
   const [showTickerSearch, setShowTickerSearch] = useState(false);
   const [tickerSearchQuery, setTickerSearchQuery] = useState('');
+  const [debouncedTickerQuery, setDebouncedTickerQuery] = useState('');
   
-  // Color palette for comparison tickers
-  const COMPARISON_COLORS = ['#FFA5FF', '#FAFF50', '#50FFA5', '#AA99FF', '#FF6B9D'];
+  // Color palette for comparison tickers (excludes dividend/CSV colors to avoid conflicts)
+  const COMPARISON_COLORS = ['#FFA5FF', '#AA99FF', '#50FFA5', '#FF6B9D', '#FFB347'];
+  const MAX_COMPARISON_TICKERS = 5;
 
   // Price Y-axis zoom state
   const [priceAxisMode, setPriceAxisMode] = useState<'auto' | 'fixed'>('auto');
@@ -472,6 +478,15 @@ export function PriceChart({
   useEffect(() => {
     setChartSessionId(symbol);
   }, [symbol]);
+
+  // Debounce ticker search query (Task 1)
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setDebouncedTickerQuery(tickerSearchQuery);
+    }, 300);
+    
+    return () => clearTimeout(timeoutId);
+  }, [tickerSearchQuery]);
 
   const handleMouseDown = (event: React.MouseEvent) => {
     if (!chartRef.current) return;
@@ -854,6 +869,71 @@ export function PriceChart({
     gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
   });
 
+  // Ticker search API query (Task 2)
+  const { data: tickerSearchResults = [] } = useQuery({
+    queryKey: ['ticker-search', debouncedTickerQuery],
+    queryFn: async (): Promise<Array<{ symbol: string; name: string; price: string; percentChange: string; marketCap: string }>> => {
+      if (!debouncedTickerQuery.trim()) return [];
+      const response = await fetch(`/api/stocks/global-search?q=${encodeURIComponent(debouncedTickerQuery)}`);
+      if (!response.ok) return [];
+      return await response.json();
+    },
+    enabled: showTickerSearch && debouncedTickerQuery.trim().length >= 2,
+    staleTime: 2 * 60 * 1000, // Cache for 2 minutes
+  });
+
+  // Fetch chart data for comparison tickers (Task 4)
+  const comparisonTickerQueries = useQueries({
+    queries: comparisonTickers.map(ticker => ({
+      queryKey: ['/api/stocks', ticker.symbol, 'chart', selectedTimeframe, startDate?.toISOString(), endDate?.toISOString(), singleTradingDay],
+      queryFn: async () => {
+        let url = `/api/stocks/${ticker.symbol}/chart?timeframe=${selectedTimeframe}`;
+        
+        // Add custom date range parameters for Custom timeframe
+        if (selectedTimeframe === 'Custom' && startDate && endDate) {
+          let fromTimestamp: number;
+          let toTimestamp: number;
+          
+          if (singleTradingDay || startDate.toDateString() === endDate.toDateString()) {
+            // Single trading day
+            const tradingDay = startDate;
+            const dayStart = new Date(tradingDay.getFullYear(), tradingDay.getMonth(), tradingDay.getDate(), 0, 0, 0, 0);
+            const dayEnd = new Date(tradingDay.getFullYear(), tradingDay.getMonth(), tradingDay.getDate(), 23, 59, 59, 999);
+            fromTimestamp = Math.floor(dayStart.getTime() / 1000);
+            toTimestamp = Math.floor(dayEnd.getTime() / 1000);
+          } else {
+            // Date range
+            fromTimestamp = Math.floor(startDate.getTime() / 1000);
+            toTimestamp = Math.floor(endDate.getTime() / 1000);
+          }
+          
+          url = `/api/stocks/${ticker.symbol}/chart?from=${fromTimestamp}&to=${toTimestamp}&timeframe=Custom`;
+        }
+        
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch chart data for ${ticker.symbol}`);
+        }
+        
+        const data = await response.json();
+        
+        // Ensure valid data structure
+        if (!data || !data.data) {
+          throw new Error('Invalid response format');
+        }
+        
+        return {
+          symbol: ticker.symbol,
+          data: data.data as ChartData[],
+          color: ticker.color
+        };
+      },
+      enabled: !!ticker.symbol,
+      staleTime: 0,
+      gcTime: 2 * 60 * 1000,
+    }))
+  });
+
   // Chart data query moved above to fix initialization order
 
   // Fetch chart history (all tickers - user can see their entire history)
@@ -1116,6 +1196,57 @@ export function PriceChart({
     return `${currencySymbol}${(revenueInMillions / 1000000).toFixed(1)}M`;
   };
 
+  // Ticker Management Functions (Task 3)
+  const addComparisonTicker = (tickerSymbol: string, tickerName: string) => {
+    // Check if ticker already exists
+    if (comparisonTickers.some(t => t.symbol === tickerSymbol)) {
+      toast({
+        title: "Ticker Already Added",
+        description: `${tickerSymbol} is already in the comparison list`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if limit reached
+    if (comparisonTickers.length >= MAX_COMPARISON_TICKERS) {
+      toast({
+        title: "Limit Reached",
+        description: `Maximum ${MAX_COMPARISON_TICKERS} comparison tickers allowed`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Assign next color from palette
+    const nextColor = COMPARISON_COLORS[comparisonTickers.length % COMPARISON_COLORS.length];
+
+    // Add to array
+    setComparisonTickers(prev => [...prev, {
+      symbol: tickerSymbol,
+      name: tickerName,
+      color: nextColor,
+    }]);
+
+    // Close search UI and reset query
+    setShowTickerSearch(false);
+    setTickerSearchQuery('');
+
+    // Show success toast
+    toast({
+      title: "Ticker Added",
+      description: `${tickerSymbol} (${tickerName}) added to comparison`,
+    });
+  };
+
+  const removeComparisonTicker = (tickerSymbol: string) => {
+    setComparisonTickers(prev => prev.filter(t => t.symbol !== tickerSymbol));
+    toast({
+      title: "Ticker Removed",
+      description: `${tickerSymbol} removed from comparison`,
+    });
+  };
+
   // Use stock details data if currentPrice is placeholder or invalid
   const actualCurrentPrice = (currentPrice && currentPrice !== '--' && !isNaN(parseFloat(currentPrice))) 
     ? currentPrice 
@@ -1304,6 +1435,46 @@ export function PriceChart({
       };
     });
   }, [chartDataWithOverlay, dividendData, showDividendOverlay]);
+
+  // Merge comparison ticker data into chart (Task 7 - data processing)
+  const chartDataWithComparisons = useMemo(() => {
+    if (!chartDataWithDividendOverlay || comparisonTickers.length === 0) {
+      return chartDataWithDividendOverlay;
+    }
+
+    // Process each comparison ticker data
+    return chartDataWithDividendOverlay.map(point => {
+      const result: any = { ...point };
+
+      // Add normalized data for each comparison ticker
+      comparisonTickerQueries.forEach((query, index) => {
+        const ticker = comparisonTickers[index];
+        if (!ticker || !query.data) return;
+
+        const tickerData = query.data as { symbol: string; data: ChartData[]; color: string };
+        if (!tickerData.data || tickerData.data.length === 0) return;
+
+        // Find matching data point by timestamp
+        const match = tickerData.data.find((d: ChartData) => {
+          const dataTimestamp = d.timestamp * (d.timestamp < 10000000000 ? 1000 : 1);
+          const pointTimestamp = point.timestamp * (point.timestamp < 10000000000 ? 1000 : 1);
+          const diff = Math.abs(dataTimestamp - pointTimestamp);
+          return diff < 300000; // 5 minutes tolerance
+        });
+
+        if (match) {
+          // Normalize to first price point for percentage-based comparison
+          const firstPrice = tickerData.data[0].close;
+          if (firstPrice && firstPrice > 0) {
+            const normalizedValue = ((match.close - firstPrice) / firstPrice) * 100;
+            result[`comparison_${ticker.symbol}`] = normalizedValue;
+          }
+        }
+      });
+
+      return result;
+    });
+  }, [chartDataWithDividendOverlay, comparisonTickers, comparisonTickerQueries]);
 
   // Calculate current price data extremes for zoom functionality
   const priceExtremes = useMemo(() => {
@@ -2493,6 +2664,106 @@ export function PriceChart({
               </div>
             </div>
 
+            {/* Comparison Ticker Tags (Task 6) */}
+            {comparisonTickers.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 mb-4">
+                {comparisonTickers.map((ticker) => (
+                  <div
+                    key={ticker.symbol}
+                    className="flex items-center gap-1.5 px-2 py-1 bg-muted rounded-md text-sm"
+                    data-testid={`comparison-ticker-${ticker.symbol}`}
+                  >
+                    <div 
+                      className="w-3 h-3 rounded-sm"
+                      style={{ backgroundColor: ticker.color }}
+                    />
+                    <span>{ticker.symbol}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground"
+                      onClick={() => removeComparisonTicker(ticker.symbol)}
+                      data-testid={`remove-comparison-ticker-${ticker.symbol}`}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Ticker Search UI (Task 5) */}
+            {showTickerSearch && (
+              <Card className="p-3 mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 relative">
+                    <Input
+                      placeholder="Search tickers (e.g., AAPL, MSFT)"
+                      value={tickerSearchQuery}
+                      onChange={(e) => setTickerSearchQuery(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape') {
+                          setShowTickerSearch(false);
+                          setTickerSearchQuery('');
+                        }
+                      }}
+                      className="pr-8"
+                      autoFocus
+                      data-testid="input-comparison-ticker-search"
+                    />
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => {
+                      setShowTickerSearch(false);
+                      setTickerSearchQuery('');
+                    }}
+                    data-testid="button-close-ticker-search"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                {/* Search Results */}
+                {debouncedTickerQuery.trim().length >= 2 && tickerSearchResults.length > 0 && (
+                  <div className="mt-2 max-h-60 overflow-y-auto space-y-1">
+                    {tickerSearchResults.slice(0, 10).map((result) => (
+                      <div
+                        key={result.symbol}
+                        className="flex items-center justify-between p-2 hover:bg-muted rounded cursor-pointer"
+                        onClick={() => addComparisonTicker(result.symbol, result.name)}
+                        data-testid={`search-result-${result.symbol}`}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold">{result.symbol}</span>
+                            <span className="text-sm text-muted-foreground truncate">{result.name}</span>
+                          </div>
+                        </div>
+                        <div className="text-sm text-muted-foreground ml-2">
+                          ${parseFloat(result.price).toFixed(2)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {debouncedTickerQuery.trim().length >= 2 && tickerSearchResults.length === 0 && (
+                  <div className="mt-2 text-sm text-muted-foreground text-center py-2">
+                    No results found
+                  </div>
+                )}
+
+                {debouncedTickerQuery.trim().length > 0 && debouncedTickerQuery.trim().length < 2 && (
+                  <div className="mt-2 text-xs text-muted-foreground">
+                    Type at least 2 characters to search
+                  </div>
+                )}
+              </Card>
+            )}
+
             {/* Shared Export Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -2867,7 +3138,7 @@ export function PriceChart({
             <div className="h-80 w-full relative">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart
-                  data={chartDataWithDividendOverlay || chartDataWithMA}
+                  data={chartDataWithComparisons || chartDataWithDividendOverlay || chartDataWithMA}
                   margin={{ top: 15, right: 0, left: 0, bottom: -5 }}
                   onClick={handleChartClick}
                 >
@@ -3174,6 +3445,23 @@ export function PriceChart({
                       isAnimationActive={false}
                     />
                   )}
+                  
+                  {/* Comparison Ticker Lines (Task 7) - normalized to percentage change */}
+                  {comparisonTickers.map((ticker) => (
+                    <Line
+                      key={ticker.symbol}
+                      yAxisId="price"
+                      type="monotone"
+                      dataKey={`comparison_${ticker.symbol}`}
+                      stroke={ticker.color}
+                      strokeWidth={2}
+                      dot={false}
+                      name={ticker.symbol}
+                      connectNulls
+                      activeDot={{ r: 4, fill: ticker.color, stroke: '#121212', strokeWidth: 2 }}
+                      isAnimationActive={false}
+                    />
+                  ))}
                   
                   {/* Custom annotation markers and percentage lines */}
                   <Customized 
