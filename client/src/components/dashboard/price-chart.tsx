@@ -184,6 +184,14 @@ export function PriceChart({
   const [csvOverlay, setCsvOverlay] = useState<{timestamp: number, value: number}[]>([]);
   const [showCsvModal, setShowCsvModal] = useState(false);
 
+  // Comparison ticker state
+  const [comparisonTickers, setComparisonTickers] = useState<string[]>([]);
+  const [showTickerSearch, setShowTickerSearch] = useState(false);
+  const [tickerSearchQuery, setTickerSearchQuery] = useState('');
+  
+  // Color palette for comparison tickers
+  const COMPARISON_COLORS = ['#FFA5FF', '#FAFF50', '#50FFA5', '#AA99FF', '#FF6B9D'];
+
   // Price Y-axis zoom state
   const [priceAxisMode, setPriceAxisMode] = useState<'auto' | 'fixed'>('auto');
   const [priceAxisRange, setPriceAxisRange] = useState<number>(100); // Current zoom range in price units
@@ -2407,6 +2415,18 @@ export function PriceChart({
                     >
                       <Type className="w-3 h-3 mr-2" style={{ color: '#FFFFFF' }} />
                       Add Text Note
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => {
+                        setShowTickerSearch(true);
+                        setAnnotationMode('text');
+                        setPendingPercentageStart(null);
+                      }}
+                      className="cursor-pointer"
+                      data-testid="menu-add-ticker"
+                    >
+                      <Plus className="w-4 h-4 mr-2" style={{ color: '#5AF5FA' }} />
+                      Add Ticker
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
