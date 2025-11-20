@@ -142,7 +142,6 @@ export function PriceChart({
   const [endCalendarMonth, setEndCalendarMonth] = useState<Date>(new Date());
   const [activeTab, setActiveTab] = useState(initialTab);
   const [chartType, setChartType] = useState<'line' | 'mountain' | 'candlestick'>('mountain');
-  const [showDividendOverlay, setShowDividendOverlay] = useState(false);
   const chartRef = useRef<HTMLDivElement>(null);
   const comparisonRef = useRef<HTMLDivElement>(null);
   
@@ -195,7 +194,7 @@ export function PriceChart({
   const [tickerSearchQuery, setTickerSearchQuery] = useState('');
   const [debouncedTickerQuery, setDebouncedTickerQuery] = useState('');
   
-  // Color palette for comparison tickers (excludes dividend/CSV colors to avoid conflicts)
+  // Color palette for comparison tickers
   const COMPARISON_COLORS = ['#FFA5FF', '#AA99FF', '#50FFA5', '#FF6B9D', '#FFB347'];
   const MAX_COMPARISON_TICKERS = 5;
 
@@ -270,7 +269,6 @@ export function PriceChart({
       timeframe, 
       customStartDate, 
       customEndDate, 
-      dividendAdjusted, 
       csvOverlay, 
       annotations 
     }: { 
@@ -279,7 +277,6 @@ export function PriceChart({
       timeframe: string;
       customStartDate?: string;
       customEndDate?: string;
-      dividendAdjusted: boolean;
       csvOverlay: { timestamp: number; value: number }[];
       annotations: Annotation[] 
     }) => {
@@ -289,7 +286,6 @@ export function PriceChart({
         timeframe,
         customStartDate,
         customEndDate,
-        dividendAdjusted,
         csvOverlay,
         annotations 
       });
@@ -420,7 +416,6 @@ export function PriceChart({
         timeframe: selectedTimeframe,
         customStartDate: startDate?.toISOString(),
         customEndDate: endDate?.toISOString(),
-        dividendAdjusted: showDividendOverlay,
         csvOverlay,
         annotations
       });
@@ -439,7 +434,6 @@ export function PriceChart({
       timeframe: selectedTimeframe,
       customStartDate: startDate?.toISOString(),
       customEndDate: endDate?.toISOString(),
-      dividendAdjusted: showDividendOverlay,
       csvOverlay,
       annotations
     });
@@ -456,7 +450,6 @@ export function PriceChart({
         timeframe: selectedTimeframe,
         customStartDate: selectedTimeframe === 'Custom' && startDate ? startDate.toISOString() : undefined,
         customEndDate: selectedTimeframe === 'Custom' && endDate ? endDate.toISOString() : undefined,
-        dividendAdjusted: showDividendOverlay,
         csvOverlay,
         annotations 
       });
@@ -467,7 +460,7 @@ export function PriceChart({
     return () => {
       clearTimeout(timeoutId);
     };
-  }, [annotations, selectedTimeframe, startDate, endDate, showDividendOverlay, csvOverlay, symbol, chartSessionId, saveChartHistoryMutation]);
+  }, [annotations, selectedTimeframe, startDate, endDate, csvOverlay, symbol, chartSessionId, saveChartHistoryMutation]);
 
   // Reset initial mount flag when symbol changes
   useEffect(() => {
@@ -827,48 +820,6 @@ export function PriceChart({
     enabled: !!symbol
   });
 
-  // Calculate timestamp range for dividend query
-  const dividendTimeRange = useMemo(() => {
-    if (!chartData?.data || chartData.data.length === 0) {
-      return { from: undefined, to: undefined };
-    }
-    
-    // Get the timestamp range from chart data
-    const firstTimestamp = chartData.data[0].timestamp;
-    const lastTimestamp = chartData.data[chartData.data.length - 1].timestamp;
-    
-    // Check if timestamps are in seconds or milliseconds
-    const isSeconds = firstTimestamp < 10000000000;
-    
-    // Add some buffer for dividends (30 days before to ensure we capture all relevant dividends)
-    const bufferSeconds = 30 * 24 * 60 * 60; // 30 days in seconds
-    const bufferAmount = isSeconds ? bufferSeconds : bufferSeconds * 1000; // Adjust for milliseconds
-    const from = firstTimestamp - bufferAmount;
-    const to = lastTimestamp;
-    
-    // Convert to seconds for API if timestamps are in milliseconds
-    const apiFrom = isSeconds ? from : Math.floor(from / 1000);
-    const apiTo = isSeconds ? to : Math.floor(to / 1000);
-    
-    return { from: apiFrom, to: apiTo };
-  }, [chartData]);
-
-  // Dividend data query - only fetch when overlay is enabled and we have chart data
-  const { data: dividendData } = useQuery({
-    queryKey: ['/api/stocks', symbol, 'dividends', dividendTimeRange.from, dividendTimeRange.to],
-    queryFn: async (): Promise<{ symbol: string; dividends: Array<{ date: string; amount: number; currency: string }>; count: number }> => {
-      const params = new URLSearchParams();
-      if (dividendTimeRange.from) params.append('from', dividendTimeRange.from.toString());
-      if (dividendTimeRange.to) params.append('to', dividendTimeRange.to.toString());
-      
-      const response = await fetch(`/api/stocks/${symbol}/dividends?${params.toString()}`);
-      if (!response.ok) throw new Error('Failed to fetch dividend data');
-      return await response.json();
-    },
-    enabled: !!symbol && showDividendOverlay && !!dividendTimeRange.from && !!dividendTimeRange.to,
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-    gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
-  });
 
   // Ticker search API query (Task 2)
   const { data: tickerSearchResults = [] } = useQuery({
@@ -971,9 +922,6 @@ export function PriceChart({
       setEndDate(undefined);
     }
     
-    // Set dividend adjusted toggle
-    setShowDividendOverlay(entry.dividendAdjusted || false);
-    
     // Set CSV overlay
     setCsvOverlay(entry.csvOverlay || []);
     
@@ -1007,7 +955,6 @@ export function PriceChart({
         setEndDate(undefined);
       }
       
-      setShowDividendOverlay(pendingHistoryRestore.dividendAdjusted || false);
       setCsvOverlay(pendingHistoryRestore.csvOverlay || []);
       updateAnnotations(pendingHistoryRestore.annotations as Annotation[] || []);
       
@@ -1392,59 +1339,14 @@ export function PriceChart({
     });
   }, [chartDataWithMA, csvOverlay]);
 
-  // Calculate non-dividend adjusted prices (add back dividends)
-  const chartDataWithDividendOverlay = useMemo(() => {
-    if (!chartDataWithOverlay || !dividendData?.dividends || dividendData.dividends.length === 0) {
+  // Merge comparison ticker data into chart (Task 7 - data processing)
+  const chartDataWithComparisons = useMemo(() => {
+    if (!chartDataWithOverlay || comparisonTickers.length === 0) {
       return chartDataWithOverlay;
     }
 
-    // Sort dividends by date
-    const sortedDividends = [...dividendData.dividends].sort((a, b) => 
-      new Date(a.date).getTime() - new Date(b.date).getTime()
-    );
-
-    // Process each data point and add cumulative dividends
-    return chartDataWithOverlay.map(dataPoint => {
-      // Use timestamp field which is always present, convert to milliseconds if needed
-      const timestampMs = dataPoint.timestamp * (dataPoint.timestamp < 10000000000 ? 1000 : 1);
-      const dataDate = new Date(timestampMs);
-      
-      // Calculate cumulative dividends up to this date
-      // Dividends are added to prices that occur on or after the ex-dividend date
-      let cumulativeDividends = 0;
-      
-      for (const dividend of sortedDividends) {
-        // Parse dividend date (ex-dividend date)
-        // Handle timezone by parsing at noon UTC for date-only strings
-        const exDivDate = new Date(dividend.date + 'T12:00:00Z');
-        
-        // If the data point is on or after ex-dividend date, add the dividend
-        // This creates the step-up effect immediately after ex-dividend date
-        if (dataDate >= exDivDate) {
-          cumulativeDividends += dividend.amount;
-        }
-      }
-      
-      // Calculate non-dividend adjusted prices (current price + cumulative dividends)
-      return {
-        ...dataPoint,
-        dividendAdjustedClose: dataPoint.close + cumulativeDividends,
-        dividendAdjustedOpen: dataPoint.open ? dataPoint.open + cumulativeDividends : undefined,
-        dividendAdjustedHigh: dataPoint.high ? dataPoint.high + cumulativeDividends : undefined,
-        dividendAdjustedLow: dataPoint.low ? dataPoint.low + cumulativeDividends : undefined,
-        cumulativeDividends // Store for tooltip display
-      };
-    });
-  }, [chartDataWithOverlay, dividendData, showDividendOverlay]);
-
-  // Merge comparison ticker data into chart (Task 7 - data processing)
-  const chartDataWithComparisons = useMemo(() => {
-    if (!chartDataWithDividendOverlay || comparisonTickers.length === 0) {
-      return chartDataWithDividendOverlay;
-    }
-
     // Process each comparison ticker data
-    return chartDataWithDividendOverlay.map(point => {
+    return chartDataWithOverlay.map(point => {
       const result: any = { ...point };
 
       // Add normalized data for each comparison ticker
@@ -1475,7 +1377,7 @@ export function PriceChart({
 
       return result;
     });
-  }, [chartDataWithDividendOverlay, comparisonTickers, comparisonTickerQueries]);
+  }, [chartDataWithOverlay, comparisonTickers, comparisonTickerQueries]);
 
   // Calculate current price data extremes for zoom functionality
   const priceExtremes = useMemo(() => {
@@ -2183,21 +2085,21 @@ export function PriceChart({
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Dividend Overlay Toggle - Only show in price-volume tab */}
+          {/* Y-Axis Mode Toggle - Only show in price-volume tab */}
           {activeTab === 'price-volume' && (
             <div className="flex items-center gap-2 ml-2">
               <Switch
-                id="dividend-overlay"
-                checked={showDividendOverlay}
-                onCheckedChange={setShowDividendOverlay}
+                id="y-axis-mode"
+                checked={yAxisDisplayMode === 'percentage'}
+                onCheckedChange={(checked) => setYAxisDisplayMode(checked ? 'percentage' : 'price')}
                 className="h-4 w-8"
-                data-testid="switch-dividend-overlay"
+                data-testid="switch-y-axis-mode"
               />
               <label
-                htmlFor="dividend-overlay"
+                htmlFor="y-axis-mode"
                 className="text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
               >
-                Dividend Overlay
+                Y-Axis: {yAxisDisplayMode === 'percentage' ? 'Percentage' : 'Price'}
               </label>
             </div>
           )}
@@ -3139,7 +3041,7 @@ export function PriceChart({
             <div className="h-80 w-full relative">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart
-                  data={chartDataWithComparisons || chartDataWithDividendOverlay || chartDataWithMA}
+                  data={chartDataWithComparisons || chartDataWithMA}
                   margin={{ top: 15, right: 0, left: 0, bottom: -5 }}
                   onClick={handleChartClick}
                 >
@@ -3280,23 +3182,6 @@ export function PriceChart({
                                 )}
                               </>
                             )}
-                            {/* Show dividend overlay information */}
-                            {showDividendOverlay && data.dividendAdjustedClose !== undefined && (
-                              <>
-                                <div style={{ 
-                                  marginTop: '6px',
-                                  paddingTop: '4px',
-                                  borderTop: '1px solid rgba(51, 51, 51, 0.5)'
-                                }}>
-                                  <div style={{ color: '#808080' }}>Non-Adjusted: {formatPrice(data.dividendAdjustedClose)}</div>
-                                  {data.cumulativeDividends > 0 && (
-                                    <div style={{ color: '#5AF5FA', fontSize: '10px' }}>
-                                      Dividends: {formatPrice(data.cumulativeDividends)}
-                                    </div>
-                                  )}
-                                </div>
-                              </>
-                            )}
                             {/* Show CSV overlay information */}
                             {csvOverlay.length > 0 && (data as any).csvOverlay !== undefined && (data as any).csvOverlay !== null && (
                               <div style={{ 
@@ -3431,21 +3316,6 @@ export function PriceChart({
                       activeDot={false} 
                       isAnimationActive={false}
                       connectNulls
-                    />
-                  )}
-                  
-                  {/* Dividend Overlay Line - shows non-dividend adjusted prices */}
-                  {showDividendOverlay && dividendData?.dividends && dividendData.dividends.length > 0 && (
-                    <Line
-                      yAxisId="price"
-                      type="stepAfter" // Use stepAfter to show the step-up immediately after ex-dividend
-                      dataKey="dividendAdjustedClose"
-                      stroke="#808080" // Grey line as specified
-                      strokeWidth={2}
-                      dot={false}
-                      activeDot={{ r: 4, fill: '#808080', stroke: '#121212', strokeWidth: 2 }}
-                      name="Non-Adjusted Price"
-                      isAnimationActive={false}
                     />
                   )}
                   
@@ -3741,23 +3611,6 @@ export function PriceChart({
                                 ) : (
                                   <div>Price: {formatPrice(data.close)}</div>
                                 )}
-                              </>
-                            )}
-                            {/* Show dividend overlay information */}
-                            {showDividendOverlay && data.dividendAdjustedClose !== undefined && (
-                              <>
-                                <div style={{ 
-                                  marginTop: '6px',
-                                  paddingTop: '4px',
-                                  borderTop: '1px solid rgba(51, 51, 51, 0.5)'
-                                }}>
-                                  <div style={{ color: '#808080' }}>Non-Adjusted: {formatPrice(data.dividendAdjustedClose)}</div>
-                                  {data.cumulativeDividends > 0 && (
-                                    <div style={{ color: '#5AF5FA', fontSize: '10px' }}>
-                                      Dividends: {formatPrice(data.cumulativeDividends)}
-                                    </div>
-                                  )}
-                                </div>
                               </>
                             )}
                             {/* Show CSV overlay information */}
@@ -4663,7 +4516,6 @@ export function PriceChart({
                         </div>
                         <div className="text-xs text-muted-foreground mb-1">
                           Timeframe: {entry.timeframe}
-                          {entry.dividendAdjusted && ' • Dividend Adjusted'}
                           {entry.csvOverlay && entry.csvOverlay.length > 0 && ` • CSV Overlay (${entry.csvOverlay.length} points)`}
                         </div>
                         <div className="text-sm text-foreground">
