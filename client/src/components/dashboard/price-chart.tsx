@@ -3213,27 +3213,12 @@ export function PriceChart({
                     width={60}
                   />
                   
-                  {/* CSV Overlay Y-axis (left side) */}
-                  {csvOverlay.length > 0 && (
+                  {/* Left Y-axis for overlays (CSV and/or Comparison Tickers) */}
+                  {(csvOverlay.length > 0 || comparisonTickers.length > 0) && (
                     <YAxis
                       yAxisId="overlay"
                       orientation="left"
-                      domain={[0, 100]}
-                      tickFormatter={(value) => `${value}%`}
-                      stroke="#b0b0b0"
-                      tick={{ fill: '#b0b0b0', fontSize: 11 }}
-                      width={50}
-                      axisLine={{ stroke: '#b0b0b0' }}
-                      tickLine={{ stroke: '#b0b0b0' }}
-                    />
-                  )}
-                  
-                  {/* Comparison Tickers Y-axis (left side) - percentage scale */}
-                  {comparisonTickers.length > 0 && csvOverlay.length === 0 && (
-                    <YAxis
-                      yAxisId="comparison"
-                      orientation="left"
-                      domain={['dataMin', 'dataMax']}
+                      domain={csvOverlay.length > 0 && comparisonTickers.length === 0 ? [0, 100] : ['dataMin', 'dataMax']}
                       tickFormatter={(value) => `${value.toFixed(1)}%`}
                       stroke="#b0b0b0"
                       tick={{ fill: '#b0b0b0', fontSize: 11 }}
@@ -3484,7 +3469,7 @@ export function PriceChart({
                   {comparisonTickers.map((ticker) => (
                     <Line
                       key={ticker.symbol}
-                      yAxisId="comparison"
+                      yAxisId="overlay"
                       type="monotone"
                       dataKey={`comparison_${ticker.symbol}`}
                       stroke={ticker.color}
@@ -3691,27 +3676,12 @@ export function PriceChart({
                     width={60}
                   />
                   
-                  {/* CSV Overlay Y-axis (left side) */}
-                  {csvOverlay.length > 0 && (
+                  {/* Left Y-axis for overlays (CSV and/or Comparison Tickers) */}
+                  {(csvOverlay.length > 0 || comparisonTickers.length > 0) && (
                     <YAxis
                       yAxisId="overlay"
                       orientation="left"
-                      domain={[0, 100]}
-                      tickFormatter={(value) => `${value}%`}
-                      stroke="#b0b0b0"
-                      tick={{ fill: '#b0b0b0', fontSize: 11 }}
-                      width={50}
-                      axisLine={{ stroke: '#b0b0b0' }}
-                      tickLine={{ stroke: '#b0b0b0' }}
-                    />
-                  )}
-                  
-                  {/* Comparison Tickers Y-axis (left side) - percentage scale */}
-                  {comparisonTickers.length > 0 && csvOverlay.length === 0 && (
-                    <YAxis
-                      yAxisId="comparison"
-                      orientation="left"
-                      domain={['dataMin', 'dataMax']}
+                      domain={csvOverlay.length > 0 && comparisonTickers.length === 0 ? [0, 100] : ['dataMin', 'dataMax']}
                       tickFormatter={(value) => `${value.toFixed(1)}%`}
                       stroke="#b0b0b0"
                       tick={{ fill: '#b0b0b0', fontSize: 11 }}
