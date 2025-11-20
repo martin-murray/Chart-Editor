@@ -12,7 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip as HoverTooltip, TooltipContent as HoverTooltipContent, TooltipProvider, TooltipTrigger as HoverTooltipTrigger } from '@/components/ui/tooltip';
 import { Input } from '@/components/ui/input';
-import { Loader2, TrendingUp, TrendingDown, Plus, Calendar as CalendarIcon, X, Download, ChevronDown, MessageSquare, Ruler, Minus, RotateCcw, Code, Type, Trash2 } from 'lucide-react';
+import { Loader2, TrendingUp, TrendingDown, Plus, Calendar as CalendarIcon, X, Download, ChevronDown, MessageSquare, Ruler, Minus, RotateCcw, Code, Type, Trash2, Settings } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { format, subDays, subMonths, subYears } from 'date-fns';
 import * as htmlToImage from 'html-to-image';
@@ -2479,8 +2479,17 @@ export function PriceChart({
                       className="cursor-pointer"
                       data-testid="menu-csv-overlay"
                     >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add % Overlay (CSV)
+                      {csvOverlay.length > 0 ? (
+                        <>
+                          <Settings className="w-4 h-4 mr-2" />
+                          Manage CSV Overlay
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add % Overlay (CSV)
+                        </>
+                      )}
                     </DropdownMenuItem>
                     <DropdownMenuItem 
                       onClick={() => setAnnotationMode('note')}
@@ -4154,12 +4163,44 @@ export function PriceChart({
         <Dialog open={showCsvModal} onOpenChange={setShowCsvModal}>
           <DialogContent className="bg-[#1E1E1E] border-[#474747]">
             <DialogHeader>
-              <DialogTitle className="text-[#f7f7f7]">Add % Overlay (CSV)</DialogTitle>
+              <DialogTitle className="text-[#f7f7f7]">
+                {csvOverlay.length > 0 ? 'Manage CSV Overlay' : 'Add % Overlay (CSV)'}
+              </DialogTitle>
               <DialogDescription className="text-[#b0b0b0]">
-                Upload or paste CSV data to add a percentage overlay to the chart.
+                {csvOverlay.length > 0 
+                  ? `You have ${csvOverlay.length} CSV data points currently overlaid on the chart.`
+                  : 'Upload or paste CSV data to add a percentage overlay to the chart.'
+                }
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
+              {/* Show current CSV data info if exists */}
+              {csvOverlay.length > 0 && (
+                <div className="bg-[#2A2A2A] p-4 rounded-md text-sm border-l-4 border-[#5AF5FA]">
+                  <p className="font-semibold text-[#f7f7f7] mb-2">Current CSV Overlay</p>
+                  <div className="text-[#b0b0b0] space-y-1">
+                    <p>Data points: {csvOverlay.length}</p>
+                    <p>Date range: {format(new Date(csvOverlay[0]?.timestamp || 0), 'MMM dd, yyyy')} to {format(new Date(csvOverlay[csvOverlay.length - 1]?.timestamp || 0), 'MMM dd, yyyy')}</p>
+                  </div>
+                  <Button
+                    variant="destructive"
+                    onClick={() => {
+                      setCsvOverlay([]);
+                      toast({
+                        title: "CSV Overlay Deleted",
+                        description: "You can now upload new CSV data below.",
+                      });
+                    }}
+                    className="mt-3 w-full"
+                    data-testid="button-delete-csv-overlay"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete Current CSV Overlay
+                  </Button>
+                </div>
+              )}
+              
+              {/* Always show upload interface */}
               <div className="bg-[#2A2A2A] p-4 rounded-md text-sm">
                 <p className="font-semibold text-[#f7f7f7] mb-2">CSV Format Requirements</p>
                 <ul className="list-disc list-inside space-y-1 text-[#b0b0b0]">
@@ -4200,7 +4241,7 @@ export function PriceChart({
                   onClick={handleCsvSubmit}
                   className="flex-1"
                 >
-                  Apply Overlay
+                  {csvOverlay.length > 0 ? 'Replace Overlay' : 'Apply Overlay'}
                 </Button>
               </div>
             </div>
