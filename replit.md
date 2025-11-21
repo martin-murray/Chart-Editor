@@ -1,112 +1,15 @@
 # Stock Market Tracker Dashboard
 
-## Overview
-A full-stack stock market tracking application built with React, Express.js, and PostgreSQL. The application provides real-time stock market data with filtering capabilities, Slack integration for alerts, and comprehensive market analytics. The system features both in-memory and database storage options for flexible deployment, aiming to provide comprehensive global market coverage and real-time insights for investors.
+### Overview
+A full-stack stock market tracking application providing real-time stock market data, comprehensive analytics, and Slack integration for alerts. The system aims to offer extensive global market coverage and actionable insights for investors, supporting both in-memory and database storage.
 
-## Recent Changes (November 17, 2025)
-- **CSV Overlay Feature in Price Chart**: Simple, reliable CSV upload for percentage overlays
-  - **Upload/Paste Interface**: Modal dialog accepts CSV file upload or direct text paste
-  - **Flexible Format Support**: Handles headerless CSVs and CSVs with headers (date, time, timestamp)
-  - **UTF-8 BOM Handling**: Automatically strips UTF-8 BOM for Excel-exported CSVs
-  - **Strict Validation**: 
-    - Date format: YYYY-MM-DD (required)
-    - Value range: 0-1 decimal (0% to 100%)
-    - At least one data point required
-    - Clear error messages with line numbers
-  - **Visual Rendering**: White line overlay on chart with fixed 0-100% y-axis (left side)
-  - **Data Merging**: Aligns CSV data with chart timeline using 1-minute timestamp tolerance
-  - **Access**: Available via "Add % Overlay (CSV)" button in annotation dropdown
-  - **Clear All**: CSV overlay cleared when "Clear All" is clicked
-- **Removed AI Copilot from Price Chart**: Eliminated AI-driven overlay feature in favor of deterministic CSV upload for reliability and predictability
-
-## Recent Changes (November 6, 2025)
-- **AI Co-Pilot Chart Maker**: Complete AI-powered chart generation system
-  - **4-Column Layout**: Chart history (1 col), chat interface (2 cols), current chart display (1 col)
-  - **Chat Interface**: Natural language chart requests with CSV upload dropzone
-  - **Chart History Panel**: Left sidebar with clickable chart thumbnails showing all generated charts
-  - **Dynamic Chart Rendering**: Supports bar, line, pie, and area charts with responsive design
-  - **PNG Export**: Chart export functionality using html2canvas
-  - **Database Schema**: aiCopilotChats, aiCopilotMessages, aiCopilotUploads tables with proper relationships
-  - **OpenAI Integration**: Uses Replit AI Integrations (no API key needed, charges billed to credits)
-- **Unified Navigation Design**: Consistent header layout across Price Chart and Comparison Chart pages
-  - **Header Text Color**: #f7f7f7 for all page titles and navigation text
-  - **Removed "Back to Home" Button**: Logo is now clickable to return home
-  - **Consistent Structure**: Both chart pages use same navigation header with logo, chart type dropdown, walkthrough link, and logout button
-  - **Sticky Header**: Header remains visible when scrolling with backdrop blur effect
-- **New Homepage & Navigation Architecture**: Redesigned application structure with dedicated pathway cards
-  - **Homepage**: Three interactive pathway cards for Price Chart (cyan #5AF5FA), Comparison Chart (yellow #FAFF50), and AI Co-Pilot (green #50FFA5)
-  - **Navigation Routing**: 
-    - `/` - Homepage with pathway cards
-    - `/price-chart` - Single-ticker price chart with annotations
-    - `/comparison-chart` - Multi-ticker comparison chart
-    - `/ai-copilot` - AI Co-Pilot chart maker
-  - **Chart Type Dropdown**: Global navigation dropdown on all pages for quick chart type switching
-  - **Responsive Card Layout**: 3-column grid on desktop, stacked layout on mobile with gradient hover effects
-  - **Consistent Logo Sizing**: 240px wide across all pages (180px on mobile < 600px)
-- **Comparison Chart Enhancement**: Forward-fill logic for global market comparisons
-  - Carries forward last known price when markets are closed (e.g., European stocks when US market is open)
-  - Creates continuous, unbroken lines for cross-timezone stock comparisons
-  - Industry-standard approach for financial charting across different market hours
-- **Bug Fix**: Vertical annotation line now renders correctly on comparison chart (was showing text box but missing line)
-
-## Recent Changes (October 28, 2025)
-- **Mobile Responsive Chart UI**: Enhanced price chart for better mobile experience
-  - **Timeframe Selector**: Dropdown on screens < 760px, button layout on larger screens
-  - **Price/Compare Tabs**: Moved tabs next to timeframe dropdown on mobile (< 760px) to prevent crushing
-  - Tabs appear in their original location below on desktop (760px+)
-  - Both mobile and desktop tab controls share the same state through a unified Tabs component wrapper
-  - All timeframes included: 1D, 5D, 2W, 1M, 3M, 1Y, 3Y, 5Y, Custom
-- **Annotation Cursor Enhancements**: Improved visual feedback for annotation tools
-  - **Color-Coded Cursors**: Green X for Measure tool, Yellow X (#FAFF50) for Vertical, Purple X (#AA99FF) for Horizontal
-  - **Icon Colors**: Annotation dropdown icons match tool colors (Vertical #FAFF50, Measure green, Horizontal #AA99FF)
-  - **Reduced Hover Tooltip Dominance**: Tooltip now has 80% opacity, smaller size (11px font, reduced padding), semi-transparent background
-  - **Cursor Priority**: Recharts tooltip cursor disabled in annotation mode to ensure custom cursors remain visible during annotation placement
-
-## Recent Changes (October 23, 2025)
-- **Login Attempt Tracking System**: Implemented comprehensive login attempt tracking with:
-  - Database schema for storing all login attempts (username, success/failure, IP address, user agent, timestamp)
-  - **Geographical Location Tracking**: Added IP geolocation integration using ipapi.co API
-    - Stores city, region, and country for each login attempt
-    - 3-second timeout with AbortController to prevent hanging
-    - Graceful degradation when geolocation unavailable (stores null, displays "Unknown")
-    - Location displayed with MapPin icon in login history table
-  - **Failure Reason Tracking**: Captures specific reasons for failed login attempts
-    - Distinguishes between "Invalid username" and "Invalid password" errors
-    - Displays failure reasons in amber color in login history table
-    - Shows "-" for successful logins, "Unknown" for legacy attempts without reason data
-  - Backend API endpoints: POST /api/login for authentication, GET /api/session for token validation, GET /api/login-attempts for viewing history
-  - Session-based authentication using secure bearer tokens (24-hour expiration, automatic cleanup)
-  - Protected API endpoints with authentication middleware
-  - Admin page at /login-history displaying login attempt history with statistics including geographical location and failure reasons
-  - Global 401 error handler that automatically logs out users when tokens expire
-  - Token validation on protected routes to ensure session validity
-
-## Recent Changes (October 17, 2025)
-- **Chart Data Coverage Fix**: Added 1-day buffer to daily resolution timeframes (3M, 1Y, 3Y, 5Y) to ensure the most recent trading day's data is included, even if the trading day hasn't completed yet. This ensures users always see the latest available data including the current day.
-- **Annotation Text Overflow Fix**: Added `overflow-hidden` and `break-words` styling to all annotation text boxes to prevent text from extending beyond box boundaries during display and export.
-- **Measure Tool Display Fix**: Removed time labels from measure tool and added `whitespace-nowrap` to prevent price text from overlapping with date labels at the bottom of charts.
-- **Tab Highlight Fix**: Removed padding from TabsList to ensure the blue active tab indicator fits perfectly within the tab container without overhanging.
-- **Measure Tool Time Span**: Added time span display to measure annotations showing duration between measurement points (e.g., "5 days", "3 hours", "45 mins") positioned below the price range.
-- **Cross-Browser Text Rendering Fix**: Fixed vertical/horizontal line annotation text truncation in Firefox and Safari by using explicit inline styles (word-break, overflow-wrap, min-width) instead of Tailwind classes for consistent cross-browser rendering.
-- **Tooltip Date/Time Overlap Fix**: Fixed chart tooltip date/time text overlapping price values when wrapping to 2 lines by adding proper line-height, padding, and border separator between date and price sections.
-- **Annotation Font Size Fix**: Reduced annotation text size from 12px to 10px and decreased padding/width for better chart scaling and readability.
-- **Cross-Browser Background Fix**: Added explicit hex color (#3A3A3A) fallback backgrounds to dropdowns, modals, and date pickers for consistent rendering in Firefox and Safari where CSS variables may not apply properly.
-
-## User Preferences
+### User Preferences
 Preferred communication style: Simple, everyday language.
 Testing preference: User prefers to handle testing themselves rather than internal automated testing. Skip QA testing for speed - user will test the app directly.
 
-### Delete Confirmation UX Pattern
-Standard two-click confirmation for all delete actions across the app:
-- **First click**: Bin icon slides left to reveal "Delete Now" text in cyan (#5AF5FA)
-- **Second click**: Card slides left and fades out (300ms animation), then deletion occurs
-- **Auto-reset**: Returns to normal state after 4 seconds if not confirmed
-- **Benefits**: Prevents accidental deletion, no modals/pop-ups, fast and modern, clear visual feedback
-- **Implementation**: Applied to Chart History Log delete buttons (individual cards and "Delete All")
+### System Architecture
 
-## System Architecture
-
-### Frontend Architecture
+#### Frontend Architecture
 - **Framework**: React 18 with TypeScript
 - **State Management**: TanStack Query (React Query)
 - **Routing**: Wouter
@@ -114,53 +17,61 @@ Standard two-click confirmation for all delete actions across the app:
 - **Build Tool**: Vite
 - **UI/UX Decisions**:
     - **Dark Mode**: Complete light/dark theme toggle with Intropic MUI color scheme (#5AF5FA cyan accents)
-    - **Typography**: Space Grotesk Light (300) for H1/H2; Mulish for H3, H4+, and body text (Light, Regular, Bold weights)
+    - **Typography**: Space Grotesk Light (300) for H1/H2; Mulish for H3, H4+, and body text
     - **Responsive Design**: Mobile-first design with adaptive layouts
     - **Dashboard**: Main interface with summary cards, gainers/losers tables, and filter controls
     - **Market Status Indicator**: Real-time US market status (OPEN/CLOSED) with countdown
     - **Data Tables**: Sortable tables with custom cell renderers
     - **Export Functionality**: CSV export for market data
-    - **Price Chart Component**: Interactive stock price charts with multiple timeframes (1D, 1W, 1M, 3M, 1Y) and integrated ticker search
+    - **Price Chart Component**: Interactive stock price charts with multiple timeframes and integrated ticker search
     - **Stock Ticker Suffix Guide**: Searchable guide for global stock exchange suffixes with market hours and holiday information
+    - **Homepage**: Three interactive pathway cards for Price Chart, Comparison Chart, and AI Co-Pilot.
+    - **Navigation**: Global navigation dropdown for quick chart type switching.
+    - **Delete Confirmation UX Pattern**: Two-click confirmation for all delete actions: bin icon slides to reveal "Delete Now" (cyan #5AF5FA), second click initiates animated deletion (card slides left and fades out). Auto-resets after 4 seconds.
 
-### Backend Architecture
+#### Backend Architecture
 - **Runtime**: Node.js with Express.js
 - **Language**: TypeScript with ES modules
 - **Database**: PostgreSQL with Drizzle ORM
 - **Session Storage**: PostgreSQL-backed sessions using `connect-pg-simple`
 - **API Design**: RESTful API endpoints with JSON responses
 
-### Data Storage Solutions
+#### Data Storage Solutions
 - **Primary Database**: PostgreSQL via Neon serverless
 - **ORM**: Drizzle with schema-first approach and Drizzle Kit for migrations
 - **Storage Implementation**: `DatabaseStorage` class for CRUD operations
 
-### Key Features
-- **Stock Data Management**: Comprehensive stock information, market summary, and advanced filtering by change threshold, market cap, index membership, and sorting.
-- **Slack Integration**: Automated morning/afternoon market mover alerts with bot integration for sending formatted messages and alert history tracking.
-- **Global Exchange Coverage**: Supports 69 global stock exchanges with Bloomberg-style ticker suffixes, comprehensive currency mapping, and Finnhub API integration for live market holiday data.
-- **Stock Data Pipeline**: Data ingestion from Alpha Vantage Premium, comprehensive coverage of 40 market movers (20 gainers, 20 losers), US stock filtering, smart market cap estimation, sector classification, efficient database storage, RESTful API endpoints, 15-minute refresh cycle, and API quota tracking.
-- **Slack Alert Workflow**: Market analysis, alert generation formatted for Slack blocks, automated delivery, and alert logging.
+#### Key Features
+- **Stock Data Management**: Comprehensive stock information, market summary, and advanced filtering.
+- **Slack Integration**: Automated morning/afternoon market mover alerts with bot integration.
+- **Global Exchange Coverage**: Supports 69 global stock exchanges with Bloomberg-style ticker suffixes, currency mapping, and Finnhub API integration for live market holiday data.
+- **Stock Data Pipeline**: Data ingestion from Alpha Vantage Premium, coverage of 40 market movers, US stock filtering, smart market cap estimation, sector classification, efficient database storage, RESTful API endpoints, 15-minute refresh cycle, and API quota tracking.
+- **Login Attempt Tracking System**: Comprehensive tracking of login attempts including geographical location (via ipapi.co), success/failure status, and specific failure reasons. Admin page displays history and statistics.
+- **Comparison Chart Enhancement**: Forward-fill logic for global market comparisons to create continuous lines across different market hours.
+- **CSV Overlay Feature**: Allows users to upload or paste CSV data for percentage overlays on charts, with strict validation and visual rendering.
+- **Y-Axis Toggle Feature**: In price chart, switch between price and percentage display modes.
 
-## External Dependencies
+### External Dependencies
 
-### Core Runtime Dependencies
+#### Core Runtime Dependencies
 - **@neondatabase/serverless**: PostgreSQL database connection
 - **drizzle-orm**: Type-safe database queries and migrations
 - **@slack/web-api**: Slack bot integration
 - **express**: Web server framework
 - **@tanstack/react-query**: Server state management
-- **Alpha Vantage Premium**: Primary data source for TOP_GAINERS_LOSERS API (live market movers, 20 gainers, 20 losers).
+- **Alpha Vantage Premium**: Primary data source for TOP_GAINERS_LOSERS API (live market movers).
 - **Finnhub API**: Fallback for ticker search, price charts, company profiles, and real-time market holidays.
 - **Polygon API**: Backup source for additional market data and comprehensive stock screening.
+- **ipapi.co**: IP geolocation for login attempt tracking.
+- **OpenAI**: AI Copilot chart maker integration (via Replit AI Integrations).
 
-### UI and Development Dependencies
+#### UI and Development Dependencies
 - **@radix-ui/***: Accessible UI primitives
 - **tailwindcss**: Utility-first CSS framework
 - **vite**: Build tool and development server
 - **typescript**: Type safety
 - **zod**: Runtime type validation
 
-### Database and Storage
+#### Database and Storage
 - **connect-pg-simple**: PostgreSQL session store
 - **drizzle-zod**: Schema validation integration
