@@ -4275,7 +4275,9 @@ export function PriceChart({
                 <div className="w-8 h-8 bg-[#FAFF50] rounded-full flex items-center justify-center">
                   <span className="text-black font-bold text-sm">E</span>
                 </div>
-                <div className="font-semibold text-lg">Quarterly Earnings</div>
+                <div className="font-semibold text-lg">
+                  {symbol ? `${symbol} Quarterly Earnings` : 'Quarterly Earnings'}
+                </div>
               </div>
               
               <div className="space-y-3 text-sm">
