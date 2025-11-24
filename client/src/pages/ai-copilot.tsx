@@ -167,95 +167,8 @@ export default function AICopilot() {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6 max-w-[1800px]">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[calc(100vh-120px)]">
-          {/* Left Sidebar: Chart History + AI Co-Pilot Tools */}
-          <div className="lg:col-span-1 flex flex-col gap-4 h-full overflow-hidden">
-            {/* Chart History Section */}
-            <Card className="flex flex-col overflow-hidden" style={{ backgroundColor: '#1C1C1C', maxHeight: '40%' }}>
-              <div className="p-4 border-b border-border">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 
-                    className="text-lg font-semibold"
-                    style={{ fontFamily: 'Mulish, sans-serif', color: '#F7F7F7' }}
-                  >
-                    Chart History
-                  </h3>
-                  <button
-                    onClick={handleNewChat}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-md hover:opacity-80 transition-opacity text-sm font-medium"
-                    style={{ 
-                      fontFamily: 'Mulish, sans-serif', 
-                      backgroundColor: '#5AF5FA',
-                      color: '#000000'
-                    }}
-                    data-testid="button-new-chat"
-                  >
-                    <Plus className="h-4 w-4" />
-                    <span>New Chat</span>
-                  </button>
-                </div>
-                <p 
-                  className="text-xs"
-                  style={{ fontFamily: 'Mulish, sans-serif', color: '#A0A0A0' }}
-                >
-                  {chartMessages.length} chart{chartMessages.length !== 1 ? 's' : ''} generated
-                </p>
-              </div>
-
-              <div className="flex-1 overflow-y-auto p-3 space-y-2">
-                {chartMessages.length === 0 ? (
-                  <div className="text-center py-8">
-                    <BarChart3 className="h-10 w-10 mx-auto mb-2" style={{ color: '#5AF5FA', opacity: 0.3 }} />
-                    <p 
-                      className="text-sm"
-                      style={{ fontFamily: 'Mulish, sans-serif', color: '#A0A0A0' }}
-                    >
-                      No charts yet
-                    </p>
-                  </div>
-                ) : (
-                  chartMessages.slice().reverse().map((msg) => (
-                    <button
-                      key={msg.id}
-                      onClick={() => setSelectedChartId(msg.id)}
-                      className={`w-full text-left p-2 rounded-lg border transition-all ${
-                        selectedChartId === msg.id 
-                          ? 'border-[#5AF5FA] bg-[#5AF5FA]/10' 
-                          : 'border-border hover:border-[#5AF5FA]/50 hover:bg-[#2A2A2A]'
-                      }`}
-                      data-testid={`button-chart-history-${msg.id}`}
-                    >
-                      <div className="flex items-start gap-2">
-                        <BarChart3 
-                          className="h-4 w-4 mt-0.5 flex-shrink-0" 
-                          style={{ color: selectedChartId === msg.id ? '#5AF5FA' : '#A0A0A0' }} 
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p 
-                            className="text-sm font-medium truncate"
-                            style={{ 
-                              fontFamily: 'Mulish, sans-serif', 
-                              color: selectedChartId === msg.id ? '#5AF5FA' : '#F7F7F7'
-                            }}
-                          >
-                            {msg.chartConfig?.title || 'Untitled Chart'}
-                          </p>
-                          <p 
-                            className="text-xs mt-0.5 capitalize"
-                            style={{ 
-                              fontFamily: 'Mulish, sans-serif', 
-                              color: '#A0A0A0'
-                            }}
-                          >
-                            {msg.chartConfig?.type} chart
-                          </p>
-                        </div>
-                      </div>
-                    </button>
-                  ))
-                )}
-              </div>
-            </Card>
-
+          {/* Left Sidebar: AI Co-Pilot Chat */}
+          <div className="lg:col-span-1 flex flex-col h-full overflow-hidden">
             {/* AI Co-Pilot Tools Section */}
             <Card className="flex-1 flex flex-col overflow-hidden" style={{ backgroundColor: '#1C1C1C' }}>
               {/* Header */}
@@ -365,9 +278,10 @@ export default function AICopilot() {
             </Card>
           </div>
 
-          {/* Main Chart Display - Takes up 3/4 of the screen */}
-          <div className="lg:col-span-3">
-            <Card className="h-full flex flex-col" style={{ backgroundColor: '#1C1C1C' }}>
+          {/* Main Chart Display with History - Takes up 3/4 of the screen */}
+          <div className="lg:col-span-3 flex flex-col gap-6 overflow-hidden">
+            {/* Generated Chart */}
+            <Card className="flex-1 flex flex-col overflow-hidden" style={{ backgroundColor: '#1C1C1C' }}>
               <div className="p-4 border-b border-border">
                 <h2 
                   className="text-2xl font-semibold"
@@ -399,6 +313,95 @@ export default function AICopilot() {
                         Upload a CSV and describe the chart you want to create
                       </p>
                     </div>
+                  </div>
+                )}
+              </div>
+            </Card>
+
+            {/* Chart History - Permanent below Generated Chart */}
+            <Card className="h-64 flex flex-col overflow-hidden" style={{ backgroundColor: '#1C1C1C' }}>
+              <div className="p-4 border-b border-border">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 
+                    className="text-lg font-semibold"
+                    style={{ fontFamily: 'Mulish, sans-serif', color: '#F7F7F7' }}
+                  >
+                    Chart History
+                  </h3>
+                  <button
+                    onClick={handleNewChat}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-md hover:opacity-80 transition-opacity text-sm font-medium"
+                    style={{ 
+                      fontFamily: 'Mulish, sans-serif', 
+                      backgroundColor: '#5AF5FA',
+                      color: '#000000'
+                    }}
+                    data-testid="button-new-chat-history"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>New Chat</span>
+                  </button>
+                </div>
+                <p 
+                  className="text-xs"
+                  style={{ fontFamily: 'Mulish, sans-serif', color: '#A0A0A0' }}
+                >
+                  {chartMessages.length} chart{chartMessages.length !== 1 ? 's' : ''} generated
+                </p>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                {chartMessages.length === 0 ? (
+                  <div className="text-center py-8">
+                    <BarChart3 className="h-10 w-10 mx-auto mb-2" style={{ color: '#5AF5FA', opacity: 0.3 }} />
+                    <p 
+                      className="text-sm"
+                      style={{ fontFamily: 'Mulish, sans-serif', color: '#A0A0A0' }}
+                    >
+                      No charts yet
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {chartMessages.slice().reverse().map((msg) => (
+                      <button
+                        key={msg.id}
+                        onClick={() => setSelectedChartId(msg.id)}
+                        className={`w-full text-left p-2 rounded-lg border transition-all ${
+                          selectedChartId === msg.id 
+                            ? 'border-[#5AF5FA] bg-[#5AF5FA]/10' 
+                            : 'border-border hover:border-[#5AF5FA]/50 hover:bg-[#2A2A2A]'
+                        }`}
+                        data-testid={`button-chart-history-${msg.id}`}
+                      >
+                        <div className="flex items-start gap-2">
+                          <BarChart3 
+                            className="h-4 w-4 mt-0.5 flex-shrink-0" 
+                            style={{ color: selectedChartId === msg.id ? '#5AF5FA' : '#A0A0A0' }} 
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p 
+                              className="text-sm font-medium truncate"
+                              style={{ 
+                                fontFamily: 'Mulish, sans-serif', 
+                                color: selectedChartId === msg.id ? '#5AF5FA' : '#F7F7F7'
+                              }}
+                            >
+                              {msg.chartConfig?.title || 'Untitled Chart'}
+                            </p>
+                            <p 
+                              className="text-xs mt-0.5 capitalize"
+                              style={{ 
+                                fontFamily: 'Mulish, sans-serif', 
+                                color: '#A0A0A0'
+                              }}
+                            >
+                              {msg.chartConfig?.type} chart
+                            </p>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
