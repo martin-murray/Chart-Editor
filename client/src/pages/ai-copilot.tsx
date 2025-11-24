@@ -71,10 +71,15 @@ export default function AICopilot() {
     createSessionMutation.mutate();
   }, []);
 
-  // Get messages
+  // Get messages for current chat
   const { data: messages = [], refetch: refetchMessages } = useQuery<AiCopilotMessage[]>({
     queryKey: ['/api/ai-copilot/messages', chatId],
     enabled: !!chatId,
+  });
+
+  // Get all chart history across all sessions
+  const { data: allChartMessages = [], refetch: refetchAllCharts } = useQuery<AiCopilotMessage[]>({
+    queryKey: ['/api/ai-copilot/all-charts'],
   });
 
   // Send message
@@ -86,6 +91,7 @@ export default function AICopilot() {
     onSuccess: () => {
       setMessage("");
       refetchMessages();
+      refetchAllCharts(); // Also refresh the chart history
     },
   });
 
@@ -107,13 +113,13 @@ export default function AICopilot() {
     }
   }, [messages, selectedChartId]);
 
-  // Get all messages with charts
-  const chartMessages = messages.filter(m => m.chartConfig);
+  // Use all chart messages across sessions instead of just current chat
+  const chartMessages = allChartMessages;
   
-  // Get selected chart
+  // Get selected chart from all chart messages
   const selectedChart = selectedChartId 
-    ? messages.find(m => m.id === selectedChartId)
-    : chartMessages[chartMessages.length - 1];
+    ? allChartMessages.find(m => m.id === selectedChartId)
+    : chartMessages[0]; // Most recent chart (since ordered by desc)
 
   // Handle new chat
   const handleNewChat = () => {
@@ -123,24 +129,28 @@ export default function AICopilot() {
 
   // Delete individual chart message
   const deleteMessageMutation = useMutation({
-    mutationFn: async (messageId: number) => {
-      if (!chatId) throw new Error("No chat ID");
-      await apiRequest('DELETE', `/api/ai-copilot/messages/${chatId}/${messageId}`);
+    mutationFn: async ({ messageId, messageChatId }: { messageId: number; messageChatId: number }) => {
+      await apiRequest('DELETE', `/api/ai-copilot/messages/${messageChatId}/${messageId}`);
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/ai-copilot/all-charts'] });
       queryClient.invalidateQueries({ queryKey: ['/api/ai-copilot/messages', chatId] });
       setDeletingId(null);
       setConfirmDeleteId(null);
     },
   });
 
-  // Delete all charts for this chat
+  // Delete all charts for the user
   const deleteAllChartsMutation = useMutation({
     mutationFn: async () => {
-      if (!chatId) return;
-      await apiRequest('DELETE', `/api/ai-copilot/charts/${chatId}`);
+      // Delete all charts across all user sessions
+      const deletePromises = allChartMessages.map(msg => 
+        apiRequest('DELETE', `/api/ai-copilot/messages/${msg.chatId}/${msg.id}`)
+      );
+      await Promise.all(deletePromises);
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/ai-copilot/all-charts'] });
       queryClient.invalidateQueries({ queryKey: ['/api/ai-copilot/messages', chatId] });
       setConfirmDeleteAll(false);
       setSelectedChartId(null);
@@ -165,7 +175,11 @@ export default function AICopilot() {
       }
       
       setTimeout(() => {
-        deleteMessageMutation.mutate(messageId);
+        // Find the message to get its chatId
+        const message = allChartMessages.find(m => m.id === messageId);
+        if (message) {
+          deleteMessageMutation.mutate({ messageId, messageChatId: message.chatId });
+        }
       }, 300); // Wait for animation
     } else {
       // First click - show confirmation
@@ -590,7 +604,7 @@ export default function AICopilot() {
                           }}
                           className="absolute top-1 right-1 hover:bg-transparent flex items-center justify-center"
                           style={{ 
-                            width: confirmDeleteId === msg.id ? '85px' : '36px',
+                            width: confirmDeleteId === msg.id ? '95px' : '36px',
                             height: '32px',
                             transition: 'width 300ms',
                             overflow: 'hidden'
@@ -614,7 +628,7 @@ export default function AICopilot() {
                             }`}
                             style={{ 
                               color: '#5AF5FA',
-                              left: '8px'
+                              left: '10px'
                             }}
                           >
                             Delete Now

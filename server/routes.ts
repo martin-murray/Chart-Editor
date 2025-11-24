@@ -1258,6 +1258,43 @@ Generate the chart data directly. Do not explain what you would do, just provide
     }
   });
 
+  // Get all chart history for the authenticated user across all sessions
+  app.get("/api/ai-copilot/all-charts", requireAuth, async (req, res) => {
+    try {
+      const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      // Get all chats for this user
+      const userChats = await db.select({ id: aiCopilotChats.id })
+        .from(aiCopilotChats)
+        .where(eq(aiCopilotChats.userId, userId));
+      
+      const chatIds = userChats.map(chat => chat.id);
+      
+      if (chatIds.length === 0) {
+        return res.json([]);
+      }
+
+      // Get all messages with chartConfig from user's chats
+      const chartMessages = await db.select()
+        .from(aiCopilotMessages)
+        .where(
+          and(
+            sql`${aiCopilotMessages.chatId} = ANY(${chatIds})`,
+            sql`${aiCopilotMessages.chartConfig} IS NOT NULL`
+          )
+        )
+        .orderBy(desc(aiCopilotMessages.createdAt));
+      
+      res.json(chartMessages);
+    } catch (error) {
+      console.error("Error fetching all chart history:", error);
+      res.status(500).json({ message: "Failed to fetch chart history" });
+    }
+  });
+
   // Delete individual AI Co-Pilot message
   app.delete("/api/ai-copilot/messages/:chatId/:messageId", requireAuth, async (req, res) => {
     try {
