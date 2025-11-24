@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Sparkles, LogOut, BookOpen, Send, Loader2, Download, BarChart3, Plus, Trash2 } from "lucide-react";
+import { Sparkles, LogOut, BookOpen, Send, Loader2, Download, BarChart3, Plus, Trash2, AlertCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import logoImage from "@assets/IPO Intelligence@2x_1758060026530.png";
 import {
@@ -12,11 +12,63 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Component } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { AiCopilotMessage } from "@shared/schema";
 import { AICopilotChart } from "@/components/ai-copilot/chart";
+
+// Error boundary for chart rendering
+class ErrorBoundary extends Component<
+  { children: React.ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: any) {
+    console.error('Chart rendering error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="h-full flex items-center justify-center">
+          <div className="text-center max-w-md">
+            <AlertCircle className="h-16 w-16 mx-auto mb-4" style={{ color: '#FF6B6B', opacity: 0.8 }} />
+            <p 
+              className="text-lg font-semibold mb-2"
+              style={{ fontFamily: 'Mulish, sans-serif', color: '#FF6B6B' }}
+            >
+              Could not render chart
+            </p>
+            <p 
+              className="text-sm"
+              style={{ fontFamily: 'Mulish, sans-serif', color: '#A0A0A0' }}
+            >
+              {this.state.error?.message || 'The chart configuration is invalid or contains unsupported data'}
+            </p>
+            <Button
+              onClick={() => this.setState({ hasError: false, error: null })}
+              className="mt-4"
+              style={{ backgroundColor: '#5AF5FA', color: '#000' }}
+            >
+              Try Again
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 function LogoutButton() {
   const { logout } = useAuth();
@@ -78,7 +130,12 @@ export default function AICopilot() {
   });
 
   // Get all chart history across all sessions
-  const { data: allChartMessages = [], refetch: refetchAllCharts } = useQuery<AiCopilotMessage[]>({
+  const { 
+    data: allChartMessages = [], 
+    refetch: refetchAllCharts,
+    isError: chartHistoryError,
+    error: chartHistoryErrorData
+  } = useQuery<AiCopilotMessage[]>({
     queryKey: ['/api/ai-copilot/all-charts'],
   });
 
@@ -428,10 +485,39 @@ export default function AICopilot() {
               </div>
 
               <div className="flex-1 p-6 overflow-auto">
-                {selectedChart?.chartConfig ? (
-                  <AICopilotChart 
-                    config={selectedChart.chartConfig} 
-                  />
+                {chartHistoryError ? (
+                  <div className="h-full flex items-center justify-center">
+                    <div className="text-center">
+                      <AlertCircle className="h-20 w-20 mx-auto mb-4" style={{ color: '#FF6B6B', opacity: 0.8 }} />
+                      <p 
+                        className="text-lg font-semibold mb-2"
+                        style={{ fontFamily: 'Mulish, sans-serif', color: '#FF6B6B' }}
+                      >
+                        Could not load chart history
+                      </p>
+                      <p 
+                        className="text-sm"
+                        style={{ fontFamily: 'Mulish, sans-serif', color: '#A0A0A0' }}
+                      >
+                        {chartHistoryErrorData instanceof Error ? chartHistoryErrorData.message : 'Failed to fetch chart data from server'}
+                      </p>
+                      <Button
+                        onClick={() => refetchAllCharts()}
+                        className="mt-4"
+                        style={{ backgroundColor: '#5AF5FA', color: '#000' }}
+                      >
+                        Try Again
+                      </Button>
+                    </div>
+                  </div>
+                ) : selectedChart?.chartConfig ? (
+                  <div className="h-full">
+                    <ErrorBoundary>
+                      <AICopilotChart 
+                        config={selectedChart.chartConfig} 
+                      />
+                    </ErrorBoundary>
+                  </div>
                 ) : (
                   <div className="h-full flex items-center justify-center">
                     <div className="text-center">

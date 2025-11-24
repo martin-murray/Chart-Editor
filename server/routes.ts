@@ -7,7 +7,7 @@ import multer from "multer";
 import { sendFeedbackToSlack } from "./slack";
 import { db } from "./db";
 import { visitorAnalytics, loginAttempts, insertLoginAttemptSchema, aiCopilotChats, aiCopilotMessages, aiCopilotUploads, chartHistory, insertChartHistorySchema } from "@shared/schema";
-import { desc, count, sql, gte, lte, and, eq } from "drizzle-orm";
+import { desc, count, sql, gte, lte, and, eq, inArray } from "drizzle-orm";
 import { getExchangeInfoFromSuffix, applySuffixOverride } from "./utils/suffixMappings";
 import { indexService } from "./services/indexService";
 import OpenAI from "openai";
@@ -1282,7 +1282,7 @@ Generate the chart data directly. Do not explain what you would do, just provide
         .from(aiCopilotMessages)
         .where(
           and(
-            sql`${aiCopilotMessages.chatId} = ANY(${chatIds})`,
+            inArray(aiCopilotMessages.chatId, chatIds),
             sql`${aiCopilotMessages.chartConfig} IS NOT NULL`
           )
         )
