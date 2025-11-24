@@ -149,6 +149,7 @@ export type InsertChartHistory = z.infer<typeof insertChartHistorySchema>;
 // AI Co-Pilot tables
 export const aiCopilotChats = pgTable("ai_copilot_chats", {
   id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(), // User identifier for ownership verification
   sessionId: text("session_id").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });

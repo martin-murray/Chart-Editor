@@ -1009,8 +1009,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create or get chat session
   app.post("/api/ai-copilot/session", requireAuth, async (req, res) => {
     try {
+      const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+      
       const sessionId = randomUUID();
-      const [chat] = await db.insert(aiCopilotChats).values({ sessionId }).returning();
+      const [chat] = await db.insert(aiCopilotChats).values({ 
+        userId,
+        sessionId 
+      }).returning();
       res.json(chat);
     } catch (error) {
       console.error("Error creating AI chat session:", error);
@@ -1247,6 +1255,91 @@ Generate the chart data directly. Do not explain what you would do, just provide
     } catch (error) {
       console.error("Error fetching messages:", error);
       res.status(500).json({ message: "Failed to fetch messages" });
+    }
+  });
+
+  // Delete individual AI Co-Pilot message
+  app.delete("/api/ai-copilot/messages/:chatId/:messageId", requireAuth, async (req, res) => {
+    try {
+      const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+      
+      const chatId = parseInt(req.params.chatId);
+      const messageId = parseInt(req.params.messageId);
+      
+      // Verify chat exists and belongs to authenticated user
+      const chat = await db.select().from(aiCopilotChats)
+        .where(
+          and(
+            eq(aiCopilotChats.id, chatId),
+            eq(aiCopilotChats.userId, userId)
+          )
+        )
+        .limit(1);
+      
+      if (chat.length === 0) {
+        return res.status(404).json({ message: "Chat not found or access denied" });
+      }
+      
+      // Verify the message belongs to the specified chat (security check)
+      await db.delete(aiCopilotMessages)
+        .where(
+          and(
+            eq(aiCopilotMessages.id, messageId),
+            eq(aiCopilotMessages.chatId, chatId)
+          )
+        );
+      
+      res.json({ success: true, message: "Message deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting AI Co-Pilot message:", error);
+      res.status(500).json({ message: "Failed to delete message" });
+    }
+  });
+
+  // Delete all messages with charts for a specific chat
+  app.delete("/api/ai-copilot/charts/:chatId", requireAuth, async (req, res) => {
+    try {
+      const userId = req.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+      
+      const chatId = parseInt(req.params.chatId);
+      
+      // Verify chat exists and belongs to authenticated user
+      const chat = await db.select().from(aiCopilotChats)
+        .where(
+          and(
+            eq(aiCopilotChats.id, chatId),
+            eq(aiCopilotChats.userId, userId)
+          )
+        )
+        .limit(1);
+      
+      if (chat.length === 0) {
+        return res.status(404).json({ message: "Chat not found or access denied" });
+      }
+      
+      // Delete associated uploads for this chat (cascade)
+      await db.delete(aiCopilotUploads)
+        .where(eq(aiCopilotUploads.chatId, chatId));
+      
+      // Delete all messages with chartConfig
+      await db.delete(aiCopilotMessages)
+        .where(
+          and(
+            eq(aiCopilotMessages.chatId, chatId),
+            sql`${aiCopilotMessages.chartConfig} IS NOT NULL`
+          )
+        );
+      
+      res.json({ success: true, message: "All charts deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting all AI Co-Pilot charts:", error);
+      res.status(500).json({ message: "Failed to delete all charts" });
     }
   });
 

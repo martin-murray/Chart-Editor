@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Sparkles, LogOut, BookOpen, Send, Loader2, Download, BarChart3, Plus } from "lucide-react";
+import { Sparkles, LogOut, BookOpen, Send, Loader2, Download, BarChart3, Plus, Trash2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import logoImage from "@assets/IPO Intelligence@2x_1758060026530.png";
 import {
@@ -46,6 +46,11 @@ export default function AICopilot() {
   const [message, setMessage] = useState("");
   const [selectedChartId, setSelectedChartId] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
+  const deleteTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const deleteAllTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleChartTypeChange = (value: string) => {
     setLocation(value);
@@ -115,6 +120,123 @@ export default function AICopilot() {
     setSelectedChartId(null);
     createSessionMutation.mutate();
   };
+
+  // Delete individual chart message
+  const deleteMessageMutation = useMutation({
+    mutationFn: async (messageId: number) => {
+      if (!chatId) throw new Error("No chat ID");
+      await apiRequest('DELETE', `/api/ai-copilot/messages/${chatId}/${messageId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/ai-copilot/messages', chatId] });
+      setDeletingId(null);
+      setConfirmDeleteId(null);
+    },
+  });
+
+  // Delete all charts for this chat
+  const deleteAllChartsMutation = useMutation({
+    mutationFn: async () => {
+      if (!chatId) return;
+      await apiRequest('DELETE', `/api/ai-copilot/charts/${chatId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/ai-copilot/messages', chatId] });
+      setConfirmDeleteAll(false);
+      setSelectedChartId(null);
+    },
+  });
+
+  // Handle delete click (first click)
+  const handleDeleteClick = (messageId: number) => {
+    if (confirmDeleteId === messageId) {
+      // Second click - execute deletion
+      // Clear timer to prevent state update after unmount
+      if (deleteTimerRef.current) {
+        clearTimeout(deleteTimerRef.current);
+        deleteTimerRef.current = null;
+      }
+      
+      setDeletingId(messageId);
+      
+      // If this is the selected chart, clear selection
+      if (selectedChartId === messageId) {
+        setSelectedChartId(null);
+      }
+      
+      setTimeout(() => {
+        deleteMessageMutation.mutate(messageId);
+      }, 300); // Wait for animation
+    } else {
+      // First click - show confirmation
+      setConfirmDeleteId(messageId);
+      
+      // Clear any existing timer
+      if (deleteTimerRef.current) {
+        clearTimeout(deleteTimerRef.current);
+      }
+      
+      // Auto-reset after 4 seconds
+      deleteTimerRef.current = setTimeout(() => {
+        setConfirmDeleteId(null);
+      }, 4000);
+    }
+  };
+
+  // Handle delete all click
+  const handleDeleteAllClick = () => {
+    if (confirmDeleteAll) {
+      // Second click - execute deletion
+      // Clear timer to prevent state update after unmount
+      if (deleteAllTimerRef.current) {
+        clearTimeout(deleteAllTimerRef.current);
+        deleteAllTimerRef.current = null;
+      }
+      
+      deleteAllChartsMutation.mutate();
+    } else {
+      // First click - show confirmation
+      setConfirmDeleteAll(true);
+      
+      // Clear any existing timer
+      if (deleteAllTimerRef.current) {
+        clearTimeout(deleteAllTimerRef.current);
+      }
+      
+      // Auto-reset after 4 seconds
+      deleteAllTimerRef.current = setTimeout(() => {
+        setConfirmDeleteAll(false);
+      }, 4000);
+    }
+  };
+
+  // Clear timer when confirmDeleteId changes (switching targets)
+  useEffect(() => {
+    if (confirmDeleteId === null && deleteTimerRef.current) {
+      clearTimeout(deleteTimerRef.current);
+      deleteTimerRef.current = null;
+    }
+  }, [confirmDeleteId]);
+
+  // Clear timer when confirmDeleteAll changes
+  useEffect(() => {
+    if (!confirmDeleteAll && deleteAllTimerRef.current) {
+      clearTimeout(deleteAllTimerRef.current);
+      deleteAllTimerRef.current = null;
+    }
+  }, [confirmDeleteAll]);
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      if (deleteTimerRef.current) {
+        clearTimeout(deleteTimerRef.current);
+      }
+      if (deleteAllTimerRef.current) {
+        clearTimeout(deleteAllTimerRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -328,19 +450,72 @@ export default function AICopilot() {
                   >
                     Chart History
                   </h3>
-                  <button
-                    onClick={handleNewChat}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-md hover:opacity-80 transition-opacity text-sm font-medium"
-                    style={{ 
-                      fontFamily: 'Mulish, sans-serif', 
-                      backgroundColor: '#5AF5FA',
-                      color: '#000000'
-                    }}
-                    data-testid="button-new-chat-history"
-                  >
-                    <Plus className="h-4 w-4" />
-                    <span>New Chat</span>
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {chartMessages.length > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleDeleteAllClick}
+                        className="hover:bg-transparent relative flex items-center justify-center"
+                        style={{ 
+                          width: confirmDeleteAll ? '95px' : '90px',
+                          height: '32px',
+                          transition: 'width 300ms',
+                          overflow: 'hidden'
+                        }}
+                        data-testid="button-delete-all-charts"
+                      >
+                        <Trash2 
+                          className={`h-4 w-4 absolute transition-all duration-300 ${
+                            confirmDeleteAll ? 'opacity-0 -translate-x-12' : 'opacity-100 translate-x-0'
+                          }`}
+                          style={{ 
+                            color: confirmDeleteAll ? '#5AF5FA' : '#F7F7F7',
+                            left: '4px'
+                          }}
+                          onMouseEnter={(e) => !confirmDeleteAll && (e.currentTarget.style.color = '#5AF5FA')}
+                          onMouseLeave={(e) => !confirmDeleteAll && (e.currentTarget.style.color = '#F7F7F7')}
+                        />
+                        <span 
+                          className={`text-sm whitespace-nowrap font-medium absolute transition-all duration-300 ${
+                            confirmDeleteAll ? 'opacity-0 -translate-x-12' : 'opacity-100 translate-x-0'
+                          }`}
+                          style={{ 
+                            color: '#F7F7F7',
+                            left: '28px'
+                          }}
+                          onMouseEnter={(e) => !confirmDeleteAll && (e.currentTarget.style.color = '#5AF5FA')}
+                          onMouseLeave={(e) => !confirmDeleteAll && (e.currentTarget.style.color = '#F7F7F7')}
+                        >
+                          Delete All
+                        </span>
+                        <span 
+                          className={`text-sm whitespace-nowrap font-medium absolute transition-all duration-300 ${
+                            confirmDeleteAll ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'
+                          }`}
+                          style={{ 
+                            color: '#5AF5FA',
+                            left: '8px'
+                          }}
+                        >
+                          Delete Now
+                        </span>
+                      </Button>
+                    )}
+                    <button
+                      onClick={handleNewChat}
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-md hover:opacity-80 transition-opacity text-sm font-medium"
+                      style={{ 
+                        fontFamily: 'Mulish, sans-serif', 
+                        backgroundColor: '#5AF5FA',
+                        color: '#000000'
+                      }}
+                      data-testid="button-new-chat-history"
+                    >
+                      <Plus className="h-4 w-4" />
+                      <span>New Chat</span>
+                    </button>
+                  </div>
                 </div>
                 <p 
                   className="text-xs"
@@ -364,43 +539,88 @@ export default function AICopilot() {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {chartMessages.slice().reverse().map((msg) => (
-                      <button
+                      <div
                         key={msg.id}
-                        onClick={() => setSelectedChartId(msg.id)}
-                        className={`w-full text-left p-2 rounded-lg border transition-all ${
+                        className={`relative rounded-lg border transition-all duration-300 ${
                           selectedChartId === msg.id 
                             ? 'border-[#5AF5FA] bg-[#5AF5FA]/10' 
                             : 'border-border hover:border-[#5AF5FA]/50 hover:bg-[#2A2A2A]'
-                        }`}
-                        data-testid={`button-chart-history-${msg.id}`}
+                        } ${deletingId === msg.id ? 'opacity-0 -translate-x-full' : ''}`}
+                        data-testid={`chart-history-card-${msg.id}`}
                       >
-                        <div className="flex items-start gap-2">
-                          <BarChart3 
-                            className="h-4 w-4 mt-0.5 flex-shrink-0" 
-                            style={{ color: selectedChartId === msg.id ? '#5AF5FA' : '#A0A0A0' }} 
-                          />
-                          <div className="flex-1 min-w-0">
-                            <p 
-                              className="text-sm font-medium truncate"
-                              style={{ 
-                                fontFamily: 'Mulish, sans-serif', 
-                                color: selectedChartId === msg.id ? '#5AF5FA' : '#F7F7F7'
-                              }}
-                            >
-                              {msg.chartConfig?.title || 'Untitled Chart'}
-                            </p>
-                            <p 
-                              className="text-xs mt-0.5 capitalize"
-                              style={{ 
-                                fontFamily: 'Mulish, sans-serif', 
-                                color: '#A0A0A0'
-                              }}
-                            >
-                              {msg.chartConfig?.type} chart
-                            </p>
+                        <button
+                          onClick={() => setSelectedChartId(msg.id)}
+                          className="w-full text-left p-2"
+                        >
+                          <div className="flex items-start gap-2">
+                            <BarChart3 
+                              className="h-4 w-4 mt-0.5 flex-shrink-0" 
+                              style={{ color: selectedChartId === msg.id ? '#5AF5FA' : '#A0A0A0' }} 
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p 
+                                className="text-sm font-medium truncate"
+                                style={{ 
+                                  fontFamily: 'Mulish, sans-serif', 
+                                  color: selectedChartId === msg.id ? '#5AF5FA' : '#F7F7F7'
+                                }}
+                              >
+                                {msg.chartConfig?.title || 'Untitled Chart'}
+                              </p>
+                              <p 
+                                className="text-xs mt-0.5 capitalize"
+                                style={{ 
+                                  fontFamily: 'Mulish, sans-serif', 
+                                  color: '#A0A0A0'
+                                }}
+                              >
+                                {msg.chartConfig?.type} chart
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      </button>
+                        </button>
+                        
+                        {/* Delete button */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteClick(msg.id);
+                          }}
+                          className="absolute top-1 right-1 hover:bg-transparent flex items-center justify-center"
+                          style={{ 
+                            width: confirmDeleteId === msg.id ? '85px' : '36px',
+                            height: '32px',
+                            transition: 'width 300ms',
+                            overflow: 'hidden'
+                          }}
+                          data-testid={`button-delete-chart-${msg.id}`}
+                        >
+                          <Trash2 
+                            className={`h-4 w-4 absolute transition-all duration-300 ${
+                              confirmDeleteId === msg.id ? 'opacity-0 -translate-x-12' : 'opacity-100 translate-x-0'
+                            }`}
+                            style={{ 
+                              color: confirmDeleteId === msg.id ? '#5AF5FA' : '#F7F7F7',
+                              left: '8px'
+                            }}
+                            onMouseEnter={(e) => confirmDeleteId !== msg.id && (e.currentTarget.style.color = '#5AF5FA')}
+                            onMouseLeave={(e) => confirmDeleteId !== msg.id && (e.currentTarget.style.color = '#F7F7F7')}
+                          />
+                          <span 
+                            className={`text-sm whitespace-nowrap font-medium absolute transition-all duration-300 ${
+                              confirmDeleteId === msg.id ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'
+                            }`}
+                            style={{ 
+                              color: '#5AF5FA',
+                              left: '8px'
+                            }}
+                          >
+                            Delete Now
+                          </span>
+                        </Button>
+                      </div>
                     ))}
                   </div>
                 )}
