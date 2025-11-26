@@ -534,6 +534,31 @@ export function PriceChart({
     return () => clearTimeout(timeoutId);
   }, [tickerSearchQuery]);
 
+  // Auto-switch to percentage mode and line chart when comparison tickers are added (Compare Mode)
+  // Revert to price mode and restore chart type when all comparisons are removed
+  // This ensures tickers with vastly different price levels are visible on the same scale
+  const prevComparisonCountRef = useRef(0);
+  const savedChartTypeRef = useRef<'line' | 'mountain' | 'candlestick'>('mountain');
+  useEffect(() => {
+    if (comparisonTickers.length > 0 && prevComparisonCountRef.current === 0) {
+      // Switching into compare mode - save current settings and switch to optimal compare view
+      savedChartTypeRef.current = chartType;
+      setYAxisDisplayMode('percentage');
+      // Candlestick doesn't work for percentage comparison - switch to line
+      if (chartType === 'candlestick') {
+        setChartType('line');
+      }
+    } else if (comparisonTickers.length === 0 && prevComparisonCountRef.current > 0) {
+      // Switching out of compare mode - restore original settings
+      setYAxisDisplayMode('price');
+      setChartType(savedChartTypeRef.current);
+    } else if (comparisonTickers.length > 0 && chartType === 'candlestick') {
+      // Defensive: if somehow candlestick is selected while in compare mode, coerce to line
+      setChartType('line');
+    }
+    prevComparisonCountRef.current = comparisonTickers.length;
+  }, [comparisonTickers.length, chartType]);
+
   const handleMouseDown = (event: React.MouseEvent) => {
     if (!chartRef.current) return;
     if (!chartData?.data) return;
@@ -1451,6 +1476,38 @@ export function PriceChart({
     });
   }, [chartDataWithOverlay, comparisonTickers, comparisonTickerQueries]);
 
+  // Pre-compute combined percentage domain for comparison mode overlay axis
+  // This ensures the axis has a concrete domain on first render (not ['dataMin', 'dataMax'])
+  const comparisonPercentageDomain = useMemo(() => {
+    if (comparisonTickers.length === 0 || !chartDataWithComparisons) {
+      return null;
+    }
+    
+    const allPercentages: number[] = [];
+    chartDataWithComparisons.forEach((point: any) => {
+      // Include main ticker percentage
+      if (point.percentageChange !== undefined) {
+        allPercentages.push(point.percentageChange);
+      }
+      // Include all comparison ticker percentages
+      comparisonTickers.forEach(ticker => {
+        const val = point[`comparison_${ticker.symbol}`];
+        if (val !== undefined && val !== null) {
+          allPercentages.push(val);
+        }
+      });
+    });
+    
+    if (allPercentages.length === 0) {
+      return null;
+    }
+    
+    const minPct = Math.min(...allPercentages);
+    const maxPct = Math.max(...allPercentages);
+    const padding = (maxPct - minPct) * 0.1 || 5;
+    return [minPct - padding, maxPct + padding] as [number, number];
+  }, [chartDataWithComparisons, comparisonTickers]);
+
   // Calculate current price data extremes for zoom functionality
   const priceExtremes = useMemo(() => {
     if (!chartDataWithMA || chartDataWithMA.length === 0) {
@@ -2146,13 +2203,21 @@ export function PriceChart({
                 Mountain
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => {
+                onClick={(e) => {
+                  // Guard against any trigger (mouse, keyboard, etc.) when in compare mode
+                  if (comparisonTickers.length > 0) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return;
+                  }
                   setChartType('candlestick');
                 }}
-                className="cursor-pointer"
+                className={comparisonTickers.length > 0 ? "cursor-not-allowed opacity-50" : "cursor-pointer"}
+                disabled={comparisonTickers.length > 0}
                 data-testid="menu-chart-candles"
+                title={comparisonTickers.length > 0 ? "Candlestick not available when comparing tickers" : undefined}
               >
-                Candles
+                Candles {comparisonTickers.length > 0 && <span className="text-xs text-muted-foreground ml-1">(N/A)</span>}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -3291,11 +3356,16 @@ export function PriceChart({
                   />
                   
                   {/* Left Y-axis for overlays (CSV and/or Comparison Tickers) */}
+                  {/* When comparing tickers, this becomes the primary axis for all percentage data */}
                   {(csvOverlay.length > 0 || comparisonTickers.length > 0) && (
                     <YAxis
                       yAxisId="overlay"
                       orientation="left"
-                      domain={csvOverlay.length > 0 && comparisonTickers.length === 0 ? [0, 100] : ['dataMin', 'dataMax']}
+                      domain={
+                        csvOverlay.length > 0 && comparisonTickers.length === 0 
+                          ? [0, 100] 
+                          : comparisonPercentageDomain || ['dataMin', 'dataMax']
+                      }
                       tickFormatter={(value) => `${value.toFixed(1)}%`}
                       stroke="#b0b0b0"
                       tick={{ fill: '#b0b0b0', fontSize: 11 }}
@@ -3395,14 +3465,16 @@ export function PriceChart({
                   )}
                   
                   {/* Dynamic chart rendering based on chart type */}
+                  {/* When comparison tickers exist, use overlay axis for unified percentage scaling */}
                   {chartType === 'line' ? (
                     <Line
-                      yAxisId="price"
+                      yAxisId={comparisonTickers.length > 0 ? "overlay" : "price"}
                       type="linear"
                       dataKey={yAxisDisplayMode === 'percentage' ? 'percentageChange' : 'close'}
                       stroke={lineColor}
                       strokeWidth={2}
                       dot={false}
+                      name={symbol}
                       activeDot={{ r: 4, fill: lineColor, stroke: '#121212', strokeWidth: 2 }}
                     />
                   ) : chartType === 'candlestick' ? (
@@ -3468,13 +3540,14 @@ export function PriceChart({
                     />
                   ) : (
                     <Area
-                      yAxisId="price"
+                      yAxisId={comparisonTickers.length > 0 ? "overlay" : "price"}
                       type="linear" 
                       dataKey={yAxisDisplayMode === 'percentage' ? 'percentageChange' : 'close'}
                       stroke={lineColor}
                       strokeWidth={2}
                       fill={`url(#${isPositive ? 'positiveGradient' : 'negativeGradient'})`}
                       dot={false}
+                      name={symbol}
                       activeDot={{ r: 4, fill: lineColor, stroke: '#121212', strokeWidth: 2 }}
                     />
                   )}
@@ -3722,11 +3795,16 @@ export function PriceChart({
                   />
                   
                   {/* Left Y-axis for overlays (CSV and/or Comparison Tickers) */}
+                  {/* When comparing tickers, this becomes the primary axis for all percentage data */}
                   {(csvOverlay.length > 0 || comparisonTickers.length > 0) && (
                     <YAxis
                       yAxisId="overlay"
                       orientation="left"
-                      domain={csvOverlay.length > 0 && comparisonTickers.length === 0 ? [0, 100] : ['dataMin', 'dataMax']}
+                      domain={
+                        csvOverlay.length > 0 && comparisonTickers.length === 0 
+                          ? [0, 100] 
+                          : comparisonPercentageDomain || ['dataMin', 'dataMax']
+                      }
                       tickFormatter={(value) => `${value.toFixed(1)}%`}
                       stroke="#b0b0b0"
                       tick={{ fill: '#b0b0b0', fontSize: 11 }}
