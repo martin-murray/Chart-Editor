@@ -117,6 +117,44 @@ const timeframes = [
   { label: 'Custom', value: 'Custom' }
 ];
 
+const timeIntervals = [
+  { label: '15 min', value: '15', resolution: '15' },
+  { label: '1 hour', value: '60', resolution: '60' },
+  { label: '3 hours', value: '180', resolution: '180' },
+  { label: '6 hours', value: '360', resolution: '360' },
+];
+
+const getValidIntervalsForTimeframe = (timeframe: string, startDate?: Date, endDate?: Date): string[] => {
+  let daysDiff = 0;
+  
+  if (timeframe === 'Custom' && startDate && endDate) {
+    daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+  } else {
+    switch (timeframe) {
+      case '1D': daysDiff = 1; break;
+      case '5D': daysDiff = 5; break;
+      case '2W': daysDiff = 14; break;
+      case '1M': daysDiff = 30; break;
+      case '3M': daysDiff = 90; break;
+      case '6M': daysDiff = 180; break;
+      case '1Y': daysDiff = 365; break;
+      case '3Y': daysDiff = 365 * 3; break;
+      case '5Y': daysDiff = 365 * 5; break;
+      default: daysDiff = 7;
+    }
+  }
+  
+  if (daysDiff <= 7) {
+    return ['15', '60', '180', '360'];
+  } else if (daysDiff <= 30) {
+    return ['60', '180', '360'];
+  } else if (daysDiff <= 90) {
+    return ['180', '360'];
+  } else {
+    return [];
+  }
+};
+
 export function PriceChart({ 
   symbol, 
   name, 
@@ -202,6 +240,9 @@ export function PriceChart({
   const [priceAxisMode, setPriceAxisMode] = useState<'auto' | 'fixed'>('auto');
   const [priceAxisRange, setPriceAxisRange] = useState<number>(100); // Current zoom range in price units
   const [yAxisDisplayMode, setYAxisDisplayMode] = useState<'price' | 'percentage'>('price');
+  
+  // Time interval state for intraday data density
+  const [selectedInterval, setSelectedInterval] = useState<string>('60'); // Default to 1 hour
   
   // Predefined zoom levels for price scaling (percentage of current price range)
   const priceZoomLevels = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 0.6, 0.7, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 7.5, 10.0];
@@ -636,6 +677,23 @@ export function PriceChart({
     staleTime: 300000, // 5 minutes
   });
 
+  // Get valid intervals for current timeframe
+  const validIntervals = useMemo(() => 
+    getValidIntervalsForTimeframe(selectedTimeframe, startDate, endDate),
+    [selectedTimeframe, startDate, endDate]
+  );
+  
+  // Auto-adjust interval when timeframe or date range changes and current interval becomes invalid
+  useEffect(() => {
+    if (validIntervals.length > 0 && !validIntervals.includes(selectedInterval)) {
+      // Switch to closest valid interval
+      setSelectedInterval(validIntervals[0]);
+    }
+  }, [validIntervals, selectedInterval]);
+
+  // Track if we're in "daily aggregation" mode (long range with no valid intervals)
+  const isDailyAggregationMode = validIntervals.length === 0;
+
   const { data: chartData, isLoading, error } = useQuery({
     queryKey: [
       '/api/stocks', 
@@ -644,10 +702,13 @@ export function PriceChart({
       selectedTimeframe, 
       startDate?.toISOString(), 
       endDate?.toISOString(), 
-      singleTradingDay
+      singleTradingDay,
+      selectedInterval
     ],
     queryFn: async (): Promise<ChartResponse> => {
-      let url = `/api/stocks/${symbol}/chart?timeframe=${selectedTimeframe}`;
+      // Add interval parameter if valid intervals exist for this timeframe
+      const intervalParam = validIntervals.length > 0 ? `&interval=${selectedInterval}` : '';
+      let url = `/api/stocks/${symbol}/chart?timeframe=${selectedTimeframe}${intervalParam}`;
       if (selectedTimeframe === 'Custom' && startDate && endDate) {
         let fromTimestamp: number;
         let toTimestamp: number;
@@ -674,7 +735,7 @@ export function PriceChart({
           toTimestamp = Math.floor(rangeEnd.getTime() / 1000);
         }
         
-        url = `/api/stocks/${symbol}/chart?from=${fromTimestamp}&to=${toTimestamp}&timeframe=Custom`;
+        url = `/api/stocks/${symbol}/chart?from=${fromTimestamp}&to=${toTimestamp}&timeframe=Custom${intervalParam}`;
       }
       
       const response = await fetch(url);
@@ -2085,6 +2146,58 @@ export function PriceChart({
             </DropdownMenuContent>
           </DropdownMenu>
 
+          {/* Time Interval selector */}
+          {validIntervals.length > 0 ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 px-3 text-xs"
+                  data-testid="button-interval-dropdown"
+                >
+                  {timeIntervals.find(i => i.value === selectedInterval)?.label || '1 hour'}
+                  <ChevronDown className="w-3 h-3 ml-1" style={{ color: '#5AF5FA' }} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                {timeIntervals
+                  .filter(interval => validIntervals.includes(interval.value))
+                  .map(interval => (
+                    <DropdownMenuItem
+                      key={interval.value}
+                      onClick={() => setSelectedInterval(interval.value)}
+                      className={`cursor-pointer ${selectedInterval === interval.value ? 'bg-[#5AF5FA]/20' : ''}`}
+                      data-testid={`menu-interval-${interval.value}`}
+                    >
+                      {interval.label}
+                    </DropdownMenuItem>
+                  ))
+                }
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <TooltipProvider>
+              <HoverTooltip>
+                <HoverTooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 px-3 text-xs opacity-50 cursor-not-allowed"
+                    disabled
+                    data-testid="button-interval-disabled"
+                  >
+                    Daily
+                    <ChevronDown className="w-3 h-3 ml-1" style={{ color: '#5AF5FA' }} />
+                  </Button>
+                </HoverTooltipTrigger>
+                <HoverTooltipContent>
+                  <p className="text-xs">Intraday intervals unavailable for ranges over 3 months</p>
+                </HoverTooltipContent>
+              </HoverTooltip>
+            </TooltipProvider>
+          )}
+
           {/* Y-Axis Mode Toggle - Only show in price-volume tab */}
           {activeTab === 'price-volume' && (
             <div className="flex items-center gap-2 ml-2">
@@ -3383,7 +3496,7 @@ export function PriceChart({
                   {csvOverlay.length > 0 && (
                     <Line
                       yAxisId="overlay"
-                      type="monotone"
+                      type="linear"
                       dataKey="csvOverlay"
                       stroke="#FFFFFF"
                       strokeWidth={2}
@@ -3400,7 +3513,7 @@ export function PriceChart({
                     <Line
                       key={ticker.symbol}
                       yAxisId="overlay"
-                      type="monotone"
+                      type="linear"
                       dataKey={`comparison_${ticker.symbol}`}
                       stroke={ticker.color}
                       strokeWidth={2}
@@ -4059,7 +4172,7 @@ export function PriceChart({
                     strokeWidth={2}
                     dot={false}
                     connectNulls={true}
-                    type="monotone"
+                    type="linear"
                   />
 
                   {/* Earnings Markers - moved to volume chart */}

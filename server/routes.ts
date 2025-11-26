@@ -292,22 +292,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/stocks/:symbol/chart", async (req, res) => {
     try {
       const { symbol } = req.params;
-      const { timeframe = '1D', from: customFrom, to: customTo } = req.query;
+      const { timeframe = '1D', from: customFrom, to: customTo, interval } = req.query;
 
-      console.log(`📊 Chart request for ${symbol}, timeframe: ${timeframe}, from: ${customFrom}, to: ${customTo}`);
+      console.log(`📊 Chart request for ${symbol}, timeframe: ${timeframe}, interval: ${interval}, from: ${customFrom}, to: ${customTo}`);
 
       // Calculate time range based on timeframe or custom dates
       const now = Math.floor(Date.now() / 1000);
       let from: number;
       let to: number = now;
-      let resolution: string;
+      let resolution: string | undefined;
+
+      // User-specified interval takes precedence if provided
+      const userInterval = interval as string | undefined;
 
       if (timeframe === 'Custom' && customFrom && customTo) {
         from = parseInt(customFrom as string);
         to = parseInt(customTo as string);
-        // For custom ranges, use appropriate resolution based on date range
+        // For custom ranges, use user interval if provided, otherwise default based on date range
         const daysDiff = (to - from) / (24 * 60 * 60);
-        if (daysDiff <= 1) {
+        
+        if (userInterval && ['15', '60', '180', '360'].includes(userInterval)) {
+          // Use user-specified interval (convert 180/360 to valid Finnhub resolutions)
+          if (userInterval === '180') {
+            resolution = '60'; // Finnhub doesn't support 3h, use 1h and we'll aggregate
+          } else if (userInterval === '360') {
+            resolution = '60'; // Finnhub doesn't support 6h, use 1h and we'll aggregate
+          } else {
+            resolution = userInterval;
+          }
+        } else if (daysDiff <= 1) {
           resolution = '5'; // 5-minute intervals for 1 day or less
         } else if (daysDiff <= 7) {
           resolution = '15'; // 15-minute intervals for up to 1 week
@@ -316,26 +329,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Don't add buffer for custom date ranges - use exactly what user requested
         }
       } else {
+        // Calculate user resolution from interval if provided
+        let userResolution: string | undefined;
+        if (userInterval && ['15', '60', '180', '360'].includes(userInterval)) {
+          // Convert to Finnhub-supported resolutions
+          if (userInterval === '180') {
+            userResolution = '60'; // 3h -> use 1h
+          } else if (userInterval === '360') {
+            userResolution = '60'; // 6h -> use 1h  
+          } else {
+            userResolution = userInterval;
+          }
+        }
+        
         switch (timeframe) {
           case '1D':
             from = now - (24 * 60 * 60); // 1 day
-            resolution = '5'; // 5-minute intervals
+            resolution = userResolution || '5'; // Use user interval or default
             break;
           case '5D':
             from = now - (5 * 24 * 60 * 60); // 5 days
-            resolution = '15'; // 15-minute intervals
+            resolution = userResolution || '15'; // 15-minute intervals
             break;
           case '2W':
             from = now - (14 * 24 * 60 * 60); // 2 weeks
-            resolution = '60'; // 1-hour intervals
+            resolution = userResolution || '60'; // 1-hour intervals
             break;
           case '1M':
             from = now - (30 * 24 * 60 * 60); // 1 month
-            resolution = '60'; // 1-hour intervals
+            resolution = userResolution || '60'; // 1-hour intervals
             break;
           case '3M':
             from = now - (90 * 24 * 60 * 60); // 3 months
-            resolution = 'D'; // Daily intervals
+            resolution = 'D'; // Daily intervals (ignore user interval for long ranges)
             to = now + (24 * 60 * 60); // Add 1 day buffer to ensure we get today's data
             break;
           case '6M':
@@ -360,7 +386,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             break;
           default:
             from = now - (24 * 60 * 60);
-            resolution = '5';
+            resolution = userResolution || '5';
         }
       }
 
@@ -380,7 +406,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Transform the data for the frontend chart
-      const formattedData = chartData.t?.map((timestamp: number, index: number) => ({
+      let formattedData = chartData.t?.map((timestamp: number, index: number) => ({
         timestamp: timestamp * 1000, // Convert to milliseconds
         time: new Date(timestamp * 1000).toISOString(),
         open: chartData.o[index],
@@ -389,6 +415,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
         close: chartData.c[index],
         volume: chartData.v[index]
       })) || [];
+
+      // Aggregate data for 3h/6h intervals if user requested them
+      // (since Finnhub only provides up to 1h resolution)
+      if (userInterval === '180' || userInterval === '360') {
+        const aggregationMs = (userInterval === '180' ? 180 : 360) * 60 * 1000; // 3h or 6h in milliseconds
+        const dayMs = 24 * 60 * 60 * 1000;
+        
+        // Group candles by composite key: trading day + interval bucket
+        // This prevents cross-day merging when gaps span multiple days
+        const buckets = new Map<string, typeof formattedData>();
+        
+        for (const point of formattedData) {
+          // Create a composite key: trading day (UTC) + bucket within that day
+          const tradingDay = Math.floor(point.timestamp / dayMs);
+          const timeWithinDay = point.timestamp % dayMs;
+          const bucketWithinDay = Math.floor(timeWithinDay / aggregationMs);
+          const bucketKey = `${tradingDay}_${bucketWithinDay}`;
+          
+          if (!buckets.has(bucketKey)) {
+            buckets.set(bucketKey, []);
+          }
+          buckets.get(bucketKey)!.push(point);
+        }
+        
+        // Convert buckets to aggregated candles
+        const aggregatedData: typeof formattedData = [];
+        
+        // Sort bucket keys to maintain chronological order (e.g., "19800_0", "19800_1", "19801_0")
+        const sortedBucketKeys = Array.from(buckets.keys()).sort((a, b) => {
+          const [dayA, bucketA] = a.split('_').map(Number);
+          const [dayB, bucketB] = b.split('_').map(Number);
+          return dayA !== dayB ? dayA - dayB : bucketA - bucketB;
+        });
+        
+        for (const bucketKey of sortedBucketKeys) {
+          const candlesInBucket = buckets.get(bucketKey)!;
+          
+          if (candlesInBucket.length === 0) continue;
+          
+          // Aggregate OHLCV for this bucket
+          const firstCandle = candlesInBucket[0];
+          const lastCandle = candlesInBucket[candlesInBucket.length - 1];
+          
+          let high = -Infinity;
+          let low = Infinity;
+          let volume = 0;
+          
+          for (const candle of candlesInBucket) {
+            high = Math.max(high, candle.high);
+            low = Math.min(low, candle.low);
+            volume += candle.volume;
+          }
+          
+          aggregatedData.push({
+            timestamp: firstCandle.timestamp,
+            time: firstCandle.time,
+            open: firstCandle.open,
+            high,
+            low,
+            close: lastCandle.close,
+            volume
+          });
+        }
+        
+        formattedData = aggregatedData;
+        console.log(`📊 Aggregated ${chartData.t?.length || 0} points to ${formattedData.length} (${userInterval === '180' ? '3h' : '6h'} intervals)`);
+      }
 
       res.json({
         symbol,

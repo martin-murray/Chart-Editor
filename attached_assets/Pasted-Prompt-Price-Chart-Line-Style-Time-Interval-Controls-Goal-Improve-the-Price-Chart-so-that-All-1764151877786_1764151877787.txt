@@ -1,0 +1,73 @@
+Prompt: Price Chart Line Style + Time Interval Controls
+
+Goal
+
+Improve the Price Chart so that:
+
+All lines are straight, angular segments (no smoothing or rounded curves).
+
+Users can choose the time interval for price data: 15m, 1h, 3h, 6h.
+
+The system applies layout logic so interval choices stay realistic for the selected date range.
+
+The chart no longer connects just the daily open/close – it uses higher-resolution price points based on the chosen interval.
+
+1. Line rendering
+
+Render all price lines as straight line segments between actual data points.
+
+Disable any curve smoothing / interpolation (no bezier, no “rounded” edges).
+
+The visual style should clearly show point-to-point moves, not a softened curve.
+
+2. Interval UI
+
+Add a Time Interval control to the Price Chart, ideally as a dropdown:
+
+Options: 15 min, 1 hour, 3 hours, 6 hours.
+
+The selected interval controls how dense the price data is along the line:
+
+15 min → most detailed line
+
+1 hour / 3 hours / 6 hours → progressively fewer points
+
+3. Behaviour when the user changes interval
+
+When the user selects an interval:
+
+Re-fetch or re-aggregate the underlying time series to that interval.
+
+Re-render the price line using those interval points only.
+
+Result: the line becomes more detailed at smaller intervals, and simpler at larger intervals.
+
+4. Layout / range logic
+
+The system should prevent silly combinations of very long ranges + ultra-dense intervals.
+
+Example logic (you can tune the exact thresholds):
+
+For ranges up to 7 days → allow 15m, 1h, 3h, 6h.
+
+For ranges around 1 month → hide or disable 15m, allow 1h, 3h, 6h.
+
+For ranges longer than 3 months → only show 3h and 6h, or default to a daily aggregation instead.
+
+If the user changes the date range and the current interval is no longer valid:
+
+Auto-switch to the closest valid interval and show a subtle note if needed.
+
+5. Fix current behaviour
+
+Right now the weekly view is “basic” because it effectively connects only open and close for a period.
+
+Update this so that:
+
+Weekly (or any custom) view uses intraday points according to the selected interval, not just start/end prices.
+
+The line should step through all interval timestamps over the selected range.
+
+One-liner version (for a shorter system prompt)
+
+“Render all price chart lines as unsmoothed straight segments between real data points, add a Time Interval dropdown (15m, 1h, 3h, 6h) that controls the density of price data, and apply simple date-range logic so very long ranges don’t allow ultra-fine intervals; stop using only open/close for a week and instead use interval-based intraday points.”
