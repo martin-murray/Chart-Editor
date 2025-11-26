@@ -1454,13 +1454,27 @@ export function PriceChart({
         const tickerData = query.data as { symbol: string; data: ChartData[]; color: string };
         if (!tickerData.data || tickerData.data.length === 0) return;
 
-        // Find matching data point by timestamp
-        const match = tickerData.data.find((d: ChartData) => {
+        // Find matching data point by date (for cross-resolution matching: hourly vs daily)
+        // First try exact timestamp match, then fall back to same-day matching
+        const pointTimestamp = point.timestamp * (point.timestamp < 10000000000 ? 1000 : 1);
+        const pointDate = new Date(pointTimestamp);
+        const pointDateStr = pointDate.toISOString().split('T')[0]; // YYYY-MM-DD
+        
+        let match = tickerData.data.find((d: ChartData) => {
           const dataTimestamp = d.timestamp * (d.timestamp < 10000000000 ? 1000 : 1);
-          const pointTimestamp = point.timestamp * (point.timestamp < 10000000000 ? 1000 : 1);
           const diff = Math.abs(dataTimestamp - pointTimestamp);
-          return diff < 300000; // 5 minutes tolerance
+          return diff < 300000; // 5 minutes tolerance for same-resolution data
         });
+        
+        // Fallback: same-day matching for cross-resolution data (e.g., hourly vs daily)
+        if (!match) {
+          match = tickerData.data.find((d: ChartData) => {
+            const dataTimestamp = d.timestamp * (d.timestamp < 10000000000 ? 1000 : 1);
+            const dataDate = new Date(dataTimestamp);
+            const dataDateStr = dataDate.toISOString().split('T')[0];
+            return dataDateStr === pointDateStr;
+          });
+        }
 
         if (match) {
           // Normalize to first price point for percentage-based comparison
@@ -2750,6 +2764,66 @@ export function PriceChart({
                     Clear All
                   </Button>
                 )}
+                
+                {/* Export Dropdown - positioned in toolbar row */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 px-3 text-xs border-[#5AF5FA]/30 text-[#5AF5FA] hover:bg-[#5AF5FA]/10 ml-2"
+                    >
+                      <Download className="w-3 h-3 mr-1" />
+                      Export
+                      <ChevronDown className="w-3 h-3 ml-1" style={{ color: '#5AF5FA' }} />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="center" className="w-36">
+                    {activeTab === 'price-volume' ? (
+                      <>
+                        <DropdownMenuItem onClick={exportAsPNG} className="cursor-pointer">
+                          <Download className="w-4 h-4 mr-2" />
+                          Export as PNG
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={exportAsPDF} className="cursor-pointer">
+                          <Download className="w-4 h-4 mr-2" />
+                          Export as PDF
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={exportAsSVG} className="cursor-pointer">
+                          <Download className="w-4 h-4 mr-2" />
+                          Export as SVG
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={exportAsCode} className="cursor-pointer">
+                          <Code className="w-4 h-4 mr-2" />
+                          Get Embed Code
+                        </DropdownMenuItem>
+                      </>
+                    ) : (
+                      <>
+                        <DropdownMenuItem onClick={exportComparisonAsPNG} className="cursor-pointer">
+                          <Download className="w-4 h-4 mr-2" />
+                          Export as PNG
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={exportComparisonAsPDF} className="cursor-pointer">
+                          <Download className="w-4 h-4 mr-2" />
+                          Export as PDF
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={exportComparisonAsSVG} className="cursor-pointer">
+                          <Download className="w-4 h-4 mr-2" />
+                          Export as SVG
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={exportComparisonAsCSV} className="cursor-pointer">
+                          <Download className="w-4 h-4 mr-2" />
+                          Export as CSV
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={exportComparisonAsCode} className="cursor-pointer">
+                          <Code className="w-4 h-4 mr-2" />
+                          Get Embed Code
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
 
@@ -2855,66 +2929,6 @@ export function PriceChart({
                 </div>
               </DialogContent>
             </Dialog>
-
-            {/* Shared Export Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 px-3 text-xs border-[#5AF5FA]/30 text-[#5AF5FA] hover:bg-[#5AF5FA]/10 ml-4"
-                >
-                  <Download className="w-3 h-3 mr-1" />
-                  Export
-                  <ChevronDown className="w-3 h-3 ml-1" style={{ color: '#5AF5FA' }} />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="center" className="w-36">
-                {activeTab === 'price-volume' ? (
-                  <>
-                    <DropdownMenuItem onClick={exportAsPNG} className="cursor-pointer">
-                      <Download className="w-4 h-4 mr-2" />
-                      Export as PNG
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={exportAsPDF} className="cursor-pointer">
-                      <Download className="w-4 h-4 mr-2" />
-                      Export as PDF
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={exportAsSVG} className="cursor-pointer">
-                      <Download className="w-4 h-4 mr-2" />
-                      Export as SVG
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={exportAsCode} className="cursor-pointer">
-                      <Code className="w-4 h-4 mr-2" />
-                      Get Embed Code
-                    </DropdownMenuItem>
-                  </>
-                ) : (
-                  <>
-                    <DropdownMenuItem onClick={exportComparisonAsPNG} className="cursor-pointer">
-                      <Download className="w-4 h-4 mr-2" />
-                      Export as PNG
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={exportComparisonAsPDF} className="cursor-pointer">
-                      <Download className="w-4 h-4 mr-2" />
-                      Export as PDF
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={exportComparisonAsSVG} className="cursor-pointer">
-                      <Download className="w-4 h-4 mr-2" />
-                      Export as SVG
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={exportComparisonAsCSV} className="cursor-pointer">
-                      <Download className="w-4 h-4 mr-2" />
-                      Export as CSV
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={exportComparisonAsCode} className="cursor-pointer">
-                      <Code className="w-4 h-4 mr-2" />
-                      Get Embed Code
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </div>
 
