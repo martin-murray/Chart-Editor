@@ -2221,29 +2221,15 @@ export function PriceChart({
         {/* Redesigned Custom Date Picker - Limited to 10 Years */}
         {selectedTimeframe === 'Custom' && showDatePicker && (
           <div className="mt-4 p-4 border rounded-lg relative z-50" style={{ zIndex: 9999, backgroundColor: '#3A3A3A' }}>
-            {/* Close Button */}
-            <button
-              onClick={() => {
-                setShowDatePicker(false);
-                // Reset states when closing
-                setSingleTradingDay(false);
-                setStartDate(undefined);
-                setEndDate(undefined);
-              }}
-              className="absolute top-3 right-3 text-muted-foreground hover:text-foreground transition-colors"
-              title="Close date picker"
-            >
-              <X className="w-4 h-4" />
-            </button>
-            
-            {/* Mode Toggle */}
-            <div className="mb-4 pr-8">
-              <div className="flex items-center justify-center gap-4">
+            {/* Top Bar: Close button, Selected Range Summary & Apply Button */}
+            <div className="flex items-start justify-between mb-4">
+              {/* Left side: Mode Toggle */}
+              <div>
                 <div className="flex bg-muted rounded-lg p-1">
                   <button
                     onClick={() => {
                       setSingleTradingDay(false);
-                      setEndDate(undefined); // Clear end date when switching to range mode
+                      setEndDate(undefined);
                     }}
                     className={`px-4 py-2 rounded-md text-sm transition-colors ${
                       !singleTradingDay 
@@ -2256,7 +2242,7 @@ export function PriceChart({
                   <button
                     onClick={() => {
                       setSingleTradingDay(true);
-                      setEndDate(undefined); // Clear end date for single day mode
+                      setEndDate(undefined);
                     }}
                     className={`px-4 py-2 rounded-md text-sm transition-colors ${
                       singleTradingDay 
@@ -2267,94 +2253,126 @@ export function PriceChart({
                     Single Trading Day
                   </button>
                 </div>
+                {singleTradingDay && (
+                  <div className="mt-2 text-xs text-muted-foreground bg-blue-50 dark:bg-blue-950 p-2 rounded">
+                    Will show hourly data from market open to close
+                  </div>
+                )}
               </div>
-              
-              {singleTradingDay && (
-                <div className="text-center mt-2 text-xs text-muted-foreground bg-blue-50 dark:bg-blue-950 p-2 rounded">
-                  ⏰ Will show hourly data from market open to close
-                </div>
-              )}
+
+              {/* Right side: Selected Range Summary + Apply Button + Close */}
+              <div className="flex items-start gap-3">
+                {startDate && (singleTradingDay || endDate) && (
+                  <div className="text-right">
+                    <div className="text-sm text-foreground">
+                      Selected: {format(startDate, 'MMM dd, yyyy')}{!singleTradingDay && endDate && ` – ${format(endDate, 'MMM dd, yyyy')}`}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {singleTradingDay 
+                        ? '(Single day with hourly intervals)'
+                        : `(${Math.ceil((endDate!.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))} days)`
+                      }
+                    </div>
+                    <Button
+                      onClick={() => {
+                        if (singleTradingDay) {
+                          setEndDate(startDate);
+                        }
+                        setShowDatePicker(false);
+                      }}
+                      className="mt-2 bg-[#5AF5FA] text-[#121212] hover:bg-[#5AF5FA]/90 font-medium"
+                      size="sm"
+                      data-testid="button-apply-date-range"
+                    >
+                      {singleTradingDay ? 'Show Trading Day' : 'Apply Date Range'}
+                    </Button>
+                  </div>
+                )}
+                <button
+                  onClick={() => {
+                    setShowDatePicker(false);
+                    setSingleTradingDay(false);
+                    setStartDate(undefined);
+                    setEndDate(undefined);
+                  }}
+                  className="text-muted-foreground hover:text-foreground transition-colors p-1"
+                  title="Close date picker"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
             
-            {/* Smart Quick Presets */}
-            <div className="mb-4 pr-8">
-              <label className="text-sm font-medium mb-2 block">
-                {singleTradingDay ? 'Quick Single Days' : 'Quick Ranges'}
-              </label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                {(singleTradingDay ? [
-                  { label: 'Yesterday', getDates: () => {
-                    const yesterday = new Date();
-                    yesterday.setDate(yesterday.getDate() - 1);
-                    // Move to Friday if weekend
-                    if (yesterday.getDay() === 0) yesterday.setDate(yesterday.getDate() - 2);
-                    if (yesterday.getDay() === 6) yesterday.setDate(yesterday.getDate() - 1);
-                    return { start: yesterday, end: undefined };
-                  }},
-                  { label: 'Last Friday', getDates: () => {
-                    const date = new Date();
-                    const daysSinceFriday = (date.getDay() + 2) % 7;
-                    date.setDate(date.getDate() - (daysSinceFriday === 0 ? 7 : daysSinceFriday));
-                    return { start: date, end: undefined };
-                  }},
-                  { label: '2 Days Ago', getDates: () => {
-                    const date = new Date();
-                    date.setDate(date.getDate() - 2);
-                    // Move to Friday if weekend
-                    if (date.getDay() === 0) date.setDate(date.getDate() - 2);
-                    if (date.getDay() === 6) date.setDate(date.getDate() - 1);
-                    return { start: date, end: undefined };
-                  }},
-                  { label: '1 Week Ago', getDates: () => {
-                    const date = new Date();
-                    date.setDate(date.getDate() - 7);
-                    // Move to Friday if weekend
-                    if (date.getDay() === 0) date.setDate(date.getDate() - 2);
-                    if (date.getDay() === 6) date.setDate(date.getDate() - 1);
-                    return { start: date, end: undefined };
-                  }}
-                ] : [
-                  { label: 'This Week', getDates: () => {
-                    const today = new Date();
-                    const monday = new Date(today);
-                    monday.setDate(today.getDate() - today.getDay() + 1);
-                    return { start: monday, end: today };
-                  }},
-                  { label: 'Last Week', getDates: () => {
-                    const today = new Date();
-                    const lastSunday = new Date(today);
-                    lastSunday.setDate(today.getDate() - today.getDay());
-                    const lastMonday = new Date(lastSunday);
-                    lastMonday.setDate(lastSunday.getDate() - 6);
-                    return { start: lastMonday, end: lastSunday };
-                  }},
-                  { label: 'This Month', getDates: () => {
-                    const today = new Date();
-                    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-                    return { start: firstDay, end: today };
-                  }},
-                  { label: 'Last 3 Months', getDates: () => {
-                    const today = new Date();
-                    const threeMonthsAgo = new Date(today);
-                    threeMonthsAgo.setMonth(today.getMonth() - 3);
-                    return { start: threeMonthsAgo, end: today };
-                  }}
-                ]).map(({ label, getDates }) => (
-                  <Button
-                    key={label}
-                    variant="outline"
-                    size="sm"
-                    className="text-xs"
-                    onClick={() => {
-                      const { start, end } = getDates();
-                      setStartDate(start);
-                      setEndDate(end);
-                    }}
-                  >
-                    {label}
+            {/* Quick Ranges Dropdown */}
+            <div className="mb-4">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="text-sm" data-testid="dropdown-quick-ranges">
+                    Quick Ranges
+                    <ChevronDown className="w-4 h-4 ml-2" style={{ color: '#5AF5FA' }} />
                   </Button>
-                ))}
-              </div>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-48">
+                  {[
+                    { label: 'Single Trading Day', getDates: () => {
+                      const yesterday = new Date();
+                      yesterday.setDate(yesterday.getDate() - 1);
+                      if (yesterday.getDay() === 0) yesterday.setDate(yesterday.getDate() - 2);
+                      if (yesterday.getDay() === 6) yesterday.setDate(yesterday.getDate() - 1);
+                      return { start: yesterday, end: undefined, setSingle: true };
+                    }},
+                    { label: 'This Week', getDates: () => {
+                      const today = new Date();
+                      const monday = new Date(today);
+                      monday.setDate(today.getDate() - today.getDay() + 1);
+                      return { start: monday, end: today };
+                    }},
+                    { label: 'Last Week', getDates: () => {
+                      const today = new Date();
+                      const lastFriday = new Date(today);
+                      lastFriday.setDate(today.getDate() - today.getDay() - 2);
+                      const lastMonday = new Date(lastFriday);
+                      lastMonday.setDate(lastFriday.getDate() - 4);
+                      return { start: lastMonday, end: lastFriday };
+                    }},
+                    { label: 'This Month', getDates: () => {
+                      const today = new Date();
+                      const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+                      if (firstDay.getDay() === 0) firstDay.setDate(firstDay.getDate() + 1);
+                      if (firstDay.getDay() === 6) firstDay.setDate(firstDay.getDate() + 2);
+                      return { start: firstDay, end: today };
+                    }},
+                    { label: 'Last 3 Months', getDates: () => {
+                      const today = new Date();
+                      const threeMonthsAgo = new Date(today);
+                      threeMonthsAgo.setMonth(today.getMonth() - 3);
+                      if (threeMonthsAgo.getDay() === 0) threeMonthsAgo.setDate(threeMonthsAgo.getDate() + 1);
+                      if (threeMonthsAgo.getDay() === 6) threeMonthsAgo.setDate(threeMonthsAgo.getDate() + 2);
+                      return { start: threeMonthsAgo, end: today };
+                    }}
+                  ].map(({ label, getDates }) => (
+                    <DropdownMenuItem
+                      key={label}
+                      onClick={() => {
+                        const result = getDates();
+                        if ('setSingle' in result && result.setSingle) {
+                          setSingleTradingDay(true);
+                          setStartDate(result.start);
+                          setEndDate(undefined);
+                        } else {
+                          setSingleTradingDay(false);
+                          setStartDate(result.start);
+                          setEndDate(result.end);
+                        }
+                      }}
+                      className="cursor-pointer"
+                      data-testid={`quick-range-${label.toLowerCase().replace(/\s+/g, '-')}`}
+                    >
+                      {label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
             
             {/* Calendar Section */}
@@ -2379,13 +2397,16 @@ export function PriceChart({
                   })()}
                   toDate={new Date()}
                   disabled={(date) => {
-                    // Disable weekends and suggest alternatives
                     const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-                    // For range mode, disable if after end date
-                    if (!singleTradingDay && !!endDate && date > endDate) return false; // Don't disable, just warn
-                    return isWeekend; // Only disable weekends
+                    if (!singleTradingDay && !!endDate && date > endDate) return false;
+                    return isWeekend;
                   }}
                   className="rounded-md border"
+                  classNames={{
+                    day_today: "border border-white rounded bg-transparent text-foreground",
+                    day_selected: "bg-[#5AF5FA] text-[#121212] hover:bg-[#5AF5FA] hover:text-[#121212] focus:bg-[#5AF5FA] focus:text-[#121212]",
+                    day: "h-9 w-9 p-0 font-normal aria-selected:opacity-100 hover:bg-[#1C1C1C] hover:text-[#F7F7F7] focus:bg-[#1C1C1C] focus:text-[#F7F7F7] rounded transition-colors"
+                  }}
                 />
                 
                 {/* Enhanced validation with smart suggestions */}
@@ -2426,13 +2447,16 @@ export function PriceChart({
                     })()}
                     toDate={new Date()}
                     disabled={(date) => {
-                      // Disable weekends
                       const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-                      // Disable if before start date
                       if (!!startDate && date < startDate) return true;
                       return isWeekend;
                     }}
                     className="rounded-md border"
+                    classNames={{
+                      day_today: "border border-white rounded bg-transparent text-foreground",
+                      day_selected: "bg-[#5AF5FA] text-[#121212] hover:bg-[#5AF5FA] hover:text-[#121212] focus:bg-[#5AF5FA] focus:text-[#121212]",
+                      day: "h-9 w-9 p-0 font-normal aria-selected:opacity-100 hover:bg-[#1C1C1C] hover:text-[#F7F7F7] focus:bg-[#1C1C1C] focus:text-[#F7F7F7] rounded transition-colors"
+                    }}
                   />
                   
                   {endDate && (endDate.getDay() === 0 || endDate.getDay() === 6) && (
@@ -2454,42 +2478,6 @@ export function PriceChart({
                 </div>
               )}
             </div>
-            
-            {/* Apply Button */}
-            {startDate && (singleTradingDay || endDate) && (
-              <div className="mt-4 text-center space-y-3">
-                <div className="text-sm text-muted-foreground">
-                  {singleTradingDay ? (
-                    <>
-                      Selected: {format(startDate, 'MMM dd, yyyy')}
-                      <span className="text-xs block mt-1">
-                        Single day with hourly intervals
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      Selected: {format(startDate, 'MMM dd, yyyy')} - {format(endDate!, 'MMM dd, yyyy')}
-                      <span className="text-xs block mt-1">
-                        ({Math.ceil((endDate!.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))} days)
-                      </span>
-                    </>
-                  )}
-                </div>
-                <Button
-                  onClick={() => {
-                    if (singleTradingDay) {
-                      // For single trading day, set end date to same as start date
-                      setEndDate(startDate);
-                    }
-                    setShowDatePicker(false);
-                  }}
-                  className="bg-[#5AF5FA] text-black hover:bg-[#5AF5FA]/90"
-                  size="sm"
-                >
-                  {singleTradingDay ? 'Show Trading Day' : 'Apply Date Range'}
-                </Button>
-              </div>
-            )}
           </div>
         )}
 

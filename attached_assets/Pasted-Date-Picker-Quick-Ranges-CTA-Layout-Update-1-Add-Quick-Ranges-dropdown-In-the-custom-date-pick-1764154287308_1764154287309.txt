@@ -1,0 +1,102 @@
+Date Picker – Quick Ranges & CTA Layout Update
+1. Add Quick Ranges dropdown
+
+In the custom date picker, move all the existing preset range CTAs into a single dropdown to keep the unit compact.
+
+Dropdown title/label: Quick Ranges
+
+Dropdown options:
+
+Single Trading Day
+
+This Week
+
+Last Week
+
+This Month
+
+Last 3 Months
+
+Behaviour:
+
+When a user selects a Quick Range:
+
+Automatically set the start and end dates in the date picker.
+
+Update the “Selected” summary text (see section 2).
+
+Do not immediately apply — the user still confirms via Apply Date Range.
+
+2. Move main CTA + selected range summary
+
+After a date range is selected (via manual date pick or Quick Range), the main call-to-action needs to appear in the top-right of the date picker.
+
+Layout in the top right:
+
+Selected range text on one line:
+
+Format:
+Selected: MMM DD, YYYY – MMM DD, YYYY
+Example: Selected: Nov 01, 2024 – Jan 10, 2025
+
+Duration text on the next line (or inline, depending on layout):
+
+Format:
+(XX days)
+Example: (45 days)
+
+Primary button underneath or next to it:
+
+Label: Apply Date Range
+
+3. Date cell states & styling (Today / Selected / Hover)
+
+We need to fix confusion around today’s date looking like it’s already selected.
+
+a. Today (default, not selected)
+
+Still visually highlighted, but not filled.
+
+Style:
+
+Border: 1px solid white
+
+Corner radius: 4px
+
+Background: same as calendar background
+
+Text: unchanged (normal date text colour)
+
+Purpose: “This is today” without implying it’s the active selected date.
+
+b. Selected date(s)
+
+Any clicked date or in-range date (start/end or full range highlight):
+
+Background: solid #5AF5FA
+
+Text colour: #121212
+
+This should clearly read as the active selection, distinct from today’s subtle outline.
+
+c. Hover / focused state (for any date cell)
+
+On hover or keyboard focus:
+
+Background: #1C1C1C
+
+Text colour: #F7F7F7
+
+This hover/focus style should apply consistently, including over today’s date or dates not yet selected.
+
+4. Behaviour summary for the AI
+
+Move all range shortcuts into a Quick Ranges dropdown inside the custom date picker (Single Trading Day, This Week, Last Week, This Month, Last 3 Months).
+
+Show the selected range and total days in the top-right: Selected: MMM DD, YYYY – MMM DD, YYYY and (XX days), with a primary button labeled Apply Date Range.
+
+Today’s date: 1px white border, 4px radius, no fill.
+
+Selected dates: background #5AF5FA, text #121212.
+
+Hover/focus: background #1C1C1C, text #F7F7F7.
