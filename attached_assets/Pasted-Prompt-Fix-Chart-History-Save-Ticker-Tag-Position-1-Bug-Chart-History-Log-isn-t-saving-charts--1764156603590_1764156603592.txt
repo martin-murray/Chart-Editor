@@ -1,0 +1,88 @@
+Prompt: Fix Chart History Save + Ticker Tag Position
+1. Bug: Chart History Log isn’t saving charts
+
+Problem
+
+The Chart History Log is not saving my current chart state.
+
+Repro example:
+
+Base ticker: (whatever is selected)
+
+I add a comparison ticker: ARGX
+
+Date range selected: Custom → Aug 20, 2025 – Sep 02, 2025
+
+The ARGX line does appear on the chart when I use presets like 1D, 5D, 2W, 1M, 3M, 6M, so the data is clearly loading.
+
+But the Chart History Log does not create/update a card for this chart.
+
+Expected behaviour
+
+Any time a chart is:
+
+Generated or updated with:
+
+A custom date range and/or
+
+Additional tickers (e.g. ARGX) or overlays,
+
+The current chart state should be:
+
+Saved or updated in the Chart History Log as a card.
+
+That history card should restore:
+
+Base ticker
+
+All added tickers (e.g. ARGX)
+
+Date range
+
+Any overlays/annotations
+
+Acceptance criteria
+
+With ARGX added and date range Aug 20, 2025 – Sep 02, 2025:
+
+I should see a Chart History card created/updated.
+
+Clicking that card should bring me back to:
+
+The same date range
+
+The same tickers (including ARGX)
+
+The same chart view.
+
+2. Bug: Extra ticker tag appearing in the wrong place
+
+Problem
+
+After adding a ticker (e.g. ARGX), there are two ticker tags.
+
+One tag appears correctly where ticker tags/overlays should live.
+
+A second tag is appearing between the Clear All and Export buttons in the toolbar which is where the +Add Ticker search unit is appearing, which is incorrect. the +Add Ticker search unit need to be in a lightbox type pop and should not move the UI components Clear All and Export 
+
+Expected behaviour
+
+Each added ticker should generate exactly one tag in the ticker/overlay tag area only.
+
+No ticker tags should appear inline in the main toolbar between Clear All and Export.
+
+Acceptance criteria
+
+Adding ARGX:
+
+Shows one ARGX tag, in the correct tag container and position.
+
+Clear All and Export remain adjacent, with no tag between them.
+
+Removing ARGX via its tag/bin removes:
+
+The ARGX overlay from the chart
+
+The single tag from the tag area
+
+No UI elements in the toolbar are affected.

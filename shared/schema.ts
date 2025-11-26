@@ -111,6 +111,11 @@ export const chartHistory = pgTable("chart_history", {
     timestamp: number;
     value: number;
   }>>(),
+  comparisonTickers: jsonb("comparison_tickers").$type<Array<{
+    symbol: string;
+    name: string;
+    color: string;
+  }>>(),
   annotations: jsonb("annotations").$type<Array<{
     id: string;
     type: string;

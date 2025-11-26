@@ -952,11 +952,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Save chart with annotations to history (upsert by sessionId)
   app.post("/api/chart-history", requireAuth, async (req: any, res) => {
     try {
-      const { sessionId, symbol, timeframe, customStartDate, customEndDate, dividendAdjusted, csvOverlay, annotations } = req.body;
+      const { sessionId, symbol, timeframe, customStartDate, customEndDate, dividendAdjusted, csvOverlay, comparisonTickers, annotations } = req.body;
       const userId = req.userId;
       
-      if (!sessionId || !symbol || !timeframe || !annotations || !Array.isArray(annotations) || annotations.length === 0) {
-        return res.status(400).json({ message: "SessionId, symbol, timeframe, and annotations are required" });
+      const hasAnnotations = annotations && Array.isArray(annotations) && annotations.length > 0;
+      const hasComparisonTickers = comparisonTickers && Array.isArray(comparisonTickers) && comparisonTickers.length > 0;
+      const hasCsvOverlay = csvOverlay && Array.isArray(csvOverlay) && csvOverlay.length > 0;
+      const hasCustomDateRange = timeframe === 'Custom' && customStartDate && customEndDate;
+      
+      if (!sessionId || !symbol || !timeframe || (!hasAnnotations && !hasComparisonTickers && !hasCsvOverlay && !hasCustomDateRange)) {
+        return res.status(400).json({ message: "SessionId, symbol, timeframe, and at least one of: annotations, comparison tickers, csv overlay, or custom date range are required" });
       }
       
       if (!userId) {
@@ -985,7 +990,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             customEndDate,
             dividendAdjusted: dividendAdjusted || false,
             csvOverlay: csvOverlay || null,
-            annotations,
+            comparisonTickers: comparisonTickers || null,
+            annotations: annotations || [],
             updatedAt: new Date()
           })
           .where(and(
@@ -1005,7 +1011,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           customEndDate,
           dividendAdjusted: dividendAdjusted || false,
           csvOverlay: csvOverlay || null,
-          annotations
+          comparisonTickers: comparisonTickers || null,
+          annotations: annotations || []
         }).returning();
         history = inserted;
       }

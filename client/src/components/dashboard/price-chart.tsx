@@ -310,7 +310,8 @@ export function PriceChart({
       timeframe, 
       customStartDate, 
       customEndDate, 
-      csvOverlay, 
+      csvOverlay,
+      comparisonTickers,
       annotations 
     }: { 
       sessionId: string;
@@ -319,6 +320,7 @@ export function PriceChart({
       customStartDate?: string;
       customEndDate?: string;
       csvOverlay: { timestamp: number; value: number }[];
+      comparisonTickers: Array<{ symbol: string; name: string; color: string }>;
       annotations: Annotation[] 
     }) => {
       await apiRequest('POST', '/api/chart-history', { 
@@ -328,6 +330,7 @@ export function PriceChart({
         customStartDate,
         customEndDate,
         csvOverlay,
+        comparisonTickers,
         annotations 
       });
     },
@@ -458,14 +461,20 @@ export function PriceChart({
         customStartDate: startDate?.toISOString(),
         customEndDate: endDate?.toISOString(),
         csvOverlay,
+        comparisonTickers,
         annotations
       });
       lastSavedStateRef.current = initialState;
       return;
     }
 
-    // Only save when annotations exist
-    if (annotations.length === 0) {
+    // Check if there's something worth saving (annotations, comparison tickers, csv overlay, or custom date range)
+    const hasAnnotations = annotations.length > 0;
+    const hasComparisonTickers = comparisonTickers.length > 0;
+    const hasCsvOverlay = csvOverlay.length > 0;
+    const hasCustomDateRange = selectedTimeframe === 'Custom' && startDate && endDate;
+    
+    if (!hasAnnotations && !hasComparisonTickers && !hasCsvOverlay && !hasCustomDateRange) {
       lastSavedStateRef.current = null;
       return;
     }
@@ -476,6 +485,7 @@ export function PriceChart({
       customStartDate: startDate?.toISOString(),
       customEndDate: endDate?.toISOString(),
       csvOverlay,
+      comparisonTickers,
       annotations
     });
     
@@ -492,6 +502,7 @@ export function PriceChart({
         customStartDate: selectedTimeframe === 'Custom' && startDate ? startDate.toISOString() : undefined,
         customEndDate: selectedTimeframe === 'Custom' && endDate ? endDate.toISOString() : undefined,
         csvOverlay,
+        comparisonTickers,
         annotations 
       });
       lastSavedStateRef.current = currentState;
@@ -501,7 +512,7 @@ export function PriceChart({
     return () => {
       clearTimeout(timeoutId);
     };
-  }, [annotations, selectedTimeframe, startDate, endDate, csvOverlay, symbol, chartSessionId, saveChartHistoryMutation]);
+  }, [annotations, selectedTimeframe, startDate, endDate, csvOverlay, comparisonTickers, symbol, chartSessionId, saveChartHistoryMutation]);
 
   // Reset initial mount flag when symbol changes
   useEffect(() => {
@@ -2705,77 +2716,80 @@ export function PriceChart({
               </div>
             )}
 
-            {/* Ticker Search UI (Task 5) */}
-            {showTickerSearch && (
-              <Card className="p-3 mb-4">
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 relative">
-                    <Input
-                      placeholder="Search tickers (e.g., AAPL, MSFT)"
-                      value={tickerSearchQuery}
-                      onChange={(e) => setTickerSearchQuery(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Escape') {
-                          setShowTickerSearch(false);
-                          setTickerSearchQuery('');
-                        }
-                      }}
-                      className="pr-8"
-                      autoFocus
-                      data-testid="input-comparison-ticker-search"
-                    />
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    onClick={() => {
-                      setShowTickerSearch(false);
-                      setTickerSearchQuery('');
+            {/* Ticker Search Dialog (Task 5) */}
+            <Dialog 
+              open={showTickerSearch} 
+              onOpenChange={(open) => {
+                setShowTickerSearch(open);
+                if (!open) setTickerSearchQuery('');
+              }}
+            >
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Add Comparison Ticker</DialogTitle>
+                  <DialogDescription>
+                    Search and add up to {MAX_COMPARISON_TICKERS} tickers to compare with {symbol}
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <Input
+                    placeholder="Search tickers (e.g., AAPL, MSFT)"
+                    value={tickerSearchQuery}
+                    onChange={(e) => setTickerSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') {
+                        setShowTickerSearch(false);
+                        setTickerSearchQuery('');
+                      }
                     }}
-                    data-testid="button-close-ticker-search"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
+                    autoFocus
+                    data-testid="input-comparison-ticker-search"
+                  />
 
-                {/* Search Results */}
-                {debouncedTickerQuery.trim().length >= 2 && tickerSearchResults.length > 0 && (
-                  <div className="mt-2 max-h-60 overflow-y-auto space-y-1">
-                    {tickerSearchResults.slice(0, 10).map((result) => (
-                      <div
-                        key={result.symbol}
-                        className="flex items-center justify-between p-2 hover:bg-muted rounded cursor-pointer"
-                        onClick={() => addComparisonTicker(result.symbol, result.name)}
-                        data-testid={`search-result-${result.symbol}`}
-                      >
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold">{result.symbol}</span>
-                            <span className="text-sm text-muted-foreground truncate">{result.name}</span>
+                  {/* Search Results */}
+                  {debouncedTickerQuery.trim().length >= 2 && tickerSearchResults.length > 0 && (
+                    <div className="max-h-60 overflow-y-auto space-y-1 border rounded-md p-2">
+                      {tickerSearchResults.slice(0, 10).map((result) => (
+                        <div
+                          key={result.symbol}
+                          className="flex items-center justify-between p-2 hover:bg-muted rounded cursor-pointer"
+                          onClick={() => addComparisonTicker(result.symbol, result.name)}
+                          data-testid={`search-result-${result.symbol}`}
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold">{result.symbol}</span>
+                              <span className="text-sm text-muted-foreground truncate">{result.name}</span>
+                            </div>
+                          </div>
+                          <div className="text-sm text-muted-foreground ml-2">
+                            ${parseFloat(result.price).toFixed(2)}
                           </div>
                         </div>
-                        <div className="text-sm text-muted-foreground ml-2">
-                          ${parseFloat(result.price).toFixed(2)}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  )}
 
-                {debouncedTickerQuery.trim().length >= 2 && tickerSearchResults.length === 0 && (
-                  <div className="mt-2 text-sm text-muted-foreground text-center py-2">
-                    No results found
-                  </div>
-                )}
+                  {debouncedTickerQuery.trim().length >= 2 && tickerSearchResults.length === 0 && (
+                    <div className="text-sm text-muted-foreground text-center py-4">
+                      No results found
+                    </div>
+                  )}
 
-                {debouncedTickerQuery.trim().length > 0 && debouncedTickerQuery.trim().length < 2 && (
-                  <div className="mt-2 text-xs text-muted-foreground">
-                    Type at least 2 characters to search
-                  </div>
-                )}
-              </Card>
-            )}
+                  {debouncedTickerQuery.trim().length > 0 && debouncedTickerQuery.trim().length < 2 && (
+                    <div className="text-xs text-muted-foreground">
+                      Type at least 2 characters to search
+                    </div>
+                  )}
+
+                  {debouncedTickerQuery.trim().length === 0 && (
+                    <div className="text-xs text-muted-foreground text-center py-2">
+                      Start typing to search for tickers
+                    </div>
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
 
             {/* Shared Export Dropdown */}
             <DropdownMenu>
