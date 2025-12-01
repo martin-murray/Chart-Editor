@@ -2152,6 +2152,24 @@ export function PriceChart({
                 ))}
               </SelectContent>
             </Select>
+            
+            {/* Mobile Price/Compare Tab Switcher */}
+            <TabsList className="h-9 bg-muted/50">
+              <TabsTrigger 
+                value="price-volume" 
+                className="h-8 px-3 text-xs data-[state=active]:bg-[#5AF5FA] data-[state=active]:text-[#121212]"
+                data-testid="tab-price-volume-mobile"
+              >
+                Price
+              </TabsTrigger>
+              <TabsTrigger 
+                value="comparison" 
+                className="h-8 px-3 text-xs data-[state=active]:bg-[#5AF5FA] data-[state=active]:text-[#121212]"
+                data-testid="tab-comparison-mobile"
+              >
+                Compare
+              </TabsTrigger>
+            </TabsList>
           </div>
           
           {/* Desktop Buttons (760px+) */}
@@ -2181,6 +2199,24 @@ export function PriceChart({
               </Button>
             ))}
           </div>
+
+          {/* Price/Compare Tab Switcher */}
+          <TabsList className="h-8 bg-muted/50">
+            <TabsTrigger 
+              value="price-volume" 
+              className="h-7 px-3 text-xs data-[state=active]:bg-[#5AF5FA] data-[state=active]:text-[#121212]"
+              data-testid="tab-price-volume"
+            >
+              Price
+            </TabsTrigger>
+            <TabsTrigger 
+              value="comparison" 
+              className="h-7 px-3 text-xs data-[state=active]:bg-[#5AF5FA] data-[state=active]:text-[#121212]"
+              data-testid="tab-comparison"
+            >
+              Compare
+            </TabsTrigger>
+          </TabsList>
 
           {/* Chart Type selector */}
           <DropdownMenu>
