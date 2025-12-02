@@ -6,7 +6,7 @@ import { finnhubService } from "./services/finnhubService";
 import multer from "multer";
 import { sendFeedbackToSlack } from "./slack";
 import { db } from "./db";
-import { visitorAnalytics, loginAttempts, insertLoginAttemptSchema, aiCopilotChats, aiCopilotMessages, aiCopilotUploads, chartHistory, insertChartHistorySchema } from "@shared/schema";
+import { visitorAnalytics, loginAttempts, insertLoginAttemptSchema, aiCopilotChats, aiCopilotMessages, aiCopilotUploads, chartHistory, insertChartHistorySchema, compareChartHistory, insertCompareChartHistorySchema } from "@shared/schema";
 import { desc, count, sql, gte, lte, and, eq, inArray } from "drizzle-orm";
 import { getExchangeInfoFromSuffix, applySuffixOverride } from "./utils/suffixMappings";
 import { indexService } from "./services/indexService";
@@ -1095,6 +1095,136 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting all chart history:", error);
       res.status(500).json({ message: "Failed to delete chart history" });
+    }
+  });
+
+  // Compare Chart History Routes
+  
+  // Save or update compare chart history
+  app.post("/api/compare-chart-history", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.userId;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+      
+      const { sessionId, timeframe, customStartDate, customEndDate, tickers, annotations } = req.body;
+      
+      // Check if entry exists for this session
+      const existing = await db
+        .select()
+        .from(compareChartHistory)
+        .where(and(
+          eq(compareChartHistory.userId, userId),
+          eq(compareChartHistory.sessionId, sessionId)
+        ))
+        .limit(1);
+      
+      if (existing.length > 0) {
+        // Update existing entry
+        await db
+          .update(compareChartHistory)
+          .set({
+            timeframe,
+            customStartDate,
+            customEndDate,
+            tickers: tickers || [],
+            annotations: annotations || [],
+            updatedAt: new Date(),
+          })
+          .where(and(
+            eq(compareChartHistory.userId, userId),
+            eq(compareChartHistory.sessionId, sessionId)
+          ));
+        res.json({ success: true, message: "Compare chart history updated" });
+      } else {
+        // Insert new entry
+        const [inserted] = await db.insert(compareChartHistory).values({
+          userId,
+          sessionId,
+          timeframe,
+          customStartDate,
+          customEndDate,
+          tickers: tickers || [],
+          annotations: annotations || [],
+        }).returning();
+        res.json({ success: true, message: "Compare chart history saved", entry: inserted });
+      }
+    } catch (error) {
+      console.error("Error saving compare chart history:", error);
+      res.status(500).json({ message: "Failed to save compare chart history" });
+    }
+  });
+  
+  // Get all compare chart history for authenticated user
+  app.get("/api/compare-chart-history", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.userId;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+      
+      const history = await db
+        .select()
+        .from(compareChartHistory)
+        .where(eq(compareChartHistory.userId, userId))
+        .orderBy(desc(compareChartHistory.savedAt))
+        .limit(50);
+      
+      res.json(history);
+    } catch (error) {
+      console.error("Error fetching compare chart history:", error);
+      res.status(500).json({ message: "Failed to fetch compare chart history" });
+    }
+  });
+  
+  // Delete a specific compare chart history entry
+  app.delete("/api/compare-chart-history/:id", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.userId;
+      const id = parseInt(req.params.id);
+      
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid entry ID" });
+      }
+      
+      await db
+        .delete(compareChartHistory)
+        .where(and(
+          eq(compareChartHistory.id, id),
+          eq(compareChartHistory.userId, userId)
+        ));
+      
+      res.json({ success: true, message: "Compare chart history entry deleted" });
+    } catch (error) {
+      console.error("Error deleting compare chart history entry:", error);
+      res.status(500).json({ message: "Failed to delete compare chart history entry" });
+    }
+  });
+  
+  // Delete all compare chart history entries for authenticated user
+  app.delete("/api/compare-chart-history", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.userId;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+      
+      await db
+        .delete(compareChartHistory)
+        .where(eq(compareChartHistory.userId, userId));
+      
+      res.json({ success: true, message: "All compare chart history entries deleted" });
+    } catch (error) {
+      console.error("Error deleting all compare chart history:", error);
+      res.status(500).json({ message: "Failed to delete compare chart history" });
     }
   });
 

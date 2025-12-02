@@ -81,6 +81,7 @@ interface ComparisonChartProps {
   onZoomIn?: (fn: () => void) => void;
   onZoomOut?: (fn: () => void) => void;
   onFitToData?: (fn: () => void) => void;
+  onTickersChange?: (tickers: TickerData[]) => void;
 }
 
 
@@ -98,9 +99,18 @@ export function ComparisonChart({
   showHoverTooltip = true,
   onZoomIn: parentZoomIn,
   onZoomOut: parentZoomOut,
-  onFitToData: parentFitToData
+  onFitToData: parentFitToData,
+  onTickersChange
 }: ComparisonChartProps) {
-  const [tickers, setTickers] = useState<TickerData[]>([]);
+  const [tickers, setTickersInternal] = useState<TickerData[]>([]);
+  
+  const setTickers = useCallback((newTickers: TickerData[] | ((prev: TickerData[]) => TickerData[])) => {
+    setTickersInternal(prev => {
+      const updated = typeof newTickers === 'function' ? newTickers(prev) : newTickers;
+      onTickersChange?.(updated);
+      return updated;
+    });
+  }, [onTickersChange]);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [isSearchVisible, setIsSearchVisible] = useState(false);

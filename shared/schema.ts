@@ -138,6 +138,40 @@ export const insertChartHistorySchema = createInsertSchema(chartHistory).omit({
   updatedAt: true,
 });
 
+export const compareChartHistory = pgTable("compare_chart_history", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  sessionId: text("session_id").notNull(),
+  timeframe: text("timeframe").notNull(),
+  customStartDate: text("custom_start_date"),
+  customEndDate: text("custom_end_date"),
+  tickers: jsonb("tickers").$type<Array<{
+    symbol: string;
+    color: string;
+    visible: boolean;
+  }>>().notNull(),
+  annotations: jsonb("annotations").$type<Array<{
+    id: string;
+    type: string;
+    text?: string;
+    price?: number;
+    timestamp?: number;
+    time?: string;
+    startTimestamp?: number;
+    endTimestamp?: number;
+    startPrice?: number;
+    endPrice?: number;
+  }>>().notNull(),
+  savedAt: timestamp("saved_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertCompareChartHistorySchema = createInsertSchema(compareChartHistory).omit({
+  id: true,
+  savedAt: true,
+  updatedAt: true,
+});
+
 export type Stock = typeof stocks.$inferSelect;
 export type InsertStock = z.infer<typeof insertStockSchema>;
 export type SlackAlert = typeof slackAlerts.$inferSelect;
@@ -150,6 +184,8 @@ export type LoginAttempt = typeof loginAttempts.$inferSelect;
 export type InsertLoginAttempt = z.infer<typeof insertLoginAttemptSchema>;
 export type ChartHistory = typeof chartHistory.$inferSelect;
 export type InsertChartHistory = z.infer<typeof insertChartHistorySchema>;
+export type CompareChartHistory = typeof compareChartHistory.$inferSelect;
+export type InsertCompareChartHistory = z.infer<typeof insertCompareChartHistorySchema>;
 
 // AI Co-Pilot tables
 export const aiCopilotChats = pgTable("ai_copilot_chats", {
