@@ -102,16 +102,12 @@ export function ComparisonChart({
   onFitToData: parentFitToData,
   onTickersChange
 }: ComparisonChartProps) {
-  const [tickers, setTickersInternal] = useState<TickerData[]>([]);
-  
-  const setTickers = useCallback((newTickers: TickerData[] | ((prev: TickerData[]) => TickerData[])) => {
-    setTickersInternal(prev => {
-      const updated = typeof newTickers === 'function' ? newTickers(prev) : newTickers;
-      onTickersChange?.(updated);
-      return updated;
-    });
-  }, [onTickersChange]);
+  const [tickers, setTickers] = useState<TickerData[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  useEffect(() => {
+    onTickersChange?.(tickers);
+  }, [tickers, onTickersChange]);
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);

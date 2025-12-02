@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { LogOut, BookOpen, ChevronDown, Minus, Type, Ruler, RotateCcw, Download, Code, X, Trash2 } from "lucide-react";
+import { LogOut, BookOpen, ChevronDown, Minus, Type, Ruler, RotateCcw, Download, Code, X, Trash2, Plus } from "lucide-react";
 import { ComparisonChart as ComparisonChartComponent } from "@/components/dashboard/comparison-chart";
 import { useAuth } from "@/contexts/AuthContext";
 import logoImage from "@assets/IPO Intelligence@2x_1758060026530.png";
@@ -125,8 +125,9 @@ export default function ComparisonChart() {
   const [singleTradingDay, setSingleTradingDay] = useState(false);
   const [startCalendarMonth, setStartCalendarMonth] = useState<Date>(new Date());
   const [endCalendarMonth, setEndCalendarMonth] = useState<Date>(new Date());
-  const [chartSessionId] = useState(() => generateSessionId());
+  const [chartSessionId, setChartSessionId] = useState(() => generateSessionId());
   const [tickers, setTickers] = useState<TickerData[]>([]);
+  const [chartKey, setChartKey] = useState(0);
   
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
@@ -445,6 +446,40 @@ export default function ComparisonChart() {
     setTickers(newTickers);
   }, []);
 
+  const handleNewChart = useCallback(() => {
+    const hasContent = tickers.length > 0 || annotations.length > 0;
+    
+    if (hasContent) {
+      saveCompareChartHistoryMutation.mutate({
+        sessionId: chartSessionId,
+        timeframe,
+        customStartDate: timeframe === 'Custom' && startDate ? startDate.toISOString() : undefined,
+        customEndDate: timeframe === 'Custom' && endDate ? endDate.toISOString() : undefined,
+        tickers,
+        annotations
+      });
+      
+      toast({
+        title: "Previous chart saved",
+        description: "Your chart has been saved in the history below",
+      });
+    }
+    
+    setChartSessionId(generateSessionId());
+    setTickers([]);
+    setAnnotations([]);
+    setAnnotationMode(undefined);
+    setPendingPercentageStart(null);
+    setTimeframe('2W');
+    setStartDate(undefined);
+    setEndDate(undefined);
+    setShowDatePicker(false);
+    setSingleTradingDay(false);
+    setChartKey(prev => prev + 1);
+    lastSavedStateRef.current = null;
+    isInitialMountRef.current = true;
+  }, [tickers, annotations, chartSessionId, timeframe, startDate, endDate, saveCompareChartHistoryMutation, toast]);
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Navigation Header */}
@@ -495,16 +530,26 @@ export default function ComparisonChart() {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6">
-        {/* Page Title */}
+        {/* Page Title with + New Chart button */}
         <div className="mb-6">
-          <h1 
-            className="text-4xl font-light mb-2"
-            style={{ fontFamily: 'Space Grotesk, sans-serif', color: '#f7f7f7' }}
-          >
-            Comparison Chart
-          </h1>
+          <div className="flex items-center justify-between">
+            <h1 
+              className="text-4xl font-light"
+              style={{ fontFamily: 'Space Grotesk, sans-serif', color: '#f7f7f7' }}
+            >
+              Comparison Chart
+            </h1>
+            <Button
+              onClick={handleNewChart}
+              className="bg-[#5AF5FA] text-[#121212] hover:bg-[#5AF5FA]/90 font-medium"
+              data-testid="button-new-chart"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              New Chart
+            </Button>
+          </div>
           <p 
-            className="text-muted-foreground"
+            className="text-muted-foreground mt-2"
             style={{ fontFamily: 'Mulish, sans-serif' }}
           >
             Compare multiple tickers side-by-side to uncover performance trends and correlations
@@ -964,6 +1009,7 @@ export default function ComparisonChart() {
         {/* Comparison Chart Component */}
         <div ref={comparisonRef}>
           <ComparisonChartComponent 
+            key={chartKey}
             timeframe={timeframe}
             startDate={startDate}
             endDate={endDate}
