@@ -2986,6 +2986,15 @@ export function PriceChart({
                   style={{ backgroundColor: lineColor }}
                 />
                 <span style={{ color: '#f7f7f7' }}>{symbol}</span>
+                <span style={{ color: '#f7f7f7' }} className="font-bold">
+                  {actualCurrentPrice !== '--' ? formatPrice(parseFloat(actualCurrentPrice)) : '--'}
+                </span>
+                <span 
+                  className="font-semibold px-1 rounded text-[#121212]"
+                  style={{ backgroundColor: lineColor }}
+                >
+                  {isPositive ? '+' : ''}{timeframePercentChange.toFixed(2)}%
+                </span>
               </div>
             )}
             
@@ -3104,6 +3113,15 @@ export function PriceChart({
                       style={{ backgroundColor: lineColor }}
                     />
                     <span style={{ color: '#f7f7f7' }}>{symbol}</span>
+                    <span style={{ color: '#f7f7f7' }} className="font-bold">
+                      {actualCurrentPrice !== '--' ? formatPrice(parseFloat(actualCurrentPrice)) : '--'}
+                    </span>
+                    <span 
+                      className="font-semibold px-1 rounded text-[#121212]"
+                      style={{ backgroundColor: lineColor }}
+                    >
+                      {isPositive ? '+' : ''}{timeframePercentChange.toFixed(2)}%
+                    </span>
                   </div>
                 )}
                 
