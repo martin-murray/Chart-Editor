@@ -2968,22 +2968,22 @@ export function PriceChart({
           </div>
         </div>
 
-        {/* Ticker Legend - Shared Chart Key (appears above both tabs) */}
+        {/* Ticker Legend - Shared Chart Key (appears above both tabs) - OUTSIDE export area for interactivity */}
         {(symbol || comparisonTickers.length > 0) && (
           <div className="flex flex-wrap gap-2 mb-3 ml-1">
-            {/* Main Ticker Tag - No Close Button */}
+            {/* Main Ticker Tag - No Close Button - Uses lineColor for positive/negative */}
             {symbol && (
               <div 
                 className="flex items-center gap-2 px-2 py-1 rounded border text-xs font-medium"
                 style={{ 
                   backgroundColor: '#1a1a1a', 
-                  borderColor: '#5AF5FA'
+                  borderColor: lineColor
                 }}
                 data-testid="ticker-legend-main"
               >
                 <div 
                   className="w-3 h-3 rounded-sm" 
-                  style={{ backgroundColor: '#5AF5FA' }}
+                  style={{ backgroundColor: lineColor }}
                 />
                 <span style={{ color: '#f7f7f7' }}>{symbol}</span>
               </div>
@@ -3087,6 +3087,46 @@ export function PriceChart({
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
           >
+            {/* Export Legend - Included in export area, positioned at top */}
+            {(symbol || comparisonTickers.length > 0) && (
+              <div className="absolute top-2 left-4 flex flex-wrap gap-2 z-50">
+                {/* Main Ticker - Uses lineColor for positive/negative */}
+                {symbol && (
+                  <div 
+                    className="flex items-center gap-2 px-2 py-1 rounded border text-xs font-medium"
+                    style={{ 
+                      backgroundColor: '#1a1a1a', 
+                      borderColor: lineColor
+                    }}
+                  >
+                    <div 
+                      className="w-3 h-3 rounded-sm" 
+                      style={{ backgroundColor: lineColor }}
+                    />
+                    <span style={{ color: '#f7f7f7' }}>{symbol}</span>
+                  </div>
+                )}
+                
+                {/* Comparison Tickers */}
+                {comparisonTickers.map(ticker => (
+                  <div 
+                    key={`export-${ticker.symbol}`}
+                    className="flex items-center gap-2 px-2 py-1 rounded border text-xs font-medium"
+                    style={{ 
+                      backgroundColor: '#1a1a1a', 
+                      borderColor: ticker.color
+                    }}
+                  >
+                    <div 
+                      className="w-3 h-3 rounded-sm" 
+                      style={{ backgroundColor: ticker.color }}
+                    />
+                    <span style={{ color: '#f7f7f7' }}>{ticker.symbol}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            
             {/* Annotation Labels - positioned in reserved padding space above charts */}
             {annotations.length > 0 && (
               <div className="absolute top-0 left-0 w-full h-20 pointer-events-none" style={{ zIndex: 1000 }}>
