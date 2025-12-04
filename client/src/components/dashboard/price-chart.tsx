@@ -2968,66 +2968,6 @@ export function PriceChart({
           </div>
         </div>
 
-        {/* Ticker Legend - Shared Chart Key (appears above both tabs) - OUTSIDE export area for interactivity */}
-        {(symbol || comparisonTickers.length > 0) && (
-          <div className="flex flex-wrap gap-2 mb-3 ml-1">
-            {/* Main Ticker Tag - No Close Button - Uses lineColor for positive/negative */}
-            {symbol && (
-              <div 
-                className="flex items-center gap-2 px-2 py-1 rounded border text-xs font-medium"
-                style={{ 
-                  backgroundColor: '#1a1a1a', 
-                  borderColor: lineColor
-                }}
-                data-testid="ticker-legend-main"
-              >
-                <div 
-                  className="w-3 h-3 rounded-sm" 
-                  style={{ backgroundColor: lineColor }}
-                />
-                <span style={{ color: '#f7f7f7' }}>{symbol}</span>
-                <span style={{ color: '#f7f7f7' }} className="font-bold">
-                  {actualCurrentPrice !== '--' ? formatPrice(parseFloat(actualCurrentPrice)) : '--'}
-                </span>
-                <span 
-                  className="font-semibold px-1 rounded text-[#121212]"
-                  style={{ backgroundColor: lineColor }}
-                >
-                  {isPositive ? '+' : ''}{timeframePercentChange.toFixed(2)}%
-                </span>
-              </div>
-            )}
-            
-            {/* Comparison Ticker Tags - With Close Buttons */}
-            {comparisonTickers.map(ticker => (
-              <div 
-                key={ticker.symbol}
-                className="flex items-center gap-2 px-2 py-1 rounded border text-xs font-medium"
-                style={{ 
-                  backgroundColor: '#1a1a1a', 
-                  borderColor: ticker.color
-                }}
-                data-testid={`ticker-legend-${ticker.symbol}`}
-              >
-                <div 
-                  className="w-3 h-3 rounded-sm" 
-                  style={{ backgroundColor: ticker.color }}
-                />
-                <span style={{ color: '#f7f7f7' }}>{ticker.symbol}</span>
-                <button
-                  onClick={() => removeComparisonTicker(ticker.symbol)}
-                  className="ml-1 hover:opacity-70 transition-opacity"
-                  style={{ color: '#f7f7f7' }}
-                  aria-label={`Remove ${ticker.symbol}`}
-                  data-testid={`button-remove-ticker-${ticker.symbol}`}
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-          
         <TabsContent value="price-volume" className="bg-background relative z-10" data-testid="tabpanel-price-volume">
         {isLoading ? (
           <div className="h-80 flex items-center justify-center">
