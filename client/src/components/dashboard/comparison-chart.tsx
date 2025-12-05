@@ -1089,28 +1089,55 @@ export function ComparisonChart({
 
   // Save annotation with user text
   const saveAnnotation = () => {
-    if (isEditMode && editingAnnotation && annotationInput.trim()) {
+    if (isEditMode && editingAnnotation) {
       // Update existing annotation
-      updateAnnotations?.(prev => prev.map(annotation => 
-        annotation.id === editingAnnotation.id 
-          ? { ...annotation, text: annotationInput.trim() }
-          : annotation
-      ));
+      if (editingAnnotation.type === 'horizontal') {
+        // For horizontal annotations, update both percentage and text
+        const newPercentage = parseFloat(horizontalPercentageInput);
+        if (!isNaN(newPercentage)) {
+          updateAnnotations?.(prev => prev.map(annotation => 
+            annotation.id === editingAnnotation.id 
+              ? { ...annotation, price: newPercentage, text: annotationInput.trim() }
+              : annotation
+          ));
+        }
+      } else if (annotationInput.trim()) {
+        updateAnnotations?.(prev => prev.map(annotation => 
+          annotation.id === editingAnnotation.id 
+            ? { ...annotation, text: annotationInput.trim() }
+            : annotation
+        ));
+      }
       setShowAnnotationInput(false);
       setAnnotationInput('');
+      setHorizontalPercentageInput('');
       setEditingAnnotation(null);
       setIsEditMode(false);
-    } else if (pendingAnnotation && annotationInput.trim()) {
+    } else if (pendingAnnotation) {
       // Create new annotation
-      const newAnnotation: Annotation = {
-        ...pendingAnnotation,
-        id: `annotation-${Date.now()}`,
-        text: annotationInput.trim()
-      };
-      
-      updateAnnotations?.(prev => [...prev, newAnnotation]);
+      if (pendingAnnotation.type === 'horizontal') {
+        // For horizontal annotations, use the entered percentage value
+        const newPercentage = parseFloat(horizontalPercentageInput);
+        if (!isNaN(newPercentage)) {
+          const newAnnotation: Annotation = {
+            ...pendingAnnotation,
+            id: `annotation-${Date.now()}`,
+            price: newPercentage,
+            text: annotationInput.trim() || ''
+          };
+          updateAnnotations?.(prev => [...prev, newAnnotation]);
+        }
+      } else if (annotationInput.trim()) {
+        const newAnnotation: Annotation = {
+          ...pendingAnnotation,
+          id: `annotation-${Date.now()}`,
+          text: annotationInput.trim()
+        };
+        updateAnnotations?.(prev => [...prev, newAnnotation]);
+      }
       setShowAnnotationInput(false);
       setAnnotationInput('');
+      setHorizontalPercentageInput('');
       setPendingAnnotation(null);
     }
   };
@@ -1130,6 +1157,7 @@ export function ComparisonChart({
   const cancelAnnotation = () => {
     setShowAnnotationInput(false);
     setAnnotationInput('');
+    setHorizontalPercentageInput('');
     setPendingAnnotation(null);
     setEditingAnnotation(null);
     setIsEditMode(false);

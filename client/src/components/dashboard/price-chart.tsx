@@ -12,7 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip as HoverTooltip, TooltipContent as HoverTooltipContent, TooltipProvider, TooltipTrigger as HoverTooltipTrigger } from '@/components/ui/tooltip';
 import { Input } from '@/components/ui/input';
-import { Loader2, TrendingUp, TrendingDown, Plus, Calendar as CalendarIcon, X, Download, ChevronDown, MessageSquare, Ruler, Minus, RotateCcw, Code, Type, Trash2, Settings } from 'lucide-react';
+import { Loader2, TrendingUp, TrendingDown, Plus, Calendar as CalendarIcon, X, Download, ChevronDown, MessageSquare, Ruler, Minus, RotateCcw, Code, Type, Trash2, Settings, Pencil } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { format, subDays, subMonths, subYears } from 'date-fns';
 import * as htmlToImage from 'html-to-image';
@@ -253,6 +253,7 @@ export function PriceChart({
   // Drag state for horizontal lines
   const [isDragging, setIsDragging] = useState(false);
   const [dragAnnotationId, setDragAnnotationId] = useState<string | null>(null);
+  const [hoveredHorizontalId, setHoveredHorizontalId] = useState<string | null>(null);
   const [dragStartY, setDragStartY] = useState(0);
   const [dragStartPrice, setDragStartPrice] = useState(0);
   
@@ -3294,7 +3295,7 @@ export function PriceChart({
               </div>
             )}
 
-            {/* Interactive overlay elements for horizontal lines */}
+            {/* Interactive overlay elements for horizontal lines with Edit button */}
             {annotations.filter(annotation => annotation.type === 'horizontal').map((annotation) => {
               if (!chartData?.data) return null;
               
@@ -3334,19 +3335,28 @@ export function PriceChart({
               const yPercent = (domainMax - annotationValue) / yRange; // Position from top
               const yPixels = chartTop + (yPercent * chartHeight);
               
+              const isHovered = hoveredHorizontalId === annotation.id;
+              
               return (
                 <div
                   key={`interactive-${annotation.id}`}
-                  className="absolute pointer-events-auto cursor-grab active:cursor-grabbing hover:opacity-80"
+                  className="absolute pointer-events-auto"
                   style={{ 
                     left: '60px', // Chart left margin
                     right: '30px', // Chart right margin
-                    top: `${yPixels - 8}px`, 
-                    height: '16px', // Large hit area
+                    top: `${yPixels - 12}px`, 
+                    height: '24px', // Larger hit area
                     zIndex: 20,
-                    backgroundColor: 'transparent'
+                    backgroundColor: isHovered ? 'rgba(90, 245, 250, 0.1)' : 'transparent',
+                    borderTop: isHovered ? '2px solid #5AF5FA' : 'none',
+                    borderBottom: isHovered ? '2px solid #5AF5FA' : 'none',
+                    transition: 'background-color 0.15s ease'
                   }}
+                  onMouseEnter={() => setHoveredHorizontalId(annotation.id)}
+                  onMouseLeave={() => setHoveredHorizontalId(null)}
                   onMouseDown={(e) => {
+                    // Only start dragging if not clicking the edit button
+                    if ((e.target as HTMLElement).closest('[data-edit-button]')) return;
                     setIsDragging(true);
                     setDragAnnotationId(annotation.id);
                     setDragStartY(e.clientY);
@@ -3354,10 +3364,44 @@ export function PriceChart({
                     e.preventDefault();
                     e.stopPropagation();
                   }}
-                  onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
-                  title="Click and drag to move horizontal line"
                   data-testid={`horizontal-line-drag-${annotation.id}`}
-                />
+                >
+                  {/* Edit button - appears on hover */}
+                  {isHovered && (
+                    <button
+                      data-edit-button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleAnnotationDoubleClick(annotation);
+                      }}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium transition-all"
+                      style={{
+                        backgroundColor: '#5AF5FA',
+                        color: '#121212',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                      }}
+                      title="Edit horizontal line"
+                    >
+                      <Pencil className="w-3 h-3" />
+                      Edit
+                    </button>
+                  )}
+                  
+                  {/* Price label on hover */}
+                  {isHovered && (
+                    <div 
+                      className="absolute left-2 top-1/2 -translate-y-1/2 text-xs font-medium px-1.5 py-0.5 rounded"
+                      style={{ backgroundColor: '#1a1a1a', color: '#5AF5FA', border: '1px solid #5AF5FA' }}
+                    >
+                      {yAxisDisplayMode === 'percentage' 
+                        ? `${annotationValue >= 0 ? '+' : ''}${annotationValue.toFixed(2)}%`
+                        : formatPrice(annotation.price)
+                      }
+                      {annotation.text && ` - ${annotation.text}`}
+                    </div>
+                  )}
+                </div>
               );
             })}
 
