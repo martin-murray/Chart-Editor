@@ -3653,7 +3653,7 @@ export function PriceChart({
                             const lineColor = isBeingDragged ? "#FFD700" : "#AA99FF";
                             
                             const isHovered = hoveredHorizontalId === annotation.id;
-                            const highlightColor = isHovered ? "#5AF5FA" : lineColor;
+                            const highlightColor = isHovered ? "#CC99FF" : lineColor; // Lighter purple when hovered
                             
                             return (
                               <g key={`horizontal-${annotation.id}`}>
@@ -3678,14 +3678,14 @@ export function PriceChart({
                                   }}
                                 />
                                 
-                                {/* Hover highlight background */}
+                                {/* Hover highlight background - purple to match line */}
                                 {isHovered && (
                                   <rect
                                     x={xAxis.x}
                                     y={y - 12}
                                     width={xAxis.width}
                                     height={24}
-                                    fill="rgba(90, 245, 250, 0.1)"
+                                    fill="rgba(170, 153, 255, 0.15)"
                                     style={{ pointerEvents: 'none' }}
                                   />
                                 )}
@@ -3701,11 +3701,42 @@ export function PriceChart({
                                   style={{ pointerEvents: 'none' }}
                                 />
                                 
-                                {/* Edit button - appears on hover using foreignObject */}
+                                {/* Price/percentage label on hover - positioned above the line */}
+                                {isHovered && (
+                                  <foreignObject
+                                    x={xAxis.x + 8}
+                                    y={y - 28}
+                                    width={200}
+                                    height={24}
+                                    style={{ overflow: 'visible', pointerEvents: 'none' }}
+                                  >
+                                    <div
+                                      style={{
+                                        display: 'inline-block',
+                                        padding: '2px 8px',
+                                        borderRadius: '4px',
+                                        backgroundColor: '#1a1a1a',
+                                        color: '#AA99FF',
+                                        fontSize: '11px',
+                                        fontWeight: 500,
+                                        border: '1px solid #AA99FF',
+                                        whiteSpace: 'nowrap'
+                                      }}
+                                    >
+                                      {yAxisDisplayMode === 'percentage' 
+                                        ? `${displayValue >= 0 ? '+' : ''}${displayValue.toFixed(2)}%`
+                                        : formatPrice(annotation.price)
+                                      }
+                                      {annotation.text && ` - ${annotation.text}`}
+                                    </div>
+                                  </foreignObject>
+                                )}
+                                
+                                {/* Edit button - appears on hover, positioned above the line */}
                                 {isHovered && (
                                   <foreignObject
                                     x={xAxis.x + xAxis.width - 60}
-                                    y={y - 12}
+                                    y={y - 28}
                                     width={55}
                                     height={24}
                                     style={{ overflow: 'visible' }}
@@ -3722,7 +3753,7 @@ export function PriceChart({
                                         gap: '4px',
                                         padding: '2px 8px',
                                         borderRadius: '4px',
-                                        backgroundColor: '#5AF5FA',
+                                        backgroundColor: '#AA99FF',
                                         color: '#121212',
                                         fontSize: '11px',
                                         fontWeight: 600,
@@ -3734,37 +3765,6 @@ export function PriceChart({
                                       <Pencil style={{ width: '10px', height: '10px' }} />
                                       Edit
                                     </button>
-                                  </foreignObject>
-                                )}
-                                
-                                {/* Price/percentage label on hover */}
-                                {isHovered && (
-                                  <foreignObject
-                                    x={xAxis.x + 8}
-                                    y={y - 12}
-                                    width={200}
-                                    height={24}
-                                    style={{ overflow: 'visible' }}
-                                  >
-                                    <div
-                                      style={{
-                                        display: 'inline-block',
-                                        padding: '2px 8px',
-                                        borderRadius: '4px',
-                                        backgroundColor: '#1a1a1a',
-                                        color: '#5AF5FA',
-                                        fontSize: '11px',
-                                        fontWeight: 500,
-                                        border: '1px solid #5AF5FA',
-                                        whiteSpace: 'nowrap'
-                                      }}
-                                    >
-                                      {yAxisDisplayMode === 'percentage' 
-                                        ? `${displayValue >= 0 ? '+' : ''}${displayValue.toFixed(2)}%`
-                                        : formatPrice(annotation.price)
-                                      }
-                                      {annotation.text && ` - ${annotation.text}`}
-                                    </div>
                                   </foreignObject>
                                 )}
                               </g>

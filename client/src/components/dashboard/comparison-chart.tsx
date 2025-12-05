@@ -2103,9 +2103,9 @@ export function ComparisonChart({
                 top: `${yPixels - hitAreaHeight/2}px`, // Centered on actual line position
                 height: `${hitAreaHeight}px`, // Larger hit area
                 zIndex: 20,
-                backgroundColor: isHovered ? 'rgba(90, 245, 250, 0.1)' : 'transparent',
-                borderTop: isHovered ? '2px solid #5AF5FA' : 'none',
-                borderBottom: isHovered ? '2px solid #5AF5FA' : 'none',
+                backgroundColor: isHovered ? 'rgba(170, 153, 255, 0.15)' : 'transparent',
+                borderTop: isHovered ? '2px solid #AA99FF' : 'none',
+                borderBottom: isHovered ? '2px solid #AA99FF' : 'none',
                 transition: 'background-color 0.15s ease'
               }}
               onMouseEnter={() => setHoveredHorizontalId(annotation.id)}
@@ -2122,7 +2122,24 @@ export function ComparisonChart({
               }}
               data-testid={`horizontal-line-drag-${annotation.id}`}
             >
-              {/* Edit button - appears on hover */}
+              {/* Percentage label on hover - positioned above the line */}
+              {isHovered && (
+                <div 
+                  className="absolute left-2 text-xs font-medium px-1.5 py-0.5 rounded pointer-events-none"
+                  style={{ 
+                    backgroundColor: '#1a1a1a', 
+                    color: '#AA99FF', 
+                    border: '1px solid #AA99FF',
+                    top: '-20px',
+                    zIndex: 30
+                  }}
+                >
+                  {annotation.price >= 0 ? '+' : ''}{annotation.price.toFixed(2)}%
+                  {annotation.text && ` - ${annotation.text}`}
+                </div>
+              )}
+              
+              {/* Edit button - appears on hover, positioned above the line */}
               {isHovered && (
                 <button
                   data-edit-button
@@ -2131,28 +2148,19 @@ export function ComparisonChart({
                     e.stopPropagation();
                     handleAnnotationDoubleClick(annotation);
                   }}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium transition-all"
+                  className="absolute right-2 flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium transition-all"
                   style={{
-                    backgroundColor: '#5AF5FA',
+                    backgroundColor: '#AA99FF',
                     color: '#121212',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                    top: '-20px',
+                    zIndex: 30
                   }}
                   title="Edit horizontal line"
                 >
                   <Pencil className="w-3 h-3" />
                   Edit
                 </button>
-              )}
-              
-              {/* Percentage label on hover */}
-              {isHovered && (
-                <div 
-                  className="absolute left-2 top-1/2 -translate-y-1/2 text-xs font-medium px-1.5 py-0.5 rounded"
-                  style={{ backgroundColor: '#1a1a1a', color: '#5AF5FA', border: '1px solid #5AF5FA' }}
-                >
-                  {annotation.price >= 0 ? '+' : ''}{annotation.price.toFixed(2)}%
-                  {annotation.text && ` - ${annotation.text}`}
-                </div>
               )}
             </div>
           );
