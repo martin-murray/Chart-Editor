@@ -130,6 +130,7 @@ export function ComparisonChart({
   const [pendingAnnotation, setPendingAnnotation] = useState<Omit<Annotation, 'id' | 'text'> | null>(null);
   const [editingAnnotation, setEditingAnnotation] = useState<Annotation | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [horizontalPercentageInput, setHorizontalPercentageInput] = useState<string>('');
   
   // Drag state for horizontal lines
   const [isDragging, setIsDragging] = useState(false);
@@ -1068,6 +1069,9 @@ export function ComparisonChart({
       setEditingAnnotation(annotation);
       setIsEditMode(true);
       setAnnotationInput(annotation.text || '');
+      if (annotation.type === 'horizontal') {
+        setHorizontalPercentageInput(annotation.price?.toString() || '');
+      }
       setShowAnnotationInput(true);
     } else if (annotation.type === 'percentage') {
       // For percentage annotations, delete directly like Price chart (no confirmation)

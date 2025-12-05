@@ -209,6 +209,7 @@ export function PriceChart({
   const [pendingAnnotation, setPendingAnnotation] = useState<Omit<Annotation, 'id' | 'text'> | null>(null);
   const [editingAnnotation, setEditingAnnotation] = useState<Annotation | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [horizontalPriceInput, setHorizontalPriceInput] = useState<string>('');
   
   // Percentage measurement state
   const [annotationMode, setAnnotationMode] = useState<'text' | 'percentage' | 'horizontal' | 'note'>('text');
@@ -1670,6 +1671,10 @@ export function PriceChart({
         setEditingAnnotation(null);
         setIsEditMode(false);
         setAnnotationInput('');
+        // Pre-fill the price input with the clicked position (can be edited)
+        if (annotationMode === 'horizontal') {
+          setHorizontalPriceInput(calculatedPrice.toFixed(2));
+        }
         setPendingAnnotation(newAnnotation);
         setShowAnnotationInput(true);
         return; // Exit early for horizontal and note annotations
@@ -1751,6 +1756,9 @@ export function PriceChart({
       setEditingAnnotation(annotation);
       setIsEditMode(true);
       setAnnotationInput(annotation.text || '');
+      if (annotation.type === 'horizontal') {
+        setHorizontalPriceInput(annotation.price?.toString() || '');
+      }
       setShowAnnotationInput(true);
     } else if (annotation.type === 'percentage') {
       // Percentage annotations can be deleted on double-click
@@ -1765,28 +1773,55 @@ export function PriceChart({
 
   // Save annotation with user text
   const saveAnnotation = () => {
-    if (isEditMode && editingAnnotation && annotationInput.trim()) {
+    if (isEditMode && editingAnnotation) {
       // Update existing annotation
-      updateAnnotations(prev => prev.map(annotation => 
-        annotation.id === editingAnnotation.id 
-          ? { ...annotation, text: annotationInput.trim() }
-          : annotation
-      ));
+      if (editingAnnotation.type === 'horizontal') {
+        // For horizontal annotations, update both price and text
+        const newPrice = parseFloat(horizontalPriceInput);
+        if (!isNaN(newPrice)) {
+          updateAnnotations(prev => prev.map(annotation => 
+            annotation.id === editingAnnotation.id 
+              ? { ...annotation, price: newPrice, text: annotationInput.trim() }
+              : annotation
+          ));
+        }
+      } else if (annotationInput.trim()) {
+        updateAnnotations(prev => prev.map(annotation => 
+          annotation.id === editingAnnotation.id 
+            ? { ...annotation, text: annotationInput.trim() }
+            : annotation
+        ));
+      }
       setShowAnnotationInput(false);
       setAnnotationInput('');
+      setHorizontalPriceInput('');
       setEditingAnnotation(null);
       setIsEditMode(false);
-    } else if (pendingAnnotation && annotationInput.trim()) {
+    } else if (pendingAnnotation) {
       // Create new annotation
-      const newAnnotation: Annotation = {
-        ...pendingAnnotation,
-        id: `annotation-${Date.now()}`,
-        text: annotationInput.trim()
-      };
-      
-      updateAnnotations(prev => [...prev, newAnnotation]);
+      if (pendingAnnotation.type === 'horizontal') {
+        // For horizontal annotations, use the entered price value
+        const newPrice = parseFloat(horizontalPriceInput);
+        if (!isNaN(newPrice)) {
+          const newAnnotation: Annotation = {
+            ...pendingAnnotation,
+            id: `annotation-${Date.now()}`,
+            price: newPrice,
+            text: annotationInput.trim() || ''
+          };
+          updateAnnotations(prev => [...prev, newAnnotation]);
+        }
+      } else if (annotationInput.trim()) {
+        const newAnnotation: Annotation = {
+          ...pendingAnnotation,
+          id: `annotation-${Date.now()}`,
+          text: annotationInput.trim()
+        };
+        updateAnnotations(prev => [...prev, newAnnotation]);
+      }
       setShowAnnotationInput(false);
       setAnnotationInput('');
+      setHorizontalPriceInput('');
       setPendingAnnotation(null);
     }
   };
@@ -1806,6 +1841,7 @@ export function PriceChart({
   const cancelAnnotation = () => {
     setShowAnnotationInput(false);
     setAnnotationInput('');
+    setHorizontalPriceInput('');
     setPendingAnnotation(null);
     setEditingAnnotation(null);
     setIsEditMode(false);
@@ -4399,20 +4435,65 @@ export function PriceChart({
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="border border-border rounded-lg p-6 w-96 max-w-[90vw]" style={{ backgroundColor: '#3A3A3A' }}>
             <h3 className="text-lg font-semibold mb-4">
-              {isEditMode ? 'Edit Annotation' : 'Add Annotation'}
+              {isEditMode ? 'Edit Annotation' : (pendingAnnotation?.type === 'horizontal' ? 'Add Horizontal Line' : 'Add Annotation')}
             </h3>
-            <div className="mb-4 text-sm text-muted-foreground">
-              <div>Time: {isEditMode ? editingAnnotation?.time : pendingAnnotation?.time}</div>
-              <div>Price: {formatPrice(isEditMode ? editingAnnotation?.price || 0 : pendingAnnotation?.price || 0)}</div>
-            </div>
+            
+            {/* For horizontal annotations, show price/percentage input */}
+            {(pendingAnnotation?.type === 'horizontal' || editingAnnotation?.type === 'horizontal') && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-2">
+                  {yAxisDisplayMode === 'percentage' ? 'Percentage Value' : 'Price Level'}
+                </label>
+                <div className="flex items-center gap-2">
+                  {yAxisDisplayMode !== 'percentage' && (
+                    <span className="text-muted-foreground">{getCurrencySymbol((stockDetails?.profile as any)?.currency)}</span>
+                  )}
+                  <input
+                    type="number"
+                    step="any"
+                    value={horizontalPriceInput}
+                    onChange={(e) => setHorizontalPriceInput(e.target.value)}
+                    placeholder={yAxisDisplayMode === 'percentage' ? 'e.g. -5.25' : 'e.g. 150.50'}
+                    className="flex-1 px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-[#5AF5FA]"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                      } else if (e.key === 'Escape') {
+                        cancelAnnotation();
+                      }
+                    }}
+                  />
+                  {yAxisDisplayMode === 'percentage' && (
+                    <span className="text-muted-foreground">%</span>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {yAxisDisplayMode === 'percentage' 
+                    ? 'Enter the percentage level for the horizontal line' 
+                    : 'Enter the exact price for the horizontal line'}
+                </p>
+              </div>
+            )}
+            
+            {/* Show time/price info for non-horizontal annotations */}
+            {pendingAnnotation?.type !== 'horizontal' && editingAnnotation?.type !== 'horizontal' && (
+              <div className="mb-4 text-sm text-muted-foreground">
+                <div>Time: {isEditMode ? editingAnnotation?.time : pendingAnnotation?.time}</div>
+                <div>Price: {formatPrice(isEditMode ? editingAnnotation?.price || 0 : pendingAnnotation?.price || 0)}</div>
+              </div>
+            )}
+            
             <div className="mb-4">
-              <label className="block text-sm font-medium mb-2">Event Description</label>
+              <label className="block text-sm font-medium mb-2">
+                {(pendingAnnotation?.type === 'horizontal' || editingAnnotation?.type === 'horizontal') ? 'Label (optional)' : 'Event Description'}
+              </label>
               <textarea
                 value={annotationInput}
                 onChange={(e) => setAnnotationInput(e.target.value)}
-                placeholder="Enter event description..."
+                placeholder={(pendingAnnotation?.type === 'horizontal' || editingAnnotation?.type === 'horizontal') ? 'e.g. Support level, Target price...' : 'Enter event description...'}
                 className="w-full h-24 px-3 py-2 border border-border rounded-md bg-background text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary"
-                autoFocus
+                autoFocus={pendingAnnotation?.type !== 'horizontal' && editingAnnotation?.type !== 'horizontal'}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && e.ctrlKey) {
                     saveAnnotation();
@@ -4437,7 +4518,9 @@ export function PriceChart({
               )}
               <Button 
                 onClick={saveAnnotation}
-                disabled={!annotationInput.trim()}
+                disabled={(pendingAnnotation?.type === 'horizontal' || editingAnnotation?.type === 'horizontal') 
+                  ? !horizontalPriceInput.trim() 
+                  : !annotationInput.trim()}
                 className="bg-[#5AF5FA] text-black hover:bg-[#5AF5FA]/90"
               >
                 {isEditMode ? 'Update' : 'Save'}
