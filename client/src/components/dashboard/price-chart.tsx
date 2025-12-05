@@ -3295,115 +3295,6 @@ export function PriceChart({
               </div>
             )}
 
-            {/* Interactive overlay elements for horizontal lines with Edit button */}
-            {annotations.filter(annotation => annotation.type === 'horizontal').map((annotation) => {
-              if (!chartData?.data) return null;
-              
-              // Calculate Y position using Y-axis domain (handles price/percentage mode)
-              const yAxisDomain = getPriceAxisDomain();
-              let annotationValue = annotation.price;
-              
-              // Convert annotation price to appropriate coordinate system
-              if (yAxisDisplayMode === 'percentage' && chartData?.data?.length > 0) {
-                // Find a baseline price (first data point's close price)
-                const baselinePrice = chartData.data[0]?.close;
-                if (baselinePrice && baselinePrice > 0) {
-                  // Convert stored price to percentage change from baseline
-                  annotationValue = ((annotation.price - baselinePrice) / baselinePrice) * 100;
-                }
-              }
-              
-              // Chart dimensions (approximate)  
-              const chartHeight = 320; // Price chart height
-              const chartTop = 80; // Account for header margin
-              
-              // Calculate position using Y-axis domain
-              let domainMin, domainMax;
-              if (typeof yAxisDomain[0] === 'string') {
-                // Handle 'dataMin - X' and 'dataMax + X' format
-                const prices = yAxisDisplayMode === 'percentage' 
-                  ? chartData.data.map(d => (d as any).percentageChange || 0)
-                  : chartData.data.flatMap(d => [d.high, d.low, d.open, d.close]);
-                domainMin = Math.min(...prices) - (yAxisDisplayMode === 'percentage' ? 0.5 : 1);
-                domainMax = Math.max(...prices) + (yAxisDisplayMode === 'percentage' ? 0.5 : 1);
-              } else {
-                domainMin = yAxisDomain[0];
-                domainMax = yAxisDomain[1];
-              }
-              
-              const yRange = domainMax - domainMin;
-              const yPercent = (domainMax - annotationValue) / yRange; // Position from top
-              const yPixels = chartTop + (yPercent * chartHeight);
-              
-              const isHovered = hoveredHorizontalId === annotation.id;
-              
-              return (
-                <div
-                  key={`interactive-${annotation.id}`}
-                  className="absolute pointer-events-auto"
-                  style={{ 
-                    left: '60px', // Chart left margin
-                    right: '30px', // Chart right margin
-                    top: `${yPixels - 12}px`, 
-                    height: '24px', // Larger hit area
-                    zIndex: 20,
-                    backgroundColor: isHovered ? 'rgba(90, 245, 250, 0.1)' : 'transparent',
-                    borderTop: isHovered ? '2px solid #5AF5FA' : 'none',
-                    borderBottom: isHovered ? '2px solid #5AF5FA' : 'none',
-                    transition: 'background-color 0.15s ease'
-                  }}
-                  onMouseEnter={() => setHoveredHorizontalId(annotation.id)}
-                  onMouseLeave={() => setHoveredHorizontalId(null)}
-                  onMouseDown={(e) => {
-                    // Only start dragging if not clicking the edit button
-                    if ((e.target as HTMLElement).closest('[data-edit-button]')) return;
-                    setIsDragging(true);
-                    setDragAnnotationId(annotation.id);
-                    setDragStartY(e.clientY);
-                    setDragStartPrice(annotation.price);
-                    e.preventDefault();
-                    e.stopPropagation();
-                  }}
-                  data-testid={`horizontal-line-drag-${annotation.id}`}
-                >
-                  {/* Edit button - appears on hover */}
-                  {isHovered && (
-                    <button
-                      data-edit-button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleAnnotationDoubleClick(annotation);
-                      }}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium transition-all"
-                      style={{
-                        backgroundColor: '#5AF5FA',
-                        color: '#121212',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
-                      }}
-                      title="Edit horizontal line"
-                    >
-                      <Pencil className="w-3 h-3" />
-                      Edit
-                    </button>
-                  )}
-                  
-                  {/* Price label on hover */}
-                  {isHovered && (
-                    <div 
-                      className="absolute left-2 top-1/2 -translate-y-1/2 text-xs font-medium px-1.5 py-0.5 rounded"
-                      style={{ backgroundColor: '#1a1a1a', color: '#5AF5FA', border: '1px solid #5AF5FA' }}
-                    >
-                      {yAxisDisplayMode === 'percentage' 
-                        ? `${annotationValue >= 0 ? '+' : ''}${annotationValue.toFixed(2)}%`
-                        : formatPrice(annotation.price)
-                      }
-                      {annotation.text && ` - ${annotation.text}`}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
 
             {/* Price Chart - Dynamic chart type */}
             <div className="h-80 w-full relative">
@@ -3761,37 +3652,121 @@ export function PriceChart({
                             const isBeingDragged = isDragging && dragAnnotationId === annotation.id;
                             const lineColor = isBeingDragged ? "#FFD700" : "#AA99FF";
                             
+                            const isHovered = hoveredHorizontalId === annotation.id;
+                            const highlightColor = isHovered ? "#5AF5FA" : lineColor;
+                            
                             return (
                               <g key={`horizontal-${annotation.id}`}>
-                                {/* Invisible wider line for better hit detection */}
+                                {/* Invisible wider line for better hit detection and hover */}
                                 <line
                                   x1={xAxis.x}
                                   y1={y}
                                   x2={xAxis.x + xAxis.width}
                                   y2={y}
                                   stroke="transparent"
-                                  strokeWidth={12}
+                                  strokeWidth={24}
                                   style={{ cursor: 'pointer' }}
-                                  onClick={(e) => {
+                                  onMouseEnter={() => setHoveredHorizontalId(annotation.id)}
+                                  onMouseLeave={() => setHoveredHorizontalId(null)}
+                                  onMouseDown={(e) => {
+                                    setIsDragging(true);
+                                    setDragAnnotationId(annotation.id);
+                                    setDragStartY(e.clientY);
+                                    setDragStartPrice(annotation.price);
                                     e.preventDefault();
                                     e.stopPropagation();
-                                  }}
-                                  onDoubleClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    handleAnnotationDoubleClick(annotation);
                                   }}
                                 />
+                                
+                                {/* Hover highlight background */}
+                                {isHovered && (
+                                  <rect
+                                    x={xAxis.x}
+                                    y={y - 12}
+                                    width={xAxis.width}
+                                    height={24}
+                                    fill="rgba(90, 245, 250, 0.1)"
+                                    style={{ pointerEvents: 'none' }}
+                                  />
+                                )}
+                                
                                 {/* Visible horizontal line */}
                                 <line
                                   x1={xAxis.x}
                                   y1={y}
                                   x2={xAxis.x + xAxis.width}
                                   y2={y}
-                                  stroke={lineColor}
-                                  strokeWidth={isBeingDragged ? 3 : 2}
+                                  stroke={highlightColor}
+                                  strokeWidth={isBeingDragged ? 3 : (isHovered ? 3 : 2)}
                                   style={{ pointerEvents: 'none' }}
                                 />
+                                
+                                {/* Edit button - appears on hover using foreignObject */}
+                                {isHovered && (
+                                  <foreignObject
+                                    x={xAxis.x + xAxis.width - 60}
+                                    y={y - 12}
+                                    width={55}
+                                    height={24}
+                                    style={{ overflow: 'visible' }}
+                                  >
+                                    <button
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        handleAnnotationDoubleClick(annotation);
+                                      }}
+                                      style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '4px',
+                                        padding: '2px 8px',
+                                        borderRadius: '4px',
+                                        backgroundColor: '#5AF5FA',
+                                        color: '#121212',
+                                        fontSize: '11px',
+                                        fontWeight: 600,
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                                      }}
+                                    >
+                                      <Pencil style={{ width: '10px', height: '10px' }} />
+                                      Edit
+                                    </button>
+                                  </foreignObject>
+                                )}
+                                
+                                {/* Price/percentage label on hover */}
+                                {isHovered && (
+                                  <foreignObject
+                                    x={xAxis.x + 8}
+                                    y={y - 12}
+                                    width={200}
+                                    height={24}
+                                    style={{ overflow: 'visible' }}
+                                  >
+                                    <div
+                                      style={{
+                                        display: 'inline-block',
+                                        padding: '2px 8px',
+                                        borderRadius: '4px',
+                                        backgroundColor: '#1a1a1a',
+                                        color: '#5AF5FA',
+                                        fontSize: '11px',
+                                        fontWeight: 500,
+                                        border: '1px solid #5AF5FA',
+                                        whiteSpace: 'nowrap'
+                                      }}
+                                    >
+                                      {yAxisDisplayMode === 'percentage' 
+                                        ? `${displayValue >= 0 ? '+' : ''}${displayValue.toFixed(2)}%`
+                                        : formatPrice(annotation.price)
+                                      }
+                                      {annotation.text && ` - ${annotation.text}`}
+                                    </div>
+                                  </foreignObject>
+                                )}
                               </g>
                             );
                           })}

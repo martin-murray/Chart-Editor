@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { createPortal } from "react-dom";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Search, X, Plus, Download, FileText, Image as ImageIcon } from "lucide-react";
+import { Search, X, Plus, Download, FileText, Image as ImageIcon, Pencil } from "lucide-react";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { saveAs } from 'file-saver';
@@ -137,6 +137,7 @@ export function ComparisonChart({
   const [dragAnnotationId, setDragAnnotationId] = useState<string | null>(null);
   const [dragStartY, setDragStartY] = useState(0);
   const [dragStartPrice, setDragStartPrice] = useState(0);
+  const [hoveredHorizontalId, setHoveredHorizontalId] = useState<string | null>(null);
   
   // Text annotation 2D drag state
   const [isDraggingText, setIsDraggingText] = useState(false);
@@ -985,6 +986,8 @@ export function ComparisonChart({
         setPendingAnnotation(newAnnotation);
         setShowAnnotationInput(true);
         setAnnotationInput('');
+        // Pre-fill the percentage input with the clicked position (can be edited)
+        setHorizontalPercentageInput(horizontalPrice.toFixed(2));
         setEditingAnnotation(null);
         setIsEditMode(false);
         return; // Exit early for horizontal annotations
@@ -2077,32 +2080,39 @@ export function ComparisonChart({
           </div>
         )}
 
-        {/* Interactive overlay elements for horizontal lines - USING REAL RECHARTS GEOMETRY */}
+        {/* Interactive overlay elements for horizontal lines with Edit button - USING REAL RECHARTS GEOMETRY */}
         {chartData?.length > 0 && layoutRef.current && annotations.filter(annotation => annotation.type === 'horizontal').map((annotation) => {
           const { offset, yScale } = layoutRef.current!;
           
           // Use Recharts' exact positioning + 85px offset correction
-          const yPixels = yScale(annotation.price) + 85; // Add 85px to align with visual line (moved up 5px)
-          const tolerancePx = 12; // Pixel-based tolerance
+          const yPixels = yScale(annotation.price) + 85; // Add 85px to align with visual line
+          const hitAreaHeight = 24; // Larger hit area for easier selection
           
           // Safety check for valid position
           if (isNaN(yPixels) || !offset) return null;
           
+          const isHovered = hoveredHorizontalId === annotation.id;
+          
           return (
             <div
               key={`interactive-${annotation.id}-${annotation.price}`}
-              className="absolute pointer-events-auto cursor-grab active:cursor-grabbing hover:opacity-80"
+              className="absolute pointer-events-auto"
               style={{ 
                 left: `${offset.left}px`, // Real chart left
                 width: `${offset.width}px`, // Real chart width
-                top: `${yPixels - tolerancePx/2}px`, // Centered on actual line position
-                height: `${tolerancePx}px`, // Pixel-based hit area
+                top: `${yPixels - hitAreaHeight/2}px`, // Centered on actual line position
+                height: `${hitAreaHeight}px`, // Larger hit area
                 zIndex: 20,
-                backgroundColor: 'transparent', // Invisible tolerance area
-                border: 'none'
+                backgroundColor: isHovered ? 'rgba(90, 245, 250, 0.1)' : 'transparent',
+                borderTop: isHovered ? '2px solid #5AF5FA' : 'none',
+                borderBottom: isHovered ? '2px solid #5AF5FA' : 'none',
+                transition: 'background-color 0.15s ease'
               }}
+              onMouseEnter={() => setHoveredHorizontalId(annotation.id)}
+              onMouseLeave={() => setHoveredHorizontalId(null)}
               onMouseDown={(e) => {
-                console.log('✅ COMPARISON: Mouse down on horizontal line:', annotation.id, 'at price:', annotation.price, 'yPixels:', yPixels);
+                // Only start dragging if not clicking the edit button
+                if ((e.target as HTMLElement).closest('[data-edit-button]')) return;
                 setIsDragging(true);
                 setDragAnnotationId(annotation.id);
                 setDragStartY(e.clientY);
@@ -2110,10 +2120,41 @@ export function ComparisonChart({
                 e.preventDefault();
                 e.stopPropagation();
               }}
-              onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
-              title={`Click and drag to move horizontal line (${annotation.price.toFixed(2)}%)`}
               data-testid={`horizontal-line-drag-${annotation.id}`}
-            />
+            >
+              {/* Edit button - appears on hover */}
+              {isHovered && (
+                <button
+                  data-edit-button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleAnnotationDoubleClick(annotation);
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium transition-all"
+                  style={{
+                    backgroundColor: '#5AF5FA',
+                    color: '#121212',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                  }}
+                  title="Edit horizontal line"
+                >
+                  <Pencil className="w-3 h-3" />
+                  Edit
+                </button>
+              )}
+              
+              {/* Percentage label on hover */}
+              {isHovered && (
+                <div 
+                  className="absolute left-2 top-1/2 -translate-y-1/2 text-xs font-medium px-1.5 py-0.5 rounded"
+                  style={{ backgroundColor: '#1a1a1a', color: '#5AF5FA', border: '1px solid #5AF5FA' }}
+                >
+                  {annotation.price >= 0 ? '+' : ''}{annotation.price.toFixed(2)}%
+                  {annotation.text && ` - ${annotation.text}`}
+                </div>
+              )}
+            </div>
           );
         })}
         
@@ -2371,20 +2412,56 @@ export function ComparisonChart({
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="border border-border rounded-lg p-6 w-96 max-w-[90vw]" style={{ backgroundColor: '#3A3A3A' }}>
             <h3 className="text-lg font-semibold mb-4">
-              {isEditMode ? 'Edit Annotation' : 'Add Annotation'}
+              {isEditMode ? 'Edit Annotation' : (pendingAnnotation?.type === 'horizontal' ? 'Add Horizontal Line' : 'Add Annotation')}
             </h3>
-            <div className="mb-4 text-sm text-muted-foreground">
-              <div>Time: {isEditMode ? editingAnnotation?.time : pendingAnnotation?.time}</div>
-              <div>Value: {formatPrice(isEditMode ? editingAnnotation?.price || 0 : pendingAnnotation?.price || 0)}%</div>
-            </div>
+            
+            {/* For horizontal annotations, show percentage input */}
+            {(pendingAnnotation?.type === 'horizontal' || editingAnnotation?.type === 'horizontal') && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-2">Percentage Level</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    step="any"
+                    value={horizontalPercentageInput}
+                    onChange={(e) => setHorizontalPercentageInput(e.target.value)}
+                    placeholder="e.g. -5.25"
+                    className="flex-1 px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-[#5AF5FA]"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                      } else if (e.key === 'Escape') {
+                        cancelAnnotation();
+                      }
+                    }}
+                  />
+                  <span className="text-muted-foreground">%</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Enter the percentage level for the horizontal line
+                </p>
+              </div>
+            )}
+            
+            {/* Show time/value info for non-horizontal annotations */}
+            {pendingAnnotation?.type !== 'horizontal' && editingAnnotation?.type !== 'horizontal' && (
+              <div className="mb-4 text-sm text-muted-foreground">
+                <div>Time: {isEditMode ? editingAnnotation?.time : pendingAnnotation?.time}</div>
+                <div>Value: {formatPrice(isEditMode ? editingAnnotation?.price || 0 : pendingAnnotation?.price || 0)}%</div>
+              </div>
+            )}
+            
             <div className="mb-4">
-              <label className="block text-sm font-medium mb-2">Event Description</label>
+              <label className="block text-sm font-medium mb-2">
+                {(pendingAnnotation?.type === 'horizontal' || editingAnnotation?.type === 'horizontal') ? 'Label (optional)' : 'Event Description'}
+              </label>
               <textarea
                 value={annotationInput}
                 onChange={(e) => setAnnotationInput(e.target.value)}
-                placeholder="Enter event description..."
+                placeholder={(pendingAnnotation?.type === 'horizontal' || editingAnnotation?.type === 'horizontal') ? 'e.g. Support level, Target price...' : 'Enter event description...'}
                 className="w-full h-24 px-3 py-2 border border-border rounded-md bg-background text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary"
-                autoFocus
+                autoFocus={pendingAnnotation?.type !== 'horizontal' && editingAnnotation?.type !== 'horizontal'}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && e.ctrlKey) {
                     saveAnnotation();
@@ -2409,7 +2486,9 @@ export function ComparisonChart({
               )}
               <Button 
                 onClick={saveAnnotation}
-                disabled={!annotationInput.trim()}
+                disabled={(pendingAnnotation?.type === 'horizontal' || editingAnnotation?.type === 'horizontal') 
+                  ? !horizontalPercentageInput.trim() 
+                  : !annotationInput.trim()}
                 className="bg-[#5AF5FA] text-black hover:bg-[#5AF5FA]/90"
               >
                 {isEditMode ? 'Update' : 'Save'}
