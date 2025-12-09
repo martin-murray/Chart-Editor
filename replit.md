@@ -50,6 +50,7 @@ Testing preference: User prefers to handle testing themselves rather than intern
 - **Comparison Chart Enhancement**: Forward-fill logic for global market comparisons to create continuous lines across different market hours.
 - **CSV Overlay Feature**: Allows users to upload or paste CSV data for percentage overlays on charts, with strict validation and visual rendering.
 - **Y-Axis Toggle Feature**: In price chart, switch between price and percentage display modes.
+- **Annotation Font Size Control**: Price Chart annotation edit dialogs include font size controls (−/+ buttons) with real-time preview. Sizes range from 10px to 32px in 2px increments, default 14px. Font size is persisted per annotation.
 
 ### External Dependencies
 

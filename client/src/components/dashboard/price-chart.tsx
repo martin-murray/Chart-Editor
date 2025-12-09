@@ -78,6 +78,7 @@ interface Annotation {
   time: string; // Formatted time string
   horizontalOffset?: number; // Custom horizontal position offset in pixels for dragging
   verticalOffset?: number; // Custom vertical position offset in pixels for dragging
+  fontSize?: number; // Font size in pixels for text annotations (default 14, min 10, max 32)
   // For percentage measurements
   startTimestamp?: number;
   startPrice?: number;
@@ -87,6 +88,12 @@ interface Annotation {
   endTime?: string;
   percentage?: number;
 }
+
+// Font size constants
+const DEFAULT_FONT_SIZE = 14;
+const MIN_FONT_SIZE = 10;
+const MAX_FONT_SIZE = 32;
+const FONT_SIZE_STEP = 2;
 
 interface PriceChartProps {
   symbol: string;
@@ -209,6 +216,7 @@ export function PriceChart({
   const [pendingAnnotation, setPendingAnnotation] = useState<Omit<Annotation, 'id' | 'text'> | null>(null);
   const [editingAnnotation, setEditingAnnotation] = useState<Annotation | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [fontSizeInput, setFontSizeInput] = useState(DEFAULT_FONT_SIZE);
   const [horizontalPriceInput, setHorizontalPriceInput] = useState<string>('');
   
   // Percentage measurement state
@@ -1757,6 +1765,7 @@ export function PriceChart({
       setEditingAnnotation(annotation);
       setIsEditMode(true);
       setAnnotationInput(annotation.text || '');
+      setFontSizeInput(annotation.fontSize || DEFAULT_FONT_SIZE);
       if (annotation.type === 'horizontal') {
         setHorizontalPriceInput(annotation.price?.toString() || '');
       }
@@ -1782,20 +1791,21 @@ export function PriceChart({
         if (!isNaN(newPrice)) {
           updateAnnotations(prev => prev.map(annotation => 
             annotation.id === editingAnnotation.id 
-              ? { ...annotation, price: newPrice, text: annotationInput.trim() }
+              ? { ...annotation, price: newPrice, text: annotationInput.trim(), fontSize: fontSizeInput }
               : annotation
           ));
         }
       } else if (annotationInput.trim()) {
         updateAnnotations(prev => prev.map(annotation => 
           annotation.id === editingAnnotation.id 
-            ? { ...annotation, text: annotationInput.trim() }
+            ? { ...annotation, text: annotationInput.trim(), fontSize: fontSizeInput }
             : annotation
         ));
       }
       setShowAnnotationInput(false);
       setAnnotationInput('');
       setHorizontalPriceInput('');
+      setFontSizeInput(DEFAULT_FONT_SIZE);
       setEditingAnnotation(null);
       setIsEditMode(false);
     } else if (pendingAnnotation) {
@@ -1808,7 +1818,8 @@ export function PriceChart({
             ...pendingAnnotation,
             id: `annotation-${Date.now()}`,
             price: newPrice,
-            text: annotationInput.trim() || ''
+            text: annotationInput.trim() || '',
+            fontSize: fontSizeInput
           };
           updateAnnotations(prev => [...prev, newAnnotation]);
         }
@@ -1816,13 +1827,15 @@ export function PriceChart({
         const newAnnotation: Annotation = {
           ...pendingAnnotation,
           id: `annotation-${Date.now()}`,
-          text: annotationInput.trim()
+          text: annotationInput.trim(),
+          fontSize: fontSizeInput
         };
         updateAnnotations(prev => [...prev, newAnnotation]);
       }
       setShowAnnotationInput(false);
       setAnnotationInput('');
       setHorizontalPriceInput('');
+      setFontSizeInput(DEFAULT_FONT_SIZE);
       setPendingAnnotation(null);
     }
   };
@@ -1843,9 +1856,19 @@ export function PriceChart({
     setShowAnnotationInput(false);
     setAnnotationInput('');
     setHorizontalPriceInput('');
+    setFontSizeInput(DEFAULT_FONT_SIZE);
     setPendingAnnotation(null);
     setEditingAnnotation(null);
     setIsEditMode(false);
+  };
+
+  // Font size control handlers
+  const decreaseFontSize = () => {
+    setFontSizeInput(prev => Math.max(MIN_FONT_SIZE, prev - FONT_SIZE_STEP));
+  };
+
+  const increaseFontSize = () => {
+    setFontSizeInput(prev => Math.min(MAX_FONT_SIZE, prev + FONT_SIZE_STEP));
   };
 
   const formatPercent = (value: number) => {
@@ -3150,14 +3173,14 @@ export function PriceChart({
                             backgroundColor: '#121212', 
                             border: '1px solid #FAFF50',
                             minWidth: '40px',
-                            fontSize: '10px',
+                            fontSize: `${annotation.fontSize || DEFAULT_FONT_SIZE}px`,
                             wordBreak: 'break-word',
                             overflowWrap: 'break-word',
                             whiteSpace: 'pre-wrap'
                           }}
                           onMouseDown={(e) => handleTextMouseDown(e, annotation)}
                           onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
-                          title="Click and drag to move in any direction, double-click to delete"
+                          title="Click and drag to move in any direction, double-click to edit"
                         >
                           <div className="text-foreground">{annotation.text || ''}</div>
                         </div>
@@ -3183,14 +3206,14 @@ export function PriceChart({
                             backgroundColor: '#121212', 
                             border: '1px solid #AA99FF',
                             minWidth: '40px',
-                            fontSize: '10px',
+                            fontSize: `${annotation.fontSize || DEFAULT_FONT_SIZE}px`,
                             wordBreak: 'break-word',
                             overflowWrap: 'break-word',
                             whiteSpace: 'pre-wrap'
                           }}
                           onMouseDown={(e) => handleTextMouseDown(e, annotation)}
                           onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
-                          title="Click and drag to move in any direction, double-click to delete"
+                          title="Click and drag to move in any direction, double-click to edit"
                         >
                           <div className="text-foreground">{annotation.text || ''}</div>
                         </div>
@@ -3220,14 +3243,14 @@ export function PriceChart({
                             backgroundColor: '#121212', 
                             border: '1px solid #FFFFFF',
                             minWidth: '40px',
-                            fontSize: '10px',
+                            fontSize: `${annotation.fontSize || DEFAULT_FONT_SIZE}px`,
                             wordBreak: 'break-word',
                             overflowWrap: 'break-word',
                             whiteSpace: 'pre-wrap'
                           }}
                           onMouseDown={(e) => handleTextMouseDown(e, annotation)}
                           onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
-                          title="Click and drag to move in any direction, double-click to delete"
+                          title="Click and drag to move in any direction, double-click to edit"
                         >
                           <div className="text-foreground">{annotation.text || ''}</div>
                         </div>
@@ -3706,8 +3729,8 @@ export function PriceChart({
                                   <foreignObject
                                     x={xAxis.x + 8}
                                     y={y - 28}
-                                    width={200}
-                                    height={24}
+                                    width={300}
+                                    height={30}
                                     style={{ overflow: 'visible', pointerEvents: 'none' }}
                                   >
                                     <div
@@ -3717,7 +3740,7 @@ export function PriceChart({
                                         borderRadius: '4px',
                                         backgroundColor: '#1a1a1a',
                                         color: '#AA99FF',
-                                        fontSize: '11px',
+                                        fontSize: `${annotation.fontSize || DEFAULT_FONT_SIZE}px`,
                                         fontWeight: 500,
                                         border: '1px solid #AA99FF',
                                         whiteSpace: 'nowrap'
@@ -4512,6 +4535,7 @@ export function PriceChart({
                 onChange={(e) => setAnnotationInput(e.target.value)}
                 placeholder={(pendingAnnotation?.type === 'horizontal' || editingAnnotation?.type === 'horizontal') ? 'e.g. Support level, Target price...' : 'Enter event description...'}
                 className="w-full h-24 px-3 py-2 border border-border rounded-md bg-background text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+                style={{ fontSize: `${fontSizeInput}px` }}
                 autoFocus={pendingAnnotation?.type !== 'horizontal' && editingAnnotation?.type !== 'horizontal'}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && e.ctrlKey) {
@@ -4522,6 +4546,42 @@ export function PriceChart({
                 }}
               />
             </div>
+            
+            {/* Font Size Controls */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2">Font Size</label>
+              <div className="flex items-center gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={decreaseFontSize}
+                  disabled={fontSizeInput <= MIN_FONT_SIZE}
+                  className="h-8 w-8 p-0"
+                  data-testid="button-decrease-font-size"
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
+                <span className="text-sm font-medium min-w-[50px] text-center" data-testid="text-font-size-value">
+                  {fontSizeInput}px
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={increaseFontSize}
+                  disabled={fontSizeInput >= MAX_FONT_SIZE}
+                  className="h-8 w-8 p-0"
+                  data-testid="button-increase-font-size"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Adjust text size ({MIN_FONT_SIZE}px - {MAX_FONT_SIZE}px)
+              </p>
+            </div>
+            
             <div className="flex gap-2 justify-end">
               <Button variant="outline" onClick={cancelAnnotation}>
                 Cancel
