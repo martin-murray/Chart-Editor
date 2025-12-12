@@ -15,66 +15,6 @@ run = ["npm", "run", "start"]
 localPort = 5000
 externalPort = 80
 
-[[ports]]
-localPort = 32787
-externalPort = 8099
-
-[[ports]]
-localPort = 32893
-externalPort = 8008
-
-[[ports]]
-localPort = 33031
-externalPort = 8080
-
-[[ports]]
-localPort = 33319
-externalPort = 9000
-
-[[ports]]
-localPort = 35347
-externalPort = 3003
-
-[[ports]]
-localPort = 37323
-externalPort = 3002
-
-[[ports]]
-localPort = 40027
-externalPort = 6000
-
-[[ports]]
-localPort = 40071
-externalPort = 6800
-
-[[ports]]
-localPort = 40413
-externalPort = 3000
-
-[[ports]]
-localPort = 41441
-externalPort = 5000
-
-[[ports]]
-localPort = 41479
-externalPort = 3001
-
-[[ports]]
-localPort = 42203
-externalPort = 8000
-
-[[ports]]
-localPort = 43761
-externalPort = 4200
-
-[[ports]]
-localPort = 44381
-externalPort = 5173
-
-[[ports]]
-localPort = 46163
-externalPort = 8081
-
 [env]
 PORT = "5000"
 

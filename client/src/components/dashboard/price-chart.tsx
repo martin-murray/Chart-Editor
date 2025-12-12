@@ -3514,10 +3514,11 @@ export function PriceChart({
                       type="linear"
                       dataKey={yAxisDisplayMode === 'percentage' ? 'percentageChange' : 'close'}
                       stroke={lineColor}
-                      strokeWidth={2}
+                      strokeWidth={0.75}
                       dot={false}
                       name={symbol}
-                      activeDot={{ r: 4, fill: lineColor, stroke: '#121212', strokeWidth: 2 }}
+                      activeDot={{ r: 3, fill: lineColor, stroke: '#121212', strokeWidth: 1 }}
+                      style={{ shapeRendering: 'geometricPrecision' }}
                     />
                   ) : chartType === 'candlestick' ? (
                     <Customized 
@@ -3586,11 +3587,12 @@ export function PriceChart({
                       type="linear" 
                       dataKey={yAxisDisplayMode === 'percentage' ? 'percentageChange' : 'close'}
                       stroke={lineColor}
-                      strokeWidth={2}
+                      strokeWidth={0.75}
                       fill={`url(#${isPositive ? 'positiveGradient' : 'negativeGradient'})`}
                       dot={false}
                       name={symbol}
-                      activeDot={{ r: 4, fill: lineColor, stroke: '#121212', strokeWidth: 2 }}
+                      activeDot={{ r: 3, fill: lineColor, stroke: '#121212', strokeWidth: 1 }}
+                      style={{ shapeRendering: 'geometricPrecision' }}
                     />
                   )}
                   
@@ -3616,12 +3618,13 @@ export function PriceChart({
                       type="linear"
                       dataKey="csvOverlay"
                       stroke="#FFFFFF"
-                      strokeWidth={2}
+                      strokeWidth={1}
                       dot={false}
                       name="CSV Overlay"
                       connectNulls
-                      activeDot={{ r: 4, fill: '#FFFFFF', stroke: '#121212', strokeWidth: 2 }}
+                      activeDot={{ r: 3, fill: '#FFFFFF', stroke: '#121212', strokeWidth: 1 }}
                       isAnimationActive={false}
+                      style={{ shapeRendering: 'geometricPrecision' }}
                     />
                   )}
                   
@@ -3633,12 +3636,13 @@ export function PriceChart({
                       type="linear"
                       dataKey={`comparison_${ticker.symbol}`}
                       stroke={ticker.color}
-                      strokeWidth={2}
+                      strokeWidth={1}
                       dot={false}
                       name={ticker.symbol}
                       connectNulls
-                      activeDot={{ r: 4, fill: ticker.color, stroke: '#121212', strokeWidth: 2 }}
+                      activeDot={{ r: 3, fill: ticker.color, stroke: '#121212', strokeWidth: 1 }}
                       isAnimationActive={false}
+                      style={{ shapeRendering: 'geometricPrecision' }}
                     />
                   ))}
                   
@@ -4375,10 +4379,11 @@ export function PriceChart({
                   <Line 
                     dataKey="volumeMA" 
                     stroke="#F7F7F7" 
-                    strokeWidth={2}
+                    strokeWidth={1}
                     dot={false}
                     connectNulls={true}
                     type="linear"
+                    style={{ shapeRendering: 'geometricPrecision' }}
                   />
 
                   {/* Earnings Markers - moved to volume chart */}
