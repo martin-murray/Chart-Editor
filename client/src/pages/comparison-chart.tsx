@@ -1082,10 +1082,10 @@ export default function ComparisonChart() {
           />
         </div>
 
-        {/* Compare Chart History Log */}
+        {/* Saved Charts */}
         <Card className="p-6 mt-8" style={{ backgroundColor: '#121212' }}>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Compare Chart History</h3>
+            <h3 className="text-lg font-semibold">Saved Charts</h3>
             {compareChartHistory.length > 0 && (
               <Button
                 variant="ghost"

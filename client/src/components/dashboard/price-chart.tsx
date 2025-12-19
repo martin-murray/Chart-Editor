@@ -4969,10 +4969,10 @@ export function PriceChart({
         </div>
       )}
 
-      {/* Chart History Log */}
+      {/* Saved Charts */}
       <Card className="p-6 mt-8" style={{ backgroundColor: '#121212' }}>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">Chart History Log</h3>
+          <h3 className="text-lg font-semibold">Saved Charts</h3>
           {chartHistory.length > 0 && (
             <Button
               variant="ghost"
