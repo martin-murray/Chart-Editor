@@ -932,7 +932,76 @@ export function ComparisonChart({
 
   // Annotation handling methods
   const handleChartClick = (event: any) => {
-    if (!event || !chartData) return;
+    if (!event || !chartData || chartData.length === 0) return;
+    
+    // For text annotations, allow clicking anywhere on the chart
+    if (annotationMode === 'text') {
+      // If there's an activePayload, use that data point
+      if (event.activePayload && event.activePayload.length > 0) {
+        const clickedData = event.activePayload[0].payload;
+        const timestamp = clickedData.timestamp;
+        const time = clickedData.date;
+        const firstVisibleTicker = tickers.find(t => t.visible);
+        const percentageValue = firstVisibleTicker 
+          ? (clickedData[`${firstVisibleTicker.symbol}_percentage`] || 0) 
+          : 0;
+        
+        const newAnnotation: Omit<Annotation, 'id' | 'text'> = {
+          type: 'text',
+          x: 0,
+          y: 0,
+          timestamp,
+          price: percentageValue,
+          time
+        };
+        
+        setPendingAnnotation(newAnnotation);
+        setShowAnnotationInput(true);
+        setAnnotationInput('');
+        setEditingAnnotation(null);
+        setIsEditMode(false);
+        return;
+      }
+      
+      // Fallback: use the nearest data point based on click position
+      if (event.chartX !== undefined) {
+        const chartContainer = document.querySelector('[data-testid="comparison-chart-container"] .recharts-wrapper');
+        if (chartContainer) {
+          const rect = chartContainer.getBoundingClientRect();
+          const plotLeft = 22; // Left margin
+          const plotRight = 22; // Right margin
+          const plotWidth = rect.width - plotLeft - plotRight;
+          const relativeX = Math.max(0, Math.min(1, (event.chartX - plotLeft) / plotWidth));
+          const dataIndex = Math.round(relativeX * (chartData.length - 1));
+          const nearestPoint = chartData[Math.max(0, Math.min(dataIndex, chartData.length - 1))];
+          
+          if (nearestPoint) {
+            const firstVisibleTicker = tickers.find(t => t.visible);
+            const rawPercentage = firstVisibleTicker 
+              ? (nearestPoint[`${firstVisibleTicker.symbol}_percentage`] || 0) 
+              : 0;
+            const percentageValue = typeof rawPercentage === 'string' ? parseFloat(rawPercentage) : rawPercentage;
+            
+            const newAnnotation: Omit<Annotation, 'id' | 'text'> = {
+              type: 'text',
+              x: 0,
+              y: 0,
+              timestamp: nearestPoint.timestamp as number,
+              price: percentageValue,
+              time: nearestPoint.date as string
+            };
+            
+            setPendingAnnotation(newAnnotation);
+            setShowAnnotationInput(true);
+            setAnnotationInput('');
+            setEditingAnnotation(null);
+            setIsEditMode(false);
+            return;
+          }
+        }
+      }
+      return;
+    }
     
     // For horizontal annotations, we handle ANY click on the chart (even without activePayload)
     if (annotationMode === 'horizontal') {
@@ -1025,27 +1094,8 @@ export function ComparisonChart({
     
     const percentageValue = clickedData[`${firstVisibleTicker.symbol}_percentage`] || 0;
     
-    if (annotationMode === 'text') {
-      // Text annotation mode - single click
-      const newAnnotation: Omit<Annotation, 'id' | 'text'> = {
-        type: 'text',
-        x: 0, // Will be calculated during rendering
-        y: 0, // Will be calculated during rendering  
-        timestamp,
-        price: percentageValue,
-        time
-      };
-      
-      setPendingAnnotation(newAnnotation);
-      setShowAnnotationInput(true);
-      setAnnotationInput('');
-      setEditingAnnotation(null);
-      setIsEditMode(false);
-    } else if (annotationMode === 'horizontal') {
-      // This case is now handled earlier in the function for freehand placement
-      // This code path should not be reached for horizontal annotations
-      return;
-    } else if (annotationMode === 'percentage') {
+    // Text and horizontal annotations are now handled earlier in the function
+    if (annotationMode === 'percentage') {
       // Percentage measurement mode - two clicks
       if (!pendingPercentageStart) {
         // First click - set start point
