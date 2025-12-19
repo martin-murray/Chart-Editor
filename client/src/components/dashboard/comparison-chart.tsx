@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { createPortal } from "react-dom";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Search, X, Plus, Download, FileText, Image as ImageIcon, Pencil } from "lucide-react";
+import { Search, X, Plus, Minus, Download, FileText, Image as ImageIcon, Pencil } from "lucide-react";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { saveAs } from 'file-saver';
@@ -45,6 +45,12 @@ interface SearchResult {
   type?: string;
 }
 
+// Font size constants for annotations
+const DEFAULT_FONT_SIZE = 14;
+const MIN_FONT_SIZE = 10;
+const MAX_FONT_SIZE = 32;
+const FONT_SIZE_STEP = 2;
+
 interface Annotation {
   id: string;
   type: 'text' | 'percentage' | 'horizontal' | 'note';
@@ -56,6 +62,7 @@ interface Annotation {
   time: string; // Formatted time string
   horizontalOffset?: number; // Custom horizontal position offset in pixels for dragging
   verticalOffset?: number; // Custom vertical position offset in pixels for dragging
+  fontSize?: number; // Font size for annotation text
   // For percentage measurements
   startTimestamp?: number;
   startPrice?: number;
@@ -131,6 +138,7 @@ export function ComparisonChart({
   const [editingAnnotation, setEditingAnnotation] = useState<Annotation | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [horizontalPercentageInput, setHorizontalPercentageInput] = useState<string>('');
+  const [fontSizeInput, setFontSizeInput] = useState(DEFAULT_FONT_SIZE);
   
   // Drag state for horizontal lines
   const [isDragging, setIsDragging] = useState(false);
@@ -1072,6 +1080,7 @@ export function ComparisonChart({
       setEditingAnnotation(annotation);
       setIsEditMode(true);
       setAnnotationInput(annotation.text || '');
+      setFontSizeInput(annotation.fontSize || DEFAULT_FONT_SIZE);
       if (annotation.type === 'horizontal') {
         setHorizontalPercentageInput(annotation.price?.toString() || '');
       }
@@ -1080,6 +1089,15 @@ export function ComparisonChart({
       // For percentage annotations, delete directly like Price chart (no confirmation)
       updateAnnotations?.(prev => prev.filter(a => a.id !== annotation.id));
     }
+  };
+
+  // Font size control handlers
+  const increaseFontSize = () => {
+    setFontSizeInput(prev => Math.min(prev + FONT_SIZE_STEP, MAX_FONT_SIZE));
+  };
+  
+  const decreaseFontSize = () => {
+    setFontSizeInput(prev => Math.max(prev - FONT_SIZE_STEP, MIN_FONT_SIZE));
   };
 
   // Clear all annotations
@@ -1100,20 +1118,21 @@ export function ComparisonChart({
         if (!isNaN(newPercentage)) {
           updateAnnotations?.(prev => prev.map(annotation => 
             annotation.id === editingAnnotation.id 
-              ? { ...annotation, price: newPercentage, text: annotationInput.trim() }
+              ? { ...annotation, price: newPercentage, text: annotationInput.trim(), fontSize: fontSizeInput }
               : annotation
           ));
         }
       } else if (annotationInput.trim()) {
         updateAnnotations?.(prev => prev.map(annotation => 
           annotation.id === editingAnnotation.id 
-            ? { ...annotation, text: annotationInput.trim() }
+            ? { ...annotation, text: annotationInput.trim(), fontSize: fontSizeInput }
             : annotation
         ));
       }
       setShowAnnotationInput(false);
       setAnnotationInput('');
       setHorizontalPercentageInput('');
+      setFontSizeInput(DEFAULT_FONT_SIZE);
       setEditingAnnotation(null);
       setIsEditMode(false);
     } else if (pendingAnnotation) {
@@ -1126,7 +1145,8 @@ export function ComparisonChart({
             ...pendingAnnotation,
             id: `annotation-${Date.now()}`,
             price: newPercentage,
-            text: annotationInput.trim() || ''
+            text: annotationInput.trim() || '',
+            fontSize: fontSizeInput
           };
           updateAnnotations?.(prev => [...prev, newAnnotation]);
         }
@@ -1134,13 +1154,15 @@ export function ComparisonChart({
         const newAnnotation: Annotation = {
           ...pendingAnnotation,
           id: `annotation-${Date.now()}`,
-          text: annotationInput.trim()
+          text: annotationInput.trim(),
+          fontSize: fontSizeInput
         };
         updateAnnotations?.(prev => [...prev, newAnnotation]);
       }
       setShowAnnotationInput(false);
       setAnnotationInput('');
       setHorizontalPercentageInput('');
+      setFontSizeInput(DEFAULT_FONT_SIZE);
       setPendingAnnotation(null);
     }
   };
@@ -1161,6 +1183,7 @@ export function ComparisonChart({
     setShowAnnotationInput(false);
     setAnnotationInput('');
     setHorizontalPercentageInput('');
+    setFontSizeInput(DEFAULT_FONT_SIZE);
     setPendingAnnotation(null);
     setEditingAnnotation(null);
     setIsEditMode(false);
@@ -1968,7 +1991,7 @@ export function ComparisonChart({
                         backgroundColor: '#121212', 
                         border: '1px solid #FAFF50',
                         minWidth: '40px',
-                        fontSize: '10px',
+                        fontSize: `${annotation.fontSize || DEFAULT_FONT_SIZE}px`,
                         wordBreak: 'break-word',
                         overflowWrap: 'break-word',
                         whiteSpace: 'pre-wrap'
@@ -2005,7 +2028,7 @@ export function ComparisonChart({
                         backgroundColor: '#121212', 
                         border: '1px solid #AA99FF',
                         minWidth: '50px',
-                        fontSize: '12px',
+                        fontSize: `${annotation.fontSize || DEFAULT_FONT_SIZE}px`,
                         wordBreak: 'break-word',
                         overflowWrap: 'break-word',
                         whiteSpace: 'pre-wrap',
@@ -2470,6 +2493,7 @@ export function ComparisonChart({
                 onChange={(e) => setAnnotationInput(e.target.value)}
                 placeholder={(pendingAnnotation?.type === 'horizontal' || editingAnnotation?.type === 'horizontal') ? 'e.g. Support level, Target price...' : 'Enter event description...'}
                 className="w-full h-24 px-3 py-2 border border-border rounded-md bg-background text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+                style={{ fontSize: `${fontSizeInput}px` }}
                 autoFocus={pendingAnnotation?.type !== 'horizontal' && editingAnnotation?.type !== 'horizontal'}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && e.ctrlKey) {
@@ -2479,6 +2503,41 @@ export function ComparisonChart({
                   }
                 }}
               />
+            </div>
+            
+            {/* Font Size Controls */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2">Font Size</label>
+              <div className="flex items-center gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={decreaseFontSize}
+                  disabled={fontSizeInput <= MIN_FONT_SIZE}
+                  className="h-8 w-8 p-0"
+                  data-testid="button-decrease-font-size"
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
+                <span className="text-sm font-medium min-w-[50px] text-center" data-testid="text-font-size-value">
+                  {fontSizeInput}px
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={increaseFontSize}
+                  disabled={fontSizeInput >= MAX_FONT_SIZE}
+                  className="h-8 w-8 p-0"
+                  data-testid="button-increase-font-size"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Adjust text size ({MIN_FONT_SIZE}px - {MAX_FONT_SIZE}px)
+              </p>
             </div>
             <div className="flex gap-2 justify-end">
               <Button variant="outline" onClick={cancelAnnotation}>
