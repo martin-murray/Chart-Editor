@@ -89,6 +89,7 @@ interface ComparisonChartProps {
   onZoomOut?: (fn: () => void) => void;
   onFitToData?: (fn: () => void) => void;
   onTickersChange?: (tickers: TickerData[]) => void;
+  controlledTickers?: TickerData[];
 }
 
 
@@ -107,10 +108,18 @@ export function ComparisonChart({
   onZoomIn: parentZoomIn,
   onZoomOut: parentZoomOut,
   onFitToData: parentFitToData,
-  onTickersChange
+  onTickersChange,
+  controlledTickers
 }: ComparisonChartProps) {
   const [tickers, setTickers] = useState<TickerData[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Sync with controlled tickers from parent (for history restoration)
+  useEffect(() => {
+    if (controlledTickers !== undefined) {
+      setTickers(controlledTickers);
+    }
+  }, [controlledTickers]);
   
   useEffect(() => {
     onTickersChange?.(tickers);

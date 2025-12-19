@@ -1025,6 +1025,7 @@ export default function ComparisonChart() {
             onZoomOut={(fn) => { if (fn && typeof fn === 'function') comparisonZoomOutRef.current = fn; }}
             onFitToData={(fn) => { if (fn && typeof fn === 'function') comparisonFitToDataRef.current = fn; }}
             onTickersChange={handleTickersChange}
+            controlledTickers={tickers}
           />
         </div>
 
