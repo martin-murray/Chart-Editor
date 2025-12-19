@@ -949,7 +949,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Chart History Routes
 
-  // Save chart with annotations to history (upsert by sessionId)
+  // Save chart with annotations to history (deduplicate by symbol)
   app.post("/api/chart-history", requireAuth, async (req: any, res) => {
     try {
       const { sessionId, symbol, timeframe, customStartDate, customEndDate, dividendAdjusted, csvOverlay, comparisonTickers, annotations } = req.body;
@@ -960,21 +960,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const hasCsvOverlay = csvOverlay && Array.isArray(csvOverlay) && csvOverlay.length > 0;
       const hasCustomDateRange = timeframe === 'Custom' && customStartDate && customEndDate;
       
-      if (!sessionId || !symbol || !timeframe || (!hasAnnotations && !hasComparisonTickers && !hasCsvOverlay && !hasCustomDateRange)) {
-        return res.status(400).json({ message: "SessionId, symbol, timeframe, and at least one of: annotations, comparison tickers, csv overlay, or custom date range are required" });
+      if (!symbol || !timeframe || (!hasAnnotations && !hasComparisonTickers && !hasCsvOverlay && !hasCustomDateRange)) {
+        return res.status(400).json({ message: "Symbol, timeframe, and at least one of: annotations, comparison tickers, csv overlay, or custom date range are required" });
       }
       
       if (!userId) {
         return res.status(401).json({ message: "User not authenticated" });
       }
       
-      // Check if entry exists for this userId + sessionId
+      // Check if entry exists for this userId + symbol (deduplicate by symbol)
       const existing = await db
         .select()
         .from(chartHistory)
         .where(and(
           eq(chartHistory.userId, userId),
-          eq(chartHistory.sessionId, sessionId)
+          eq(chartHistory.symbol, symbol)
         ))
         .limit(1);
       
@@ -984,6 +984,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const [updated] = await db
           .update(chartHistory)
           .set({
+            sessionId: sessionId || existing[0].sessionId,
             symbol,
             timeframe,
             customStartDate,
@@ -996,7 +997,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           })
           .where(and(
             eq(chartHistory.userId, userId),
-            eq(chartHistory.sessionId, sessionId)
+            eq(chartHistory.symbol, symbol)
           ))
           .returning();
         history = updated;
@@ -1004,7 +1005,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Insert new entry
         const [inserted] = await db.insert(chartHistory).values({
           userId,
-          sessionId,
+          sessionId: sessionId || `chart-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           symbol,
           timeframe,
           customStartDate,
@@ -1100,7 +1101,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Compare Chart History Routes
   
-  // Save or update compare chart history
+  // Save or update compare chart history (deduplicate by ticker list)
   app.post("/api/compare-chart-history", requireAuth, async (req: any, res) => {
     try {
       const userId = req.userId;
@@ -1111,21 +1112,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const { sessionId, timeframe, customStartDate, customEndDate, tickers, annotations } = req.body;
       
-      // Check if entry exists for this session
+      // Create a unique key from sorted ticker symbols for deduplication
+      const tickerKey = tickers && Array.isArray(tickers) 
+        ? JSON.stringify(tickers.map((t: any) => t.symbol).sort())
+        : '[]';
+      
+      // Check if entry exists for this user + ticker combination (deduplicate by tickers)
       const existing = await db
         .select()
         .from(compareChartHistory)
-        .where(and(
-          eq(compareChartHistory.userId, userId),
-          eq(compareChartHistory.sessionId, sessionId)
-        ))
-        .limit(1);
+        .where(eq(compareChartHistory.userId, userId))
+        .limit(100); // Get all entries to find matching ticker combination
       
-      if (existing.length > 0) {
+      const matchingEntry = existing.find((entry: any) => {
+        const entryTickerKey = entry.tickers && Array.isArray(entry.tickers)
+          ? JSON.stringify(entry.tickers.map((t: any) => t.symbol).sort())
+          : '[]';
+        return entryTickerKey === tickerKey;
+      });
+      
+      if (matchingEntry) {
         // Update existing entry
         await db
           .update(compareChartHistory)
           .set({
+            sessionId,
             timeframe,
             customStartDate,
             customEndDate,
@@ -1133,16 +1144,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             annotations: annotations || [],
             updatedAt: new Date(),
           })
-          .where(and(
-            eq(compareChartHistory.userId, userId),
-            eq(compareChartHistory.sessionId, sessionId)
-          ));
+          .where(eq(compareChartHistory.id, matchingEntry.id));
         res.json({ success: true, message: "Compare chart history updated" });
       } else {
         // Insert new entry
         const [inserted] = await db.insert(compareChartHistory).values({
           userId,
-          sessionId,
+          sessionId: sessionId || `compare-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           timeframe,
           customStartDate,
           customEndDate,
@@ -1488,7 +1496,7 @@ Generate the chart data directly. Do not explain what you would do, just provide
     }
   });
 
-  // Get all chart history for the authenticated user across all sessions
+  // Get all chart history for the authenticated user across all sessions (deduplicated by chart title)
   app.get("/api/ai-copilot/all-charts", requireAuth, async (req, res) => {
     try {
       const userId = req.userId;
@@ -1518,7 +1526,19 @@ Generate the chart data directly. Do not explain what you would do, just provide
         )
         .orderBy(desc(aiCopilotMessages.createdAt));
       
-      res.json(chartMessages);
+      // Deduplicate by chart title - keep only the most recent of each title
+      const seenTitles = new Set<string>();
+      const deduplicatedCharts = chartMessages.filter((msg: any) => {
+        if (!msg.chartConfig) return false;
+        const title = msg.chartConfig.title || 'Untitled';
+        if (seenTitles.has(title)) {
+          return false; // Skip duplicate
+        }
+        seenTitles.add(title);
+        return true;
+      });
+      
+      res.json(deduplicatedCharts);
     } catch (error) {
       console.error("Error fetching all chart history:", error);
       res.status(500).json({ message: "Failed to fetch chart history" });
