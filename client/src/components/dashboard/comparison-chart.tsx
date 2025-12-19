@@ -2000,15 +2000,16 @@ export function ComparisonChart({
                     }}
                   >
                     <div 
-                      className="rounded px-1.5 py-0.5 max-w-32 pointer-events-auto cursor-grab hover:opacity-80 shadow-lg select-none"
+                      className="rounded px-2 py-1.5 max-w-40 pointer-events-auto cursor-grab hover:opacity-80 shadow-lg select-none"
                       style={{ 
                         backgroundColor: '#121212', 
                         border: '1px solid #AA99FF',
-                        minWidth: '40px',
-                        fontSize: '10px',
+                        minWidth: '50px',
+                        fontSize: '12px',
                         wordBreak: 'break-word',
                         overflowWrap: 'break-word',
-                        whiteSpace: 'pre-wrap'
+                        whiteSpace: 'pre-wrap',
+                        lineHeight: '1.4'
                       }}
                       onMouseDown={(e) => handleTextMouseDown(e, annotation)}
                       onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
