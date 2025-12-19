@@ -15,13 +15,28 @@ import { saveAs } from 'file-saver';
 import * as htmlToImage from 'html-to-image';
 import jsPDF from 'jspdf';
 
-// Color palette for different tickers (max 5 tickers)
+// Color palette for different tickers (20 distinct colors)
 const TICKER_COLORS = [
   '#5AF5FA', // Cyan - primary brand color
   '#FFA5FF', // Pink/Magenta  
   '#AA99FF', // Purple
   '#FAFF50', // Yellow
-  '#50FFA5', // Green - added 5th color to complete the palette
+  '#50FFA5', // Green
+  '#FF6B6B', // Coral Red
+  '#4ECDC4', // Teal
+  '#FFB347', // Orange
+  '#87CEEB', // Sky Blue
+  '#DDA0DD', // Plum
+  '#98D8C8', // Mint
+  '#F7DC6F', // Gold
+  '#BB8FCE', // Lavender
+  '#85C1E9', // Light Blue
+  '#F8B500', // Amber
+  '#82E0AA', // Light Green
+  '#F1948A', // Salmon
+  '#AED6F1', // Powder Blue
+  '#D7BDE2', // Thistle
+  '#A3E4D7', // Aquamarine
 ];
 
 interface ChartDataPoint {
