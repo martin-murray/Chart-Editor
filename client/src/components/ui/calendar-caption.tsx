@@ -33,11 +33,23 @@ export function CalendarCaption({ displayMonth, fromYear = 2014, toYear = 2024 }
     goToMonth(newDate);
   };
 
+  const stopPropagation = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
+  };
+
   return (
-    <div className="flex items-center justify-center gap-2 mb-2">
+    <div 
+      className="flex items-center justify-center gap-2 mb-2"
+      onClick={stopPropagation}
+      onMouseDown={stopPropagation}
+      onTouchStart={stopPropagation}
+    >
       <select
         value={currentMonth}
         onChange={handleMonthChange}
+        onClick={stopPropagation}
+        onMouseDown={stopPropagation}
+        onTouchStart={stopPropagation}
         className="bg-[#2A2A2A] text-[#f7f7f7] border border-[#474747] rounded px-2 py-1 text-sm cursor-pointer hover:bg-[#333333] focus:outline-none focus:ring-1 focus:ring-[#5AF5FA]"
         style={{ backgroundColor: '#2A2A2A', color: '#f7f7f7' }}
       >
@@ -55,6 +67,9 @@ export function CalendarCaption({ displayMonth, fromYear = 2014, toYear = 2024 }
       <select
         value={currentYear}
         onChange={handleYearChange}
+        onClick={stopPropagation}
+        onMouseDown={stopPropagation}
+        onTouchStart={stopPropagation}
         className="bg-[#2A2A2A] text-[#f7f7f7] border border-[#474747] rounded px-2 py-1 text-sm cursor-pointer hover:bg-[#333333] focus:outline-none focus:ring-1 focus:ring-[#5AF5FA]"
         style={{ backgroundColor: '#2A2A2A', color: '#f7f7f7' }}
       >
