@@ -2,7 +2,10 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { LogOut, BookOpen, ChevronDown, Minus, Type, Ruler, RotateCcw, Download, Code, X, Trash2, Plus } from "lucide-react";
+import { LogOut, BookOpen, ChevronDown, Minus, Type, Ruler, RotateCcw, Download, Code, X, Trash2, Plus, Save } from "lucide-react";
+import { useChartSaveState } from "@/hooks/use-chart-save-state";
+import { SaveChartModal } from "@/components/ui/save-chart-modal";
+import { UnsavedChangesDialog } from "@/components/ui/unsaved-changes-dialog";
 import { ComparisonChart as ComparisonChartComponent } from "@/components/dashboard/comparison-chart";
 import { useAuth } from "@/contexts/AuthContext";
 import logoImage from "@assets/IPO Intelligence@2x_1758060026530.png";
@@ -132,6 +135,10 @@ export default function ComparisonChart() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showUnsavedChangesDialog, setShowUnsavedChangesDialog] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
+  const { hasUnsavedChanges, currentSavedEntryId, markAsSaved, resetSaveState, updateCurrentState } = useChartSaveState();
   const confirmTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isInitialMountRef = useRef(true);
   const lastSavedStateRef = useRef<string | null>(null);
@@ -207,7 +214,7 @@ export default function ComparisonChart() {
       tickers: TickerData[];
       annotations: Annotation[] 
     }) => {
-      await apiRequest('POST', '/api/compare-chart-history', { 
+      const response = await apiRequest('POST', '/api/compare-chart-history', { 
         sessionId,
         timeframe,
         customStartDate,
@@ -215,6 +222,7 @@ export default function ComparisonChart() {
         tickers,
         annotations 
       });
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/compare-chart-history'] });
@@ -321,56 +329,28 @@ export default function ComparisonChart() {
   }, []);
 
   useEffect(() => {
-    if (isInitialMountRef.current) {
-      isInitialMountRef.current = false;
-      const initialState = JSON.stringify({
-        timeframe,
-        customStartDate: startDate?.toISOString(),
-        customEndDate: endDate?.toISOString(),
-        tickers,
-        annotations
-      });
-      lastSavedStateRef.current = initialState;
-      return;
-    }
-
-    const hasAnnotations = annotations.length > 0;
-    const hasTickers = tickers.length > 0;
-    const hasCustomDateRange = timeframe === 'Custom' && startDate && endDate;
-    
-    if (!hasAnnotations && !hasTickers && !hasCustomDateRange) {
-      lastSavedStateRef.current = null;
-      return;
-    }
-
-    const currentState = JSON.stringify({
+    const currentState = {
       timeframe,
       customStartDate: startDate?.toISOString(),
       customEndDate: endDate?.toISOString(),
       tickers,
       annotations
-    });
-    
-    if (currentState === lastSavedStateRef.current) {
-      return;
-    }
-
-    const timeoutId = setTimeout(() => {
-      saveCompareChartHistoryMutation.mutate({ 
-        sessionId: chartSessionId,
-        timeframe,
-        customStartDate: timeframe === 'Custom' && startDate ? startDate.toISOString() : undefined,
-        customEndDate: timeframe === 'Custom' && endDate ? endDate.toISOString() : undefined,
-        tickers,
-        annotations 
-      });
-      lastSavedStateRef.current = currentState;
-    }, 2000);
-
-    return () => {
-      clearTimeout(timeoutId);
     };
-  }, [annotations, timeframe, startDate, endDate, tickers, chartSessionId, saveCompareChartHistoryMutation]);
+    const hasSaveableContent = tickers.length > 0 || annotations.length > 0 || (timeframe === 'Custom' && !!startDate && !!endDate);
+    updateCurrentState(currentState, hasSaveableContent);
+  }, [annotations, timeframe, startDate, endDate, tickers, updateCurrentState]);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
 
   const restoreFromHistory = (entry: CompareChartHistory) => {
     setTimeframe(entry.timeframe);
@@ -385,6 +365,7 @@ export default function ComparisonChart() {
     
     setTickers(entry.tickers || []);
     setAnnotations(entry.annotations as Annotation[] || []);
+    markAsSaved(entry.id, { timeframe: entry.timeframe, tickers: entry.tickers, annotations: entry.annotations });
     
     toast({
       title: "Chart Restored",
@@ -478,7 +459,67 @@ export default function ComparisonChart() {
     setChartKey(prev => prev + 1);
     lastSavedStateRef.current = null;
     isInitialMountRef.current = true;
-  }, [tickers, annotations, chartSessionId, timeframe, startDate, endDate, saveCompareChartHistoryMutation, toast]);
+    resetSaveState();
+  }, [tickers, annotations, chartSessionId, timeframe, startDate, endDate, saveCompareChartHistoryMutation, toast, resetSaveState]);
+
+  const handleSaveChart = useCallback(() => {
+    const hasSaveableContent = tickers.length > 0 || annotations.length > 0 || (timeframe === 'Custom' && !!startDate && !!endDate);
+    if (!hasSaveableContent) {
+      toast({
+        title: "Nothing to save",
+        description: "Add tickers or annotations to save a chart",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (currentSavedEntryId !== null) {
+      setShowSaveModal(true);
+    } else {
+      handleSaveNew();
+    }
+  }, [tickers, annotations, timeframe, startDate, endDate, currentSavedEntryId, toast]);
+
+  const handleSaveNew = useCallback(async () => {
+    const newSessionId = `compare-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    saveCompareChartHistoryMutation.mutate({
+      sessionId: newSessionId,
+      timeframe,
+      customStartDate: timeframe === 'Custom' && startDate ? startDate.toISOString() : undefined,
+      customEndDate: timeframe === 'Custom' && endDate ? endDate.toISOString() : undefined,
+      tickers,
+      annotations
+    }, {
+      onSuccess: (data: any) => {
+        const entryId = data?.entry?.id || data?.id || Date.now();
+        markAsSaved(entryId, { timeframe, tickers, annotations });
+        toast({ title: "Chart saved", description: "Chart saved to history" });
+        setShowSaveModal(false);
+      }
+    });
+  }, [timeframe, startDate, endDate, tickers, annotations, saveCompareChartHistoryMutation, markAsSaved, toast]);
+
+  const handleOverwrite = useCallback(async () => {
+    saveCompareChartHistoryMutation.mutate({
+      sessionId: chartSessionId,
+      timeframe,
+      customStartDate: timeframe === 'Custom' && startDate ? startDate.toISOString() : undefined,
+      customEndDate: timeframe === 'Custom' && endDate ? endDate.toISOString() : undefined,
+      tickers,
+      annotations
+    }, {
+      onSuccess: (data: any) => {
+        const entryId = data?.entry?.id || data?.id || currentSavedEntryId || Date.now();
+        markAsSaved(entryId, { timeframe, tickers, annotations });
+        toast({ title: "Chart updated", description: "Chart overwritten successfully" });
+        setShowSaveModal(false);
+        setShowUnsavedChangesDialog(false);
+        if (pendingNavigation) {
+          window.location.href = pendingNavigation;
+        }
+      }
+    });
+  }, [chartSessionId, timeframe, startDate, endDate, tickers, annotations, saveCompareChartHistoryMutation, currentSavedEntryId, markAsSaved, toast, pendingNavigation]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -973,6 +1014,18 @@ export default function ComparisonChart() {
                 <RotateCcw className="w-3 h-3 mr-1" />
                 Clear All
               </Button>
+
+              {/* Save Chart Button */}
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleSaveChart}
+                className="h-8 px-3 text-xs border-[#5AF5FA] text-[#5AF5FA] hover:bg-[#5AF5FA]/10"
+                data-testid="button-save-chart"
+              >
+                <Save className="w-3 h-3 mr-1" />
+                Save Chart
+              </Button>
               
               {/* Export Dropdown */}
               <DropdownMenu>
@@ -1192,6 +1245,36 @@ export default function ComparisonChart() {
           </div>
         </Card>
       </main>
+
+      <SaveChartModal
+        isOpen={showSaveModal}
+        onClose={() => setShowSaveModal(false)}
+        onOverwrite={handleOverwrite}
+        onSaveAsCopy={handleSaveNew}
+        hasExistingEntry={currentSavedEntryId !== null}
+      />
+
+      <UnsavedChangesDialog
+        isOpen={showUnsavedChangesDialog}
+        onClose={() => {
+          setShowUnsavedChangesDialog(false);
+          setPendingNavigation(null);
+        }}
+        onSaveAsCopy={() => {
+          handleSaveNew();
+          if (pendingNavigation) {
+            setTimeout(() => window.location.href = pendingNavigation, 500);
+          }
+        }}
+        onOverwrite={handleOverwrite}
+        onDontSave={() => {
+          setShowUnsavedChangesDialog(false);
+          if (pendingNavigation) {
+            window.location.href = pendingNavigation;
+          }
+        }}
+        hasExistingEntry={currentSavedEntryId !== null}
+      />
     </div>
   );
 }

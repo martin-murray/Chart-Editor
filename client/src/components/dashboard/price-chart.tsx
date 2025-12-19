@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo, useEffect } from 'react';
+import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueries } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { AreaChart, Area, LineChart, Line, BarChart, Bar, ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine, Customized } from 'recharts';
@@ -12,7 +12,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip as HoverTooltip, TooltipContent as HoverTooltipContent, TooltipProvider, TooltipTrigger as HoverTooltipTrigger } from '@/components/ui/tooltip';
 import { Input } from '@/components/ui/input';
-import { Loader2, TrendingUp, TrendingDown, Plus, Calendar as CalendarIcon, X, Download, ChevronDown, MessageSquare, Ruler, Minus, RotateCcw, Code, Type, Trash2, Settings, Pencil } from 'lucide-react';
+import { Loader2, TrendingUp, TrendingDown, Plus, Calendar as CalendarIcon, X, Download, ChevronDown, MessageSquare, Ruler, Minus, RotateCcw, Code, Type, Trash2, Settings, Pencil, Save } from 'lucide-react';
+import { useChartSaveState } from "@/hooks/use-chart-save-state";
+import { SaveChartModal } from "@/components/ui/save-chart-modal";
+import { UnsavedChangesDialog } from "@/components/ui/unsaved-changes-dialog";
 import { Switch } from '@/components/ui/switch';
 import { format, subDays, subMonths, subYears } from 'date-fns';
 import * as htmlToImage from 'html-to-image';
@@ -294,6 +297,12 @@ export function PriceChart({
   // Session ID tracking - regenerates when symbol changes
   const [chartSessionId, setChartSessionId] = useState<string>(() => crypto.randomUUID());
   
+  // Manual save workflow state
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showUnsavedChangesDialog, setShowUnsavedChangesDialog] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
+  const { hasUnsavedChanges, currentSavedEntryId, markAsSaved, resetSaveState, updateCurrentState } = useChartSaveState();
+  
   // Helper function to update annotations in both controlled and uncontrolled modes
   const updateAnnotations = (newAnnotations: Annotation[] | ((prev: Annotation[]) => Annotation[])) => {
     if (onAnnotationsChange) {
@@ -333,7 +342,7 @@ export function PriceChart({
       comparisonTickers: Array<{ symbol: string; name: string; color: string }>;
       annotations: Annotation[] 
     }) => {
-      await apiRequest('POST', '/api/chart-history', { 
+      const response = await apiRequest('POST', '/api/chart-history', { 
         sessionId,
         symbol, 
         timeframe,
@@ -343,6 +352,7 @@ export function PriceChart({
         comparisonTickers,
         annotations 
       });
+      return response;
     },
     onSuccess: () => {
       // Invalidate chart history query to refresh the list
@@ -461,68 +471,33 @@ export function PriceChart({
     };
   }, []);
 
-  // Auto-save full chart state with debouncing
+  // Track changes for manual save workflow
   useEffect(() => {
-    // Skip on initial mount (don't save pre-loaded state)
-    if (isInitialMountRef.current) {
-      isInitialMountRef.current = false;
-      const initialState = JSON.stringify({
-        timeframe: selectedTimeframe,
-        customStartDate: startDate?.toISOString(),
-        customEndDate: endDate?.toISOString(),
-        csvOverlay,
-        comparisonTickers,
-        annotations
-      });
-      lastSavedStateRef.current = initialState;
-      return;
-    }
-
-    // Check if there's something worth saving (annotations, comparison tickers, csv overlay, or custom date range)
-    const hasAnnotations = annotations.length > 0;
-    const hasComparisonTickers = comparisonTickers.length > 0;
-    const hasCsvOverlay = csvOverlay.length > 0;
-    const hasCustomDateRange = selectedTimeframe === 'Custom' && startDate && endDate;
-    
-    if (!hasAnnotations && !hasComparisonTickers && !hasCsvOverlay && !hasCustomDateRange) {
-      lastSavedStateRef.current = null;
-      return;
-    }
-
-    // Check if any state actually changed since last save
-    const currentState = JSON.stringify({
+    const currentState = {
+      symbol,
       timeframe: selectedTimeframe,
       customStartDate: startDate?.toISOString(),
       customEndDate: endDate?.toISOString(),
       csvOverlay,
       comparisonTickers,
       annotations
-    });
-    
-    if (currentState === lastSavedStateRef.current) {
-      return; // No changes, skip save
-    }
-
-    // Debounce the save operation (2000ms delay)
-    const timeoutId = setTimeout(() => {
-      saveChartHistoryMutation.mutate({ 
-        sessionId: chartSessionId,
-        symbol, 
-        timeframe: selectedTimeframe,
-        customStartDate: selectedTimeframe === 'Custom' && startDate ? startDate.toISOString() : undefined,
-        customEndDate: selectedTimeframe === 'Custom' && endDate ? endDate.toISOString() : undefined,
-        csvOverlay,
-        comparisonTickers,
-        annotations 
-      });
-      lastSavedStateRef.current = currentState;
-    }, 2000);
-
-    // Clear timeout on new changes to avoid multiple saves
-    return () => {
-      clearTimeout(timeoutId);
     };
-  }, [annotations, selectedTimeframe, startDate, endDate, csvOverlay, comparisonTickers, symbol, chartSessionId, saveChartHistoryMutation]);
+    const hasSaveableContent = annotations.length > 0 || comparisonTickers.length > 0 || csvOverlay.length > 0 || (selectedTimeframe === 'Custom' && !!startDate && !!endDate);
+    updateCurrentState(currentState, hasSaveableContent);
+  }, [annotations, selectedTimeframe, startDate, endDate, csvOverlay, comparisonTickers, symbol, updateCurrentState]);
+
+  // Beforeunload listener to warn about unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
 
   // Reset initial mount flag when symbol changes
   useEffect(() => {
@@ -1035,6 +1010,9 @@ export function PriceChart({
     // Set annotations
     updateAnnotations(entry.annotations as Annotation[] || []);
     
+    // Mark as saved to track this restored state
+    markAsSaved(entry.id, { symbol: entry.symbol, timeframe: entry.timeframe, annotations: entry.annotations });
+    
     // Show toast to confirm restoration
     toast({
       title: "Chart Restored",
@@ -1225,6 +1203,69 @@ export function PriceChart({
       toast({ title: "Error", description: "Failed to parse CSV", variant: "destructive" });
     }
   };
+
+  // Manual save handlers
+  const handleSaveChart = useCallback(() => {
+    const hasSaveableContent = annotations.length > 0 || comparisonTickers.length > 0 || csvOverlay.length > 0 || (selectedTimeframe === 'Custom' && startDate && endDate);
+    if (!hasSaveableContent) {
+      toast({
+        title: "Nothing to save",
+        description: "Add annotations, comparisons, CSV overlay, or custom date range to save a chart",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (currentSavedEntryId !== null) {
+      setShowSaveModal(true);
+    } else {
+      handleSaveNew();
+    }
+  }, [annotations, comparisonTickers, csvOverlay, selectedTimeframe, startDate, endDate, currentSavedEntryId, toast]);
+
+  const handleSaveNew = useCallback(async () => {
+    const newSessionId = `chart-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    saveChartHistoryMutation.mutate({
+      sessionId: newSessionId,
+      symbol,
+      timeframe: selectedTimeframe,
+      customStartDate: selectedTimeframe === 'Custom' && startDate ? startDate.toISOString() : undefined,
+      customEndDate: selectedTimeframe === 'Custom' && endDate ? endDate.toISOString() : undefined,
+      csvOverlay,
+      comparisonTickers,
+      annotations
+    }, {
+      onSuccess: (data: any) => {
+        markAsSaved(data?.id || Date.now(), { symbol, timeframe: selectedTimeframe, annotations, csvOverlay, comparisonTickers });
+        toast({ title: "Chart saved", description: "Chart saved to history" });
+        setShowSaveModal(false);
+      }
+    });
+  }, [symbol, selectedTimeframe, startDate, endDate, csvOverlay, comparisonTickers, annotations, saveChartHistoryMutation, markAsSaved, toast]);
+
+  const handleOverwrite = useCallback(async () => {
+    saveChartHistoryMutation.mutate({
+      sessionId: chartSessionId,
+      symbol,
+      timeframe: selectedTimeframe,
+      customStartDate: selectedTimeframe === 'Custom' && startDate ? startDate.toISOString() : undefined,
+      customEndDate: selectedTimeframe === 'Custom' && endDate ? endDate.toISOString() : undefined,
+      csvOverlay,
+      comparisonTickers,
+      annotations
+    }, {
+      onSuccess: (data: any) => {
+        const entryId = data?.id || currentSavedEntryId || Date.now();
+        markAsSaved(entryId, { symbol, timeframe: selectedTimeframe, annotations, csvOverlay, comparisonTickers });
+        toast({ title: "Chart updated", description: "Chart overwritten successfully" });
+        setShowSaveModal(false);
+        setShowUnsavedChangesDialog(false);
+        if (pendingNavigation) {
+          window.location.href = pendingNavigation;
+        }
+      }
+    });
+  }, [chartSessionId, symbol, selectedTimeframe, startDate, endDate, csvOverlay, comparisonTickers, annotations, saveChartHistoryMutation, currentSavedEntryId, markAsSaved, toast, pendingNavigation]);
 
   // Handle CSV file upload
   useEffect(() => {
@@ -2860,6 +2901,18 @@ export function PriceChart({
                     Clear All
                   </Button>
                 )}
+                
+                {/* Save Chart Button */}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleSaveChart}
+                  className="h-8 px-3 text-xs border-[#5AF5FA] text-[#5AF5FA] hover:bg-[#5AF5FA]/10"
+                  data-testid="button-save-chart"
+                >
+                  <Save className="w-3 h-3 mr-1" />
+                  Save Chart
+                </Button>
                 
                 {/* Export Dropdown - positioned in toolbar row */}
                 <DropdownMenu>
@@ -5075,5 +5128,39 @@ export function PriceChart({
     </div>
   );
 
-  return chartContent;
+  return (
+    <>
+      {chartContent}
+      
+      <SaveChartModal
+        isOpen={showSaveModal}
+        onClose={() => setShowSaveModal(false)}
+        onOverwrite={handleOverwrite}
+        onSaveAsCopy={handleSaveNew}
+        hasExistingEntry={currentSavedEntryId !== null}
+      />
+
+      <UnsavedChangesDialog
+        isOpen={showUnsavedChangesDialog}
+        onClose={() => {
+          setShowUnsavedChangesDialog(false);
+          setPendingNavigation(null);
+        }}
+        onSaveAsCopy={() => {
+          handleSaveNew();
+          if (pendingNavigation) {
+            setTimeout(() => window.location.href = pendingNavigation, 500);
+          }
+        }}
+        onOverwrite={handleOverwrite}
+        onDontSave={() => {
+          setShowUnsavedChangesDialog(false);
+          if (pendingNavigation) {
+            window.location.href = pendingNavigation;
+          }
+        }}
+        hasExistingEntry={currentSavedEntryId !== null}
+      />
+    </>
+  );
 }
