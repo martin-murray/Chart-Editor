@@ -2875,16 +2875,19 @@ export function PriceChart({
                 
                 {/* Hover Tool Toggle */}
                 <div className="flex items-center gap-2">
-                  <label htmlFor="hover-tool-toggle" className="text-xs text-muted-foreground">
-                    Hover tool
-                  </label>
                   <Switch
                     id="hover-tool-toggle"
                     checked={showHoverTooltip}
                     onCheckedChange={setShowHoverTooltip}
-                    className="scale-75"
+                    className="h-4 w-8"
                     data-testid="switch-hover-tool"
                   />
+                  <label
+                    htmlFor="hover-tool-toggle"
+                    className="text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
+                  >
+                    Hover: {showHoverTooltip ? 'On' : 'Off'}
+                  </label>
                 </div>
                 
                 {onClearAll && (
