@@ -1236,7 +1236,8 @@ export function PriceChart({
       annotations
     }, {
       onSuccess: (data: any) => {
-        markAsSaved(data?.id || Date.now(), { symbol, timeframe: selectedTimeframe, annotations, csvOverlay, comparisonTickers });
+        const entryId = data?.entry?.id || data?.id || Date.now();
+        markAsSaved(entryId, { symbol, timeframe: selectedTimeframe, annotations, csvOverlay, comparisonTickers });
         toast({ title: "Chart saved", description: "Chart saved to history" });
         setShowSaveModal(false);
       }
@@ -1255,7 +1256,7 @@ export function PriceChart({
       annotations
     }, {
       onSuccess: (data: any) => {
-        const entryId = data?.id || currentSavedEntryId || Date.now();
+        const entryId = data?.entry?.id || data?.id || currentSavedEntryId || Date.now();
         markAsSaved(entryId, { symbol, timeframe: selectedTimeframe, annotations, csvOverlay, comparisonTickers });
         toast({ title: "Chart updated", description: "Chart overwritten successfully" });
         setShowSaveModal(false);
