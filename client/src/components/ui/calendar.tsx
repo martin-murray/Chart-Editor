@@ -21,6 +21,20 @@ function Calendar({
   toYear,
   ...props
 }: CalendarProps) {
+  // Memoize the Caption component to prevent re-creation on each render
+  const MemoizedCaption = React.useMemo(() => {
+    if (!enableYearDropdown) return undefined;
+    return function StableCaption({ displayMonth }: { displayMonth: Date }) {
+      return (
+        <CalendarCaption
+          displayMonth={displayMonth}
+          fromYear={fromYear}
+          toYear={toYear}
+        />
+      );
+    };
+  }, [enableYearDropdown, fromYear, toYear]);
+
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
@@ -66,15 +80,7 @@ function Calendar({
         IconRight: ({ className, ...props }) => (
           <ChevronRight className={cn("h-4 w-4", className)} {...props} />
         ),
-        ...(enableYearDropdown && {
-          Caption: ({ displayMonth }) => (
-            <CalendarCaption
-              displayMonth={displayMonth}
-              fromYear={fromYear}
-              toYear={toYear}
-            />
-          ),
-        }),
+        ...(MemoizedCaption && { Caption: MemoizedCaption }),
       }}
       {...props}
     />
