@@ -277,6 +277,9 @@ export function PriceChart({
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  
+  // Sort state for Saved Charts
+  const [savedChartsSortOrder, setSavedChartsSortOrder] = useState<'newest' | 'oldest'>('newest');
   const confirmTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [dragTextStartY, setDragTextStartY] = useState(0);
   const [dragStartOffset, setDragStartOffset] = useState(0);
@@ -4972,7 +4975,20 @@ export function PriceChart({
       {/* Saved Charts */}
       <Card className="p-6 mt-8" style={{ backgroundColor: '#121212' }}>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">Saved Charts</h3>
+          <div className="flex items-center gap-4">
+            <h3 className="text-lg font-semibold">Saved Charts</h3>
+            {chartHistory.length > 0 && (
+              <Select value={savedChartsSortOrder} onValueChange={(value: 'newest' | 'oldest') => setSavedChartsSortOrder(value)}>
+                <SelectTrigger className="w-[140px] h-8 text-xs bg-[#1a1a1a] border-[#2a2a2a]" data-testid="select-sort-saved-charts">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#1a1a1a] border-[#2a2a2a]">
+                  <SelectItem value="newest">Newest first</SelectItem>
+                  <SelectItem value="oldest">Oldest first</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          </div>
           {chartHistory.length > 0 && (
             <Button
               variant="ghost"
@@ -5028,7 +5044,13 @@ export function PriceChart({
         <div className="h-[350px] overflow-y-scroll">
           {chartHistory.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {chartHistory.map((entry) => {
+              {[...chartHistory]
+                .sort((a, b) => {
+                  const dateA = new Date(a.updatedAt || a.savedAt).getTime();
+                  const dateB = new Date(b.updatedAt || b.savedAt).getTime();
+                  return savedChartsSortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+                })
+                .map((entry) => {
                 const annotationCounts = entry.annotations.reduce((acc, ann) => {
                   const type = ann.type === 'text' ? 'Text' : 
                                ann.type === 'percentage' ? 'Measure' : 
@@ -5040,6 +5062,10 @@ export function PriceChart({
                 const annotationSummary = Object.entries(annotationCounts)
                   .map(([type, count]) => `${count} ${type}`)
                   .join(', ');
+                
+                const savedDate = new Date(entry.savedAt);
+                const updatedDate = entry.updatedAt ? new Date(entry.updatedAt) : null;
+                const wasUpdated = updatedDate && updatedDate.getTime() !== savedDate.getTime();
 
                 return (
                   <Card 
@@ -5070,8 +5096,10 @@ export function PriceChart({
                         <div className="font-bold text-[#5AF5FA] mb-1">
                           {entry.symbol}
                         </div>
-                        <div className="text-sm text-muted-foreground mb-2">
-                          {format(new Date(entry.savedAt), 'MMM dd, yyyy HH:mm:ss')}
+                        <div className="text-sm text-muted-foreground mb-1">
+                          {wasUpdated 
+                            ? `Updated: ${format(updatedDate, 'MMM dd, yyyy HH:mm')}`
+                            : `Saved: ${format(savedDate, 'MMM dd, yyyy HH:mm')}`}
                         </div>
                         <div className="text-xs text-muted-foreground mb-1">
                           Timeframe: {entry.timeframe}

@@ -1133,7 +1133,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (matchingEntry) {
         // Update existing entry
-        await db
+        const [updated] = await db
           .update(compareChartHistory)
           .set({
             sessionId,
@@ -1144,8 +1144,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             annotations: annotations || [],
             updatedAt: new Date(),
           })
-          .where(eq(compareChartHistory.id, matchingEntry.id));
-        res.json({ success: true, message: "Compare chart history updated" });
+          .where(eq(compareChartHistory.id, matchingEntry.id))
+          .returning();
+        res.json({ success: true, message: "Compare chart history updated", entry: updated });
       } else {
         // Insert new entry
         const [inserted] = await db.insert(compareChartHistory).values({
