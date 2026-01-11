@@ -649,10 +649,10 @@ function ChartMaker() {
           </p>
         </div>
 
-          {/* Search Section */}
-          <Card className="p-6 mb-8 max-[900px]:p-4 max-[600px]:p-3" style={{ backgroundColor: '#121212' }}>
+          {/* Search Section - No outer box */}
+          <div className="mb-8">
             <GlobalTickerSearch onSelectStock={setChartMakerSelectedStock} />
-          </Card>
+          </div>
 
           {/* Price Chart - renders for both search results and index selections */}
           {chartMakerSelectedStock && (

@@ -4972,8 +4972,8 @@ export function PriceChart({
         </div>
       )}
 
-      {/* Saved Charts */}
-      <Card className="p-6 mt-8" style={{ backgroundColor: '#121212' }}>
+      {/* Saved Charts - No outer box */}
+      <div className="mt-8">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
             <h3 className="text-lg font-semibold">Saved Charts</h3>
@@ -5156,7 +5156,7 @@ export function PriceChart({
             </div>
           )}
         </div>
-      </Card>
+      </div>
     </div>
   );
 
