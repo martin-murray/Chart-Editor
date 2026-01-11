@@ -747,27 +747,14 @@ export default function ComparisonChart() {
 
           <ComparisonChartComponent
             timeframe={timeframe}
-            chartType={chartType}
-            onTimeframeChange={setTimeframe}
-            onChartTypeChange={setChartType}
-            selectedInterval={selectedInterval}
-            onIntervalChange={setSelectedInterval}
-            showHoverTooltip={showHoverTooltip}
-            onHoverTooltipChange={setShowHoverTooltip}
-            annotations={annotations}
-            onAnnotationsChange={setAnnotations}
-            annotationMode={annotationMode}
-            onAnnotationModeChange={setAnnotationMode}
-            onClearAll={clearAll}
             startDate={startDate}
             endDate={endDate}
             singleTradingDay={singleTradingDay}
+            showHoverTooltip={showHoverTooltip}
+            annotations={annotations}
+            onAnnotationsChange={setAnnotations}
+            annotationMode={annotationMode}
             onTickersChange={handleTickersChange}
-            chartKey={chartKey}
-            onSaveChart={handleSaveChart}
-            onExportPNG={exportAsPNG}
-            onExportPDF={exportAsPDF}
-            onExportSVG={exportAsSVG}
             controlledTickers={tickers}
           />
         </div>
