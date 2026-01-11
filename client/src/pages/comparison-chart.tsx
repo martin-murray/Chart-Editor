@@ -600,46 +600,17 @@ export default function ComparisonChart() {
           </p>
         </div>
 
-        {/* Chart Controls Row 1: Timeframe buttons + Chart Type + Time Interval */}
-        <div className="flex gap-4 items-center flex-wrap max-[900px]:gap-2 w-full mb-4">
-          {/* Mobile View: Timeframe Dropdown */}
-          <div className="min-[760px]:hidden w-full flex gap-2 items-center">
-            <Select 
-              value={timeframe} 
-              onValueChange={(value) => {
-                setTimeframe(value);
-                if (value !== 'Custom') {
-                  setStartDate(undefined);
-                  setEndDate(undefined);
-                  setShowDatePicker(false);
-                } else {
-                  setShowDatePicker(true);
-                }
-              }}
-            >
-              <SelectTrigger className="flex-1 h-9 text-sm" data-testid="select-timeframe-mobile">
-                <SelectValue placeholder="Select timeframe" />
-              </SelectTrigger>
-              <SelectContent style={{ backgroundColor: '#1a1a1a' }}>
-                {timeframes.map((tf) => (
-                  <SelectItem key={tf.value} value={tf.value} className="cursor-pointer">
-                    {tf.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          {/* Desktop Buttons */}
-          <div className="hidden min-[760px]:flex gap-1 items-center flex-wrap">
-            {timeframes.map((tf) => (
-              <Button
-                key={tf.value}
-                variant={timeframe === tf.value ? "default" : "outline"}
-                size="sm"
-                onClick={() => {
-                  setTimeframe(tf.value);
-                  if (tf.value !== 'Custom') {
+        {/* Chart Unit - Removed outer Card box */}
+        <div className="w-full">
+          {/* Chart Controls Row 1: Timeframe buttons + Chart Type + Time Interval */}
+          <div className="flex gap-4 items-center flex-wrap max-[900px]:gap-2 w-full mb-4 px-0">
+            {/* Mobile View: Timeframe Dropdown */}
+            <div className="min-[760px]:hidden w-full flex gap-2 items-center">
+              <Select 
+                value={timeframe} 
+                onValueChange={(value) => {
+                  setTimeframe(value);
+                  if (value !== 'Custom') {
                     setStartDate(undefined);
                     setEndDate(undefined);
                     setShowDatePicker(false);
@@ -647,100 +618,158 @@ export default function ComparisonChart() {
                     setShowDatePicker(true);
                   }
                 }}
-                className={`h-8 px-3 text-xs ${
-                  timeframe === tf.value 
-                    ? 'bg-[#5AF5FA] text-black hover:bg-[#5AF5FA]/90' 
-                    : 'hover:bg-muted'
-                }`}
               >
-                {tf.label}
-              </Button>
-            ))}
-          </div>
+                <SelectTrigger className="flex-1 h-9 text-sm" data-testid="select-timeframe-mobile">
+                  <SelectValue placeholder="Select timeframe" />
+                </SelectTrigger>
+                <SelectContent style={{ backgroundColor: '#1a1a1a' }}>
+                  {timeframes.map((tf) => (
+                    <SelectItem key={tf.value} value={tf.value} className="cursor-pointer">
+                      {tf.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {/* Desktop Buttons */}
+            <div className="hidden min-[760px]:flex gap-1 items-center flex-wrap">
+              {timeframes.map((tf) => (
+                <Button
+                  key={tf.value}
+                  variant={timeframe === tf.value ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    setTimeframe(tf.value);
+                    if (tf.value !== 'Custom') {
+                      setStartDate(undefined);
+                      setEndDate(undefined);
+                      setShowDatePicker(false);
+                    } else {
+                      setShowDatePicker(true);
+                    }
+                  }}
+                  className={`h-8 px-3 text-xs ${
+                    timeframe === tf.value 
+                      ? 'bg-[#5AF5FA] text-black hover:bg-[#5AF5FA]/90' 
+                      : 'hover:bg-muted'
+                  }`}
+                >
+                  {tf.label}
+                </Button>
+              ))}
+            </div>
 
-          {/* Chart Type selector (Line/Mountain only for comparison) */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-8 px-3 text-xs"
-                data-testid="button-chart-type-dropdown"
-              >
-                {chartType === 'line' && 'Line'}
-                {chartType === 'mountain' && 'Mountain'}
-                <ChevronDown className="w-3 h-3 ml-1" style={{ color: '#5AF5FA' }} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              <DropdownMenuItem
-                onClick={() => setChartType('line')}
-                className="cursor-pointer"
-                data-testid="menu-chart-line"
-              >
-                Line
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => setChartType('mountain')}
-                className="cursor-pointer"
-                data-testid="menu-chart-mountain"
-              >
-                Mountain
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* Time Interval selector */}
-          {validIntervals.length > 0 ? (
+            {/* Chart Type selector (Line/Mountain only for comparison) */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   size="sm"
                   variant="outline"
                   className="h-8 px-3 text-xs"
-                  data-testid="button-interval-dropdown"
+                  data-testid="button-chart-type-dropdown"
                 >
-                  {timeIntervals.find(i => i.value === selectedInterval)?.label || 'Daily'}
+                  {chartType === 'line' && 'Line'}
+                  {chartType === 'mountain' && 'Mountain'}
                   <ChevronDown className="w-3 h-3 ml-1" style={{ color: '#5AF5FA' }} />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start">
-                {timeIntervals
-                  .filter(interval => validIntervals.includes(interval.value))
-                  .map(interval => (
-                    <DropdownMenuItem
-                      key={interval.value}
-                      onClick={() => setSelectedInterval(interval.value)}
-                      className={`cursor-pointer ${selectedInterval === interval.value ? 'bg-[#5AF5FA]/20' : ''}`}
-                      data-testid={`menu-interval-${interval.value}`}
-                    >
-                      {interval.label}
-                    </DropdownMenuItem>
-                  ))
-                }
+                <DropdownMenuItem
+                  onClick={() => setChartType('line')}
+                  className="cursor-pointer"
+                  data-testid="menu-chart-line"
+                >
+                  Line
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setChartType('mountain')}
+                  className="cursor-pointer"
+                  data-testid="menu-chart-mountain"
+                >
+                  Mountain
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          ) : (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
+
+            {/* Time Interval selector */}
+            {validIntervals.length > 0 ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-8 px-3 text-xs opacity-50 cursor-not-allowed"
-                    disabled
-                    data-testid="button-interval-disabled"
+                    className="h-8 px-3 text-xs"
+                    data-testid="button-interval-dropdown"
                   >
-                    Daily
+                    {timeIntervals.find(i => i.value === selectedInterval)?.label || 'Daily'}
                     <ChevronDown className="w-3 h-3 ml-1" style={{ color: '#5AF5FA' }} />
                   </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="text-xs">Intraday intervals unavailable for ranges over 3 months</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  {timeIntervals
+                    .filter(interval => validIntervals.includes(interval.value))
+                    .map(interval => (
+                      <DropdownMenuItem
+                        key={interval.value}
+                        onClick={() => setSelectedInterval(interval.value)}
+                        className={`cursor-pointer ${selectedInterval === interval.value ? 'bg-[#5AF5FA]/20' : ''}`}
+                        data-testid={`menu-interval-${interval.value}`}
+                      >
+                        {interval.label}
+                      </DropdownMenuItem>
+                    ))
+                  }
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 px-3 text-xs opacity-50 cursor-not-allowed"
+                      disabled
+                      data-testid="button-interval-disabled"
+                    >
+                      Daily
+                      <ChevronDown className="w-3 h-3 ml-1" style={{ color: '#5AF5FA' }} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">Intraday intervals unavailable for ranges over 3 months</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+          </div>
+
+          <ComparisonChartComponent
+            timeframe={timeframe}
+            chartType={chartType}
+            onTimeframeChange={setTimeframe}
+            onChartTypeChange={setChartType}
+            selectedInterval={selectedInterval}
+            onIntervalChange={setSelectedInterval}
+            showHoverTooltip={showHoverTooltip}
+            onHoverTooltipChange={setShowHoverTooltip}
+            annotations={annotations}
+            onAnnotationsChange={setAnnotations}
+            annotationMode={annotationMode}
+            onAnnotationModeChange={setAnnotationMode}
+            onClearAll={clearAll}
+            startDate={startDate}
+            endDate={endDate}
+            singleTradingDay={singleTradingDay}
+            onTickersChange={handleTickersChange}
+            chartKey={chartKey}
+            onSaveChart={handleSaveChart}
+            onExportPNG={exportAsPNG}
+            onExportPDF={exportAsPDF}
+            onExportSVG={exportAsSVG}
+            controlledTickers={tickers}
+          />
         </div>
 
         {/* Custom Date Picker */}
