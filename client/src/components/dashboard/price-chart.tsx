@@ -239,6 +239,8 @@ export function PriceChart({
     symbol: string;
     name: string;
     color: string;
+    price: string;
+    percentChange: string;
   }>>([]);
   const [showTickerSearch, setShowTickerSearch] = useState(false);
   const [tickerSearchQuery, setTickerSearchQuery] = useState('');
@@ -1297,7 +1299,7 @@ export function PriceChart({
   };
 
   // Ticker Management Functions (Task 3)
-  const addComparisonTicker = (tickerSymbol: string, tickerName: string) => {
+  const addComparisonTicker = (tickerSymbol: string, tickerName: string, tickerPrice: string, tickerPercentChange: string) => {
     // Check if ticker already exists
     if (comparisonTickers.some(t => t.symbol === tickerSymbol)) {
       toast({
@@ -1326,6 +1328,8 @@ export function PriceChart({
       symbol: tickerSymbol,
       name: tickerName,
       color: nextColor,
+      price: tickerPrice,
+      percentChange: tickerPercentChange,
     }]);
 
     // Close search UI and reset query
@@ -2983,34 +2987,6 @@ export function PriceChart({
               </div>
             </div>
 
-            {/* Comparison Ticker Tags (Task 6) */}
-            {comparisonTickers.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2 mb-4">
-                {comparisonTickers.map((ticker) => (
-                  <div
-                    key={ticker.symbol}
-                    className="flex items-center gap-1.5 px-2 py-1 bg-muted rounded-md text-sm"
-                    data-testid={`comparison-ticker-${ticker.symbol}`}
-                  >
-                    <div 
-                      className="w-3 h-3 rounded-sm"
-                      style={{ backgroundColor: ticker.color }}
-                    />
-                    <span>{ticker.symbol}</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground"
-                      onClick={() => removeComparisonTicker(ticker.symbol)}
-                      data-testid={`remove-comparison-ticker-${ticker.symbol}`}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
-
             {/* Ticker Search Dialog (Task 5) */}
             <Dialog 
               open={showTickerSearch} 
@@ -3048,7 +3024,7 @@ export function PriceChart({
                         <div
                           key={result.symbol}
                           className="flex items-center justify-between p-2 hover:bg-muted rounded cursor-pointer"
-                          onClick={() => addComparisonTicker(result.symbol, result.name)}
+                          onClick={() => addComparisonTicker(result.symbol, result.name, result.price, result.percentChange)}
                           data-testid={`search-result-${result.symbol}`}
                         >
                           <div className="flex-1 min-w-0">
@@ -3186,22 +3162,65 @@ export function PriceChart({
                 )}
                 
                 {/* Comparison Tickers */}
-                {comparisonTickers.map(ticker => (
-                  <div 
-                    key={`export-${ticker.symbol}`}
-                    className="flex items-center gap-2 px-2 py-1 rounded border text-xs font-medium"
-                    style={{ 
-                      backgroundColor: '#1a1a1a', 
-                      borderColor: ticker.color
-                    }}
-                  >
+                {comparisonTickers.map((ticker, index) => {
+                  // Get live data from comparison ticker queries
+                  const queryResult = comparisonTickerQueries[index];
+                  const tickerChartData = queryResult?.data?.data;
+                  
+                  // Calculate live price and percentage from chart data
+                  let livePrice = parseFloat(ticker.price); // Fallback to search price
+                  let livePercent = parseFloat(ticker.percentChange); // Fallback to search percent
+                  
+                  if (tickerChartData && tickerChartData.length > 0) {
+                    const firstDataPoint = tickerChartData[0];
+                    const lastDataPoint = tickerChartData[tickerChartData.length - 1];
+                    const startPrice = firstDataPoint.open || firstDataPoint.close;
+                    const endPrice = lastDataPoint.close;
+                    
+                    if (startPrice && endPrice) {
+                      livePrice = endPrice;
+                      livePercent = ((endPrice - startPrice) / startPrice) * 100;
+                    }
+                  }
+                  
+                  const tickerIsPositive = livePercent >= 0;
+                  const tickerColor = tickerIsPositive ? '#4ADE80' : '#F87171';
+                  
+                  return (
                     <div 
-                      className="w-3 h-3 rounded-sm" 
-                      style={{ backgroundColor: ticker.color }}
-                    />
-                    <span style={{ color: '#f7f7f7' }}>{ticker.symbol}</span>
-                  </div>
-                ))}
+                      key={`export-${ticker.symbol}`}
+                      className="flex items-center gap-2 px-2 py-1 rounded border text-xs font-medium"
+                      style={{ 
+                        backgroundColor: '#1a1a1a', 
+                        borderColor: ticker.color
+                      }}
+                      data-testid={`comparison-ticker-${ticker.symbol}`}
+                    >
+                      <div 
+                        className="w-3 h-3 rounded-sm" 
+                        style={{ backgroundColor: ticker.color }}
+                      />
+                      <span style={{ color: '#f7f7f7' }}>{ticker.symbol}</span>
+                      <span style={{ color: '#f7f7f7' }} className="font-bold">
+                        {!isNaN(livePrice) ? formatPrice(livePrice) : '--'}
+                      </span>
+                      <span 
+                        className="font-semibold px-1 rounded text-[#121212]"
+                        style={{ backgroundColor: tickerColor }}
+                      >
+                        {tickerIsPositive ? '+' : ''}{!isNaN(livePercent) ? livePercent.toFixed(2) : '0.00'}%
+                      </span>
+                      <button
+                        onClick={() => removeComparisonTicker(ticker.symbol)}
+                        className="ml-1 hover:opacity-70 transition-opacity"
+                        style={{ color: '#f7f7f7' }}
+                        data-testid={`remove-comparison-ticker-${ticker.symbol}`}
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             )}
             
