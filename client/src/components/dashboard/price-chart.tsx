@@ -82,6 +82,8 @@ interface Annotation {
   horizontalOffset?: number; // Custom horizontal position offset in pixels for dragging
   verticalOffset?: number; // Custom vertical position offset in pixels for dragging
   fontSize?: number; // Font size in pixels for text annotations (default 14, min 10, max 32)
+  width?: number; // Custom width for text box resizing (in pixels)
+  height?: number; // Custom height for text box resizing (in pixels)
   // For percentage measurements
   startTimestamp?: number;
   startPrice?: number;
@@ -274,6 +276,21 @@ export function PriceChart({
   const [isDraggingText, setIsDraggingText] = useState(false);
   const [dragTextAnnotationId, setDragTextAnnotationId] = useState<string | null>(null);
   const [dragTextStartX, setDragTextStartX] = useState(0);
+  
+  // Annotation selection and resize state
+  const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
+  const [isResizing, setIsResizing] = useState(false);
+  const [resizeHandle, setResizeHandle] = useState<'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw' | null>(null);
+  const [resizeStartX, setResizeStartX] = useState(0);
+  const [resizeStartY, setResizeStartY] = useState(0);
+  const [resizeStartWidth, setResizeStartWidth] = useState(0);
+  const [resizeStartHeight, setResizeStartHeight] = useState(0);
+  
+  // Min/max dimensions for resizable text boxes
+  const MIN_BOX_WIDTH = 60;
+  const MIN_BOX_HEIGHT = 24;
+  const MAX_BOX_WIDTH = 400;
+  const MAX_BOX_HEIGHT = 300;
   
   // Delete confirmation states
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
@@ -687,6 +704,87 @@ export function PriceChart({
       setDragStartVerticalOffset(0);
     }
   };
+
+  // Handle annotation single-click to select (show resize handles)
+  const handleAnnotationClick = (e: React.MouseEvent, annotation: Annotation) => {
+    e.stopPropagation();
+    // Only select text-based annotations that can be resized
+    if (annotation.type === 'text' || annotation.type === 'horizontal' || annotation.type === 'note') {
+      setSelectedAnnotationId(annotation.id);
+    }
+  };
+
+  // Handle click away to deselect annotation
+  const handleClickAway = () => {
+    if (selectedAnnotationId && !isResizing) {
+      setSelectedAnnotationId(null);
+    }
+  };
+
+  // Handle resize handle mouse down
+  const handleResizeMouseDown = (e: React.MouseEvent, annotation: Annotation, handle: 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw') => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsResizing(true);
+    setResizeHandle(handle);
+    setResizeStartX(e.clientX);
+    setResizeStartY(e.clientY);
+    setResizeStartWidth(annotation.width || 128); // Default width matches max-w-32 (128px)
+    setResizeStartHeight(annotation.height || 0); // 0 means auto-height
+  };
+
+  // Handle resize mouse move (called from global listener)
+  const handleResizeMouseMove = (e: MouseEvent) => {
+    if (!isResizing || !resizeHandle || !selectedAnnotationId) return;
+
+    const deltaX = e.clientX - resizeStartX;
+    const deltaY = e.clientY - resizeStartY;
+    
+    let newWidth = resizeStartWidth;
+    let newHeight = resizeStartHeight;
+
+    // Calculate new dimensions based on handle
+    if (resizeHandle.includes('e')) {
+      newWidth = Math.max(MIN_BOX_WIDTH, Math.min(MAX_BOX_WIDTH, resizeStartWidth + deltaX));
+    }
+    if (resizeHandle.includes('w')) {
+      newWidth = Math.max(MIN_BOX_WIDTH, Math.min(MAX_BOX_WIDTH, resizeStartWidth - deltaX));
+    }
+    if (resizeHandle.includes('s')) {
+      newHeight = Math.max(MIN_BOX_HEIGHT, Math.min(MAX_BOX_HEIGHT, (resizeStartHeight || MIN_BOX_HEIGHT) + deltaY));
+    }
+    if (resizeHandle.includes('n')) {
+      newHeight = Math.max(MIN_BOX_HEIGHT, Math.min(MAX_BOX_HEIGHT, (resizeStartHeight || MIN_BOX_HEIGHT) - deltaY));
+    }
+
+    // Update the annotation dimensions
+    updateAnnotations(prev => prev.map(ann => 
+      ann.id === selectedAnnotationId 
+        ? { ...ann, width: newWidth, height: newHeight > 0 ? newHeight : undefined }
+        : ann
+    ));
+  };
+
+  // Handle resize mouse up
+  const handleResizeMouseUp = () => {
+    if (isResizing) {
+      setIsResizing(false);
+      setResizeHandle(null);
+    }
+  };
+
+  // Add global event listeners for resize
+  useEffect(() => {
+    if (isResizing) {
+      document.addEventListener('mousemove', handleResizeMouseMove);
+      document.addEventListener('mouseup', handleResizeMouseUp);
+      
+      return () => {
+        document.removeEventListener('mousemove', handleResizeMouseMove);
+        document.removeEventListener('mouseup', handleResizeMouseUp);
+      };
+    }
+  }, [isResizing, resizeHandle, selectedAnnotationId, resizeStartX, resizeStartY, resizeStartWidth, resizeStartHeight]);
 
 
 
@@ -1843,6 +1941,7 @@ export function PriceChart({
   const saveAnnotation = () => {
     if (isEditMode && editingAnnotation) {
       // Update existing annotation
+      const annotationIdToReselect = editingAnnotation.id;
       if (editingAnnotation.type === 'horizontal') {
         // For horizontal annotations, update both price and text
         const newPrice = parseFloat(horizontalPriceInput);
@@ -1866,6 +1965,8 @@ export function PriceChart({
       setFontSizeInput(DEFAULT_FONT_SIZE);
       setEditingAnnotation(null);
       setIsEditMode(false);
+      // Re-select annotation after editing to show resize handles
+      setSelectedAnnotationId(annotationIdToReselect);
     } else if (pendingAnnotation) {
       // Create new annotation
       if (pendingAnnotation.type === 'horizontal') {
@@ -1906,6 +2007,8 @@ export function PriceChart({
       setAnnotationInput('');
       setEditingAnnotation(null);
       setIsEditMode(false);
+      // Clear selection when deleting
+      setSelectedAnnotationId(null);
     }
   };
 
@@ -1918,6 +2021,7 @@ export function PriceChart({
     setPendingAnnotation(null);
     setEditingAnnotation(null);
     setIsEditMode(false);
+    // Keep selection when canceling edit (user might want to resize)
   };
 
   // Font size control handlers
@@ -3171,6 +3275,7 @@ export function PriceChart({
               backgroundColor: '#121212',
               cursor: isDragging ? 'grabbing' : undefined
             }}
+            onClick={handleClickAway}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
@@ -3278,6 +3383,8 @@ export function PriceChart({
                     
                     const totalDataPoints = (chartData?.data?.length ?? 1) - 1;
                     const xPercent = totalDataPoints > 0 ? (dataIndex / totalDataPoints) * 100 : 0;
+                    const isSelected = selectedAnnotationId === annotation.id;
+                    const borderColor = isSelected ? '#5AF5FA' : '#FAFF50';
                     
                     return (
                       <div
@@ -3290,21 +3397,49 @@ export function PriceChart({
                         }}
                       >
                         <div 
-                          className="rounded px-1.5 py-0.5 max-w-32 pointer-events-auto cursor-grab hover:opacity-80 shadow-lg select-none"
+                          className={`rounded px-1.5 py-0.5 pointer-events-auto shadow-lg select-none relative ${isSelected ? '' : 'cursor-grab hover:opacity-80'}`}
                           style={{ 
                             backgroundColor: '#121212', 
-                            border: '1px solid #FAFF50',
-                            minWidth: '40px',
+                            border: `${isSelected ? '2px' : '1px'} solid ${borderColor}`,
+                            minWidth: `${MIN_BOX_WIDTH}px`,
+                            width: annotation.width ? `${annotation.width}px` : 'auto',
+                            maxWidth: annotation.width ? `${annotation.width}px` : `${MAX_BOX_WIDTH}px`,
+                            height: annotation.height ? `${annotation.height}px` : 'auto',
+                            minHeight: `${MIN_BOX_HEIGHT}px`,
                             fontSize: `${annotation.fontSize || DEFAULT_FONT_SIZE}px`,
                             wordBreak: 'break-word',
-                            overflowWrap: 'break-word',
-                            whiteSpace: 'pre-wrap'
+                            overflowWrap: 'anywhere',
+                            whiteSpace: 'pre-wrap',
+                            overflow: 'hidden'
                           }}
-                          onMouseDown={(e) => handleTextMouseDown(e, annotation)}
+                          onClick={(e) => handleAnnotationClick(e, annotation)}
+                          onMouseDown={(e) => {
+                            if (!isSelected) {
+                              handleTextMouseDown(e, annotation);
+                            } else if (!(e.target as HTMLElement).classList.contains('resize-handle')) {
+                              handleTextMouseDown(e, annotation);
+                            }
+                          }}
                           onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
-                          title="Click and drag to move in any direction, double-click to edit"
+                          title={isSelected ? "Drag corners/edges to resize, double-click to edit" : "Click to select, drag to move, double-click to edit"}
                         >
                           <div className="text-foreground">{annotation.text || ''}</div>
+                          
+                          {/* Resize Handles - only show when selected */}
+                          {isSelected && (
+                            <>
+                              {/* Corner handles */}
+                              <div className="resize-handle absolute -top-1 -left-1 w-2.5 h-2.5 bg-[#5AF5FA] rounded-sm cursor-nw-resize" onMouseDown={(e) => handleResizeMouseDown(e, annotation, 'nw')} />
+                              <div className="resize-handle absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#5AF5FA] rounded-sm cursor-ne-resize" onMouseDown={(e) => handleResizeMouseDown(e, annotation, 'ne')} />
+                              <div className="resize-handle absolute -bottom-1 -left-1 w-2.5 h-2.5 bg-[#5AF5FA] rounded-sm cursor-sw-resize" onMouseDown={(e) => handleResizeMouseDown(e, annotation, 'sw')} />
+                              <div className="resize-handle absolute -bottom-1 -right-1 w-2.5 h-2.5 bg-[#5AF5FA] rounded-sm cursor-se-resize" onMouseDown={(e) => handleResizeMouseDown(e, annotation, 'se')} />
+                              {/* Edge handles */}
+                              <div className="resize-handle absolute -top-1 left-1/2 -translate-x-1/2 w-4 h-2 bg-[#5AF5FA] rounded-sm cursor-n-resize" onMouseDown={(e) => handleResizeMouseDown(e, annotation, 'n')} />
+                              <div className="resize-handle absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-2 bg-[#5AF5FA] rounded-sm cursor-s-resize" onMouseDown={(e) => handleResizeMouseDown(e, annotation, 's')} />
+                              <div className="resize-handle absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-4 bg-[#5AF5FA] rounded-sm cursor-w-resize" onMouseDown={(e) => handleResizeMouseDown(e, annotation, 'w')} />
+                              <div className="resize-handle absolute top-1/2 -right-1 -translate-y-1/2 w-2 h-4 bg-[#5AF5FA] rounded-sm cursor-e-resize" onMouseDown={(e) => handleResizeMouseDown(e, annotation, 'e')} />
+                            </>
+                          )}
                         </div>
                       </div>
                     );
@@ -3315,6 +3450,8 @@ export function PriceChart({
                     
                     const totalDataPoints = (chartData?.data?.length ?? 1) - 1;
                     const xPercent = totalDataPoints > 0 ? (dataIndex / totalDataPoints) * 100 : 0;
+                    const isSelected = selectedAnnotationId === annotation.id;
+                    const borderColor = isSelected ? '#5AF5FA' : '#AA99FF';
                     
                     return (
                       <div
@@ -3323,21 +3460,49 @@ export function PriceChart({
                         style={{ left: `${xPercent}%`, top: `${20 + (annotation.verticalOffset || 0)}px`, transform: `translateX(calc(-50% + ${annotation.horizontalOffset || 0}px))` }}
                       >
                         <div 
-                          className="rounded px-1.5 py-0.5 max-w-32 pointer-events-auto cursor-grab hover:opacity-80 shadow-lg select-none"
+                          className={`rounded px-1.5 py-0.5 pointer-events-auto shadow-lg select-none relative ${isSelected ? '' : 'cursor-grab hover:opacity-80'}`}
                           style={{ 
                             backgroundColor: '#121212', 
-                            border: '1px solid #AA99FF',
-                            minWidth: '40px',
+                            border: `${isSelected ? '2px' : '1px'} solid ${borderColor}`,
+                            minWidth: `${MIN_BOX_WIDTH}px`,
+                            width: annotation.width ? `${annotation.width}px` : 'auto',
+                            maxWidth: annotation.width ? `${annotation.width}px` : `${MAX_BOX_WIDTH}px`,
+                            height: annotation.height ? `${annotation.height}px` : 'auto',
+                            minHeight: `${MIN_BOX_HEIGHT}px`,
                             fontSize: `${annotation.fontSize || DEFAULT_FONT_SIZE}px`,
                             wordBreak: 'break-word',
-                            overflowWrap: 'break-word',
-                            whiteSpace: 'pre-wrap'
+                            overflowWrap: 'anywhere',
+                            whiteSpace: 'pre-wrap',
+                            overflow: 'hidden'
                           }}
-                          onMouseDown={(e) => handleTextMouseDown(e, annotation)}
+                          onClick={(e) => handleAnnotationClick(e, annotation)}
+                          onMouseDown={(e) => {
+                            if (!isSelected) {
+                              handleTextMouseDown(e, annotation);
+                            } else if (!(e.target as HTMLElement).classList.contains('resize-handle')) {
+                              handleTextMouseDown(e, annotation);
+                            }
+                          }}
                           onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
-                          title="Click and drag to move in any direction, double-click to edit"
+                          title={isSelected ? "Drag corners/edges to resize, double-click to edit" : "Click to select, drag to move, double-click to edit"}
                         >
                           <div className="text-foreground">{annotation.text || ''}</div>
+                          
+                          {/* Resize Handles - only show when selected */}
+                          {isSelected && (
+                            <>
+                              {/* Corner handles */}
+                              <div className="resize-handle absolute -top-1 -left-1 w-2.5 h-2.5 bg-[#5AF5FA] rounded-sm cursor-nw-resize" onMouseDown={(e) => handleResizeMouseDown(e, annotation, 'nw')} />
+                              <div className="resize-handle absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#5AF5FA] rounded-sm cursor-ne-resize" onMouseDown={(e) => handleResizeMouseDown(e, annotation, 'ne')} />
+                              <div className="resize-handle absolute -bottom-1 -left-1 w-2.5 h-2.5 bg-[#5AF5FA] rounded-sm cursor-sw-resize" onMouseDown={(e) => handleResizeMouseDown(e, annotation, 'sw')} />
+                              <div className="resize-handle absolute -bottom-1 -right-1 w-2.5 h-2.5 bg-[#5AF5FA] rounded-sm cursor-se-resize" onMouseDown={(e) => handleResizeMouseDown(e, annotation, 'se')} />
+                              {/* Edge handles */}
+                              <div className="resize-handle absolute -top-1 left-1/2 -translate-x-1/2 w-4 h-2 bg-[#5AF5FA] rounded-sm cursor-n-resize" onMouseDown={(e) => handleResizeMouseDown(e, annotation, 'n')} />
+                              <div className="resize-handle absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-2 bg-[#5AF5FA] rounded-sm cursor-s-resize" onMouseDown={(e) => handleResizeMouseDown(e, annotation, 's')} />
+                              <div className="resize-handle absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-4 bg-[#5AF5FA] rounded-sm cursor-w-resize" onMouseDown={(e) => handleResizeMouseDown(e, annotation, 'w')} />
+                              <div className="resize-handle absolute top-1/2 -right-1 -translate-y-1/2 w-2 h-4 bg-[#5AF5FA] rounded-sm cursor-e-resize" onMouseDown={(e) => handleResizeMouseDown(e, annotation, 'e')} />
+                            </>
+                          )}
                         </div>
                       </div>
                     );
@@ -3348,6 +3513,8 @@ export function PriceChart({
                     
                     const totalDataPoints = (chartData?.data?.length ?? 1) - 1;
                     const xPercent = totalDataPoints > 0 ? (dataIndex / totalDataPoints) * 100 : 0;
+                    const isSelected = selectedAnnotationId === annotation.id;
+                    const borderColor = isSelected ? '#5AF5FA' : '#FFFFFF';
                     
                     return (
                       <div
@@ -3360,21 +3527,49 @@ export function PriceChart({
                         }}
                       >
                         <div 
-                          className="rounded px-1.5 py-0.5 max-w-32 pointer-events-auto cursor-grab hover:opacity-80 shadow-lg select-none"
+                          className={`rounded px-1.5 py-0.5 pointer-events-auto shadow-lg select-none relative ${isSelected ? '' : 'cursor-grab hover:opacity-80'}`}
                           style={{ 
                             backgroundColor: '#121212', 
-                            border: '1px solid #FFFFFF',
-                            minWidth: '40px',
+                            border: `${isSelected ? '2px' : '1px'} solid ${borderColor}`,
+                            minWidth: `${MIN_BOX_WIDTH}px`,
+                            width: annotation.width ? `${annotation.width}px` : 'auto',
+                            maxWidth: annotation.width ? `${annotation.width}px` : `${MAX_BOX_WIDTH}px`,
+                            height: annotation.height ? `${annotation.height}px` : 'auto',
+                            minHeight: `${MIN_BOX_HEIGHT}px`,
                             fontSize: `${annotation.fontSize || DEFAULT_FONT_SIZE}px`,
                             wordBreak: 'break-word',
-                            overflowWrap: 'break-word',
-                            whiteSpace: 'pre-wrap'
+                            overflowWrap: 'anywhere',
+                            whiteSpace: 'pre-wrap',
+                            overflow: 'hidden'
                           }}
-                          onMouseDown={(e) => handleTextMouseDown(e, annotation)}
+                          onClick={(e) => handleAnnotationClick(e, annotation)}
+                          onMouseDown={(e) => {
+                            if (!isSelected) {
+                              handleTextMouseDown(e, annotation);
+                            } else if (!(e.target as HTMLElement).classList.contains('resize-handle')) {
+                              handleTextMouseDown(e, annotation);
+                            }
+                          }}
                           onDoubleClick={() => handleAnnotationDoubleClick(annotation)}
-                          title="Click and drag to move in any direction, double-click to edit"
+                          title={isSelected ? "Drag corners/edges to resize, double-click to edit" : "Click to select, drag to move, double-click to edit"}
                         >
                           <div className="text-foreground">{annotation.text || ''}</div>
+                          
+                          {/* Resize Handles - only show when selected */}
+                          {isSelected && (
+                            <>
+                              {/* Corner handles */}
+                              <div className="resize-handle absolute -top-1 -left-1 w-2.5 h-2.5 bg-[#5AF5FA] rounded-sm cursor-nw-resize" onMouseDown={(e) => handleResizeMouseDown(e, annotation, 'nw')} />
+                              <div className="resize-handle absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#5AF5FA] rounded-sm cursor-ne-resize" onMouseDown={(e) => handleResizeMouseDown(e, annotation, 'ne')} />
+                              <div className="resize-handle absolute -bottom-1 -left-1 w-2.5 h-2.5 bg-[#5AF5FA] rounded-sm cursor-sw-resize" onMouseDown={(e) => handleResizeMouseDown(e, annotation, 'sw')} />
+                              <div className="resize-handle absolute -bottom-1 -right-1 w-2.5 h-2.5 bg-[#5AF5FA] rounded-sm cursor-se-resize" onMouseDown={(e) => handleResizeMouseDown(e, annotation, 'se')} />
+                              {/* Edge handles */}
+                              <div className="resize-handle absolute -top-1 left-1/2 -translate-x-1/2 w-4 h-2 bg-[#5AF5FA] rounded-sm cursor-n-resize" onMouseDown={(e) => handleResizeMouseDown(e, annotation, 'n')} />
+                              <div className="resize-handle absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-2 bg-[#5AF5FA] rounded-sm cursor-s-resize" onMouseDown={(e) => handleResizeMouseDown(e, annotation, 's')} />
+                              <div className="resize-handle absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-4 bg-[#5AF5FA] rounded-sm cursor-w-resize" onMouseDown={(e) => handleResizeMouseDown(e, annotation, 'w')} />
+                              <div className="resize-handle absolute top-1/2 -right-1 -translate-y-1/2 w-2 h-4 bg-[#5AF5FA] rounded-sm cursor-e-resize" onMouseDown={(e) => handleResizeMouseDown(e, annotation, 'e')} />
+                            </>
+                          )}
                         </div>
                       </div>
                     );
