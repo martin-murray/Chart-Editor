@@ -716,9 +716,12 @@ export function PriceChart({
 
   // Handle click away to deselect annotation
   const handleClickAway = () => {
-    if (selectedAnnotationId && !isResizing) {
+    // Don't deselect if we're currently resizing or just finished resizing
+    if (selectedAnnotationId && !isResizing && !justFinishedResizingRef.current) {
       setSelectedAnnotationId(null);
     }
+    // Reset the flag
+    justFinishedResizingRef.current = false;
   };
 
   // Handle resize handle mouse down
@@ -765,11 +768,20 @@ export function PriceChart({
     ));
   };
 
+  // Track if we just finished resizing to prevent click-away
+  const justFinishedResizingRef = useRef(false);
+
   // Handle resize mouse up
   const handleResizeMouseUp = () => {
     if (isResizing) {
       setIsResizing(false);
       setResizeHandle(null);
+      // Set flag to prevent click-away from deselecting
+      justFinishedResizingRef.current = true;
+      // Reset flag after a short delay
+      setTimeout(() => {
+        justFinishedResizingRef.current = false;
+      }, 100);
     }
   };
 
