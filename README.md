@@ -24,4 +24,4 @@ Simply open `index.html` in a web browser to start using the Chart Editor.
 - HTML5
 - CSS3
 - JavaScript
-- Chart.js
+- Canvas API

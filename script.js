@@ -127,21 +127,30 @@ function drawLineChart(ctx, canvas, title, labels, values) {
     ctx.lineWidth = 3;
     ctx.beginPath();
     
-    values.forEach((value, index) => {
-        const x = padding + (index / (values.length - 1)) * chartWidth;
-        const y = canvas.height - padding - (value / maxValue) * chartHeight;
-        
-        if (index === 0) {
-            ctx.moveTo(x, y);
-        } else {
-            ctx.lineTo(x, y);
-        }
-    });
-    ctx.stroke();
+    // Handle single point case
+    if (values.length === 1) {
+        const x = padding + chartWidth / 2;
+        const y = canvas.height - padding - (values[0] / maxValue) * chartHeight;
+        ctx.arc(x, y, 5, 0, 2 * Math.PI);
+        ctx.fillStyle = 'rgba(102, 126, 234, 1)';
+        ctx.fill();
+    } else {
+        values.forEach((value, index) => {
+            const x = padding + (index / (values.length - 1)) * chartWidth;
+            const y = canvas.height - padding - (value / maxValue) * chartHeight;
+            
+            if (index === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+        });
+        ctx.stroke();
+    }
     
     // Draw points and labels
     values.forEach((value, index) => {
-        const x = padding + (index / (values.length - 1)) * chartWidth;
+        const x = values.length === 1 ? padding + chartWidth / 2 : padding + (index / (values.length - 1)) * chartWidth;
         const y = canvas.height - padding - (value / maxValue) * chartHeight;
         
         // Draw point
