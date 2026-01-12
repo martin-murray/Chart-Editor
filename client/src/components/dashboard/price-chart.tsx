@@ -911,11 +911,20 @@ export function PriceChart({
   // Ticker search API query (Task 2)
   const { data: tickerSearchResults = [] } = useQuery({
     queryKey: ['ticker-search', debouncedTickerQuery],
-    queryFn: async (): Promise<Array<{ symbol: string; name: string; price: string; percentChange: string; marketCap: string }>> => {
+    queryFn: async (): Promise<Array<{ symbol: string; name: string; price: string; percentChange: string; marketCap: string; type?: string }>> => {
       if (!debouncedTickerQuery.trim()) return [];
       const response = await fetch(`/api/stocks/global-search?q=${encodeURIComponent(debouncedTickerQuery)}`);
       if (!response.ok) return [];
-      return await response.json();
+      const rawResults = await response.json();
+      // Transform API response to expected format
+      return rawResults.map((item: any) => ({
+        symbol: item.symbol,
+        name: item.description || item.name || '',
+        price: item.price || '0.00',
+        percentChange: item.percentChange || '0.00',
+        marketCap: item.marketCap || 'N/A',
+        type: item.type || 'Common Stock'
+      }));
     },
     enabled: showTickerSearch && debouncedTickerQuery.trim().length >= 2,
     staleTime: 2 * 60 * 1000, // Cache for 2 minutes
@@ -3019,25 +3028,59 @@ export function PriceChart({
 
                   {/* Search Results */}
                   {debouncedTickerQuery.trim().length >= 2 && tickerSearchResults.length > 0 && (
-                    <div className="max-h-60 overflow-y-auto space-y-1 border rounded-md p-2">
-                      {tickerSearchResults.slice(0, 10).map((result) => (
-                        <div
-                          key={result.symbol}
-                          className="flex items-center justify-between p-2 hover:bg-muted rounded cursor-pointer"
-                          onClick={() => addComparisonTicker(result.symbol, result.name, result.price, result.percentChange)}
-                          data-testid={`search-result-${result.symbol}`}
-                        >
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold">{result.symbol}</span>
-                              <span className="text-sm text-muted-foreground truncate">{result.name}</span>
+                    <div className="max-h-60 overflow-y-auto border rounded-md">
+                      {tickerSearchResults.slice(0, 10).map((result) => {
+                        const percentValue = parseFloat(result.percentChange);
+                        const isPositiveChange = !isNaN(percentValue) && percentValue >= 0;
+                        return (
+                          <div
+                            key={result.symbol}
+                            className="px-3 py-2.5 hover:bg-muted/50 transition-colors border-b border-border/50 last:border-b-0 cursor-pointer"
+                            onClick={() => addComparisonTicker(result.symbol, result.name, result.price, result.percentChange)}
+                            data-testid={`search-result-${result.symbol}`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-semibold text-foreground">{result.symbol}</span>
+                                  {result.type && (
+                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground">
+                                      {result.type === 'Common Stock' ? 'Stock' : result.type}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-sm text-muted-foreground truncate mt-0.5">
+                                  {result.name}
+                                </div>
+                                {result.marketCap && result.marketCap !== 'N/A' && (
+                                  <div className="text-xs text-muted-foreground mt-0.5">
+                                    {result.marketCap}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 ml-3">
+                                <span className="font-medium text-foreground text-sm">
+                                  ${parseFloat(result.price).toFixed(2)}
+                                </span>
+                                {!isNaN(percentValue) && percentValue !== 0 && (
+                                  <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium ${
+                                    isPositiveChange 
+                                      ? 'bg-green-500/10 text-green-600 dark:text-green-400' 
+                                      : 'bg-red-500/10 text-red-600 dark:text-red-400'
+                                  }`}>
+                                    {isPositiveChange ? (
+                                      <TrendingUp className="w-3 h-3" />
+                                    ) : (
+                                      <TrendingDown className="w-3 h-3" />
+                                    )}
+                                    {Math.abs(percentValue).toFixed(2)}%
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
-                          <div className="text-sm text-muted-foreground ml-2">
-                            ${parseFloat(result.price).toFixed(2)}
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
 
