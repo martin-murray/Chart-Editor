@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Market Movers Dashboard - Research Team</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/heroicons@2.0.18/24/outline/index.js" type="module"></script>
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                fontFamily: {
+                    'sans': ['Inter', 'system-ui', 'sans-serif'],
+                },
+                colors: {
+                    border: "hsl(214.3 31.8% 91.4%)",
+                    input: "hsl(214.3 31.8% 91.4%)",
+                    ring: "hsl(222.2 84% 4.9%)",
+                    background: "hsl(0 0% 100%)",
+                    foreground: "hsl(222.2 84% 4.9%)",
+                    primary: {
+                        DEFAULT: "hsl(222.2 47.4% 11.2%)",
+                        foreground: "hsl(210 40% 98%)",
+                    },
+                    secondary: {
+                        DEFAULT: "hsl(210 40% 96%)",
+                        foreground: "hsl(222.2 84% 4.9%)",
+                    },
+                    destructive: {
+                        DEFAULT: "hsl(0 84.2% 60.2%)",
+                        foreground: "hsl(210 40% 98%)",
+                    },
+                    muted: {
+                        DEFAULT: "hsl(210 40% 96%)",
+                        foreground: "hsl(215.4 16.3% 46.9%)",
+                    },
+                    accent: {
+                        DEFAULT: "hsl(210 40% 96%)",
+                        foreground: "hsl(222.2 84% 4.9%)",
+                    },
+                    card: {
+                        DEFAULT: "hsl(0 0% 100%)",
+                        foreground: "hsl(222.2 84% 4.9%)",
+                    },
+                }
+            }
+        }
+    };
+    </script>
+    <style>
+        .gainer { color: #059669; }
+        .loser { color: #dc2626; }
+        .neutral { color: #64748b; }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-50 font-sans">
+    <!-- @COMPONENT: Header -->
+    <header class="bg-white border-b border-slate-200 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div>
+                    <h1 class="text-2xl font-semibold text-slate-900">Market Movers Dashboard</h1>
+                    <p class="text-sm text-slate-600">Research Team - Real-time Stock Tracking</p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="text-sm text-slate-600">
+                        Last updated: <span data-bind="lastUpdated" class="font-medium">2:47 PM EST</span>
+                    </div>
+                    <button data-event="click:refreshData" class="inline-flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        Refresh Data
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+    <!-- @END_COMPONENT: Header -->
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- @COMPONENT: FilterSection -->
+        <div class="bg-white rounded-lg border border-slate-200 shadow-sm p-6 mb-8">
+            <h2 class="text-lg font-semibold text-slate-900 mb-4">Filters & Settings</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">% Change Threshold</label>
+                    <select data-bind="changeThreshold" class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent">
+                        <option value="1">≥ 1%</option>
+                        <option value="2" selected>≥ 2%</option>
+                        <option value="3">≥ 3%</option>
+                        <option value="5">≥ 5%</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Market Cap</label>
+                    <select data-bind="marketCap" class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent">
+                        <option value="2B" selected>≥ $2B</option>
+                        <option value="5B">≥ $5B</option>
+                        <option value="10B">≥ $10B</option>
+                        <option value="50B">≥ $50B</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Index Filter</label>
+                    <select data-bind="indexFilter" class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent">
+                        <option value="all">All Indices</option>
+                        <option value="sp500">S&P 500</option>
+                        <option value="sp400">S&P 400</option>
+                        <option value="sp600">S&P 600</option>
+                        <option value="nasdaq100">NASDAQ 100</option>
+                        <option value="russell1000">Russell 1000</option>
+                        <option value="russell2000">Russell 2000</option>
+                        <option value="russell3000">Russell 3000</option>
+                        <option value="tmi">TMI</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Data Refresh</label>
+                    <div class="text-sm text-slate-600">
+                        <div>Next: 4:00 PM EST</div>
+                        <div class="text-xs text-slate-500">Updates: 9:30am, 1pm, 4pm</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: FilterSection -->
+
+        <!-- @COMPONENT: SummaryCards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-slate-600">Market Movers</p>
+                        <p class="text-2xl font-bold text-slate-900" data-bind="totalMovers">247</p>
+                    </div>
+                    <div class="p-3 bg-slate-100 rounded-lg">
+                        <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-500 mt-2">≥$2B market cap stocks</p>
+            </div>
+
+            <div class="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-slate-600">Top Gainers</p>
+                        <p class="text-2xl font-bold gainer" data-bind="totalGainers">143</p>
+                    </div>
+                    <div class="p-3 bg-emerald-50 rounded-lg">
+                        <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                        </svg>
+                    </div>
+                </div>
+                <p class="text-xs text-emerald-600 mt-2">+2.4% avg change</p>
+            </div>
+
+            <div class="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-slate-600">Top Losers</p>
+                        <p class="text-2xl font-bold loser" data-bind="totalLosers">104</p>
+                    </div>
+                    <div class="p-3 bg-red-50 rounded-lg">
+                        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path>
+                        </svg>
+                    </div>
+                </div>
+                <p class="text-xs text-red-600 mt-2">-1.8% avg change</p>
+            </div>
+
+            <div class="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-slate-600">Market Cap</p>
+                        <p class="text-2xl font-bold text-slate-900" data-bind="totalMarketCap">$24.7T</p>
+                    </div>
+                    <div class="p-3 bg-blue-50 rounded-lg">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                        </svg>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-500 mt-2">Total tracked value</p>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: SummaryCards -->
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- @COMPONENT: MainDataTables -->
+            <div class="lg:col-span-2 space-y-8">
+                <!-- Top Gainers Table -->
+                <div class="bg-white rounded-lg border border-slate-200 shadow-sm">
+                    <div class="p-6 border-b border-slate-200">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-lg font-semibold text-slate-900">Top Gainers</h3>
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm text-slate-500">Sort by:</span>
+                                <select data-bind="gainersSort" class="text-sm border-slate-300 rounded-md">
+                                    <option>% Change</option>
+                                    <option>Market Cap</option>
+                                    <option>Volume</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-slate-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Stock</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Price</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Change</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">% Change</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Market Cap</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Index</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-slate-200">
+                                <!-- @MAP: topGainers.map(stock => ( -->
+                                <tr class="hover:bg-slate-50" data-mock="true">
+                                    <td class="px-6 py-4">
+                                        <div>
+                                            <div class="text-sm font-medium text-slate-900" data-bind="stock.symbol">NVDA</div>
+                                            <div class="text-sm text-slate-500" data-bind="stock.name">NVIDIA Corporation</div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-slate-900" data-bind="stock.price">$892.45</td>
+                                    <td class="px-6 py-4 text-sm gainer" data-bind="stock.change">+$24.38</td>
+                                    <td class="px-6 py-4">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800" data-bind="stock.percentChange">+2.81%</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-slate-900" data-bind="stock.marketCap">$2.19T</td>
+                                    <td class="px-6 py-4">
+                                        <span class="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-blue-100 text-blue-800" data-bind="stock.index">S&P 500</span>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-slate-50" data-mock="true">
+                                    <td class="px-6 py-4">
+                                        <div>
+                                            <div class="text-sm font-medium text-slate-900">TSLA</div>
+                                            <div class="text-sm text-slate-500">Tesla, Inc.</div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-slate-900">$267.89</td>
+                                    <td class="px-6 py-4 text-sm gainer">+$7.23</td>
+                                    <td class="px-6 py-4">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800">+2.77%</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-slate-900">$853.2B</td>
+                                    <td class="px-6 py-4">
+                                        <span class="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-blue-100 text-blue-800">S&P 500</span>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-slate-50" data-mock="true">
+                                    <td class="px-6 py-4">
+                                        <div>
+                                            <div class="text-sm font-medium text-slate-900">META</div>
+                                            <div class="text-sm text-slate-500">Meta Platforms, Inc.</div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-slate-900">$486.12</td>
+                                    <td class="px-6 py-4 text-sm gainer">+$12.34</td>
+                                    <td class="px-6 py-4">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800">+2.61%</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-slate-900">$1.24T</td>
+                                    <td class="px-6 py-4">
+                                        <span class="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-blue-100 text-blue-800">S&P 500</span>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-slate-50" data-mock="true">
+                                    <td class="px-6 py-4">
+                                        <div>
+                                            <div class="text-sm font-medium text-slate-900">AMD</div>
+                                            <div class="text-sm text-slate-500">Advanced Micro Devices</div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-slate-900">$178.92</td>
+                                    <td class="px-6 py-4 text-sm gainer">+$4.46</td>
+                                    <td class="px-6 py-4">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800">+2.56%</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-slate-900">$289.4B</td>
+                                    <td class="px-6 py-4">
+                                        <span class="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-blue-100 text-blue-800">S&P 500</span>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-slate-50" data-mock="true">
+                                    <td class="px-6 py-4">
+                                        <div>
+                                            <div class="text-sm font-medium text-slate-900">GOOGL</div>
+                                            <div class="text-sm text-slate-500">Alphabet Inc.</div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-slate-900">$156.78</td>
+                                    <td class="px-6 py-4 text-sm gainer">+$3.89</td>
+                                    <td class="px-6 py-4">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800">+2.54%</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-slate-900">$1.97T</td>
+                                    <td class="px-6 py-4">
+                                        <span class="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-blue-100 text-blue-800">S&P 500</span>
+                                    </td>
+                                </tr>
+                                <!-- @END_MAP )) -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="px-6 py-3 border-t border-slate-200">
+                        <button data-event="click:viewAllGainers" class="text-sm text-slate-600 hover:text-slate-900 font-medium">View all gainers →</button>
+                    </div>
+                </div>
+
+                <!-- Top Losers Table -->
+                <div class="bg-white rounded-lg border border-slate-200 shadow-sm">
+                    <div class="p-6 border-b border-slate-200">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-lg font-semibold text-slate-900">Top Losers</h3>
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm text-slate-500">Sort by:</span>
+                                <select data-bind="losersSort" class="text-sm border-slate-300 rounded-md">
+                                    <option>% Change</option>
+                                    <option>Market Cap</option>
+                                    <option>Volume</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-slate-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Stock</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Price</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Change</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">% Change</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Market Cap</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Index</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-slate-200">
+                                <!-- @MAP: topLosers.map(stock => ( -->
+                                <tr class="hover:bg-slate-50" data-mock="true">
+                                    <td class="px-6 py-4">
+                                        <div>
+                                            <div class="text-sm font-medium text-slate-900" data-bind="stock.symbol">INTC</div>
+                                            <div class="text-sm text-slate-500" data-bind="stock.name">Intel Corporation</div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-slate-900" data-bind="stock.price">$23.45</td>
+                                    <td class="px-6 py-4 text-sm loser" data-bind="stock.change">-$0.89</td>
+                                    <td class="px-6 py-4">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800" data-bind="stock.percentChange">-3.65%</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-slate-900" data-bind="stock.marketCap">$98.7B</td>
+                                    <td class="px-6 py-4">
+                                        <span class="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-blue-100 text-blue-800" data-bind="stock.index">S&P 500</span>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-slate-50" data-mock="true">
+                                    <td class="px-6 py-4">
+                                        <div>
+                                            <div class="text-sm font-medium text-slate-900">IBM</div>
+                                            <div class="text-sm text-slate-500">International Business Machines</div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-slate-900">$189.67</td>
+                                    <td class="px-6 py-4 text-sm loser">-$6.78</td>
+                                    <td class="px-6 py-4">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">-3.45%</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-slate-900">$175.2B</td>
+                                    <td class="px-6 py-4">
+                                        <span class="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-blue-100 text-blue-800">S&P 500</span>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-slate-50" data-mock="true">
+                                    <td class="px-6 py-4">
+                                        <div>
+                                            <div class="text-sm font-medium text-slate-900">PYPL</div>
+                                            <div class="text-sm text-slate-500">PayPal Holdings</div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-slate-900">$67.89</td>
+                                    <td class="px-6 py-4 text-sm loser">-$2.34</td>
+                                    <td class="px-6 py-4">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">-3.33%</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-slate-900">$78.4B</td>
+                                    <td class="px-6 py-4">
+                                        <span class="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-blue-100 text-blue-800">S&P 500</span>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-slate-50" data-mock="true">
+                                    <td class="px-6 py-4">
+                                        <div>
+                                            <div class="text-sm font-medium text-slate-900">DIS</div>
+                                            <div class="text-sm text-slate-500">The Walt Disney Company</div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-slate-900">$98.12</td>
+                                    <td class="px-6 py-4 text-sm loser">-$3.12</td>
+                                    <td class="px-6 py-4">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">-3.08%</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-slate-900">$179.3B</td>
+                                    <td class="px-6 py-4">
+                                        <span class="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-blue-100 text-blue-800">S&P 500</span>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-slate-50" data-mock="true">
+                                    <td class="px-6 py-4">
+                                        <div>
+                                            <div class="text-sm font-medium text-slate-900">NFLX</div>
+                                            <div class="text-sm text-slate-500">Netflix Inc.</div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-slate-900">$445.67</td>
+                                    <td class="px-6 py-4 text-sm loser">-$13.89</td>
+                                    <td class="px-6 py-4">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">-3.02%</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-slate-900">$197.8B</td>
+                                    <td class="px-6 py-4">
+                                        <span class="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-blue-100 text-blue-800">S&P 500</span>
+                                    </td>
+                                </tr>
+                                <!-- @END_MAP )) -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="px-6 py-3 border-t border-slate-200">
+                        <button data-event="click:viewAllLosers" class="text-sm text-slate-600 hover:text-slate-900 font-medium">View all losers →</button>
+                    </div>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: MainDataTables -->
+
+            <!-- @COMPONENT: SlackIntegration -->
+            <div class="space-y-6">
+                <!-- Slack Integration Panel -->
+                <div class="bg-white rounded-lg border border-slate-200 shadow-sm">
+                    <div class="p-6 border-b border-slate-200">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 bg-green-100 rounded-lg">
+                                <svg class="w-5 h-5 text-green-600" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M5.042 15.165a2.528 2.528 0 0 0 2.5 2.5c1.61 0 2.929-1.46 2.929-3.25v-3.25h-2.929a2.532 2.532 0 0 0-2.5 2.5 2.528 2.528 0 0 0 0 .5zm2.5-12.165a2.528 2.528 0 0 0-2.5 2.5v2.5h2.5a2.528 2.528 0 0 0 2.5-2.5 2.528 2.528 0 0 0-2.5-2.5zm12.928 5.5a2.528 2.528 0 0 0-2.5-2.5h-2.5v2.5a2.528 2.528 0 0 0 2.5 2.5c1.61 0 2.929-1.46 2.929-3.25 0-.83-.329-1.58-.929-2.25z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-slate-900">Slack Integration</h3>
+                                <p class="text-sm text-slate-600">Auto-posted alerts to #research-team</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-6 space-y-4">
+                        <!-- @STATE: slackConnected:boolean = true -->
+                        <div class="flex items-center justify-between p-4 bg-green-50 rounded-lg">
+                            <div class="flex items-center gap-3">
+                                <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                                <span class="text-sm font-medium text-green-800">Connected to Research Team</span>
+                            </div>
+                            <button data-event="click:configureSlack" class="text-xs text-green-700 hover:text-green-900 font-medium">Configure</button>
+                        </div>
+
+                        <div class="space-y-3">
+                            <h4 class="text-sm font-semibold text-slate-900">Alert Schedule</h4>
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between p-3 border border-slate-200 rounded-lg">
+                                    <div>
+                                        <div class="text-sm font-medium text-slate-900">Morning Alert</div>
+                                        <div class="text-xs text-slate-500">Top 10 Movers at 10:00 AM EST</div>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                                        <span class="text-xs text-green-600">Active</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between p-3 border border-slate-200 rounded-lg">
+                                    <div>
+                                        <div class="text-sm font-medium text-slate-900">Afternoon Alert</div>
+                                        <div class="text-xs text-slate-500">Top 10 Movers at 3:00 PM EST</div>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                                        <span class="text-xs text-green-600">Active</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 border-t border-slate-200">
+                            <button data-event="click:sendTestAlert" class="w-full bg-slate-900 text-white py-2 px-4 rounded-lg hover:bg-slate-800 transition-colors text-sm font-medium">
+                                Send Test Alert
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Export & Analytics -->
+                <div class="bg-white rounded-lg border border-slate-200 shadow-sm">
+                    <div class="p-6 border-b border-slate-200">
+                        <h3 class="text-lg font-semibold text-slate-900">Export & Analytics</h3>
+                    </div>
+                    <div class="p-6 space-y-4">
+                        <div class="grid grid-cols-2 gap-3">
+                            <button data-event="click:exportCSV" class="flex flex-col items-center p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+                                <svg class="w-5 h-5 text-slate-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                <span class="text-xs font-medium text-slate-700">Export CSV</span>
+                            </button>
+                            <button data-event="click:exportPDF" class="flex flex-col items-center p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+                                <svg class="w-5 h-5 text-slate-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                </svg>
+                                <span class="text-xs font-medium text-slate-700">Export PDF</span>
+                            </button>
+                        </div>
+
+                        <div class="pt-4 border-t border-slate-200 space-y-3">
+                            <h4 class="text-sm font-semibold text-slate-900">Quick Stats</h4>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-slate-600">Avg Daily Volume:</span>
+                                    <span class="font-medium text-slate-900" data-bind="avgVolume">847.2M</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-600">Market Volatility:</span>
+                                    <span class="font-medium text-orange-600" data-bind="volatility">Moderate</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-600">Sector Leader:</span>
+                                    <span class="font-medium text-slate-900" data-bind="sectorLeader">Technology</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Alerts -->
+                <div class="bg-white rounded-lg border border-slate-200 shadow-sm">
+                    <div class="p-6 border-b border-slate-200">
+                        <h3 class="text-lg font-semibold text-slate-900">Recent Alerts</h3>
+                    </div>
+                    <div class="p-6">
+                        <div class="space-y-3">
+                            <!-- @MAP: recentAlerts.map(alert => ( -->
+                            <div class="flex items-start gap-3 p-3 bg-slate-50 rounded-lg" data-mock="true">
+                                <div class="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="text-sm font-medium text-slate-900" data-bind="alert.title">Morning Alert Sent</div>
+                                    <div class="text-xs text-slate-500 mt-1" data-bind="alert.description">Top 10 movers posted to #research-team</div>
+                                    <div class="text-xs text-slate-400 mt-1" data-bind="alert.timestamp">2 hours ago</div>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3 p-3 bg-slate-50 rounded-lg" data-mock="true">
+                                <div class="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="text-sm font-medium text-slate-900">Data Refresh Complete</div>
+                                    <div class="text-xs text-slate-500 mt-1">247 stocks updated with latest prices</div>
+                                    <div class="text-xs text-slate-400 mt-1">13 minutes ago</div>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3 p-3 bg-slate-50 rounded-lg" data-mock="true">
+                                <div class="w-2 h-2 bg-orange-500 rounded-full mt-2 flex-shrink-0"></div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="text-sm font-medium text-slate-900">Volatility Alert</div>
+                                    <div class="text-xs text-slate-500 mt-1">NVDA showing unusual volume spikes</div>
+                                    <div class="text-xs text-slate-400 mt-1">47 minutes ago</div>
+                                </div>
+                            </div>
+                            <!-- @END_MAP )) -->
+                        </div>
+                        <button data-event="click:viewAllAlerts" class="text-xs text-slate-600 hover:text-slate-900 font-medium mt-4">View all alerts →</button>
+                    </div>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: SlackIntegration -->
+        </div>
+    </main>
+
+    <script>
+        // TODO: Implement real-time data fetching from Yahoo Finance API
+        // TODO: Implement actual filtering and sorting functionality
+        // TODO: Implement Slack integration for real alerts
+        // TODO: Implement CSV/PDF export functionality
+        // TODO: Add error handling and loading states
+        
+        (function() {
+            // Mock interactive functionality for demonstration
+            const refreshButton = document.querySelector('[data-event="click:refreshData"]');
+            const testAlertButton = document.querySelector('[data-event="click:sendTestAlert"]');
+            
+            if (refreshButton) {
+                refreshButton.addEventListener('click', function() {
+                    // Mock refresh functionality
+                    const timestamp = document.querySelector('[data-bind="lastUpdated"]');
+                    if (timestamp) {
+                        const now = new Date();
+                        timestamp.textContent = now.toLocaleTimeString('en-US', { 
+                            hour: 'numeric', 
+                            minute: '2-digit',
+                            timeZone: 'America/New_York',
+                            timeZoneName: 'short'
+                        });
+                    }
+                    
+                    // Add visual feedback
+                    refreshButton.innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Refreshing...';
+                    
+                    setTimeout(() => {
+                        refreshButton.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Refresh Data';
+                    }, 2000);
+                });
+            }
+            
+            if (testAlertButton) {
+                testAlertButton.addEventListener('click', function() {
+                    // Mock test alert
+                    testAlertButton.textContent = 'Sending...';
+                    testAlertButton.disabled = true;
+                    
+                    setTimeout(() => {
+                        testAlertButton.textContent = 'Alert Sent! ✓';
+                        setTimeout(() => {
+                            testAlertButton.textContent = 'Send Test Alert';
+                            testAlertButton.disabled = false;
+                        }, 2000);
+                    }, 1000);
+                });
+            }
+        })();
+    </script>
+</body>
+</html>
