@@ -211,6 +211,9 @@ export class IndexService {
 
   constructor() {
     this.finnhubApiKey = process.env.FINNHUB_API_KEY || '';
+    if (!this.finnhubApiKey) {
+      throw new Error("FINNHUB_API_KEY environment variable is required. Please set it in your .env file.");
+    }
   }
 
   private async makeRequest(endpoint: string): Promise<any> {
