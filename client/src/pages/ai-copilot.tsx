@@ -2,8 +2,9 @@ import { Link, useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Sparkles, LogOut, BookOpen, Send, Loader2, Download, BarChart3, Plus, Trash2, AlertCircle } from "lucide-react";
+import { Sparkles, LogOut, BookOpen, Send, Loader2, Download, BarChart3, Plus, Trash2, AlertCircle, Globe } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { SuffixSearchModal } from "@/components/suffix-search-modal";
 import logoImage from "@assets/IPO Intelligence@2x_1758060026530.png";
 import {
   Select,
@@ -103,6 +104,7 @@ export default function AICopilot() {
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
   const deleteTimerRef = useRef<NodeJS.Timeout | null>(null);
   const deleteAllTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [triggerSuffixModal, setTriggerSuffixModal] = useState(false);
 
   const handleChartTypeChange = (value: string) => {
     setLocation(value);
@@ -349,6 +351,18 @@ export default function AICopilot() {
                   <span>Walkthrough</span>
                 </span>
               </Link>
+
+              {/* Suffix Guide Link */}
+              <SuffixSearchModal open={triggerSuffixModal} onOpenChange={setTriggerSuffixModal}>
+                <button
+                  className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
+                  data-testid="button-suffix-guide"
+                  style={{ fontFamily: 'var(--font-sans)', fontSize: '16px', color: '#f7f7f7' }}
+                >
+                  <Globe className="h-5 w-5 text-[#5AF5FA]" />
+                  <span>Suffix Guide</span>
+                </button>
+              </SuffixSearchModal>
 
               {/* Logout Button */}
               <LogoutButton />

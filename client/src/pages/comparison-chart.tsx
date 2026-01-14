@@ -568,15 +568,16 @@ export default function ComparisonChart() {
               </Link>
 
               {/* Suffix Guide Link */}
-              <button
-                onClick={() => setTriggerSuffixModal(true)}
-                className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
-                data-testid="button-suffix-guide"
-                style={{ fontFamily: 'var(--font-sans)', fontSize: '16px', color: '#f7f7f7' }}
-              >
-                <Globe className="h-5 w-5 text-[#5AF5FA]" />
-                <span>Suffix Guide</span>
-              </button>
+              <SuffixSearchModal open={triggerSuffixModal} onOpenChange={setTriggerSuffixModal}>
+                <button
+                  className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
+                  data-testid="button-suffix-guide"
+                  style={{ fontFamily: 'var(--font-sans)', fontSize: '16px', color: '#f7f7f7' }}
+                >
+                  <Globe className="h-5 w-5 text-[#5AF5FA]" />
+                  <span>Suffix Guide</span>
+                </button>
+              </SuffixSearchModal>
 
               {/* Logout Button */}
               <LogoutButton />
@@ -1333,10 +1334,6 @@ export default function ComparisonChart() {
         hasExistingEntry={currentSavedEntryId !== null}
       />
 
-      {/* Suffix Guide Modal */}
-      <SuffixSearchModal>
-        <button style={{ display: 'none' }} />
-      </SuffixSearchModal>
     </div>
   );
 }

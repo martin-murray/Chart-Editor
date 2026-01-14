@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BarChart3, TrendingUp, Sparkles, LogOut, Globe, MessageSquare, BookOpen } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { SuffixSearchModal } from "@/components/suffix-search-modal";
 import logoImage from "@assets/IPO Intelligence@2x_1758060026530.png";
 import {
   Select,
@@ -36,6 +38,7 @@ function LogoutButton() {
 
 export default function Home() {
   const [, setLocation] = useLocation();
+  const [triggerSuffixModal, setTriggerSuffixModal] = useState(false);
 
   const pathwayCards = [
     {
@@ -114,6 +117,18 @@ export default function Home() {
                   <span>Walkthrough</span>
                 </span>
               </Link>
+
+              {/* Suffix Guide Link */}
+              <SuffixSearchModal open={triggerSuffixModal} onOpenChange={setTriggerSuffixModal}>
+                <button
+                  className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
+                  data-testid="button-suffix-guide"
+                  style={{ fontFamily: 'var(--font-sans)', fontSize: '16px', color: '#f7f7f7' }}
+                >
+                  <Globe className="h-5 w-5 text-[#5AF5FA]" />
+                  <span>Suffix Guide</span>
+                </button>
+              </SuffixSearchModal>
 
               {/* Logout Button */}
               <LogoutButton />

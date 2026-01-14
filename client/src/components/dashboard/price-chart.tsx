@@ -4376,22 +4376,8 @@ export function PriceChart({
                     />
                   ))}
 
-                  {/* Horizontal Annotation Reference Lines - purple styling */}
-                  {annotations.filter(annotation => annotation.type === 'horizontal').map((annotation) => {
-                    const isBeingDragged = isDragging && dragAnnotationId === annotation.id;
-                    const lineColor = isBeingDragged ? "#7755CC" : "#AA99FF"; // Darker purple when dragging
-                    return (
-                      <ReferenceLine 
-                        key={annotation.id}
-                        y={annotation.price}
-                        yAxisId="price"
-                        stroke={lineColor}
-                        strokeWidth={isBeingDragged ? 3 : 2}
-                        vectorEffect="non-scaling-stroke"
-                        shapeRendering="crispEdges"
-                      />
-                    );
-                  })}
+                  {/* Horizontal annotations are rendered in the Customized component above (lines 3990-4128) */}
+                  {/* This ensures proper handling of both price and percentage view modes */}
 
 
                   {/* Click Capture Overlay for Annotations - only active in annotation mode */}

@@ -496,13 +496,10 @@ function ChartMaker() {
     }
   }, []);
   
-  // Trigger suffix modal after component mounts
+  // Trigger suffix modal after component mounts (for query parameter)
   useEffect(() => {
-    if (triggerSuffixModal && suffixButtonRef.current) {
-      setTimeout(() => {
-        suffixButtonRef.current?.click();
-        setTriggerSuffixModal(false);
-      }, 100);
+    if (triggerSuffixModal) {
+      // Modal will open via controlled open prop
     }
   }, [triggerSuffixModal]);
   
@@ -625,16 +622,17 @@ function ChartMaker() {
               </Link>
 
               {/* Suffix Guide Link */}
-              <button
-                ref={suffixButtonRef}
-                onClick={() => setTriggerSuffixModal(true)}
-                className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
-                data-testid="button-suffix-guide"
-                style={{ fontFamily: 'var(--font-sans)', fontSize: '16px', color: '#f7f7f7' }}
-              >
-                <Globe className="h-5 w-5 text-[#5AF5FA]" />
-                <span>Suffix Guide</span>
-              </button>
+              <SuffixSearchModal open={triggerSuffixModal} onOpenChange={setTriggerSuffixModal}>
+                <button
+                  ref={suffixButtonRef}
+                  className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
+                  data-testid="button-suffix-guide"
+                  style={{ fontFamily: 'var(--font-sans)', fontSize: '16px', color: '#f7f7f7' }}
+                >
+                  <Globe className="h-5 w-5 text-[#5AF5FA]" />
+                  <span>Suffix Guide</span>
+                </button>
+              </SuffixSearchModal>
 
               {/* Logout Button */}
               <LogoutButton />
@@ -810,11 +808,6 @@ function ChartMaker() {
             </div>
           </Card>
       </main>
-      
-      {/* Suffix Guide Modal */}
-      <SuffixSearchModal>
-        <button ref={suffixButtonRef} style={{ display: 'none' }} />
-      </SuffixSearchModal>
       
       {/* Cookie Policy Banner */}
       <CookiePolicyBanner />

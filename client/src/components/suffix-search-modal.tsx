@@ -49,6 +49,8 @@ const PaymentCardIcon = ({ className }: { className?: string }) => (
 
 interface SuffixSearchModalProps {
   children: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 // Mapping from exchange names to Finnhub exchange codes  
@@ -100,12 +102,21 @@ const exchangeToFinnhubCode: { [key: string]: string } = {
   'Bolsa Mexicana de Valores (Mexican Stock Exchange)': 'MX'
 };
 
-export function SuffixSearchModal({ children }: SuffixSearchModalProps) {
+export function SuffixSearchModal({ children, open: controlledOpen, onOpenChange }: SuffixSearchModalProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResult, setSearchResult] = useState<SuffixInfo | null>(null);
   const [noResults, setNoResults] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
   const [marketStatus, setMarketStatus] = useState<MarketStatus | null>(null);
+  
+  // Use controlled open if provided, otherwise use internal state
+  const isOpen = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setIsOpen = (open: boolean) => {
+    if (controlledOpen === undefined) {
+      setInternalOpen(open);
+    }
+    onOpenChange?.(open);
+  };
 
   const allSuffixes = getAllSuffixes();
 
