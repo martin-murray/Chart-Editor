@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chart Editor - Create Professional, Data-Driven Charts</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Chart Editor</h1>
+            <p>Create professional, data-driven charts</p>
+        </header>
+
+        <div class="editor">
+            <div class="controls">
+                <h2>Chart Configuration</h2>
+                
+                <div class="control-group">
+                    <label for="chartType">Chart Type:</label>
+                    <select id="chartType">
+                        <option value="bar">Bar Chart</option>
+                        <option value="line">Line Chart</option>
+                        <option value="pie">Pie Chart</option>
+                        <option value="doughnut">Doughnut Chart</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="chartTitle">Chart Title:</label>
+                    <input type="text" id="chartTitle" placeholder="Enter chart title" value="Sales Data">
+                </div>
+
+                <div class="control-group">
+                    <label for="dataLabels">Labels (comma-separated):</label>
+                    <input type="text" id="dataLabels" placeholder="e.g., Jan, Feb, Mar" value="Q1, Q2, Q3, Q4">
+                </div>
+
+                <div class="control-group">
+                    <label for="dataValues">Values (comma-separated):</label>
+                    <input type="text" id="dataValues" placeholder="e.g., 10, 20, 30" value="65, 59, 80, 81">
+                </div>
+
+                <div class="control-group">
+                    <label for="datasetLabel">Dataset Label:</label>
+                    <input type="text" id="datasetLabel" placeholder="Enter dataset label" value="Sales">
+                </div>
+
+                <button id="updateChart" class="btn-primary">Update Chart</button>
+                <button id="resetChart" class="btn-secondary">Reset</button>
+            </div>
+
+            <div class="chart-container">
+                <h2>Chart Preview</h2>
+                <canvas id="myChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
