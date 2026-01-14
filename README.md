@@ -39,6 +39,14 @@ If a Git command in Cursor shows a one-time code like `20B1-84A2` and asks you t
 3. Paste the code, authorize access, and finish the flow.
 4. Return to Cursor; the Git command continues once authorization is complete.
 
+## Creating a GitHub Personal Access Token (PAT) for Cursor pushes
+If Cursor asks for a Personal Access Token when committing or pushing:
+1. Visit https://github.com/settings/tokens (opens in your browser).
+2. Choose **Fine-grained token** (recommended) or **Classic**.
+3. Set the repository access to **martin-murray/Chart-Editor** (or your fork) and grant **Contents: Read and write** (ensure **Metadata: Read** is included; add **Pull requests: Read and write** if you'll open PRs).
+4. Create the token and copy it—GitHub will only show it once.
+5. When Cursor prompts for a password, paste the token; use your GitHub username as the username.
+
 ## Technologies
 - HTML5
 - CSS3
