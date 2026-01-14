@@ -335,7 +335,6 @@ export default function AICopilot() {
                 </SelectTrigger>
                 <SelectContent style={{ backgroundColor: '#3A3A3A' }}>
                   <SelectItem value="/price-chart">Price Chart</SelectItem>
-                  <SelectItem value="/comparison-chart">Comparison Chart</SelectItem>
                   <SelectItem value="/ai-copilot">AI Co-Pilot</SelectItem>
                 </SelectContent>
               </Select>

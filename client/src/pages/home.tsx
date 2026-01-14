@@ -52,16 +52,6 @@ export default function Home() {
       titleColor: '#5AF5FA', // Cyan/Blue
     },
     {
-      id: 'comparison-chart',
-      title: 'Comparison Chart',
-      description: 'Compare multiple tickers or ETFs side-by-side to uncover performance trends, correlations, and outliers. Create dynamic visuals that highlight relative strength and movement across markets.',
-      icon: TrendingUp,
-      destination: '/comparison-chart',
-      buttonText: 'Open Comparison Chart',
-      iconColor: '#FAFF50', // Yellow
-      titleColor: '#FAFF50', // Yellow
-    },
-    {
       id: 'ai-copilot',
       title: 'AI Co-Pilot',
       description: 'Upload a CSV or simply prompt the AI Co-Pilot to create bespoke charts using your data. Automatically styled in Intropic brand colours, ready to export in high-resolution or embed directly into reports.',
@@ -101,7 +91,6 @@ export default function Home() {
                 </SelectTrigger>
                 <SelectContent style={{ backgroundColor: '#3A3A3A' }}>
                   <SelectItem value="/price-chart">Price Chart</SelectItem>
-                  <SelectItem value="/comparison-chart">Comparison Chart</SelectItem>
                   <SelectItem value="/ai-copilot">AI Co-Pilot</SelectItem>
                 </SelectContent>
               </Select>
@@ -156,7 +145,7 @@ export default function Home() {
         </div>
 
         {/* Pathway Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
           {pathwayCards.map((card) => {
             const IconComponent = card.icon;
             return (

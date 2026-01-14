@@ -123,10 +123,7 @@ export function SuffixSearchModal({ children, open: controlledOpen, onOpenChange
   // Get Finnhub exchange code for the selected exchange
   const finnhubExchange = searchResult?.exchange ? exchangeToFinnhubCode[searchResult.exchange] || 'US' : null;
   
-  // Debug exchange mapping
-  if (searchResult?.exchange) {
-    console.log('Debug exchange mapping - Exchange:', searchResult.exchange, 'Mapped to Finnhub code:', finnhubExchange);
-  }
+  // Exchange mapping (debug logs removed to reduce console noise)
 
   // Fetch holidays from Finnhub API
   const { data: holidayData } = useQuery({
@@ -156,9 +153,7 @@ export function SuffixSearchModal({ children, open: controlledOpen, onOpenChange
       maxDate.setDate(today.getDate() + 365); // Next 365 days (full year)
       const isUpcoming = holidayDate >= today && holidayDate <= maxDate;
       
-      if (isUpcoming) {
-        console.log('Valid upcoming holiday for', finnhubExchange, ':', holiday.eventName || holiday.name, 'on', holidayDate.toDateString());
-      }
+      // Removed excessive logging for each valid holiday
       
       return isUpcoming;
     } catch (error) {
@@ -167,10 +162,12 @@ export function SuffixSearchModal({ children, open: controlledOpen, onOpenChange
     }
   }).slice(0, 5) || []; // Limit to 5 upcoming holidays
   
-  console.log('Final upcoming holidays for', finnhubExchange, ':', upcomingHolidays.length, 'holidays');
+  // Only log when we have a valid exchange code
+  if (finnhubExchange) {
+    console.log('Final upcoming holidays for', finnhubExchange, ':', upcomingHolidays.length, 'holidays');
+  }
 
   const handleSearch = (query: string) => {
-    console.log('Debug search - Query:', query);
     setSearchQuery(query);
     setNoResults(false);
 
@@ -181,11 +178,9 @@ export function SuffixSearchModal({ children, open: controlledOpen, onOpenChange
     }
 
     const result = searchSuffix(query);
-    console.log('Debug search - Search result:', result);
     
     if (result) {
       setSearchResult(result);
-      console.log('Debug search - Setting result with exchange:', result.exchange);
       // Update market status if market hours are available
       if (result.marketHours) {
         setMarketStatus(computeMarketStatus(result.marketHours));
