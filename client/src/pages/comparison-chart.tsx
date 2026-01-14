@@ -2,11 +2,12 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { LogOut, BookOpen, ChevronDown, Minus, Type, Ruler, RotateCcw, Download, Code, X, Trash2, Plus, Save } from "lucide-react";
+import { LogOut, BookOpen, Globe, ChevronDown, Minus, Type, Ruler, RotateCcw, Download, Code, X, Trash2, Plus, Save } from "lucide-react";
 import { useChartSaveState } from "@/hooks/use-chart-save-state";
 import { SaveChartModal } from "@/components/ui/save-chart-modal";
 import { UnsavedChangesDialog } from "@/components/ui/unsaved-changes-dialog";
 import { ComparisonChart as ComparisonChartComponent } from "@/components/dashboard/comparison-chart";
+import { SuffixSearchModal } from "@/components/suffix-search-modal";
 import { useAuth } from "@/contexts/AuthContext";
 import logoImage from "@assets/IPO Intelligence@2x_1758060026530.png";
 import { format } from 'date-fns';
@@ -148,6 +149,7 @@ export default function ComparisonChart() {
   
   const comparisonRef = useRef<HTMLDivElement>(null);
   const comparisonZoomInRef = useRef<(() => void) | null>(null);
+  const [triggerSuffixModal, setTriggerSuffixModal] = useState(false);
   const comparisonZoomOutRef = useRef<(() => void) | null>(null);
   const comparisonFitToDataRef = useRef<(() => void) | null>(null);
 
@@ -564,6 +566,17 @@ export default function ComparisonChart() {
                   <span>Walkthrough</span>
                 </span>
               </Link>
+
+              {/* Suffix Guide Link */}
+              <button
+                onClick={() => setTriggerSuffixModal(true)}
+                className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
+                data-testid="button-suffix-guide"
+                style={{ fontFamily: 'var(--font-sans)', fontSize: '16px', color: '#f7f7f7' }}
+              >
+                <Globe className="h-5 w-5 text-[#5AF5FA]" />
+                <span>Suffix Guide</span>
+              </button>
 
               {/* Logout Button */}
               <LogoutButton />
@@ -1319,6 +1332,11 @@ export default function ComparisonChart() {
         }}
         hasExistingEntry={currentSavedEntryId !== null}
       />
+
+      {/* Suffix Guide Modal */}
+      <SuffixSearchModal>
+        <button style={{ display: 'none' }} />
+      </SuffixSearchModal>
     </div>
   );
 }

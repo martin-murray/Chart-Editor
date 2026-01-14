@@ -1239,11 +1239,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // AI Co-Pilot Routes
 
-  // Initialize OpenAI client with Replit AI Integrations
-  const openai = new OpenAI({
+  // Initialize OpenAI client with Replit AI Integrations (optional)
+  const openai = process.env.AI_INTEGRATIONS_OPENAI_API_KEY ? new OpenAI({
     apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
     baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-  });
+  }) : null;
 
   // Create or get chat session
   app.post("/api/ai-copilot/session", requireAuth, async (req, res) => {
@@ -1307,6 +1307,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Send message and get AI response
   app.post("/api/ai-copilot/chat", requireAuth, async (req, res) => {
     try {
+      if (!openai) {
+        return res.status(503).json({ 
+          message: "AI features are currently unavailable. Please configure OPENAI_API_KEY." 
+        });
+      }
+
       const { chatId, message } = req.body;
 
       // Save user message
