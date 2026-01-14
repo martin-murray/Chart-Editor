@@ -32,6 +32,13 @@ If you originally worked on this project in Replit and now use a local editor (e
    `git remote -v`  
    The URL should show `github.com` and no longer mention `gitsafe`.
 
+## Completing GitHub device authentication prompts (e.g., in Cursor)
+If a Git command in Cursor shows a one-time code like `20B1-84A2` and asks you to finish authenticating:
+1. Copy the code from the prompt.
+2. In a browser, open https://github.com/login/device (or click the link shown in the prompt).
+3. Paste the code, authorize access, and finish the flow.
+4. Return to Cursor; the Git command continues once authorization is complete.
+
 ## Technologies
 - HTML5
 - CSS3
